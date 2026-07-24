@@ -1,0 +1,49 @@
+[toml-schema]
+version = "1.0.0"
+
+[types.action]
+type = "string"
+allowedvalues = ["click", "hold"]
+
+[types.button]
+type = "string"
+allowedvalues = ["left", "right", "middle"]
+
+[types.waitRangeStr]
+type = "string"
+pattern = "^\\d+(ms|s|m)+..^\\d+(ms|s|m)+$"
+
+[types.key]
+type = "string"
+
+[types.keys]
+type = "array"
+arraytype = "types.key"
+minlenght = 1
+
+[elements.command]
+type = "table"
+
+    [elements.command.action]
+    typeof = "types.action"
+
+    [elements.command.button]
+    type = "array"
+    arraytype = "types.button"
+    minlength = 1
+
+    [elements.command.start]
+    oneof = [ "type.key", "types.keys" ]
+
+    [elements.command.end]
+    typeof = "types.key"
+
+    [elements.command.key]
+    oneof = [ "type.key", "types.keys" ]
+
+    [elements.command.press-wait]
+    typeof = "types.waitRangeStr"
+
+    [elements.command.release-wait]
+    typeof = "types.waitRangeStr"
+

@@ -6,7 +6,6 @@
 #define INCLUDE_AUTOINPUT_MOUSE_H
 #pragma once
 
-#include <atomic>
 
 namespace autoinput
 {
@@ -22,35 +21,15 @@ namespace autoinput
         MouseHandler& operator=(const MouseHandler& rhs);
         MouseHandler& operator=(MouseHandler&& rhs) noexcept;
 
-        [[nodiscard]] std::string getButtonName() const;
+        [[nodiscard]] std::string getButtonName() const { return mouseButtonToString(m_mouseButton); }
 
         void setActive(const bool isActive) { m_isActive = isActive; }
         [[nodiscard]] bool getActive() const { return m_isActive; }
+        [[nodiscard]] MouseButton getMouseButton() const { return m_mouseButton; }
 
-        void togglePressState()
-        {
-            if (m_isButtonPressed)
-            {
-                releaseButton();
-                return;
-            }
+        void togglePressState();
 
-            pressButton();
-        }
-
-        bool operator==(const MouseHandler& otherPoint) const
-        {
-            return this->m_mouseButton == otherPoint.m_mouseButton;
-        }
-
-        struct HashFunction
-        {
-            size_t operator()(const MouseHandler& handler) const
-            {
-                using button_t = std::underlying_type_t<MouseButton>;
-                return std::hash<button_t>()(static_cast<button_t>(handler.m_mouseButton));
-            }
-        };
+        bool operator==(const MouseHandler& rhs) const;
 
         void pressButton();
         void releaseButton();
@@ -61,6 +40,16 @@ namespace autoinput
         std::atomic<bool> m_isActive{ false };
         bool m_isButtonPressed{ false };
         std::unique_ptr<std::thread> m_autoclickerThread{ nullptr };
+    };
+
+    template<>
+    struct HashFunction<MouseHandler>
+    {
+        size_t operator()(const MouseHandler& handler) const
+        {
+            using button_t = std::underlying_type_t<MouseButton>;
+            return std::hash<button_t>()(static_cast<button_t>(handler.getMouseButton()));
+        }
     };
 
     inline MouseHandler::MouseHandler(const MouseHandler& rhs)
@@ -101,6 +90,22 @@ namespace autoinput
         this->m_isButtonPressed = rhs.m_isButtonPressed;
         m_isActive.store(rhs.m_isActive.load());
         return *this;
+    }
+
+    inline void MouseHandler::togglePressState()
+    {
+        if (m_isButtonPressed)
+        {
+            releaseButton();
+            return;
+        }
+
+        pressButton();
+    }
+
+    inline bool MouseHandler::operator==(const MouseHandler& rhs) const
+    {
+        return this->m_mouseButton == rhs.m_mouseButton;
     }
 }
 #endif // INCLUDE_AUTOINPUT_MOUSE_H

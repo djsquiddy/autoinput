@@ -2,18 +2,15 @@
 // Created by djsquiddy on 3/9/2026.
 //
 #include "autoinput.h"
-
-#include <format>
-#include <iostream>
-#include <ranges>
-#include <random>
-
+#include "logger.h"
 #include "platform.h"
 
 namespace autoinput
 {
-    bool Program::processKeyEvent(const KeyboardInput& input)
+    bool Program::processKeyEvent(KeyboardInput&& input)
     {
+        input.printInfo();
+
         if (!input.isKeyDown())
         {
             return false;
@@ -21,11 +18,11 @@ namespace autoinput
 
         if (m_hasFunctionKeys)
         {
-            if (const int32_t functionKey = input.functionKey(); functionKey != INVALID_KEY)
+            if (const auto functionKey = input.functionKey(); functionKey != INVALID_KEY)
             {
-                for (int32_t i = 0; i < m_keyInfo.size(); ++i)
+                for (const KeyInfo& keyInfo : m_keyInfo)
                 {
-                    if (const KeyInfo& keyInfo = m_keyInfo[i]; keyInfo.functionKey == functionKey)
+                    if ( keyInfo.functionKey == functionKey)
                     {
                         if (keyInfo.isStartKey)
                         {
@@ -40,11 +37,11 @@ namespace autoinput
         }
         if (m_hasNonFunctionKeys)
         {
-            if (const int32_t charKey = input.getChar(); charKey != INVALID_KEY)
+            if (const auto charKey = input.getChar(); charKey != INVALID_KEY)
             {
-                for (int32_t i = 0; i < m_keyInfo.size(); ++i)
+                for (const KeyInfo& keyInfo : m_keyInfo)
                 {
-                    if (const KeyInfo& keyInfo = m_keyInfo[i]; keyInfo.keyCode == charKey)
+                    if (keyInfo.keyCode == charKey)
                     {
                         if (keyInfo.isStartKey)
                         {
@@ -64,7 +61,7 @@ namespace autoinput
     void Program::start(const KeyInfo& keyInfo)
     {
         MouseHandler& handler = m_mouseHandlers.at(keyInfo.mouseButton);
-        if (m_arguments.buttonState == ButtonState::HOLD)
+        if (m_arguments.actionState == ActionState::HOLD)
         {
             handler.togglePressState();
         }
@@ -87,33 +84,33 @@ namespace autoinput
 
     void Program::printProgramInfo() const
     {
-        for (int32_t i = 0; i < m_keyInfo.size(); ++i)
+        // ReSharper disable once CppUseStructuredBinding
+        for (auto keyInfo : m_keyInfo)
         {
-            const KeyInfo& keyInfo = m_keyInfo[i];
             if (keyInfo.keyCode != INVALID_KEY)
             {
                 if (keyInfo.mouseButton != MouseButton::NONE)
                 {
-                    std::cout << std::format("Key: {}, Is used as start key: {} to start {}", keyInfo.keyCode, keyInfo.isStartKey, mouseButtonToString(keyInfo.mouseButton)) << "\n";
+                    Logger::info("Key: {}, Is used as start key: {} to start {}\n", keyInfo.keyCode, keyInfo.isStartKey, mouseButtonToString(keyInfo.mouseButton));
                 }
                 else
                 {
-                    std::cout << std::format("Key: {}, Is used as start key: {}", keyInfo.keyCode, keyInfo.isStartKey) << "\n";
+                    Logger::info("Key: {}, Is used as start key: {}\n", keyInfo.keyCode, keyInfo.isStartKey);
                 }
             }
             else
             {
                 if (keyInfo.mouseButton != MouseButton::NONE)
                 {
-                    std::cout << std::format("Function: F{}, Is used as start key: {} to start {}", keyInfo.functionKey, keyInfo.isStartKey, mouseButtonToString(keyInfo.mouseButton)) << "\n";
+                    Logger::info("Function: F{}, Is used as start key: {} to start {}\n", keyInfo.functionKey, keyInfo.isStartKey, mouseButtonToString(keyInfo.mouseButton));
                 }
                 else
                 {
-                    std::cout << std::format("Function: F{}, Is used as start key: {}", keyInfo.functionKey, keyInfo.isStartKey) << "\n";
+                    Logger::info("Function: F{}, Is used as start key: {}\n", keyInfo.functionKey, keyInfo.isStartKey);
                 }
             }
         }
-        std::cout << std::endl;
+        Logger::flush();
     }
 
     // ReSharper disable once CppMemberFunctionMayBeConst
@@ -141,7 +138,7 @@ namespace autoinput
 
                 handler.pressButton();
                 const auto pressWaitTime = std::chrono::milliseconds(delayData.getPressDelay());
-                std::cout << std::format("Pressed button: {}, waiting: {}", handler.getButtonName(), pressWaitTime) << std::endl;
+                Logger::debug("Pressed button: {}, waiting: {}", handler.getButtonName(), pressWaitTime);
                 std::this_thread::sleep_for(pressWaitTime);
                 if (!handler.getActive())
                 {
@@ -150,7 +147,7 @@ namespace autoinput
                 }
                 handler.releaseButton();
                 const auto releaseWaitTime = std::chrono::milliseconds(delayData.getReleaseDelay());
-                std::cout << std::format("Released button: {}, waiting: {}", handler.getButtonName(), releaseWaitTime) << std::endl;
+                Logger::debug("Released button: {}, waiting: {}", handler.getButtonName(), releaseWaitTime);
                 std::this_thread::sleep_for(std::chrono::milliseconds(releaseWaitTime));
             }
         });
@@ -158,10 +155,9 @@ namespace autoinput
 
     void Program::init()
     {
-        for (size_t i = 0; i < m_arguments.buttons.size(); ++i)
+        for (auto & button : m_arguments.buttons)
         {
-            m_mouseHandlers[m_arguments.buttons[i]] = MouseHandler{m_arguments.buttons[i]};
-            // m_mouseHandlers.insert(std::make_pair(m_arguments.buttons[i], MouseHandler{m_arguments.buttons[i]});
+            m_mouseHandlers[button] = MouseHandler{button};
         }
 
         for (size_t i = 0; i < m_arguments.startKeys.size(); ++i)

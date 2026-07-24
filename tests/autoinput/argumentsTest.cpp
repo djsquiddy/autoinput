@@ -1,0 +1,175 @@
+/**
+ * @file argumentsTest.cpp
+ * @author djsquiddy
+ * @date July 2026
+ */
+#include <gtest/gtest.h>
+
+#include "autoinput/arguments.h"
+
+namespace autoinput
+{
+    TEST(WaitDelayDataTest, RejectsEmptyWaitTime)
+    {
+        WaitDelayData delayData;
+
+        EXPECT_FALSE(delayData.parseWaitTimeDelay("", true));
+    }
+
+    TEST(WaitDelayDataTest, ParsesPressMillisecondsWithoutSuffix)
+    {
+        WaitDelayData delayData;
+
+        EXPECT_TRUE(delayData.parseWaitTimeDelay("250", true));
+
+        EXPECT_TRUE(delayData.hasPress);
+        EXPECT_FALSE(delayData.usePressRange);
+        EXPECT_EQ(delayData.minWaitPressDelay, std::chrono::milliseconds{ 250 });
+        EXPECT_EQ(delayData.maxWaitPressDelay, std::chrono::milliseconds{ 250 });
+        EXPECT_EQ(delayData.getPressDelay(), std::chrono::milliseconds{ 250 });
+    }
+
+    TEST(WaitDelayDataTest, ParsesReleaseMillisecondsWithoutSuffix)
+    {
+        WaitDelayData delayData;
+
+        EXPECT_TRUE(delayData.parseWaitTimeDelay("125", false));
+
+        EXPECT_TRUE(delayData.hasRelease);
+        EXPECT_FALSE(delayData.useReleaseRange);
+        EXPECT_EQ(delayData.minWaitReleaseDelay, std::chrono::milliseconds{ 125 });
+        EXPECT_EQ(delayData.maxWaitReleaseDelay, std::chrono::milliseconds{ 125 });
+        EXPECT_EQ(delayData.getReleaseDelay(), std::chrono::milliseconds{ 125 });
+    }
+
+    TEST(WaitDelayDataTest, ParsesSeconds)
+    {
+        WaitDelayData delayData;
+
+        EXPECT_TRUE(delayData.parseWaitTimeDelay("2s", true));
+
+        EXPECT_EQ(delayData.minWaitPressDelay, std::chrono::seconds{ 2 });
+        EXPECT_EQ(delayData.maxWaitPressDelay, std::chrono::seconds{ 2 });
+    }
+
+    TEST(WaitDelayDataTest, ParsesMinutes)
+    {
+        WaitDelayData delayData;
+
+        EXPECT_TRUE(delayData.parseWaitTimeDelay("3m", true));
+
+        EXPECT_EQ(delayData.minWaitPressDelay, std::chrono::minutes{ 3 });
+        EXPECT_EQ(delayData.maxWaitPressDelay, std::chrono::minutes{ 3 });
+    }
+
+    TEST(WaitDelayDataTest, ParsesMillisecondSuffix)
+    {
+        WaitDelayData delayData;
+
+        EXPECT_TRUE(delayData.parseWaitTimeDelay("500ms", true));
+
+        EXPECT_EQ(delayData.minWaitPressDelay, std::chrono::milliseconds{ 500 });
+        EXPECT_EQ(delayData.maxWaitPressDelay, std::chrono::milliseconds{ 500 });
+    }
+
+    TEST(WaitDelayDataTest, ParsesPressRange)
+    {
+        WaitDelayData delayData;
+
+        EXPECT_TRUE(delayData.parseWaitTimeDelay("100ms..250ms", true));
+
+        EXPECT_TRUE(delayData.hasPress);
+        EXPECT_TRUE(delayData.usePressRange);
+        EXPECT_EQ(delayData.minWaitPressDelay, std::chrono::milliseconds{ 100 });
+        EXPECT_EQ(delayData.maxWaitPressDelay, std::chrono::milliseconds{ 250 });
+
+        const std::chrono::milliseconds delay = delayData.getPressDelay();
+        EXPECT_GE(delay, std::chrono::milliseconds{ 100 });
+        EXPECT_LE(delay, std::chrono::milliseconds{ 250 });
+    }
+
+    TEST(WaitDelayDataTest, ParsesReleaseRange)
+    {
+        WaitDelayData delayData;
+
+        EXPECT_TRUE(delayData.parseWaitTimeDelay("1s..2s", false));
+
+        EXPECT_TRUE(delayData.hasRelease);
+        EXPECT_TRUE(delayData.useReleaseRange);
+        EXPECT_EQ(delayData.minWaitReleaseDelay, std::chrono::seconds{ 1 });
+        EXPECT_EQ(delayData.maxWaitReleaseDelay, std::chrono::seconds{ 2 });
+
+        const std::chrono::milliseconds delay = delayData.getReleaseDelay();
+        EXPECT_GE(delay, std::chrono::seconds{ 1 });
+        EXPECT_LE(delay, std::chrono::seconds{ 2 });
+    }
+
+    TEST(ProgramArgumentsTest, SafeGetNextArgumentReturnsNextValue)
+    {
+        char program[] = "autoinput";
+        char option[] = "-s";
+        char value[] = "f2";
+        char* argv[] = { program, option, value };
+
+        EXPECT_EQ(ProgramArguments::safeGetNextArgument(2, 3, argv), "f2");
+    }
+
+    TEST(ProgramArgumentsTest, SafeGetNextArgumentReturnsEmptyWhenOutOfBounds)
+    {
+        char program[] = "autoinput";
+        char* argv[] = { program };
+
+        EXPECT_TRUE(ProgramArguments::safeGetNextArgument(1, 1, argv).empty());
+    }
+
+    TEST(ProgramArgumentsTest, SafeGetNextArgumentReturnsEmptyForOption)
+    {
+        char program[] = "autoinput";
+        char option[] = "-s";
+        char nextOption[] = "-e";
+        char* argv[] = { program, option, nextOption };
+
+        EXPECT_TRUE(ProgramArguments::safeGetNextArgument(2, 3, argv).empty());
+    }
+
+    TEST(ProgramArgumentsTest, PostParseArgumentsDefaultsToLeftButton)
+    {
+        ProgramArguments arguments;
+        arguments.startKeys.emplace_back("f2");
+        arguments.endKey = "f3";
+
+        EXPECT_TRUE(arguments.postParseArguments());
+
+        ASSERT_EQ(arguments.buttons.size(), 1);
+        EXPECT_EQ(arguments.buttons.front(), MouseButton::LEFT);
+    }
+
+    TEST(ProgramArgumentsTest, PostParseArgumentsFailsWithoutStartKey)
+    {
+        ProgramArguments arguments;
+        arguments.endKey = "f3";
+
+        EXPECT_FALSE(arguments.postParseArguments());
+    }
+
+    TEST(ProgramArgumentsTest, PostParseArgumentsFailsWithoutEndKey)
+    {
+        ProgramArguments arguments;
+        arguments.startKeys.emplace_back("f2");
+
+        EXPECT_FALSE(arguments.postParseArguments());
+    }
+
+    TEST(ProgramArgumentsTest, PostParseArgumentsResizesStartKeysToButtonCount)
+    {
+        ProgramArguments arguments;
+        arguments.buttons.emplace_back(MouseButton::LEFT);
+        arguments.buttons.emplace_back(MouseButton::RIGHT);
+        arguments.startKeys.emplace_back("f2");
+        arguments.endKey = "f3";
+
+        EXPECT_TRUE(arguments.postParseArguments());
+
+        EXPECT_EQ(arguments.startKeys.size(), arguments.buttons.size());
+    }
+}

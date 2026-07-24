@@ -4,8 +4,14 @@
 
 #include "arguments.h"
 
+#include <algorithm>
+
+#include "logger.h"
+#include "config.h"
+
 #include <iostream>
 #include <random>
+#include <ranges>
 
 namespace autoinput
 {
@@ -43,10 +49,10 @@ namespace autoinput
         struct NumberIndexData
         {
             std::string_view numberData;
-            int32_t startIndex = 0;
-            int32_t endIndex = 0;
-            int32_t durationStartIndex = 0;
-            int32_t durationEndIndex = 0;
+            size_t startIndex = 0;
+            size_t endIndex = 0;
+            size_t durationStartIndex = 0;
+            size_t durationEndIndex = 0;
 
             void init()
             {
@@ -70,19 +76,19 @@ namespace autoinput
                     durationEndIndex = numberData.size();
                 }
 
-                std::cout << "Wait Number data:\n";
-                std::cout << "Number   Start Index: " << startIndex << " End Index: " << endIndex << "\n";
-                std::cout << "Number              : " << getNumber() << "\n";
-                std::cout << "Duration Start Index: " << durationEndIndex << " End Index: " << durationEndIndex << "\n";
-                std::cout << "Duration            : " << getMilliseconds() << "\n";
+                Logger::debug("Wait Number data:\n");
+                Logger::debug("Number   Start Index: {} End Index: {}\n", startIndex, endIndex);
+                Logger::debug("Number              : {}\n", getNumber());
+                Logger::debug("Duration Start Index: {} End Index: {}\n", durationStartIndex, durationEndIndex);
+                Logger::debug("Duration            : {}\n", getMilliseconds());
             }
 
-            int32_t getNumber() const
+            [[nodiscard]] int32_t getNumber() const
             {
                 return parseStringToInt(numberData.substr(startIndex, endIndex - startIndex));
             }
 
-            std::chrono::milliseconds getMilliseconds() const
+            [[nodiscard]] std::chrono::milliseconds getMilliseconds() const
             {
                 const auto number = getNumber();
                 if (durationStartIndex == 0)
@@ -94,20 +100,20 @@ namespace autoinput
                 if (durationType == "s")
                 {
                     const std::chrono::seconds seconds{number};
-                    return std::chrono::milliseconds(seconds);
+                    return {seconds};
                 }
                 if (durationType == "m")
                 {
                     const std::chrono::minutes minutes{number};
-                    return std::chrono::milliseconds(minutes);
+                    return {minutes};
                 }
                 if (durationType == "ms")
                 {
                     return std::chrono::milliseconds(number);
                 }
 
-                std::cerr << "Unrecognized duration type: " << durationType << "\n";
-                std::cerr << "Recognized options: [s|m|ms]" << std::endl;
+                Logger::error("Unrecognized duration type: {}\n", durationType);
+                Logger::error("Recognized options: [s|m|ms]\n");
                 return std::chrono::milliseconds(number);
             }
         };
@@ -155,6 +161,11 @@ namespace autoinput
         return true;
     }
 
+    ProgramArguments::ProgramArguments()
+        : NonCopyable()
+    {
+    }
+
     bool ProgramArguments::parseArguments(int argc, char** argv)
     {
         if (argc >= 1)
@@ -167,105 +178,91 @@ namespace autoinput
             printUsage();
             return false;
         }
+
         for (int i = 1; i < argc; ++i)
         {
             const std::string_view arg = argv[i];
-
-            std::cout << "processing argument[" << i << "]: " << arg << "\n";
-
             if (arg == "-h" || arg == "--help")
             {
                 printUsage(true);
                 return false;
             }
-
-            if (arg == "-t" || arg == "--type")
+            if (arg == "-l" || arg == "--log")
             {
-                std::string_view buttonType = safeGetNextArgument(++i, argc, argv);
-                if (buttonType.empty())
+                const std::string_view logLevelStr = safeGetNextArgument(++i, argc, argv);
+                const LogLevel logLevel = logLevelFromString(logLevelStr);
+                Logger::setLogLevel(logLevel);
+                continue;
+            }
+            // We want to parse the configuration first so we can use cli arguments as overrides if need/wanted.
+            if (arg == "-c" || arg == "--config")
+            {
+                if (!parseConfigArguments(argc, argv, i))
                 {
-                    std::cerr << "The parameter " << arg << " needs an argument. Choices: {click,c,hold,h}\n" << std::endl;
-                    printUsage();
                     return false;
                 }
-                buttonState = buttonStateFromArguments(buttonType);
-                if (buttonState == ButtonState::INVALID)
+            }
+        }
+
+        for (int i = 1; i < argc; ++i)
+        {
+            const std::string_view arg = argv[i];
+
+            Logger::debug("processing argument[{}]: {}\n", i, arg);
+
+#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
+            if (arg == "-k" || arg == "--key")
+            {
+                if (!parseKey(argc, argv, i))
                 {
-                    std::cerr << "Invalid parameter " << buttonType <<  " for button type. Choices: {click,c,hold,h}\n" << std::endl;
-                    printUsage();
+                    return false;
+                }
+                continue;
+            }
+#endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
+            if (arg == "-t" || arg == "--type")
+            {
+                if (!parseActionState(argc, argv, i))
+                {
                     return false;
                 }
             }
             else if (arg == "-b" || arg == "--button" || arg == "--btn")
             {
-                int32_t j = i + 1;
-                for (; j < argc; ++j)
+                if (!parseButton(argc, argv, i))
                 {
-                    std::string_view button = safeGetNextArgument(j, argc, argv);
-                    if (buttons.empty() && button.empty())
-                    {
-                        std::cerr << "The parameter " << arg << " needs an argument. Choices: {left,l,right,r,middle,m}\n" << std::endl;
-                        printUsage();
-                        return false;
-                    }
-                    if (button.empty() && j >= i + 2)
-                    {
-                        // We were able to process at least one argument.
-                        break;
-                    }
-                    if (const auto mouseButton = mouseButtonFromArguments(button); mouseButton != MouseButton::NONE)
-                    {
-                        buttons.emplace_back(mouseButton);
-                    }
-                    else
-                    {
-                        std::cerr << "Invalid parameter " << button <<  " for button type. Choices: {left,l,right,r,middle,m}\n" << std::endl;
-                        printUsage();
-                        return false;
-                    }
+                    return false;
                 }
-                i = j - 1;
             }
             else if (arg == "-s" || arg == "--start")
             {
-                int32_t j = i + 1;
-                for (; j < argc; ++j)
+                if (!parseStartKey(argc, argv, i))
                 {
-                    const std::string_view startKeyArgument = safeGetNextArgument(j, argc, argv);
-                    if (startKeys.empty() && startKeyArgument.empty())
-                    {
-                        std::cerr << "The parameter " << arg << " needs an argument.\n" << std::endl;
-                        printUsage();
-                        return false;
-                    }
-                    if (startKeyArgument.empty() && j >= i + 2)
-                    {
-                        // We were able to process at least one argument.
-                        break;
-                    }
-                    startKeys.emplace_back(startKeyArgument);
+                    return false;
                 }
-                i = j - 1;
             }
             else if (arg == "-e" || arg == "--end")
             {
-                endKey = safeGetNextArgument(++i, argc, argv);
-            }
-            else if (arg == "-w" || arg == "--wait" || arg=="--press-wait" || arg=="--release-wait")
-            {
-                bool isPressWait = arg.contains("press");
-                const std::string_view waitArgument = safeGetNextArgument(++i, argc, argv);
-                if (waitArgument.empty())
+                if (!parseEndKey(argc, argv, i))
                 {
                     return false;
                 }
-
-                const auto isValidWaitDelay = delayData.parseWaitTimeDelay(waitArgument, isPressWait);
-                if (!isValidWaitDelay)
+            }
+            else if (arg == "-w" || arg == "--wait" || arg=="--press-wait" || arg=="--release-wait")
+            {
+                if (arg.contains("press"))
                 {
-                    std::cerr << "The parameter " << arg << " needs an argument.\n" << std::endl;
-                    printUsage();
-                    return false;
+                    if (!parsePressWaitTime(argc, argv, i))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!parseReleaseTime(argc, argv, i))
+                    {
+                        return false;
+                    }
                 }
             }
         }
@@ -281,14 +278,14 @@ namespace autoinput
         }
         if (startKeys.empty())
         {
-            std::cerr << "Start key is missing...\nAssign it using -s or --start" << std::endl;
             printUsage();
+            Logger::error("Start key is missing...\nAssign it using -s or --start\n");
             return false;
         }
         if (endKey.empty())
         {
-            std::cerr << "End key is missing...\nAssign it using -e or --end" << std::endl;
             printUsage();
+            Logger::error("End key is missing...\nAssign it using -e or --end");
             return false;
         }
 
@@ -302,60 +299,275 @@ namespace autoinput
 
     void ProgramArguments::printUsage(const bool verbose) const
     {
-        std::cout << "usage: " << programName << " [-h] [-t {click,c,hold,h}] [-b {left,l,right,r,middle,m} [{left,l,right,r,middle,m} ...]] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME]";
-        std::cout << "\n\n";
-        std::cout << "options:\n";
-
+        Logger::print("usage {} [-h] [-t {{click,c,hold,h}}] [-b {{left,l,right,r,middle,m}} [{{left,l,right,r,middle,m}} ...]] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME]\n\n", programName);
+        Logger::print("options\n");
         const auto optionPrefix = std::string(4, ' ');
         const auto optionUsagePrefix = std::string(10, ' ');
 
-        std::cout << optionPrefix << "-h, --help" << "\n";;
-        std::cout << optionUsagePrefix << "show this help message with examples and exits." << "\n";
-        std::cout << optionPrefix << "-t, --type {click,c,hold,h}" << "\n";;
-        std::cout << optionUsagePrefix << "What kind of mouse event to use." << "\n";
-        std::cout << optionPrefix << "-b, --btn, --button {left,l,right,r,middle,m} [{left,l,right,r,middle,m} ...]" << "\n";;
-        std::cout << optionUsagePrefix << "Which button to press. (Default: left)" << "\n";
-        std::cout << optionPrefix << "-s, --start-key START_KEYS [START_KEYS ...]" << "\n";;
-        std::cout << optionUsagePrefix << "Key that is used to start the autoclicker. If button presses need separate start/stop binding the order matters here." << "\n";
-        std::cout << optionPrefix << "-e, --end-key END_KEY" << "\n";;
-        std::cout << optionUsagePrefix << "Key that is used to end the autoclicker." << "\n";
-        std::cout << optionPrefix << "-w, --wait WAIT_TIME" << "\n";;
-        std::cout << optionUsagePrefix << "Max duration to wait before auto clicking. " << bold("Type must be set to click") << "\n";
-        std::cout << optionUsagePrefix << "Can use a time range by using {min}..{max} with each click being random between the range. See examples for usage.\n";
+        Logger::print("{} -h, --help\n", optionPrefix);
+        Logger::print("{} show this help message with examples and exits.\n", optionUsagePrefix);
+        Logger::print("{} -l, --log [{{d,debug,i,info,w,warn,warning,e,error,f,fatal}}]\n", optionPrefix);
+        Logger::print("{} set the log level. (Choices: debug, info, warning, warn, error, fatal)\n", optionUsagePrefix);
+        Logger::print("{} -c --config\n", optionPrefix);
+        Logger::print("{} Use the specified configuration found under {}. Extension can be omitted\n", optionUsagePrefix, getConfigsPath().string());
+        Logger::print("{} -t, --type {{click,c,hold,h}}\n", optionPrefix);
+        Logger::print("{} What kind of action event to use.\n", optionUsagePrefix);
+        Logger::print("{} -b, --btn, --button {{left,l,right,r,middle,m}} [{{left,l,right,r,middle,m}} ...]\n", optionPrefix);
+        Logger::print("{} Which button to press. (Default: left)\n", optionUsagePrefix);
+#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
+        Logger::print("{} -k, --key {{key}} [{{key}} ...]\n", optionPrefix);
+        Logger::print("{} Key that is used to start the autoclicker. If button presses need separate start/stop binding the order matters here.\n", optionUsagePrefix);
+#endif
+        Logger::print("{} -s, --start-key START_KEYS [START_KEYS ...]\n", optionPrefix);
+        Logger::print("{} Key that is used to start the autoclicker. If button presses need separate start/stop binding the order matters here.\n", optionUsagePrefix);
+        Logger::print("{} -e, --end-key END_KEY\n", optionPrefix);
+        Logger::print("{} Key that is used to end the autoclicker.\n", optionUsagePrefix);
+        Logger::print("{} -w, --wait WAIT_TIME\n", optionPrefix);
+        Logger::print("{} Max duration to wait before auto clicking. {}\n", optionUsagePrefix, bold("Type must be set to click"));
+        Logger::print("{} Can use a time range by using {{min}}..{{max}} with each click being random between the range. See examples for usage.\n", optionUsagePrefix);
 
-        std::cout << "\n\n";
+        Logger::print("\n\n");
         if (verbose)
         {
             const auto examplePrefix = std::string(2, ' ');
             const auto exampleCmdPrefix = std::string(4, ' ') + "> ";
             const auto exampleNotePrefix = std::string(10, ' ') + "Note: ";
             int32_t index = 1;
-            std::cout << "examples:\n";
-            std::cout << examplePrefix << index << ") hold the left click when pressing F2 and stop on F3:\n";
-            std::cout << exampleCmdPrefix << programName << " -t hold -b left -s f2 -e f3" << "\n";
+            Logger::print("examples:\n");
+            Logger::print("{}{}) hold the left click when pressing F2 and stopping on F3:\n", examplePrefix, index);
+            Logger::print("{}{} -t hold -b left -s f2 -e f3\n", exampleCmdPrefix, programName);
             ++index;
-            std::cout << "\n";
-            std::cout << examplePrefix << index << ") hold the left click when pressing F2, or hold the right click when pressing F3 and stop on F4:\n";
-            std::cout << exampleCmdPrefix << programName << " -t hold -b left right -s f2 f3 -e f4" << "\n";
+            Logger::print("\n");
+            Logger::print("{}{}) hold the left click when pressing F2, or hold the right click when pressing F3 and stop on F4:\n", examplePrefix, index);
+            Logger::print("{}{} -t hold -b left right -s f2 f3 -e f4\n", exampleCmdPrefix, programName);
             ++index;
-            std::cout << "\n";
-            std::cout << examplePrefix << index << ") hold the left and right click when pressing F2 and stop on F3:\n";
-            std::cout << exampleCmdPrefix << programName << " -t hold -b left right -s f2 -e f3" << "\n";
-            std::cout << exampleNotePrefix << "This only works if start key only has " << bold("ONE") <<" value." << "\n";
+            Logger::print("\n");
+            Logger::print("{}{}) hold the left and right click when pressing F2 and stop on F3:\n", examplePrefix, index);
+            Logger::print("{}{} -t hold -b left right -s f2 -e f3\n", exampleCmdPrefix, programName);
+            Logger::print("{} This only works if start key only has {} value.\n", exampleNotePrefix, bold("ONE"));
             ++index;
-            std::cout << "\n";
-            std::cout << examplePrefix << index << ") auto left click every 2 seconds:\n";
-            std::cout << exampleCmdPrefix << programName << " -t click -s f2 -e f3 -w 2" << "\n";
+            Logger::print("\n");
+            Logger::print("{}{}) auto left click every 2 seconds:\n", examplePrefix, index);
+            Logger::print("{}{} -t click -s f2 -e f3 -w 2\n", exampleCmdPrefix, programName);
             ++index;
-            std::cout << "\n";
-            std::cout << examplePrefix << index << ") auto left click every 1 to 2 seconds:\n";
-            std::cout << exampleCmdPrefix << programName << " -t click -s f2 -e f3 --press-wait 1s..2s" << "\n";
+            Logger::print("\n");
+            Logger::print("{}{}) auto left click every 1 to 2 seconds:\n", examplePrefix, index);
+            Logger::print("{}{} -t click -s f2 -e f3 --press-wait 1s..2s\n", exampleCmdPrefix, programName);
             ++index;
-            std::cout << "\n";
-            std::cout << examplePrefix << index << ") auto left click and hold for 500ms to 1s then wait 1s to 2s after to click again:\n";
-            std::cout << exampleCmdPrefix << programName << " -t click -s f2 -e f3 --press-wait 500ms..1s --release-wait 1s..2s" << "\n";
+            Logger::print("\n");
+            Logger::print("{}{}) auto left click and hold for 500ms to 1s then wait 1s to 2s after to click again:\n", examplePrefix, index);
+            Logger::print("{}{} -t click -s f2 -e f3 --press-wait 500ms..1s --release-wait 1s..2s\n", exampleCmdPrefix, programName);
         }
-        std::cout << std::endl;
+
+        Logger::flush();
+    }
+
+    bool ProgramArguments::parseConfigArguments(int argc, char** argv, int& i)
+    {
+        // TODO: implement
+        std::string_view fileName = safeGetNextArgument(++i, argc, argv);
+        if (fileName.empty())
+        {
+            printUsage();
+            Logger::error("No configuration file name given");
+            return false;
+        }
+        const auto configPath = getConfigFilePath(std::string(fileName));
+
+        if (!doesConfigDataExists(configPath))
+        {
+            printUsage();
+            Logger::error("Configuration could not be found at: {}", configPath.string());
+            return false;
+        }
+        if (const auto foundConfigData = autoinput::loadConfigData(configPath); foundConfigData.has_value())
+        {
+            const auto& configData = *foundConfigData;
+            if (!configData.action.empty())
+            {
+                actionState = actionStateFromArguments(configData.action);
+                if (actionState == ActionState::INVALID)
+                {
+                    Logger::fatal("Invalid parameter {} for action type. Choices: {{click,hold}}\n", configData.action);
+                    return false;
+                }
+            }
+            if (!configData.buttons.empty())
+            {
+                for (auto& button : configData.buttons)
+                {
+                    if (const auto mouseButton = mouseButtonFromArguments(button); mouseButton != MouseButton::NONE)
+                    {
+                        buttons.emplace_back(mouseButton);
+                    }
+                    else
+                    {
+                        Logger::fatal("Invalid parameter {} for button type. Choices: {{left,right,middle}}\n", button);
+                        printUsage();
+                        return false;
+                    }
+                }
+            }
+#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
+            if (!configData.keys.empty())
+            {
+                for (auto& key : configData.keys)
+                {
+                    keys.emplace_back(Key::fromString(key));
+                }
+            }
+#endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
+            if (!configData.startKeys.empty())
+            {
+                for (auto& key : configData.startKeys)
+                {
+                    startKeys.emplace_back(key);
+                }
+            }
+            if (!configData.endKey.empty())
+            {
+                endKey = configData.endKey;
+            }
+            if (!configData.pressWait.empty())
+            {
+                if (const auto isValidWaitDelay = delayData.parseWaitTimeDelay(configData.pressWait, true); !isValidWaitDelay)
+                {
+                    return false;
+                }
+            }
+            if (!configData.releaseWait.empty())
+            {
+                if (const auto isValidWaitDelay = delayData.parseWaitTimeDelay(configData.releaseWait, false); !isValidWaitDelay)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    bool ProgramArguments::parseActionState(const int argc, char** argv, int& i)
+    {
+        const std::string_view arg = argv[i];
+
+        std::string_view actionType = safeGetNextArgument(++i, argc, argv);
+        if (actionType.empty())
+        {
+            printUsage();
+            Logger::fatal("The parameter {} needs an argument. Choices: {{click,c,hold,h}}\n", arg);
+            return false;
+        }
+        actionState = actionStateFromArguments(actionType);
+        if (actionState == ActionState::INVALID)
+        {
+            printUsage();
+            Logger::fatal("Invalid parameter {} for action type. Choices: {{click,c,hold,h}}\n", actionType);
+            return false;
+        }
+        return true;
+    }
+
+    bool ProgramArguments::parseButton(const int argc, char** argv, int& i)
+    {
+        const std::string_view arg = argv[i];
+        int32_t j = i + 1;
+        for (; j < argc; ++j)
+        {
+            std::string_view button = safeGetNextArgument(j, argc, argv);
+            if (buttons.empty() && button.empty())
+            {
+                printUsage();
+                Logger::fatal("The parameter {} needs an argument. Choices: {{left,l,right,r,middle,m}}\n", arg);
+                return false;
+            }
+            if (button.empty() && j >= i + 2)
+            {
+                // We were able to process at least one argument.
+                break;
+            }
+            if (const auto mouseButton = mouseButtonFromArguments(button); mouseButton != MouseButton::NONE)
+            {
+                buttons.emplace_back(mouseButton);
+            }
+            else
+            {
+                printUsage();
+                Logger::fatal("Invalid parameter {} for button type. Choices: {{left,l,right,r,middle,m}}\n", button);
+                return false;
+            }
+        }
+        i = j - 1;
+        return true;
+    }
+
+#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
+    bool ProgramArguments::parseKey(const int argc, char** argv, int& i)
+    {
+        std::string_view keyValue = safeGetNextArgument(++i, argc, argv);
+        Key key = Key::fromString(keyValue);
+        keys.emplace_back(key);
+        return true;
+    }
+#endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
+
+    bool ProgramArguments::parseStartKey(const int argc, char** argv, int& i)
+    {
+        const std::string_view arg = argv[i];
+
+        int32_t j = i + 1;
+        for (; j < argc; ++j)
+        {
+            const std::string_view startKeyArgument = safeGetNextArgument(j, argc, argv);
+            if (startKeys.empty() && startKeyArgument.empty())
+            {
+                printUsage();
+                Logger::fatal("The parameter {} needs an argument.\n", arg);
+                return false;
+            }
+            if (startKeyArgument.empty() && j >= i + 2)
+            {
+                // We were able to process at least one argument.
+                break;
+            }
+            startKeys.emplace_back(startKeyArgument);
+        }
+        i = j - 1;
+        return true;
+    }
+
+    bool ProgramArguments::parseEndKey(const int argc, char** argv, int& i)
+    {
+        endKey = safeGetNextArgument(++i, argc, argv);
+        return true;
+    }
+
+    bool ProgramArguments::parsePressWaitTime(const int argc, char** argv, int& i)
+    {
+        return parseWaitTIme(argc, argv, i, true);
+    }
+
+    bool ProgramArguments::parseReleaseTime(const int argc, char** argv, int& i)
+    {
+        return parseWaitTIme(argc, argv, i, false);
+    }
+
+    bool ProgramArguments::parseWaitTIme(const int argc, char** argv, int& i, const bool isWaitPress)
+    {
+        const std::string_view arg = argv[i];
+        const std::string_view waitArgument = safeGetNextArgument(++i, argc, argv);
+        if (waitArgument.empty())
+        {
+            return false;
+        }
+
+        if (const auto isValidWaitDelay = delayData.parseWaitTimeDelay(waitArgument, isWaitPress); !isValidWaitDelay)
+        {
+            Logger::error("The parameter {} needs an argument.\n", arg);
+            printUsage();
+            return false;
+        }
+        return true;
     }
 
     std::string_view ProgramArguments::safeGetNextArgument(const int32_t i, const int32_t argc, char** argv)

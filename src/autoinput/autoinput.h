@@ -6,14 +6,10 @@
 #define INCLUDE_AUTOINPUT_AUTOINPUT_H
 #pragma once
 
-#include <memory>
-#include <unordered_map>
-#include <vector>
-#include <thread>
-
 #include "arguments.h"
 #include "mouse.h"
 #include "keyboard.h"
+#include "keyinfo.h"
 #include "types.h"
 
 namespace autoinput
@@ -21,18 +17,10 @@ namespace autoinput
     class Program
     {
     public:
-        struct KeyInfo
-        {
-            int32_t keyCode{ INVALID_KEY };
-            int32_t functionKey{ INVALID_KEY };
-            MouseButton mouseButton{ MouseButton::NONE };
-            bool isStartKey{ false };
-        };
-
         ProgramArguments& arguments() { return m_arguments; }
         void init();
 
-        bool processKeyEvent(const KeyboardInput& input);
+        bool processKeyEvent(KeyboardInput&& input);
         void start(const KeyInfo& keyInfo);
         void end();
 
