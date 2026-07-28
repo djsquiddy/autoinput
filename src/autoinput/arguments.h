@@ -1,13 +1,15 @@
-//
-// Created by djsquiddy on 3/9/2026.
-//
-
+/**
+ * @file arguments.h
+ * @author djsquiddy
+ * @date March 2026
+ */
 #ifndef INCLUDE_AUTOINPUT_PROGRAM_ARGUMENTS_H
 #define INCLUDE_AUTOINPUT_PROGRAM_ARGUMENTS_H
 #pragma once
 
 #include "utils.h"
 #include "types.h"
+#include "settings.h"
 
 namespace autoinput
 {
@@ -36,35 +38,38 @@ namespace autoinput
         std::vector<MouseButton> buttons{};
         std::vector<Key> keys{};
         std::vector<std::string> startKeys{};
+        std::vector<ActionState> targetActions{};
         std::string endKey{};
         ActionState actionState{ ActionState::INVALID };
         WaitDelayData delayData{};
 
-        [[nodiscard]] bool parseArguments(int argc, char** argv);
+        [[nodiscard]] bool parseArguments(gsl::span<char*> args);
 
         [[nodiscard]] bool postParseArguments();
         void printUsage(bool verbose = false) const;
 
-        bool parseConfigArguments(int argc, char** argv, int& i);
-        bool parseActionState(int argc, char** argv, int& i);
-        bool parseButton(int argc, char** argv, int& i);
+        bool parseConfigArguments(gsl::span<char*> args, int& i);
+        bool parseActionState(gsl::span<char*> args, int& i);
+        bool parseButton(gsl::span<char*> args, int& i);
 #if AUTOINPUT_HOOK_KEYBOARD_ENABLED
-        bool parseKey(int argc, char** argv, int& i);
+        bool parseKey(gsl::span<char*> args, int& i);
 #endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
-        bool parseStartKey(int argc, char** argv, int& i);
-        bool parseEndKey(int argc, char** argv, int& i);
-        bool parsePressWaitTime(int argc, char** argv, int& i);
-        bool parseReleaseTime(int argc, char** argv, int& i);
-        bool parseWaitTIme(int argc, char** argv, int& i, bool isWaitPress);
+        bool parseStartKey(gsl::span<char*> args, int& i);
+        bool parseEndKey(gsl::span<char*> args, int& i);
+        bool parsePressWaitTime(gsl::span<char*> args, int& i);
+        bool parseReleaseTime(gsl::span<char*> args, int& i);
+        bool parseWaitTIme(gsl::span<char*> args, int& i, bool isWaitPress);
         /// A safe wrapper around testing the next string argument.
         ///
         /// @param i argument index
-        /// @param argc arguments count
-        /// @param argv arguments string
+        /// @param args arguments span
         /// @return If the string is not an option (starts with '-') and is within the bounds of the argument.
-        static std::string_view safeGetNextArgument(int32_t i, int32_t argc, char** argv);
+        static std::string_view safeGetNextArgument(int32_t i, gsl::span<char*> args);
 
-        std::unordered_map<std::string, std::function<bool(int,char**,int&)>> argumentCallbacks;
+        std::unordered_map<std::string, std::function<bool(gsl::span<char*>,int&)>> argumentCallbacks;
+
+    private:
+        Settings m_settings;
     };
 }
 #endif // INCLUDE_AUTOINPUT_PROGRAM_ARGUMENTS_H

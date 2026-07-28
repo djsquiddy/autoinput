@@ -1,17 +1,11 @@
-//
-// Created by djsqu on 3/9/2026.
-//
-
+/**
+ * @file arguments.cpp
+ * @author djsquiddy
+ * @date March 2026
+ */
 #include "arguments.h"
-
-#include <algorithm>
-
 #include "logger.h"
 #include "config.h"
-
-#include <iostream>
-#include <random>
-#include <ranges>
 
 namespace autoinput
 {
@@ -23,8 +17,9 @@ namespace autoinput
         }
         static std::random_device rd; // obtain a random number from hardware
         static std::mt19937 gen(rd()); // seed the generator
-        std::uniform_int_distribution<> distr(minWaitPressDelay.count(), maxWaitPressDelay.count()); // define the range
-        return std::chrono::milliseconds(distr(gen));
+        std::uniform_int_distribution<> distribution(gsl::narrow_cast<int>(minWaitPressDelay.count()),
+            gsl::narrow_cast<int>(maxWaitPressDelay.count())); // define the range
+        return std::chrono::milliseconds(distribution(gen));
     }
 
     std::chrono::milliseconds WaitDelayData::getReleaseDelay() const
@@ -35,11 +30,12 @@ namespace autoinput
         }
         static std::random_device rd; // obtain a random number from hardware
         static std::mt19937 gen(rd()); // seed the generator
-        std::uniform_int_distribution<> distr(minWaitReleaseDelay.count(), maxWaitReleaseDelay.count()); // define the range
-        return std::chrono::milliseconds(distr(gen));
+        std::uniform_int_distribution<> distribution(gsl::narrow_cast<int>(minWaitReleaseDelay.count()),
+            gsl::narrow_cast<int>(maxWaitReleaseDelay.count())); // define the range
+        return std::chrono::milliseconds(distribution(gen));
     }
 
-    bool WaitDelayData::parseWaitTimeDelay(std::string_view waitTimeDelayArg, bool isPressWait)
+    bool WaitDelayData::parseWaitTimeDelay(std::string_view waitTimeDelayArg, const bool isPressWait)
     {
         if (waitTimeDelayArg.empty())
         {
@@ -166,22 +162,24 @@ namespace autoinput
     {
     }
 
-    bool ProgramArguments::parseArguments(int argc, char** argv)
+    bool ProgramArguments::parseArguments(const gsl::span<char*> args)
     {
-        if (argc >= 1)
+        m_settings.load();
+
+        if (!args.empty())
         {
-            programName = argv[0];
+            programName = args[0];
         }
-        if (argc <= 1)
+        if (args.size() <= 1)
         {
             // We only get the program name listed.
             printUsage();
             return false;
         }
 
-        for (int i = 1; i < argc; ++i)
+        for (int i = 1; i < args.size(); ++i)
         {
-            const std::string_view arg = argv[i];
+            const std::string_view arg = args[i];
             if (arg == "-h" || arg == "--help")
             {
                 printUsage(true);
@@ -189,7 +187,7 @@ namespace autoinput
             }
             if (arg == "-l" || arg == "--log")
             {
-                const std::string_view logLevelStr = safeGetNextArgument(++i, argc, argv);
+                const std::string_view logLevelStr = safeGetNextArgument(++i, args);
                 const LogLevel logLevel = logLevelFromString(logLevelStr);
                 Logger::setLogLevel(logLevel);
                 continue;
@@ -197,73 +195,162 @@ namespace autoinput
             // We want to parse the configuration first so we can use cli arguments as overrides if need/wanted.
             if (arg == "-c" || arg == "--config")
             {
-                if (!parseConfigArguments(argc, argv, i))
+                if (!parseConfigArguments(args, i))
                 {
                     return false;
                 }
             }
         }
 
-        for (int i = 1; i < argc; ++i)
+        for (int i = 1; i < args.size(); ++i)
         {
-            const std::string_view arg = argv[i];
+            const std::string_view arg = args[i];
 
             Logger::debug("processing argument[{}]: {}\n", i, arg);
 
-#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
-            if (arg == "-k" || arg == "--key")
+            if (arg == "-t" || arg == "--type")
             {
-                if (!parseKey(argc, argv, i))
+                if (!parseActionState(args, i))
+                {
+                    return false;
+                }
+            }
+#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
+            else if (arg == "-k" || arg == "--key")
+            {
+                if (!parseKey(args, i))
                 {
                     return false;
                 }
                 continue;
             }
 #endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
-            if (arg == "-t" || arg == "--type")
-            {
-                if (!parseActionState(argc, argv, i))
-                {
-                    return false;
-                }
-            }
+#if AUTOINPUT_HOOK_MOUSE_ENABLED
             else if (arg == "-b" || arg == "--button" || arg == "--btn")
             {
-                if (!parseButton(argc, argv, i))
+                if (!parseButton(args, i))
                 {
                     return false;
                 }
             }
-            else if (arg == "-s" || arg == "--start")
+#endif // AUTOINPUT_HOOK_MOUSE_ENABLED
+            else if (arg == "-s" || arg == "--start" || arg == "--start-key")
             {
-                if (!parseStartKey(argc, argv, i))
+                if (!parseStartKey(args, i))
                 {
                     return false;
                 }
             }
-            else if (arg == "-e" || arg == "--end")
+            else if (arg == "-e" || arg == "--end" || arg == "--end-key")
             {
-                if (!parseEndKey(argc, argv, i))
+                if (!parseEndKey(args, i))
                 {
                     return false;
                 }
             }
-            else if (arg == "-w" || arg == "--wait" || arg=="--press-wait" || arg=="--release-wait")
+            else if (arg == "-w" || arg == "--wait" || arg == "--press-wait" || arg == "--release-wait")
             {
                 if (arg.contains("press"))
                 {
-                    if (!parsePressWaitTime(argc, argv, i))
+                    if (!parsePressWaitTime(args, i))
                     {
                         return false;
                     }
                 }
                 else
                 {
-                    if (!parseReleaseTime(argc, argv, i))
+                    if (!parseReleaseTime(args, i))
                     {
                         return false;
                     }
                 }
+            }
+            else if (arg == "-c" || arg == "--config")
+            {
+                // Already handled in first pass, but skip its value
+                safeGetNextArgument(++i, args);
+            }
+            else if (arg.starts_with('-'))
+            {
+                Logger::warn("Unknown argument: {}\n", arg);
+            }
+            else
+            {
+                // Positional argument
+                const auto state = actionStateFromArguments(arg);
+                if (state != ActionState::INVALID)
+                {
+                    actionState = state;
+                    continue;
+                }
+
+                auto registerTarget = [&]() {
+                    targetActions.emplace_back(actionState != ActionState::INVALID ? actionState : ActionState::CLICK);
+
+                    // Look ahead for potential start key
+                    if (const std::string_view nextArg = safeGetNextArgument(i + 1, args); !nextArg.empty() && !nextArg.starts_with('-'))
+                    {
+                        const bool isNextAction = actionStateFromArguments(nextArg) != ActionState::INVALID;
+                        const auto [character, modifier] = Key::fromString(nextArg);
+                        const bool isNextFunctionKey = modifier == KeyModifier::Function;
+
+                        // We treat it as a start key if it's a function key or if it's a trigger button (back/forward)
+                        // and it's not a standard action.
+                        if (!isNextAction)
+                        {
+                            bool isPotentialStartKey = isNextFunctionKey;
+                            if (const auto nextButton = mouseButtonFromArguments(nextArg); nextButton == MouseButton::BACK || nextButton == MouseButton::FORWARD)
+                            {
+                                isPotentialStartKey = true;
+                            }
+
+                            if (isPotentialStartKey)
+                            {
+                                startKeys.emplace_back(nextArg);
+                                ++i;
+                            }
+                        }
+                    }
+                };
+
+                if (const auto button = mouseButtonFromArguments(arg); button != MouseButton::NONE)
+                {
+                    if (button == MouseButton::BACK || button == MouseButton::FORWARD)
+                    {
+                        if ((buttons.size() + keys.size()) == startKeys.size())
+                        {
+                            // Trigger for default target
+                            buttons.emplace_back(MouseButton::LEFT);
+                            targetActions.emplace_back(actionState != ActionState::INVALID ? actionState : ActionState::CLICK);
+                            startKeys.emplace_back(arg);
+                            continue;
+                        }
+                    }
+                    buttons.emplace_back(button);
+                    registerTarget();
+                    continue;
+                }
+
+#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
+                if (Key key = Key::fromString(arg); !key.character.empty() || key.modifier != KeyModifier::None)
+                {
+                    if (key.modifier == KeyModifier::Function)
+                    {
+                        if ((buttons.size() + keys.size()) == startKeys.size())
+                        {
+                            // Trigger for default target
+                            buttons.emplace_back(MouseButton::LEFT);
+                            targetActions.emplace_back(actionState != ActionState::INVALID ? actionState : ActionState::CLICK);
+                            startKeys.emplace_back(arg);
+                            continue;
+                        }
+                    }
+                    keys.emplace_back(key);
+                    registerTarget();
+                    continue;
+                }
+#endif
+                Logger::warn("Unrecognized positional argument: {}\n", arg);
             }
         }
 
@@ -272,26 +359,71 @@ namespace autoinput
 
     bool ProgramArguments::postParseArguments()
     {
-        if (buttons.empty())
+        const auto& [start, end, press, release, action, button] = m_settings.getDefaults();
+
+        if (actionState == ActionState::INVALID)
         {
-            buttons.emplace_back(MouseButton::LEFT);
+            if (!action.empty())
+            {
+                actionState = actionStateFromArguments(action);
+            }
+
+            if (actionState == ActionState::INVALID)
+            {
+                actionState = ActionState::CLICK;
+            }
         }
+
+        if (buttons.empty() && keys.empty())
+        {
+            if (!button.empty())
+            {
+                if (const auto mouseButton = mouseButtonFromArguments(button); mouseButton != MouseButton::NONE)
+                {
+                    buttons.emplace_back(mouseButton);
+                }
+            }
+
+            if (buttons.empty())
+            {
+                buttons.emplace_back(MouseButton::LEFT);
+            }
+        }
+
+        const size_t targetCount = buttons.size() + keys.size();
+        if (targetActions.empty())
+        {
+            targetActions.resize(targetCount, actionState);
+        }
+        else if (targetActions.size() < targetCount)
+        {
+            targetActions.resize(targetCount, targetActions.back());
+        }
+
         if (startKeys.empty())
         {
-            printUsage();
-            Logger::error("Start key is missing...\nAssign it using -s or --start\n");
-            return false;
+            startKeys.emplace_back(!start.empty() ? start : "f2");
         }
         if (endKey.empty())
         {
-            printUsage();
-            Logger::error("End key is missing...\nAssign it using -e or --end");
-            return false;
+            endKey = !end.empty() ? end : "f3";
         }
 
-        if (buttons.size() != startKeys.size())
+        if (!delayData.hasPress && !press.empty())
         {
-            startKeys.resize(buttons.size());
+            delayData.parseWaitTimeDelay(press, true);
+        }
+        if (!delayData.hasRelease && !release.empty())
+        {
+            delayData.parseWaitTimeDelay(release, false);
+        }
+
+        if (targetCount != startKeys.size())
+        {
+            if (startKeys.size() < targetCount)
+            {
+                startKeys.resize(targetCount, startKeys.back());
+            }
         }
 
         return true;
@@ -299,7 +431,7 @@ namespace autoinput
 
     void ProgramArguments::printUsage(const bool verbose) const
     {
-        Logger::print("usage {} [-h] [-t {{click,c,hold,h}}] [-b {{left,l,right,r,middle,m}} [{{left,l,right,r,middle,m}} ...]] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME]\n\n", programName);
+        Logger::print("usage {} [-h] [{{click,hold}}] [{{left,right,middle,key}} ...] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME]\n\n", programName);
         Logger::print("options\n");
         const auto optionPrefix = std::string(4, ' ');
         const auto optionUsagePrefix = std::string(10, ' ');
@@ -311,12 +443,14 @@ namespace autoinput
         Logger::print("{} -c --config\n", optionPrefix);
         Logger::print("{} Use the specified configuration found under {}. Extension can be omitted\n", optionUsagePrefix, getConfigsPath().string());
         Logger::print("{} -t, --type {{click,c,hold,h}}\n", optionPrefix);
-        Logger::print("{} What kind of action event to use.\n", optionUsagePrefix);
-        Logger::print("{} -b, --btn, --button {{left,l,right,r,middle,m}} [{{left,l,right,r,middle,m}} ...]\n", optionPrefix);
-        Logger::print("{} Which button to press. (Default: left)\n", optionUsagePrefix);
+        Logger::print("{} What kind of action event to use. (Can be positional)\n", optionUsagePrefix);
+#if AUTOINPUT_HOOK_MOUSE_ENABLED
+        Logger::print("{} -b, --btn, --button {{left,l,right,r,middle,m,back,forward}} [{{left,l,right,r,middle,m,back,forward}} ...]\n", optionPrefix);
+        Logger::print("{} Which button to press. (Default: left) (Can be positional)\n", optionUsagePrefix);
+#endif // AUTOINPUT_HOOK_MOUSE_ENABLED
 #if AUTOINPUT_HOOK_KEYBOARD_ENABLED
         Logger::print("{} -k, --key {{key}} [{{key}} ...]\n", optionPrefix);
-        Logger::print("{} Key that is used to start the autoclicker. If button presses need separate start/stop binding the order matters here.\n", optionUsagePrefix);
+        Logger::print("{} Key that is to be pressed/simulated. (Can be positional)\n", optionUsagePrefix);
 #endif
         Logger::print("{} -s, --start-key START_KEYS [START_KEYS ...]\n", optionPrefix);
         Logger::print("{} Key that is used to start the autoclicker. If button presses need separate start/stop binding the order matters here.\n", optionUsagePrefix);
@@ -334,38 +468,66 @@ namespace autoinput
             const auto exampleNotePrefix = std::string(10, ' ') + "Note: ";
             int32_t index = 1;
             Logger::print("examples:\n");
-            Logger::print("{}{}) hold the left click when pressing F2 and stopping on F3:\n", examplePrefix, index);
-            Logger::print("{}{} -t hold -b left -s f2 -e f3\n", exampleCmdPrefix, programName);
+            Logger::print("{}{}) hold the left click when pressing F2 and stopping on F3 (Defaults):\n", examplePrefix, index);
+            Logger::print("{}{} hold left\n", exampleCmdPrefix, programName);
             ++index;
             Logger::print("\n");
             Logger::print("{}{}) hold the left click when pressing F2, or hold the right click when pressing F3 and stop on F4:\n", examplePrefix, index);
-            Logger::print("{}{} -t hold -b left right -s f2 f3 -e f4\n", exampleCmdPrefix, programName);
+            Logger::print("{}{} hold left f2 right f3 -e f4\n", exampleCmdPrefix, programName);
+            ++index;
+            Logger::print("\n");
+            Logger::print("{}{}) click the left button when pressing F2 and hold the left button when pressing F4:\n", examplePrefix, index);
+            Logger::print("{}{} click f2 hold f4\n", exampleCmdPrefix, programName);
+            ++index;
+            Logger::print("\n");
+            Logger::print("{}{}) hold the left button when pressing the mouse BACK button:\n", examplePrefix, index);
+            Logger::print("{}{} hold left back\n", exampleCmdPrefix, programName);
             ++index;
             Logger::print("\n");
             Logger::print("{}{}) hold the left and right click when pressing F2 and stop on F3:\n", examplePrefix, index);
-            Logger::print("{}{} -t hold -b left right -s f2 -e f3\n", exampleCmdPrefix, programName);
+            Logger::print("{}{} hold left right f2\n", exampleCmdPrefix, programName);
             Logger::print("{} This only works if start key only has {} value.\n", exampleNotePrefix, bold("ONE"));
             ++index;
             Logger::print("\n");
             Logger::print("{}{}) auto left click every 2 seconds:\n", examplePrefix, index);
-            Logger::print("{}{} -t click -s f2 -e f3 -w 2\n", exampleCmdPrefix, programName);
+            Logger::print("{}{} left -w 2s\n", exampleCmdPrefix, programName);
             ++index;
             Logger::print("\n");
             Logger::print("{}{}) auto left click every 1 to 2 seconds:\n", examplePrefix, index);
-            Logger::print("{}{} -t click -s f2 -e f3 --press-wait 1s..2s\n", exampleCmdPrefix, programName);
+            Logger::print("{}{} left --press-wait 1s..2s\n", exampleCmdPrefix, programName);
             ++index;
             Logger::print("\n");
             Logger::print("{}{}) auto left click and hold for 500ms to 1s then wait 1s to 2s after to click again:\n", examplePrefix, index);
-            Logger::print("{}{} -t click -s f2 -e f3 --press-wait 500ms..1s --release-wait 1s..2s\n", exampleCmdPrefix, programName);
+            Logger::print("{}{} left --press-wait 500ms..1s --release-wait 1s..2s\n", exampleCmdPrefix, programName);
+            ++index;
+            Logger::print("\n");
+            Logger::print("{}{}) simulate pressing the 'a' key when F2 is pressed:\n", examplePrefix, index);
+            Logger::print("{}{} a f2\n", exampleCmdPrefix, programName);
+            ++index;
+            Logger::print("\n");
+            Logger::print("{}{}) hold the space bar when pressing F2 and stop on F3:\n", examplePrefix, index);
+            Logger::print("{}{} space f2 -e f3\n", exampleCmdPrefix, programName);
+            ++index;
+            Logger::print("\n");
+            Logger::print("{}{}) click the 'ctrl+v' key combination when pressing F2:\n", examplePrefix, index);
+            Logger::print("{}{} click ctrl+v f2\n", exampleCmdPrefix, programName);
+            ++index;
+            Logger::print("\n");
+            Logger::print("{}{}) use a configuration file named 'gaming':\n", examplePrefix, index);
+            Logger::print("{}{} --config gaming\n", exampleCmdPrefix, programName);
+            ++index;
+            Logger::print("\n");
+            Logger::print("{}{}) run with debug logging enabled:\n", examplePrefix, index);
+            Logger::print("{}{} -l debug hold left\n", exampleCmdPrefix, programName);
         }
 
         Logger::flush();
     }
 
-    bool ProgramArguments::parseConfigArguments(int argc, char** argv, int& i)
+    bool ProgramArguments::parseConfigArguments(gsl::span<char*> args, int& i)
     {
         // TODO: implement
-        std::string_view fileName = safeGetNextArgument(++i, argc, argv);
+        std::string_view fileName = safeGetNextArgument(++i, args);
         if (fileName.empty())
         {
             printUsage();
@@ -402,7 +564,7 @@ namespace autoinput
                     }
                     else
                     {
-                        Logger::fatal("Invalid parameter {} for button type. Choices: {{left,right,middle}}\n", button);
+                        Logger::fatal("Invalid parameter {} for button type. Choices: {{left,right,middle,back,forward}}\n", button);
                         printUsage();
                         return false;
                     }
@@ -447,11 +609,11 @@ namespace autoinput
         return true;
     }
 
-    bool ProgramArguments::parseActionState(const int argc, char** argv, int& i)
+    bool ProgramArguments::parseActionState(const gsl::span<char*> args, int& i)
     {
-        const std::string_view arg = argv[i];
+        const std::string_view arg = args[i];
 
-        std::string_view actionType = safeGetNextArgument(++i, argc, argv);
+        std::string_view actionType = safeGetNextArgument(++i, args);
         if (actionType.empty())
         {
             printUsage();
@@ -468,17 +630,17 @@ namespace autoinput
         return true;
     }
 
-    bool ProgramArguments::parseButton(const int argc, char** argv, int& i)
+    bool ProgramArguments::parseButton(const gsl::span<char*> args, int& i)
     {
-        const std::string_view arg = argv[i];
+        const std::string_view arg = args[i];
         int32_t j = i + 1;
-        for (; j < argc; ++j)
+        for (; j < args.size(); ++j)
         {
-            std::string_view button = safeGetNextArgument(j, argc, argv);
+            std::string_view button = safeGetNextArgument(j, args);
             if (buttons.empty() && button.empty())
             {
                 printUsage();
-                Logger::fatal("The parameter {} needs an argument. Choices: {{left,l,right,r,middle,m}}\n", arg);
+                Logger::fatal("The parameter {} needs an argument. Choices: {{left,l,right,r,middle,m,back,forward}}\n", arg);
                 return false;
             }
             if (button.empty() && j >= i + 2)
@@ -493,7 +655,7 @@ namespace autoinput
             else
             {
                 printUsage();
-                Logger::fatal("Invalid parameter {} for button type. Choices: {{left,l,right,r,middle,m}}\n", button);
+                Logger::fatal("Invalid parameter {} for button type. Choices: {{left,l,right,r,middle,m,back,forward}}\n", button);
                 return false;
             }
         }
@@ -502,23 +664,23 @@ namespace autoinput
     }
 
 #if AUTOINPUT_HOOK_KEYBOARD_ENABLED
-    bool ProgramArguments::parseKey(const int argc, char** argv, int& i)
+    bool ProgramArguments::parseKey(const gsl::span<char*> args, int& i)
     {
-        std::string_view keyValue = safeGetNextArgument(++i, argc, argv);
+        std::string_view keyValue = safeGetNextArgument(++i, args);
         Key key = Key::fromString(keyValue);
         keys.emplace_back(key);
         return true;
     }
 #endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
 
-    bool ProgramArguments::parseStartKey(const int argc, char** argv, int& i)
+    bool ProgramArguments::parseStartKey(const gsl::span<char*> args, int& i)
     {
-        const std::string_view arg = argv[i];
+        const std::string_view arg = args[i];
 
         int32_t j = i + 1;
-        for (; j < argc; ++j)
+        for (; j < args.size(); ++j)
         {
-            const std::string_view startKeyArgument = safeGetNextArgument(j, argc, argv);
+            const std::string_view startKeyArgument = safeGetNextArgument(j, args);
             if (startKeys.empty() && startKeyArgument.empty())
             {
                 printUsage();
@@ -536,26 +698,26 @@ namespace autoinput
         return true;
     }
 
-    bool ProgramArguments::parseEndKey(const int argc, char** argv, int& i)
+    bool ProgramArguments::parseEndKey(const gsl::span<char*> args, int& i)
     {
-        endKey = safeGetNextArgument(++i, argc, argv);
+        endKey = safeGetNextArgument(++i, args);
         return true;
     }
 
-    bool ProgramArguments::parsePressWaitTime(const int argc, char** argv, int& i)
+    bool ProgramArguments::parsePressWaitTime(const gsl::span<char*> args, int& i)
     {
-        return parseWaitTIme(argc, argv, i, true);
+        return parseWaitTIme(args, i, true);
     }
 
-    bool ProgramArguments::parseReleaseTime(const int argc, char** argv, int& i)
+    bool ProgramArguments::parseReleaseTime(const gsl::span<char*> args, int& i)
     {
-        return parseWaitTIme(argc, argv, i, false);
+        return parseWaitTIme(args, i, false);
     }
 
-    bool ProgramArguments::parseWaitTIme(const int argc, char** argv, int& i, const bool isWaitPress)
+    bool ProgramArguments::parseWaitTIme(const gsl::span<char*> args, int& i, const bool isWaitPress)
     {
-        const std::string_view arg = argv[i];
-        const std::string_view waitArgument = safeGetNextArgument(++i, argc, argv);
+        const std::string_view arg = args[i];
+        const std::string_view waitArgument = safeGetNextArgument(++i, args);
         if (waitArgument.empty())
         {
             return false;
@@ -570,14 +732,14 @@ namespace autoinput
         return true;
     }
 
-    std::string_view ProgramArguments::safeGetNextArgument(const int32_t i, const int32_t argc, char** argv)
+    std::string_view ProgramArguments::safeGetNextArgument(const int32_t i, const gsl::span<char*> args)
     {
-        if (i >= argc || argv[i][0] == '-')
+        if (i >= args.size() || args[i][0] == '-')
         {
             return std::string_view{};
         }
 
-        std::cout << "processing argument[" << i << "]: " << argv[i] << "\n";
-        return std::string_view{argv[i]};
+        Logger::debug("processing argument[{}]: {}\n", i, args[i]);
+        return std::string_view{args[i]};
     }
 }

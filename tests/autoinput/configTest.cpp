@@ -112,6 +112,72 @@ release = "1s..2s"
         std::filesystem::remove(path);
     }
 
+    TEST(ConfigTest, LoadConfigDataParsesButtonAndStartKeys)
+    {
+        const std::filesystem::path path = makeTemporaryConfigFile(
+            "autoinput_config_button_start_test.toml",
+            R"toml(
+[command]
+button = "left"
+start = ["f2", "f4"]
+)toml"
+        );
+
+        const std::optional<ConfigData> configData = loadConfigData(path);
+
+        ASSERT_TRUE(configData.has_value());
+        ASSERT_EQ(configData->buttons.size(), 1);
+        EXPECT_EQ(configData->buttons[0], "left");
+        ASSERT_EQ(configData->startKeys.size(), 2);
+        EXPECT_EQ(configData->startKeys[0], "f2");
+        EXPECT_EQ(configData->startKeys[1], "f4");
+
+        std::filesystem::remove(path);
+    }
+
+    TEST(ConfigTest, LoadConfigDataParsesMultipleButtonsAndSingleStartKey)
+    {
+        const std::filesystem::path path = makeTemporaryConfigFile(
+            "autoinput_config_multi_button_test.toml",
+            R"toml(
+[command]
+button = ["left", "right"]
+start = "f2"
+)toml"
+        );
+
+        const std::optional<ConfigData> configData = loadConfigData(path);
+
+        ASSERT_TRUE(configData.has_value());
+        ASSERT_EQ(configData->buttons.size(), 2);
+        EXPECT_EQ(configData->buttons[0], "left");
+        EXPECT_EQ(configData->buttons[1], "right");
+        ASSERT_EQ(configData->startKeys.size(), 1);
+        EXPECT_EQ(configData->startKeys[0], "f2");
+
+        std::filesystem::remove(path);
+    }
+
+    TEST(ConfigTest, LoadConfigDataParsesKeys)
+    {
+        const std::filesystem::path path = makeTemporaryConfigFile(
+            "autoinput_config_keys_test.toml",
+            R"toml(
+[command]
+key = ["a", "b"]
+)toml"
+        );
+
+        const std::optional<ConfigData> configData = loadConfigData(path);
+
+        ASSERT_TRUE(configData.has_value());
+        ASSERT_EQ(configData->keys.size(), 2);
+        EXPECT_EQ(configData->keys[0], "a");
+        EXPECT_EQ(configData->keys[1], "b");
+
+        std::filesystem::remove(path);
+    }
+
     TEST(ConfigTest, TryGetTableValueReturnsTrueWhenValueExists)
     {
         const toml::table table{

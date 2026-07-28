@@ -72,12 +72,16 @@ namespace autoinput
         EXPECT_EQ(mouseButtonFromArguments("right"), MouseButton::RIGHT);
     }
 
+    TEST(MouseButtonFromArgumentsTest, ParsesBackAndForward)
+    {
+        EXPECT_EQ(mouseButtonFromArguments("back"), MouseButton::BACK);
+        EXPECT_EQ(mouseButtonFromArguments("forward"), MouseButton::FORWARD);
+    }
+
     TEST(MouseButtonFromArgumentsTest, ReturnsNoneForUnknownInput)
     {
         EXPECT_EQ(mouseButtonFromArguments(""), MouseButton::NONE);
         EXPECT_EQ(mouseButtonFromArguments("unknown"), MouseButton::NONE);
-        EXPECT_EQ(mouseButtonFromArguments("back"), MouseButton::NONE);
-        EXPECT_EQ(mouseButtonFromArguments("forward"), MouseButton::NONE);
     }
 
     TEST(MouseButtonToStringTest, FormatsMouseButtons)

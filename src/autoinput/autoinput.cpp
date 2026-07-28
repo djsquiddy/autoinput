@@ -1,12 +1,17 @@
-//
-// Created by djsquiddy on 3/9/2026.
-//
+/**
+ * @file autoinput.cpp
+ * @author djsquiddy
+ * @date March 2026
+ */
 #include "autoinput.h"
 #include "logger.h"
 #include "platform.h"
+#include "backend.h"
 
 namespace autoinput
 {
+    std::unique_ptr<PlatformBackend> g_backend = nullptr;
+
     bool Program::processKeyEvent(KeyboardInput&& input)
     {
         input.printInfo();
@@ -16,58 +21,87 @@ namespace autoinput
             return false;
         }
 
-        if (m_hasFunctionKeys)
-        {
-            if (const auto functionKey = input.functionKey(); functionKey != INVALID_KEY)
-            {
-                for (const KeyInfo& keyInfo : m_keyInfo)
-                {
-                    if ( keyInfo.functionKey == functionKey)
-                    {
-                        if (keyInfo.isStartKey)
-                        {
-                            start(keyInfo);
-                            return true;
-                        }
+        const auto [charKey, functionKey, vk, modifier] = input.getKeyState();
+        bool handled = false;
 
-                        end();
-                    }
-                }
-            }
-        }
-        if (m_hasNonFunctionKeys)
+        for (const KeyInfo& keyInfo : m_keyInfo)
         {
-            if (const auto charKey = input.getChar(); charKey != INVALID_KEY)
+            if ((keyInfo.keyCode != INVALID_KEY && keyInfo.keyCode == charKey) ||
+                (keyInfo.functionKey != INVALID_KEY && keyInfo.functionKey == functionKey) ||
+                (keyInfo.virtualKey != 0 && keyInfo.virtualKey == vk))
             {
-                for (const KeyInfo& keyInfo : m_keyInfo)
+                if (keyInfo.isStartKey)
                 {
-                    if (keyInfo.keyCode == charKey)
-                    {
-                        if (keyInfo.isStartKey)
-                        {
-                            start(keyInfo);
-                            return true;
-                        }
-
-                        end();
-                    }
+                    start(keyInfo);
                 }
+                else
+                {
+                    end();
+                }
+                handled = true;
             }
         }
 
-        return false;
+        return handled;
+    }
+
+    bool Program::processMouseEvent(const MouseInput& input)
+    {
+        input.printInfo();
+
+        const auto [trigger, isDown] = input.getButtonState();
+
+        if (trigger == MouseButton::NONE || !isDown)
+        {
+            return false;
+        }
+
+        bool handled = false;
+        for (const KeyInfo& keyInfo : m_keyInfo)
+        {
+            if (keyInfo.triggerButton == trigger)
+            {
+                if (keyInfo.isStartKey)
+                {
+                    start(keyInfo);
+                }
+                else
+                {
+                    end();
+                }
+                handled = true;
+            }
+        }
+
+        return handled;
     }
 
     void Program::start(const KeyInfo& keyInfo)
     {
-        MouseHandler& handler = m_mouseHandlers.at(keyInfo.mouseButton);
-        if (m_arguments.actionState == ActionState::HOLD)
+        if (keyInfo.mouseButton != MouseButton::NONE)
         {
-            handler.togglePressState();
+            MouseHandler& handler = m_mouseHandlers.at(keyInfo.mouseButton);
+            if (keyInfo.action == ActionState::HOLD)
+            {
+                handler.togglePressState();
+            }
+            else
+            {
+                startAutoClicker(handler);
+            }
         }
-        else
+    
+        if (!keyInfo.key.character.empty())
         {
-            startAutoClicker(handler);
+            KeyHandler& handler = m_keyHandlers.at(keyInfo.key);
+            if (keyInfo.action == ActionState::HOLD)
+            {
+                handler.togglePressState();
+            }
+            else
+            {
+                startAutoClicker(handler);
+            }
         }
     }
 
@@ -75,8 +109,14 @@ namespace autoinput
     {
         for (auto& mouseHandler : m_mouseHandlers | std::views::values)
         {
-            mouseHandler.releaseButton();
+            mouseHandler.release();
             mouseHandler.setActive(false);
+        }
+
+        for (auto& keyHandler : m_keyHandlers | std::views::values)
+        {
+            keyHandler.release();
+            keyHandler.setActive(false);
         }
 
         platform::signalEnd();
@@ -84,41 +124,43 @@ namespace autoinput
 
     void Program::printProgramInfo() const
     {
-        // ReSharper disable once CppUseStructuredBinding
-        for (auto keyInfo : m_keyInfo)
+        for (const auto& keyInfo : m_keyInfo)
         {
-            if (keyInfo.keyCode != INVALID_KEY)
+            std::string triggerStr;
+            if (keyInfo.triggerButton != MouseButton::NONE)
             {
-                if (keyInfo.mouseButton != MouseButton::NONE)
-                {
-                    Logger::info("Key: {}, Is used as start key: {} to start {}\n", keyInfo.keyCode, keyInfo.isStartKey, mouseButtonToString(keyInfo.mouseButton));
-                }
-                else
-                {
-                    Logger::info("Key: {}, Is used as start key: {}\n", keyInfo.keyCode, keyInfo.isStartKey);
-                }
+                triggerStr = std::format("Mouse: {}", mouseButtonToString(keyInfo.triggerButton));
             }
-            else
+            else if (keyInfo.keyCode != INVALID_KEY)
             {
-                if (keyInfo.mouseButton != MouseButton::NONE)
-                {
-                    Logger::info("Function: F{}, Is used as start key: {} to start {}\n", keyInfo.functionKey, keyInfo.isStartKey, mouseButtonToString(keyInfo.mouseButton));
-                }
-                else
-                {
-                    Logger::info("Function: F{}, Is used as start key: {}\n", keyInfo.functionKey, keyInfo.isStartKey);
-                }
+                triggerStr = std::format("Key: {}", static_cast<char>(keyInfo.keyCode));
             }
+            else if (keyInfo.functionKey != INVALID_KEY)
+            {
+                triggerStr = std::format("Function: F{}", keyInfo.functionKey);
+            }
+
+            std::string actionStr = keyInfo.isStartKey ? "start " : "stop ";
+            if (keyInfo.mouseButton != MouseButton::NONE)
+            {
+                actionStr += std::format("{} button", mouseButtonToString(keyInfo.mouseButton));
+            }
+            else if (!keyInfo.key.character.empty())
+            {
+                actionStr += std::format("{} key", keyInfo.key.toString());
+            }
+
+            Logger::info("{}, Is used as {} key\n", triggerStr, actionStr);
         }
         Logger::flush();
     }
 
     // ReSharper disable once CppMemberFunctionMayBeConst
-    void Program::startAutoClicker(MouseHandler& handler) // NOLINT(*-make-member-function-const)
+    void Program::startAutoClicker(InputHandler& handler) // NOLINT(*-make-member-function-const)
     {
         if (handler.getActive())
         {
-            handler.releaseButton();
+            handler.release();
             handler.setActive(false);
             handler.m_autoclickerThread->join();
             return;
@@ -136,18 +178,18 @@ namespace autoinput
                     break;
                 }
 
-                handler.pressButton();
+                handler.press();
                 const auto pressWaitTime = std::chrono::milliseconds(delayData.getPressDelay());
-                Logger::debug("Pressed button: {}, waiting: {}", handler.getButtonName(), pressWaitTime);
+                Logger::debug("Pressed: {}, waiting: {}", handler.getName(), pressWaitTime);
                 std::this_thread::sleep_for(pressWaitTime);
                 if (!handler.getActive())
                 {
                     // Make sure we didn't just disable the callback.
                     break;
                 }
-                handler.releaseButton();
+                handler.release();
                 const auto releaseWaitTime = std::chrono::milliseconds(delayData.getReleaseDelay());
-                Logger::debug("Released button: {}, waiting: {}", handler.getButtonName(), releaseWaitTime);
+                Logger::debug("Released: {}, waiting: {}", handler.getName(), releaseWaitTime);
                 std::this_thread::sleep_for(std::chrono::milliseconds(releaseWaitTime));
             }
         });
@@ -155,53 +197,96 @@ namespace autoinput
 
     void Program::init()
     {
-        for (auto & button : m_arguments.buttons)
+        for (auto& button : m_arguments.buttons)
         {
             m_mouseHandlers[button] = MouseHandler{button};
         }
 
+        for (auto& key : m_arguments.keys)
+        {
+            m_keyHandlers[key] = KeyHandler{key};
+        }
+
+        auto processKeyString = [this](const std::string& keyStr, MouseButton button, Key targetKey, ActionState action, bool isStart) {
+            const auto mouseTrigger = mouseButtonFromArguments(keyStr);
+            KeyInfo info{
+                .mouseButton = button,
+                .key = std::move(targetKey),
+                .action = action,
+                .isStartKey = isStart,
+            };
+
+            if (mouseTrigger != MouseButton::NONE)
+            {
+                info.triggerButton = mouseTrigger;
+            }
+            else
+            {
+                info.triggerKey = Key::fromString(keyStr);
+                info.virtualKey = platform::getVirtualKey(info.triggerKey);
+
+                if (keyStr.length() == 1)
+                {
+                    info.keyCode = static_cast<int32_t>(std::tolower(keyStr[0]));
+                }
+                else if (std::tolower(keyStr[0]) == 'f' && keyStr.length() > 1 && std::isdigit(keyStr[1]))
+                {
+                    info.functionKey = parseStringToInt(keyStr.substr(1));
+                }
+            }
+            m_keyInfo.emplace_back(std::move(info));
+        };
+
+        const size_t buttonCount = m_arguments.buttons.size();
+        const size_t keyCount = m_arguments.keys.size();
+        const size_t actionCount = m_arguments.targetActions.size();
+
         for (size_t i = 0; i < m_arguments.startKeys.size(); ++i)
         {
-            const auto& key = m_arguments.startKeys[i];
-            const auto ch = std::tolower(key[0]);
-            if (key.length() == 1)
+            const auto action = i < actionCount ? m_arguments.targetActions[i] : ActionState::CLICK;
+            if (i < buttonCount)
             {
-                m_hasNonFunctionKeys = true;
-                m_keyInfo.emplace_back(KeyInfo{
-                    .keyCode = static_cast<int32_t>(ch),
-                    .mouseButton = m_arguments.buttons[i],
-                    .isStartKey = true
-                });
+                processKeyString(m_arguments.startKeys[i], m_arguments.buttons[i], {}, action, true);
             }
-            else if (ch == 'f')
+            else if (i < buttonCount + keyCount)
             {
-                m_hasFunctionKeys = true;
-                const int32_t result = parseStringToInt(key.substr(1));
-                m_keyInfo.emplace_back(KeyInfo{
-                    .functionKey = result,
-                    .mouseButton = m_arguments.buttons[i],
-                    .isStartKey = true
-                });
+                processKeyString(m_arguments.startKeys[i], MouseButton::NONE, m_arguments.keys[i - buttonCount], action, true);
             }
         }
 
-        const auto ch = std::tolower(m_arguments.endKey[0]);
-        if (m_arguments.endKey.length() == 1)
+        processKeyString(m_arguments.endKey, MouseButton::NONE, {}, ActionState::CLICK, false);
+    }
+
+    bool installHooks()
+    {
+#if AUTOINPUT_FAKE_HOOK
+        Logger::info("Fake hook enabled, actions will be logged but not performed.\n");
+        g_backend = std::make_unique<FakeBackend>();
+        return g_backend->installHooks();
+#else
+        if (!g_backend)
         {
-            m_hasNonFunctionKeys = true;
-            m_keyInfo.emplace_back(KeyInfo{
-                .keyCode = static_cast<int32_t>(ch),
-                .isStartKey = false
-            });
+#ifdef _WIN32
+            g_backend = createWindowsBackend();
+#else
+            // On Linux, we call a helper that detects the backend
+            extern std::unique_ptr<PlatformBackend> detectLinuxBackend();
+            g_backend = detectLinuxBackend();
+#endif
         }
-        else if (ch == 'f')
-        {
-            m_hasFunctionKeys = true;
-            const int32_t result = parseStringToInt(m_arguments.endKey.substr(1));
-            m_keyInfo.emplace_back(KeyInfo{
-                .functionKey = result,
-                .isStartKey = false
-            });
-        }
+        
+        if (!g_backend) return false;
+        return g_backend->installHooks();
+#endif
+    }
+
+    void runListener()
+    {
+        if (g_backend) g_backend->runListener();
+    }
+
+    void cleanup()
+    {
+        if (g_backend) g_backend->cleanup();
     }
 }

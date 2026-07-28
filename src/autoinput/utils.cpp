@@ -15,7 +15,7 @@ std::string autoinput::toLowerCase(std::string_view sv)
     return result;
 }
 
-std::string autoinput::join(const std::vector<std::string>& vec, const std::string& delim)
+std::string autoinput::join(gsl::span<const std::string> vec, const std::string& delim)
 {
     std::ostringstream oss;
     for (size_t i = 0; i < vec.size(); ++i)

@@ -1,45 +1,69 @@
-//
-// Created by djsqu on 3/9/2026.
-//
-
+/**
+ * @file mouse.h
+ * @author djsquiddy
+ * @date March 2026
+ */
 #ifndef INCLUDE_AUTOINPUT_MOUSE_H
 #define INCLUDE_AUTOINPUT_MOUSE_H
 #pragma once
 
+#include "types.h"
+#include "handlerState.h"
 
 namespace autoinput
 {
-    enum class MouseButton : uint8_t;
+    struct MouseData;
 
-    class MouseHandler
+    struct MouseInput
+    {
+        explicit MouseInput(MouseData& data);
+        MouseData& data;
+
+        [[nodiscard]] bool isLeftButtonDown() const;
+        [[nodiscard]] bool isLeftButtonUp() const;
+        [[nodiscard]] bool isRightButtonDown() const;
+        [[nodiscard]] bool isRightButtonUp() const;
+        [[nodiscard]] bool isBackButtonDown() const;
+        [[nodiscard]] bool isBackButtonUp() const;
+        [[nodiscard]] bool isForwardButtonUp() const;
+        [[nodiscard]] bool isForwardButtonDown() const;
+        [[nodiscard]] bool isMiddleButtonUp() const;
+        [[nodiscard]] bool isMiddleButtonDown() const;
+
+        struct ButtonState
+        {
+            MouseButton button;
+            bool isDown;
+        };
+        [[nodiscard]] ButtonState getButtonState() const;
+
+        void printInfo() const;
+    };
+
+    class MouseHandler : public InputHandler
     {
     public:
         MouseHandler() = default;
         explicit MouseHandler(const MouseButton mouseButton) : m_mouseButton{mouseButton} { }
-        MouseHandler(const MouseHandler& rhs);
+        MouseHandler(const MouseHandler& rhs) = default;
         MouseHandler(MouseHandler&& rhs) noexcept;
         MouseHandler& operator=(const MouseHandler& rhs);
         MouseHandler& operator=(MouseHandler&& rhs) noexcept;
 
+        [[nodiscard]] std::string getName() const override { return mouseButtonToString(m_mouseButton); }
         [[nodiscard]] std::string getButtonName() const { return mouseButtonToString(m_mouseButton); }
 
-        void setActive(const bool isActive) { m_isActive = isActive; }
-        [[nodiscard]] bool getActive() const { return m_isActive; }
         [[nodiscard]] MouseButton getMouseButton() const { return m_mouseButton; }
 
-        void togglePressState();
+        void togglePressState() override;
 
         bool operator==(const MouseHandler& rhs) const;
 
-        void pressButton();
-        void releaseButton();
+        void press() override;
+        void release() override;
 
     private:
-        friend class Program;
         MouseButton m_mouseButton{ MouseButton::NONE };
-        std::atomic<bool> m_isActive{ false };
-        bool m_isButtonPressed{ false };
-        std::unique_ptr<std::thread> m_autoclickerThread{ nullptr };
     };
 
     template<>
@@ -52,18 +76,10 @@ namespace autoinput
         }
     };
 
-    inline MouseHandler::MouseHandler(const MouseHandler& rhs)
-        : m_mouseButton{ rhs.m_mouseButton }
-        , m_isButtonPressed{ rhs.m_isButtonPressed }
-    {
-        m_isActive.store(rhs.m_isActive.load());
-    }
-
     inline MouseHandler::MouseHandler(MouseHandler&& rhs) noexcept
-        : m_mouseButton{ rhs.m_mouseButton }
-          , m_isButtonPressed{ rhs.m_isButtonPressed }
+        : InputHandler(std::move(rhs))
+        , m_mouseButton{ rhs.m_mouseButton }
     {
-        m_isActive.store(rhs.m_isActive.load());
     }
 
     inline MouseHandler& MouseHandler::operator=(MouseHandler&& rhs) noexcept
@@ -73,9 +89,8 @@ namespace autoinput
             return *this;
         }
 
+        InputHandler::operator=(std::move(rhs));
         this->m_mouseButton = rhs.m_mouseButton;
-        this->m_isButtonPressed = rhs.m_isButtonPressed;
-        m_isActive.store(rhs.m_isActive.load());
         return *this;
     }
 
@@ -86,21 +101,20 @@ namespace autoinput
             return *this;
         }
 
+        InputHandler::operator=(rhs);
         this->m_mouseButton = rhs.m_mouseButton;
-        this->m_isButtonPressed = rhs.m_isButtonPressed;
-        m_isActive.store(rhs.m_isActive.load());
         return *this;
     }
 
     inline void MouseHandler::togglePressState()
     {
-        if (m_isButtonPressed)
+        if (m_isPressed)
         {
-            releaseButton();
+            release();
             return;
         }
 
-        pressButton();
+        press();
     }
 
     inline bool MouseHandler::operator==(const MouseHandler& rhs) const

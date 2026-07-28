@@ -19,7 +19,7 @@ namespace autoinput
 
     std::string toLowerCase(std::string_view sv);
 
-    std::string join(const std::vector<std::string>& vec, const std::string& delim);
+    std::string join(gsl::span<const std::string> vec, const std::string& delim);
 
     class NonCopyable
     {

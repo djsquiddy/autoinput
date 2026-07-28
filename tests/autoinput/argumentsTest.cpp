@@ -111,7 +111,7 @@ namespace autoinput
         char value[] = "f2";
         char* argv[] = { program, option, value };
 
-        EXPECT_EQ(ProgramArguments::safeGetNextArgument(2, 3, argv), "f2");
+        EXPECT_EQ(ProgramArguments::safeGetNextArgument(2, gsl::make_span(argv)), "f2");
     }
 
     TEST(ProgramArgumentsTest, SafeGetNextArgumentReturnsEmptyWhenOutOfBounds)
@@ -119,7 +119,7 @@ namespace autoinput
         char program[] = "autoinput";
         char* argv[] = { program };
 
-        EXPECT_TRUE(ProgramArguments::safeGetNextArgument(1, 1, argv).empty());
+        EXPECT_TRUE(ProgramArguments::safeGetNextArgument(1, gsl::make_span(argv)).empty());
     }
 
     TEST(ProgramArgumentsTest, SafeGetNextArgumentReturnsEmptyForOption)
@@ -129,7 +129,7 @@ namespace autoinput
         char nextOption[] = "-e";
         char* argv[] = { program, option, nextOption };
 
-        EXPECT_TRUE(ProgramArguments::safeGetNextArgument(2, 3, argv).empty());
+        EXPECT_TRUE(ProgramArguments::safeGetNextArgument(2, gsl::make_span(argv)).empty());
     }
 
     TEST(ProgramArgumentsTest, PostParseArgumentsDefaultsToLeftButton)
@@ -144,20 +144,14 @@ namespace autoinput
         EXPECT_EQ(arguments.buttons.front(), MouseButton::LEFT);
     }
 
-    TEST(ProgramArgumentsTest, PostParseArgumentsFailsWithoutStartKey)
+    TEST(ProgramArgumentsTest, PostParseArgumentsDefaultsToStartAndEndKeys)
     {
         ProgramArguments arguments;
-        arguments.endKey = "f3";
+        EXPECT_TRUE(arguments.postParseArguments());
 
-        EXPECT_FALSE(arguments.postParseArguments());
-    }
-
-    TEST(ProgramArgumentsTest, PostParseArgumentsFailsWithoutEndKey)
-    {
-        ProgramArguments arguments;
-        arguments.startKeys.emplace_back("f2");
-
-        EXPECT_FALSE(arguments.postParseArguments());
+        ASSERT_EQ(arguments.startKeys.size(), 1);
+        EXPECT_EQ(arguments.startKeys.front(), "f2");
+        EXPECT_EQ(arguments.endKey, "f3");
     }
 
     TEST(ProgramArgumentsTest, PostParseArgumentsResizesStartKeysToButtonCount)
@@ -171,5 +165,56 @@ namespace autoinput
         EXPECT_TRUE(arguments.postParseArguments());
 
         EXPECT_EQ(arguments.startKeys.size(), arguments.buttons.size());
+    }
+
+    TEST(ProgramArgumentsTest, PostParseArgumentsDoesNotDefaultToLeftButtonIfKeyIsProvided)
+    {
+        ProgramArguments arguments;
+        arguments.keys.emplace_back(Key{ .character = "a" });
+        arguments.startKeys.emplace_back("f2");
+        arguments.endKey = "f3";
+
+        EXPECT_TRUE(arguments.postParseArguments());
+
+        EXPECT_TRUE(arguments.buttons.empty());
+        ASSERT_EQ(arguments.keys.size(), 1);
+        EXPECT_EQ(arguments.keys.front().character, "a");
+    }
+
+    TEST(ProgramArgumentsTest, PostParseArgumentsResizesStartKeysToTargetCount)
+    {
+        ProgramArguments arguments;
+        arguments.buttons.emplace_back(MouseButton::LEFT);
+        arguments.keys.emplace_back(Key{ .character = "a" });
+        arguments.startKeys.emplace_back("f2");
+        arguments.endKey = "f3";
+
+        EXPECT_TRUE(arguments.postParseArguments());
+
+        EXPECT_EQ(arguments.startKeys.size(), 2);
+        EXPECT_EQ(arguments.startKeys[0], "f2");
+        EXPECT_EQ(arguments.startKeys[1], "f2");
+    }
+    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesHoldAction)
+    {
+        ProgramArguments arguments;
+        char program[] = "autoinput";
+        char typeOpt[] = "-t";
+        char typeVal[] = "hold";
+        char buttonOpt[] = "-b";
+        char buttonVal[] = "left";
+        char startOpt[] = "-s";
+        char startVal[] = "f2";
+        char endOpt[] = "-e";
+        char endVal[] = "f3";
+        char* argv[] = { program, typeOpt, typeVal, buttonOpt, buttonVal, startOpt, startVal, endOpt, endVal };
+
+        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv)));
+        EXPECT_EQ(arguments.actionState, ActionState::HOLD);
+        ASSERT_EQ(arguments.buttons.size(), 1);
+        EXPECT_EQ(arguments.buttons.front(), MouseButton::LEFT);
+        ASSERT_EQ(arguments.startKeys.size(), 1);
+        EXPECT_EQ(arguments.startKeys.front(), "f2");
+        EXPECT_EQ(arguments.endKey, "f3");
     }
 }

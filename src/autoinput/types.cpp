@@ -1,6 +1,8 @@
-//
-// Created by djsquiddy on 3/9/2026.
-//
+/**
+ * @file types.cpp
+ * @author djsquiddy
+ * @date March 2026
+ */
 #include "types.h"
 #include "logger.h"
 #include "utils.h"
@@ -106,18 +108,18 @@ namespace autoinput
             {
                 key.modifier |= KeyModifier::Alt;
             }
-            else if (s=="meta")
+            else if (s == "meta")
             {
                 key.modifier |= KeyModifier::Meta;
             }
-            else if (s.length() == 1)
-            {
-                key.character = s;
-            }
-            else if (s.starts_with('f'))
+            else if (s.starts_with('f') && s.length() > 1 && std::isdigit(s[1]))
             {
                 key.modifier |= KeyModifier::Function;
                 key.character = s.substr(1);
+            }
+            else
+            {
+                key.character = s;
             }
         }
         return key;
@@ -170,6 +172,14 @@ namespace autoinput
         {
             return MouseButton::MIDDLE;
         }
+        if (button == "back")
+        {
+            return MouseButton::BACK;
+        }
+        if (button == "forward")
+        {
+            return MouseButton::FORWARD;
+        }
         return MouseButton::NONE;
     }
 
@@ -202,13 +212,23 @@ namespace autoinput
         {
             const std::string_view parsedText{ value.data(), static_cast<std::size_t>(ptr - value.data()) };
             const std::string_view remainingText{ ptr, static_cast<std::size_t>((value.data() + value.size()) - ptr) };
-
-            Logger::info(
-                "\nResult: {}, parsed -> {}, remaining -> {}\n",
-                result,
-                Quoted(std::string{ parsedText }),
-                Quoted(std::string{ remainingText })
-            );
+            if (remainingText.empty())
+            {
+                Logger::debug(
+                    "Result: {}, parsed -> {}\n",
+                    result,
+                    Quoted(std::string{ parsedText })
+                );
+            }
+            else
+            {
+                Logger::debug(
+                    "Result: {}, parsed -> {}, remaining -> {}\n",
+                    result,
+                    Quoted(std::string{ parsedText }),
+                    Quoted(std::string{ remainingText })
+                );
+            }
         }
         else if (ec == std::errc::invalid_argument)
         {

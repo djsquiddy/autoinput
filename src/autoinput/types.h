@@ -1,7 +1,8 @@
-//
-// Created by djsquiddy on 3/9/2026.
-//
-
+/**
+ * @file types.h
+ * @author djsquiddy
+ * @date March 2026
+ */
 #ifndef INCLUDE_AUTOINPUT_TYPES_H
 #define INCLUDE_AUTOINPUT_TYPES_H
 #pragma once
@@ -49,6 +50,15 @@
 
 namespace autoinput
 {
+    struct KeyboardData
+    {
+        std::any internal;
+    };
+
+    struct MouseData
+    {
+        std::any internal;
+    };
     template<typename T>
     struct HashFunction {};
 
@@ -117,9 +127,6 @@ namespace autoinput
     };
     AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(MouseButton);
 
-    // TODO: move over to a data structure that can contain modifiers like CTRL or ALT.
-    // using Key = std::string;
-
     enum class KeyModifier : uint8_t
     {
         None = 0,
@@ -177,13 +184,14 @@ namespace autoinput
 }
 
 // ReSharper disable CppMemberFunctionMayBeStatic
+// NOLINTBEGIN(*-convert-member-functions-to-static)
 // Specialize std::formatter for bold
 template <>
 struct std::formatter<autoinput::bold>
 {
     // Parse format specifications (e.g., "{:s}" for string, "{:c}" for char)
     // Default is full name if no spec is provided.
-    constexpr auto parse(std::format_parse_context& ctx)  // NOLINT(*-convert-member-functions-to-static)
+    constexpr auto parse(std::format_parse_context& ctx)
     {
         auto it = ctx.begin();
         if (it != ctx.end() && *it != '}')
@@ -195,7 +203,7 @@ struct std::formatter<autoinput::bold>
     }
 
     // Format the value
-    auto format(const autoinput::bold bold, std::format_context& ctx) const // NOLINT(*-convert-member-functions-to-static)
+    auto format(const autoinput::bold bold, std::format_context& ctx) const
     {
         return std::format_to(ctx.out(), "\x1b[1m{}\x1b[0m", bold.getString());
     }
@@ -205,13 +213,13 @@ struct std::formatter<autoinput::bold>
 template <>
 struct std::formatter<autoinput::MouseButton>
 {
-    constexpr auto parse(std::format_parse_context& ctx)  // NOLINT(*-convert-member-functions-to-static)
+    constexpr auto parse(std::format_parse_context& ctx)
     {
         return ctx.begin();
     }
 
     // Format the value
-    auto format(const autoinput::MouseButton mouseButton, std::format_context& ctx) const // NOLINT(*-convert-member-functions-to-static)
+    auto format(const autoinput::MouseButton mouseButton, std::format_context& ctx) const
     {
         return std::format_to(ctx.out(), "{}", autoinput::mouseButtonToString(mouseButton));
     }
@@ -220,12 +228,12 @@ struct std::formatter<autoinput::MouseButton>
 template<>
 struct std::formatter<autoinput::Key>
 {
-    constexpr auto parse(std::format_parse_context& ctx) // NOLINT(*-convert-member-functions-to-static)
+    constexpr auto parse(std::format_parse_context& ctx)
     {
         return ctx.begin();
     }
 
-    auto format(const autoinput::Key key, std::format_context& ctx) const // NOLINT(*-convert-member-functions-to-static)
+    auto format(const autoinput::Key key, std::format_context& ctx) const
     {
         return std::format_to(ctx.out(), "{}", key.toString());
     }
@@ -234,12 +242,12 @@ struct std::formatter<autoinput::Key>
 template <>
 struct std::formatter<autoinput::ConsoleColor>
 {
-    constexpr auto parse(std::format_parse_context& ctx) // NOLINT(*-convert-member-functions-to-static)
+    constexpr auto parse(std::format_parse_context& ctx)
     {
         return ctx.begin();
     }
 
-    auto format(const autoinput::ConsoleColor color, std::format_context& ctx) const // NOLINT(*-convert-member-functions-to-static)
+    auto format(const autoinput::ConsoleColor color, std::format_context& ctx) const
     {
         return std::format_to(ctx.out(), "{}", autoinput::getConsoleColor(color));
     }
@@ -252,8 +260,7 @@ struct std::formatter<autoinput::Quoted>
     constexpr auto parse(const format_parse_context& parse_ctx)
     {
         auto iter = parse_ctx.begin();
-        auto get_char = [&]() -> int { return iter
-          != parse_ctx.end() ? *iter : 0; };
+        auto get_char = [&]() -> int { return iter != parse_ctx.end() ? *iter : 0; };
         auto c = get_char();
         if (c == 0 || c == '}')
         {
@@ -295,6 +302,7 @@ private:
     char m_quote{ '"' };
     char m_esc{ '\\' };
 };
-    // ReSharper restore CppMemberFunctionMayBeStatic
+// NOLINTEND(*-convert-member-functions-to-static)
+// ReSharper restore CppMemberFunctionMayBeStatic
 
 #endif // INCLUDE_AUTOINPUT_TYPES_H

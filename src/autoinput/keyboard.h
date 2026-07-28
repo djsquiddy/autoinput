@@ -1,10 +1,15 @@
-//
-// Created by djsquiddy on 3/9/2026.
-//
-
+/**
+ * @file keyboard.h
+ * @author djsquiddy
+ * @date March 2026
+ */
 #ifndef INCLUDE_AUTOINPUT_KEYBOARD_H
 #define INCLUDE_AUTOINPUT_KEYBOARD_H
 #pragma once
+
+#include "types.h"
+#include "handlerState.h"
+
 namespace autoinput
 {
     struct KeyboardData;
@@ -20,38 +25,42 @@ namespace autoinput
         [[nodiscard]] int8_t getChar() const;
         [[nodiscard]] int64_t functionKey() const;
 
+        struct KeyState
+        {
+            int32_t keyCode{ INVALID_KEY };
+            int32_t functionKey{ INVALID_KEY };
+            int32_t virtualKey{ 0 };
+            KeyModifier modifier{ KeyModifier::None };
+        };
+        [[nodiscard]] KeyState getKeyState() const;
+
         void printInfo() const;
     };
 
-    class KeyHandler
+    class KeyHandler : public InputHandler
     {
     public:
         KeyHandler() = default;
-        explicit KeyHandler(const Key& key) : m_key{ key } {}
-        KeyHandler(const KeyHandler& rhs);
+        explicit KeyHandler(Key key) : m_key{std::move(key)} {}
+        KeyHandler(const KeyHandler& rhs) = default;
         KeyHandler(KeyHandler&& rhs) noexcept;
         KeyHandler& operator=(const KeyHandler& rhs);
         KeyHandler& operator=(KeyHandler&& rhs) noexcept;
 
+        [[nodiscard]] std::string getName() const override { return m_key.toString(); }
         [[nodiscard]] std::string getKeyValue() const { return m_key.toString(); }
 
-        void setActive(const bool active) { m_isActive = active; }
-        [[nodiscard]] bool getActive() const { return m_isActive; }
         [[nodiscard]] Key getKey() const { return m_key; }
 
-        void togglePressState();
+        void togglePressState() override;
 
         bool operator==(const KeyHandler& rhs) const;
 
-        void pressKey();
-        void releaseKey();
+        void press() override;
+        void release() override;
 
     private:
-        friend class Program;
         Key m_key{};
-        std::atomic<bool> m_isActive{ false };
-        bool m_isPressed{ false };
-        std::unique_ptr<std::thread> m_autoclickerThread{ nullptr };
     };
 
     template<>
@@ -64,18 +73,10 @@ namespace autoinput
         }
     };
 
-    inline KeyHandler::KeyHandler(const KeyHandler& rhs)
-        : m_key{ rhs.m_key }
-        , m_isPressed{ rhs.m_isPressed }
-    {
-        m_isActive.store(rhs.m_isActive.load());
-    }
-
     inline KeyHandler::KeyHandler(KeyHandler&& rhs) noexcept
-        : m_key{ std::move(rhs.m_key) }
-        , m_isPressed{ rhs.m_isPressed }
+        : InputHandler(std::move(rhs))
+        , m_key{ std::move(rhs.m_key) }
     {
-        m_isActive.store(rhs.m_isActive.load());
     }
 
     inline KeyHandler& KeyHandler::operator=(KeyHandler&& rhs) noexcept
@@ -85,9 +86,8 @@ namespace autoinput
             return *this;
         }
 
+        InputHandler::operator=(std::move(rhs));
         this->m_key = rhs.m_key;
-        this->m_isPressed = rhs.m_isPressed;
-        m_isActive.store(rhs.m_isActive.load());
         return *this;
     }
 
@@ -98,9 +98,8 @@ namespace autoinput
             return *this;
         }
 
+        InputHandler::operator=(rhs);
         this->m_key = rhs.m_key;
-        this->m_isPressed = rhs.m_isPressed;
-        m_isActive.store(rhs.m_isActive.load());
         return *this;
     }
 
@@ -108,11 +107,11 @@ namespace autoinput
     {
         if (m_isPressed)
         {
-            releaseKey();
+            release();
             return;
         }
 
-        pressKey();
+        press();
     }
 
     inline bool KeyHandler::operator==(const KeyHandler& rhs) const

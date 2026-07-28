@@ -1,0 +1,34 @@
+/**
+ * @file mouseTriggerLogicTest.cpp
+ * @author djsquiddy
+ * @date July 2026
+ */
+#include <gtest/gtest.h>
+#include "autoinput/autoinput.h"
+#include "autoinput/arguments.h"
+
+namespace autoinput
+{
+    TEST(ProgramInitTest, MapsMouseButtonsAsTriggers)
+    {
+        Program program;
+        char* argv[] = {(char*)"autoinput", (char*)"left", (char*)"-s", (char*)"back", (char*)"-e", (char*)"forward"};
+        int argc = sizeof(argv) / sizeof(char*);
+
+        program.arguments().parseArguments(gsl::make_span(argv, argc));
+        program.init();
+
+        const auto& keyInfo = program.getKeyInfo();
+        // Expecting 2 KeyInfo: one for start (back) and one for end (forward)
+        ASSERT_EQ(keyInfo.size(), 2);
+
+        // Start key info
+        EXPECT_EQ(keyInfo[0].triggerButton, MouseButton::BACK);
+        EXPECT_EQ(keyInfo[0].mouseButton, MouseButton::LEFT);
+        EXPECT_TRUE(keyInfo[0].isStartKey);
+
+        // End key info
+        EXPECT_EQ(keyInfo[1].triggerButton, MouseButton::FORWARD);
+        EXPECT_FALSE(keyInfo[1].isStartKey);
+    }
+}

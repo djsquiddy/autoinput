@@ -1,7 +1,8 @@
-//
-// Created by djsquiddy on 3/9/2026.
-//
-
+/**
+ * @file autoinput.h
+ * @author djsquiddy
+ * @date March 2026
+ */
 #ifndef INCLUDE_AUTOINPUT_AUTOINPUT_H
 #define INCLUDE_AUTOINPUT_AUTOINPUT_H
 #pragma once
@@ -19,21 +20,23 @@ namespace autoinput
     public:
         ProgramArguments& arguments() { return m_arguments; }
         void init();
-
+        
         bool processKeyEvent(KeyboardInput&& input);
+        bool processMouseEvent(const MouseInput& input);
         void start(const KeyInfo& keyInfo);
         void end();
+
+        [[nodiscard]] const std::vector<KeyInfo>& getKeyInfo() const { return m_keyInfo; }
 
         void printProgramInfo() const;
 
     private:
         std::unordered_map<MouseButton, MouseHandler, HashFunction<MouseButton>> m_mouseHandlers{};
+        std::unordered_map<Key, KeyHandler, HashFunction<Key>> m_keyHandlers{};
         ProgramArguments m_arguments{};
         std::vector<KeyInfo> m_keyInfo{};
-        bool m_hasNonFunctionKeys{ false };
-        bool m_hasFunctionKeys{ false };
 
-        void startAutoClicker(MouseHandler& handler);
+        void startAutoClicker(InputHandler& handler);
     };
 
     bool installHooks();

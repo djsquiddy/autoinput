@@ -1,25 +1,125 @@
-//
-// Created by djsquiddy on 3/9/2026.
-//
-
+/**
+ * @file autoinput_windows.cpp
+ * @author djsquiddy
+ * @date March 2026
+ */
 #include "autoinput/autoinput.h"
 #include "autoinput/mouse.h"
 #include "autoinput/keyboard.h"
 #include "autoinput/logger.h"
 #include "autoinput/types.h"
 #include "autoinput/platform.h"
+#include "autoinput/backend.h"
+
+#include "internal_data_win32.h"
 
 namespace autoinput
 {
+    namespace
+    {
+        WORD toVirtualKey(const Key& key);
+    }
+
     namespace platform
     {
+        namespace
+        {
+            DWORD g_mainThreadId = 0;
+
+            BOOL WINAPI ConsoleHandler(DWORD dwType)
+            {
+                if (dwType == CTRL_C_EVENT)
+                {
+                    signalEnd();
+                    return TRUE;
+                }
+                return FALSE;
+            }
+        }
+
         void signalEnd()
         {
-            PostQuitMessage(0);
+            if (g_backend) g_backend->cleanup();
+            
+            if (g_mainThreadId != 0 && GetCurrentThreadId() != g_mainThreadId)
+            {
+                PostThreadMessage(g_mainThreadId, WM_QUIT, 0, 0);
+            }
+            else
+            {
+                PostQuitMessage(0);
+            }
+        }
+
+        void setupSignalHandler()
+        {
+            g_mainThreadId = GetCurrentThreadId();
+            if (SetConsoleCtrlHandler(ConsoleHandler, TRUE) == FALSE)
+            {
+                Logger::fatal("Unable to install signal handler!\n");
+            }
+        }
+
+        int32_t getVirtualKey(const Key& key)
+        {
+            try
+            {
+                return static_cast<int32_t>(toVirtualKey(key));
+            }
+            catch (...)
+            {
+                return 0;
+            }
         }
     }
-   namespace
+
+    namespace
     {
+        HHOOK g_hKeyboardHook = nullptr;
+        std::unique_ptr<KeyboardData> g_keyboardData;
+        HHOOK g_hMouseHook = nullptr;
+        std::unique_ptr<MouseData> g_mouseData;
+
+        WORD getVirtualKeyFromString(const std::string& keyStr)
+        {
+            static const std::unordered_map<std::string, WORD> specialKeys = {
+                {"esc", VK_ESCAPE},
+                {"escape", VK_ESCAPE},
+                {"space", VK_SPACE},
+                {"tab", VK_TAB},
+                {"enter", VK_RETURN},
+                {"return", VK_RETURN},
+                {"backspace", VK_BACK},
+                {"ins", VK_INSERT},
+                {"insert", VK_INSERT},
+                {"del", VK_DELETE},
+                {"delete", VK_DELETE},
+                {"home", VK_HOME},
+                {"end", VK_END},
+                {"pageup", VK_PRIOR},
+                {"pgup", VK_PRIOR},
+                {"pagedown", VK_NEXT},
+                {"pgdn", VK_NEXT},
+                {"up", VK_UP},
+                {"down", VK_DOWN},
+                {"left", VK_LEFT},
+                {"right", VK_RIGHT},
+                {"capslock", VK_CAPITAL},
+                {"numlock", VK_NUMLOCK},
+                {"scrolllock", VK_SCROLL},
+                {"printscreen", VK_SNAPSHOT},
+                {"prtsc", VK_SNAPSHOT},
+                {"pause", VK_PAUSE}
+            };
+
+            auto it = specialKeys.find(keyStr);
+            if (it != specialKeys.end())
+            {
+                return it->second;
+            }
+            return 0;
+        }
+
         WORD toVirtualKey(const Key& key)
         {
             if (static_cast<bool>(key.modifier & KeyModifier::Function))
@@ -31,12 +131,18 @@ namespace autoinput
                     throw std::invalid_argument{ "Function key must be between F1 and F24." };
                 }
 
-                return static_cast<WORD>(VK_F1 + functionNumber - 1);
+                return gsl::narrow_cast<WORD>(VK_F1 + functionNumber - 1);
+            }
+
+            const WORD specialVk = getVirtualKeyFromString(key.character);
+            if (specialVk != 0)
+            {
+                return specialVk;
             }
 
             if (key.character.length() != 1)
             {
-                throw std::invalid_argument{ "Only single-character non-function keys are supported." };
+                throw std::invalid_argument{ "Unsupported key: " + key.character };
             }
 
             const SHORT virtualKey = VkKeyScanExA(
@@ -49,7 +155,7 @@ namespace autoinput
                 throw std::invalid_argument{ "Unable to map character to virtual key." };
             }
 
-            return LOBYTE(virtualKey);
+            return gsl::narrow_cast<BYTE>(virtualKey);
         }
 
         std::vector<WORD> modifierVirtualKeys(const KeyModifier modifier)
@@ -88,7 +194,7 @@ namespace autoinput
             return input;
         }
 
-        void sendKeyboardInputs(std::vector<INPUT>& inputs)
+        void sendKeyboardInputs(const gsl::span<INPUT> inputs)
         {
             if (inputs.empty())
             {
@@ -96,7 +202,7 @@ namespace autoinput
             }
 
             const UINT sent = SendInput(
-                static_cast<UINT>(inputs.size()),
+                gsl::narrow_cast<UINT>(inputs.size()),
                 inputs.data(),
                 sizeof(INPUT)
             );
@@ -106,141 +212,303 @@ namespace autoinput
                 throw std::runtime_error{ "SendInput failed to send all keyboard inputs." };
             }
         }
+
+        // Low-level keyboard callback
+        LRESULT CALLBACK LowLevelKeyboardProc(
+            const int    nCode,
+            const WPARAM wParam,
+            const LPARAM lParam)
+        {
+            if (nCode == HC_ACTION)        // Process this event
+            {
+                auto* p = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
+                WindowsKeyboardData winData;
+                winData.wParam = wParam;
+                winData.kbdStruct = p;
+                g_keyboardData->internal = winData;
+                if (g_program->processKeyEvent(KeyboardInput { *g_keyboardData }))
+                {
+                    return 1;
+                }
+            }
+
+            // Let the event continue normally
+            return CallNextHookEx(g_hKeyboardHook, nCode, wParam, lParam);
+        }
+
+        // Low-level mouse callback
+        LRESULT CALLBACK LowLevelMouseProc(
+            const int    nCode,
+            const WPARAM wParam,
+            const LPARAM lParam)
+        {
+            if (nCode != HC_ACTION)        // Process this event
+            {
+                // Let the event continue normally
+                return CallNextHookEx(g_hMouseHook, nCode, wParam, lParam);
+            }
+
+            auto* p = reinterpret_cast<MSLLHOOKSTRUCT*>(lParam);
+            WindowsMouseData winData;
+            winData.wParam = wParam;
+            winData.mouseStruct = p;
+            g_mouseData->internal = winData;
+
+            if (g_program->processMouseEvent(MouseInput { *g_mouseData }))
+            {
+                return 1;
+            }
+
+            // Let the event continue normally
+            return CallNextHookEx(g_hMouseHook, nCode, wParam, lParam);
+        }
+
+        class WindowsBackend : public PlatformBackend
+        {
+        public:
+            bool installHooks() override
+            {
+                g_keyboardData = std::make_unique<KeyboardData>();
+                g_hKeyboardHook = SetWindowsHookEx(
+                    WH_KEYBOARD_LL,
+                    LowLevelKeyboardProc,
+                    GetModuleHandle(NULL),
+                    0
+                );
+
+                if (!g_hKeyboardHook)
+                {
+                    Logger::error("SetWindowsHookEx for Keyboard failed: {}\n", GetLastError());
+                    return false;
+                }
+
+                g_mouseData = std::make_unique<MouseData>();
+                g_hMouseHook = SetWindowsHookEx(
+                    WH_MOUSE_LL,
+                    LowLevelMouseProc,
+                    GetModuleHandle(NULL),
+                    0
+                );
+
+                if (!g_hMouseHook)
+                {
+                    Logger::error("SetWindowsHookEx for Mouse failed: {}\n", GetLastError());
+                    return false;
+                }
+
+                return true;
+            }
+
+            void runListener() override
+            {
+                MSG msg;
+                while (GetMessage(&msg, NULL, 0, 0))
+                {
+                    TranslateMessage(&msg);
+                    DispatchMessage(&msg);
+                }
+            }
+
+            void cleanup() override
+            {
+                if (g_hKeyboardHook)
+                {
+                    UnhookWindowsHookEx(g_hKeyboardHook);
+                    g_hKeyboardHook = nullptr;
+                }
+                if (g_hMouseHook)
+                {
+                    UnhookWindowsHookEx(g_hMouseHook);
+                    g_hMouseHook = nullptr;
+                }
+            }
+
+            void keyPress(const Key& key) override
+            {
+                std::vector<INPUT> inputs;
+                const std::vector<WORD> modifiers = modifierVirtualKeys(key.modifier);
+                inputs.reserve(modifiers.size() + 1);
+                for (const WORD modifier : modifiers)
+                {
+                    inputs.push_back(keyboardInput(modifier));
+                }
+                inputs.push_back(keyboardInput(toVirtualKey(key)));
+                sendKeyboardInputs(inputs);
+            }
+
+            void keyRelease(const Key& key) override
+            {
+                std::vector<INPUT> inputs;
+                const std::vector<WORD> modifiers = modifierVirtualKeys(key.modifier);
+                inputs.push_back(keyboardInput(toVirtualKey(key), KEYEVENTF_KEYUP));
+                for (const auto modifier : std::views::reverse(modifiers))
+                {
+                    inputs.push_back(keyboardInput(modifier, KEYEVENTF_KEYUP));
+                }
+                sendKeyboardInputs(inputs);
+            }
+
+            void mousePress(MouseButton button) override
+            {
+                INPUT input{};
+                input.type = INPUT_MOUSE;
+                switch (button)
+                {
+                case MouseButton::LEFT: input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN; break;
+                case MouseButton::MIDDLE: input.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN; break;
+                case MouseButton::RIGHT: input.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN; break;
+                case MouseButton::BACK:
+                    input.mi.dwFlags = MOUSEEVENTF_XDOWN;
+                    input.mi.mouseData = XBUTTON1;
+                    break;
+                case MouseButton::FORWARD:
+                    input.mi.dwFlags = MOUSEEVENTF_XDOWN;
+                    input.mi.mouseData = XBUTTON2;
+                    break;
+                default: return;
+                }
+                SendInput(1, &input, sizeof(INPUT));
+            }
+
+            void mouseRelease(MouseButton button) override
+            {
+                INPUT input{};
+                input.type = INPUT_MOUSE;
+                switch (button)
+                {
+                case MouseButton::LEFT: input.mi.dwFlags = MOUSEEVENTF_LEFTUP; break;
+                case MouseButton::MIDDLE: input.mi.dwFlags = MOUSEEVENTF_MIDDLEUP; break;
+                case MouseButton::RIGHT: input.mi.dwFlags = MOUSEEVENTF_RIGHTUP; break;
+                case MouseButton::BACK:
+                    input.mi.dwFlags = MOUSEEVENTF_XUP;
+                    input.mi.mouseData = XBUTTON1;
+                    break;
+                case MouseButton::FORWARD:
+                    input.mi.dwFlags = MOUSEEVENTF_XUP;
+                    input.mi.mouseData = XBUTTON2;
+                    break;
+                default: return;
+                }
+                SendInput(1, &input, sizeof(INPUT));
+            }
+        };
     }
 
-    void KeyHandler::pressKey()
+    std::unique_ptr<PlatformBackend> createWindowsBackend()
     {
-        if (m_isPressed)
-        {
-            return;
-        }
-
-        std::vector<INPUT> inputs;
-
-        for (const std::vector<WORD> modifiers = modifierVirtualKeys(m_key.modifier); const WORD modifier : modifiers)
-        {
-            inputs.push_back(keyboardInput(modifier));
-        }
-
-        inputs.push_back(keyboardInput(toVirtualKey(m_key)));
-
-#if AUTOINPUT_FAKE_HOOK
-        sendKeyboardInputs(inputs);
-#endif
-        m_isPressed = true;
+        return std::make_unique<WindowsBackend>();
     }
 
-    void KeyHandler::releaseKey()
+
+    MouseInput::MouseInput(MouseData& data) : data{ data } {}
+
+    bool MouseInput::isLeftButtonDown() const 
     {
-        if (!m_isPressed)
-        {
-            return;
-        }
-
-        std::vector<INPUT> inputs;
-        const std::vector<WORD> modifiers = modifierVirtualKeys(m_key.modifier);
-
-        inputs.push_back(keyboardInput(toVirtualKey(m_key), KEYEVENTF_KEYUP));
-
-        for (auto it = modifiers.rbegin(); it != modifiers.rend(); ++it)
-        {
-            inputs.push_back(keyboardInput(*it, KEYEVENTF_KEYUP));
-        }
-
-#if AUTOINPUT_FAKE_HOOK
-        sendKeyboardInputs(inputs);
-#endif
-        m_isPressed = false;
+        const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
+        return winData && winData->wParam == WM_LBUTTONDOWN; 
+    }
+    bool MouseInput::isLeftButtonUp() const 
+    { 
+        const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
+        return winData && winData->wParam == WM_LBUTTONUP; 
+    }
+    bool MouseInput::isRightButtonDown() const 
+    { 
+        const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
+        return winData && winData->wParam == WM_RBUTTONDOWN; 
+    }
+    bool MouseInput::isRightButtonUp() const 
+    { 
+        const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
+        return winData && winData->wParam == WM_RBUTTONUP; 
+    }
+    bool MouseInput::isBackButtonDown() const 
+    { 
+        const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
+        return winData && winData->wParam == WM_XBUTTONDOWN && winData->mouseStruct->mouseData == XBUTTON1;
+    }
+    bool MouseInput::isBackButtonUp() const 
+    { 
+        const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
+        return winData && winData->wParam == WM_XBUTTONUP && winData->mouseStruct->mouseData == XBUTTON1;
+    }
+    bool MouseInput::isForwardButtonUp() const 
+    { 
+        const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
+        return winData && winData->wParam == WM_XBUTTONUP && winData->mouseStruct->mouseData == XBUTTON2;
+    }
+    bool MouseInput::isForwardButtonDown() const 
+    { 
+        const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
+        return winData && winData->wParam == WM_XBUTTONDOWN && winData->mouseStruct->mouseData == XBUTTON2;
+    }
+    bool MouseInput::isMiddleButtonUp() const 
+    { 
+        const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
+        return winData && winData->wParam == WM_MBUTTONUP; 
+    }
+    bool MouseInput::isMiddleButtonDown() const 
+    { 
+        const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
+        return winData && winData->wParam == WM_MBUTTONDOWN; 
     }
 
-    void MouseHandler::pressButton()
+    MouseInput::ButtonState MouseInput::getButtonState() const
     {
-        if (m_isButtonPressed)
-        {
-            return;
-        }
-
-        INPUT input{};
-        input.type = INPUT_MOUSE;
-        switch (m_mouseButton)
-        {
-        case MouseButton::LEFT:
-            input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-            break;
-        case MouseButton::MIDDLE:
-            input.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
-            break;
-        case MouseButton::RIGHT:
-            input.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
-            break;
-        case MouseButton::BACK:
-        case MouseButton::FORWARD:
-        default:
-            return;
-        }
-        Logger::debug("Pressing {} button\n", m_mouseButton);
-#if AUTOINPUT_FAKE_HOOK
-        SendInput(1, &input, sizeof(INPUT));
-#endif
-        m_isButtonPressed = true;
+        if (isLeftButtonDown()) return { MouseButton::LEFT, true };
+        if (isLeftButtonUp()) return { MouseButton::LEFT, false };
+        if (isRightButtonDown()) return { MouseButton::RIGHT, true };
+        if (isRightButtonUp()) return { MouseButton::RIGHT, false };
+        if (isMiddleButtonDown()) return { MouseButton::MIDDLE, true };
+        if (isMiddleButtonUp()) return { MouseButton::MIDDLE, false };
+        if (isBackButtonDown()) return { MouseButton::BACK, true };
+        if (isBackButtonUp()) return { MouseButton::BACK, false };
+        if (isForwardButtonDown()) return { MouseButton::FORWARD, true };
+        if (isForwardButtonUp()) return { MouseButton::FORWARD, false };
+        return { MouseButton::NONE, false };
     }
 
-    void MouseHandler::releaseButton()
+    void MouseInput::printInfo() const
     {
-        if (!m_isButtonPressed)
+        if (!Logger::isDebugModeEnabled())
         {
             return;
         }
 
-        INPUT input{};
-        input.type = INPUT_MOUSE;
-        switch (m_mouseButton)
-        {
-        case MouseButton::LEFT:
-            input.mi.dwFlags = MOUSEEVENTF_LEFTUP;
-            break;
-        case MouseButton::MIDDLE:
-            input.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
-            break;
-        case MouseButton::RIGHT:
-            input.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
-            break;
-        case MouseButton::BACK:
-        case MouseButton::FORWARD:
-        default:
-            return;
-        }
-        Logger::debug("Releasing {} button\n", m_mouseButton);
-#if AUTOINPUT_FAKE_HOOK
-        SendInput(1, &input, sizeof(INPUT));
-#endif
-        m_isButtonPressed = false;
+        std::string type = "???";
+        std::string button = "None";
+
+        if (isLeftButtonDown()) { type = "DOWN"; button = "Left"; }
+        else if (isLeftButtonUp()) { type = "UP"; button = "Left"; }
+        else if (isRightButtonDown()) { type = "DOWN"; button = "Right"; }
+        else if (isRightButtonUp()) { type = "UP"; button = "Right"; }
+        else if (isMiddleButtonDown()) { type = "DOWN"; button = "Middle"; }
+        else if (isMiddleButtonUp()) { type = "UP"; button = "Middle"; }
+        else if (isBackButtonDown()) { type = "DOWN"; button = "Back"; }
+        else if (isBackButtonUp()) { type = "UP"; button = "Back"; }
+        else if (isForwardButtonDown()) { type = "DOWN"; button = "Forward"; }
+        else if (isForwardButtonUp()) { type = "UP"; button = "Forward"; }
+
+        Logger::debug("[{}] Mouse {} button\n", type, button);
     }
-
-#if AUTOINPUT_HOOK_MOUSE_ENABLED
-    struct MouseInput
-    {
-        WPARAM wParam{ 0 };
-        MSLLHOOKSTRUCT* mouseStruct{ nullptr };
-
-        [[nodiscard]] bool isLeftButtonDown() const{  return wParam == WM_LBUTTONDOWN; }
-        [[nodiscard]] bool isLeftButtonUp() const { return wParam == WM_LBUTTONUP; }
-        [[nodiscard]] bool isRightButtonDown() const { return wParam == WM_RBUTTONDOWN; }
-        [[nodiscard]] bool isRightButtonUp() const { return wParam == WM_RBUTTONUP; }
-    };
-#endif // AUTOINPUT_HOOK_MOUSE_ENABLED
-
-    struct KeyboardData
-    {
-        WPARAM wParam{ 0 };
-        KBDLLHOOKSTRUCT* kbdStruct{ nullptr };
-    };
 
     KeyboardInput::KeyboardInput(KeyboardData& data) : data{ data } {}
 
-    bool KeyboardInput::isKeyDown() const { return data.wParam == WM_KEYDOWN || data.wParam == WM_SYSKEYDOWN; }
-    bool KeyboardInput::isKeyUp() const { return data.wParam == WM_KEYUP || data.wParam == WM_SYSKEYUP; }
-    bool KeyboardInput::isSysKey() const { return data.wParam == WM_SYSKEYDOWN  || data.wParam == WM_SYSKEYUP; }
+    bool KeyboardInput::isKeyDown() const 
+    {
+        const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
+        return winData && (winData->wParam == WM_KEYDOWN || winData->wParam == WM_SYSKEYDOWN); 
+    }
+    bool KeyboardInput::isKeyUp() const 
+    { 
+        const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
+        return winData && (winData->wParam == WM_KEYUP || winData->wParam == WM_SYSKEYUP); 
+    }
+    bool KeyboardInput::isSysKey() const 
+    { 
+        const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
+        return winData && (winData->wParam == WM_SYSKEYDOWN || winData->wParam == WM_SYSKEYUP); 
+    }
 
     int8_t KeyboardInput::getChar() const
     {
@@ -248,9 +516,10 @@ namespace autoinput
         {
             return INVALID_KEY;
         }
-        if (data.kbdStruct->vkCode >= 0x30 && data.kbdStruct->vkCode <= 0x5A)
+        const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
+        if (winData && winData->kbdStruct->vkCode >= 0x30 && winData->kbdStruct->vkCode <= 0x5A)
         {
-            char ch = static_cast<char>(data.kbdStruct->vkCode);
+            char ch = static_cast<char>(winData->kbdStruct->vkCode);
             if (!(GetKeyState(VK_SHIFT) & 0x8000))
             {
                 ch += 32; // crude lowercase
@@ -266,28 +535,42 @@ namespace autoinput
         {
             return INVALID_KEY;
         }
-        if (data.kbdStruct->vkCode >= VK_F1 && data.kbdStruct->vkCode <= VK_F24)
+        const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
+        if (winData && winData->kbdStruct->vkCode >= VK_F1 && winData->kbdStruct->vkCode <= VK_F24)
         {
-            return static_cast<int32_t>(data.kbdStruct->vkCode - VK_F1) + 1;
+            return static_cast<int32_t>(winData->kbdStruct->vkCode - VK_F1) + 1;
         }
         return INVALID_KEY;
     }
 
+    KeyboardInput::KeyState KeyboardInput::getKeyState() const
+    {
+        const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
+        int32_t vk = winData ? static_cast<int32_t>(winData->kbdStruct->vkCode) : 0;
+        return { static_cast<int32_t>(getChar()), static_cast<int32_t>(functionKey()), vk, KeyModifier::None };
+    }
+
     void KeyboardInput::printInfo() const
     {
+        if (!Logger::isDebugModeEnabled())
+        {
+            return;
+        }
+
+        const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
+        if (!winData) return;
+
         std::string type = isKeyDown() ? "DOWN" : isKeyUp() ? "UP" : "???";
         if (isSysKey())
         {
             type += " (sys)";
         }
 
-        // Print virtual key code + scan code
-        auto info = std::format("[{}] vk=0x{:x} scan=0x{:x} flags=0x{:x}",
+        auto info = std::format("[{}] vk=0x{:x} scan=0x{:x} flags=0x{:x}\n",
                                  type,
-                                 data.kbdStruct->vkCode,
-                                 data.kbdStruct->scanCode,
-                                 data.kbdStruct->flags);
-        // Optional: human-readable char for printable keys (very rough)
+                                 winData->kbdStruct->vkCode,
+                                 winData->kbdStruct->scanCode,
+                                 winData->kbdStruct->flags);
         if (const auto ch = getChar(); ch != INVALID_KEY)
         {
             info += "  char='" + std::to_string(ch) + "'";
@@ -299,134 +582,4 @@ namespace autoinput
 
         Logger::debug(info);
     }
-
-#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
-    HHOOK g_hKeyboardHook = nullptr;
-    std::unique_ptr<KeyboardData> keyboardData;
-#endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
-#if AUTOINPUT_HOOK_MOUSE_ENABLED
-    HHOOK g_hMouseHook = nullptr;
-#endif // AUTOINPUT_HOOK_MOUSE_ENABLED
-
-
-#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
-    // Low-level keyboard callback
-    LRESULT CALLBACK LowLevelKeyboardProc(
-        const int    nCode,
-        const WPARAM wParam,
-        const LPARAM lParam)
-    {
-        if (nCode == HC_ACTION)        // Process this event
-        {
-            auto* p = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
-            keyboardData->wParam = wParam;
-            keyboardData->kbdStruct = p;
-            if (g_program->processKeyEvent(KeyboardInput { *keyboardData }))
-            {
-                return 1;
-            }
-        }
-
-        // Let the event continue normally
-        return CallNextHookEx(g_hKeyboardHook, nCode, wParam, lParam);
-    }
-#endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
-
-#if AUTOINPUT_HOOK_MOUSE_ENABLED
-    // Low-level mouse callback
-    LRESULT CALLBACK LowLevelMouseProc(
-        const int    nCode,
-        const WPARAM wParam,
-        const LPARAM lParam)
-    {
-        if (nCode == HC_ACTION)        // Process this event
-        {
-            auto* p = reinterpret_cast<MSLLHOOKSTRUCT*>(lParam);
-            const MouseInput input = {.wParam = wParam, .mouseStruct = p};
-            if (input.isLeftButtonDown())
-            {
-                Logger::debug("Left button pressed");
-            }
-            else if (input.isLeftButtonUp())
-            {
-                Logger::debug("Left button released");
-            }
-            if (input.isRightButtonDown())
-            {
-                Logger::debug("Right button pressed");
-            }
-            else if (input.isRightButtonUp())
-            {
-                Logger::debug("Right button released");
-            }
-        }
-
-        // Let the event continue normally
-        return CallNextHookEx(g_hMouseHook, nCode, wParam, lParam);
-    }
-#endif // AUTOINPUT_HOOK_MOUSE_ENABLED
-
-    bool installHooks()
-    {
-#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
-        keyboardData = std::make_unique<KeyboardData>();
-        // Install the global low-level keyboard hook
-        g_hKeyboardHook = SetWindowsHookEx(
-            WH_KEYBOARD_LL,             // hook type
-            LowLevelKeyboardProc,       // callback
-            GetModuleHandle(NULL),      // module (NULL = current exe)
-            0                           // 0 = global
-        );
-
-        if (!g_hKeyboardHook)
-        {
-            Logger::error(std::format("SetWindowsHookEx for getting the Keyboard events failed: {}\n", GetLastError()));
-            return false;
-        }
-#endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
-#if AUTOINPUT_HOOK_MOUSE_ENABLED
-        g_hMouseHook = SetWindowsHookEx(
-            WH_MOUSE_LL,             // hook type
-            LowLevelMouseProc,       // callback
-            GetModuleHandle(NULL),      // module (NULL = current exe)
-            0                           // 0 = global
-        );
-
-        if (!g_hMouseHook)
-        {
-            Logger::error(std::format("SetWindowsHookEx for getting the Mouse events failed: {}\n", GetLastError()));
-            return false;
-        }
-#endif // AUTOINPUT_HOOK_MOUSE_ENABLED
-        return true;
-    }
-
-    void runListener()
-    {
-        MSG msg;
-        while (GetMessage(&msg, NULL, 0, 0))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-    }
-
-    void cleanup()
-    {
-#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
-        // Cleanup (rarely reached in console apps without signal handler)
-        if (g_hKeyboardHook)
-        {
-            UnhookWindowsHookEx(g_hKeyboardHook);
-        }
-#endif // defined(HOOK_KEYBOARD_ENABLED) && HOOK_KEYBOARD_ENABLED
-
-#if AUTOINPUT_HOOK_MOUSE_ENABLED
-        if (g_hMouseHook)
-        {
-            UnhookWindowsHookEx(g_hMouseHook);
-        }
-#endif // AUTOINPUT_HOOK_MOUSE_ENABLED
-    }
-
 }

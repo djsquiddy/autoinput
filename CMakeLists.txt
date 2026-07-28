@@ -23,6 +23,7 @@ endif()
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
+include(configure_gsl)
 include(configure_toml_plusplus)
 include(configure_googletest)
 ######################################################################################################################################
@@ -68,11 +69,17 @@ function(configure_autoinput_target target_name)
         target_compile_definitions(${target_name} PRIVATE AUTOINPUT_FAKE_HOOK=0)
     endif()
 
+    if (target_name STREQUAL "${PROJECT_NAME}_tests")
+        target_compile_definitions(${target_name} PRIVATE AUTOINPUT_TESTING=1)
+    endif()
+
     target_compile_definitions(${target_name} PRIVATE CONFIGS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/configs")
     target_compile_definitions(${target_name} PUBLIC TOML_HEADER_ONLY=0)
 
     if (WIN32)
         target_compile_definitions(${target_name} PRIVATE NOGDI)
+        target_compile_definitions(${target_name} PRIVATE NOMINMAX)
+        target_compile_definitions(${target_name} PRIVATE _CRT_SECURE_NO_WARNINGS)
     endif()
 endfunction()
 
@@ -99,6 +106,7 @@ endif()
 set(PROJECT_SOURCES ${PROJECT_SOURCES}
     src/pch.cpp
     src/autoinput/autoinput.h
+    src/autoinput/backend.h
     src/autoinput/arguments.cpp
     src/autoinput/arguments.h
     src/autoinput/types.h
@@ -114,11 +122,25 @@ set(PROJECT_SOURCES ${PROJECT_SOURCES}
     src/autoinput/logger.cpp
     src/autoinput/config.h
     src/autoinput/config.cpp
+    src/autoinput/handlerState.h
+    src/autoinput/settings.cpp
+    src/autoinput/settings.h
+    src/autoinput/handler.cpp
 )
 
 if (WIN32)
-    set(PROJECT_SOURCES ${PROJECT_SOURCES} src/autoinput/win32/autoinput_windows.cpp)
-endif(WIN32)
+    set(PROJECT_SOURCES ${PROJECT_SOURCES}
+        src/autoinput/win32/autoinput_windows.cpp
+        src/autoinput/win32/internal_data_win32.h
+    )
+elseif (UNIX AND NOT APPLE)
+    set(PROJECT_SOURCES ${PROJECT_SOURCES} 
+        src/autoinput/linux/autoinput_linux.cpp
+        src/autoinput/linux/autoinput_x11.cpp
+        src/autoinput/linux/autoinput_wayland.cpp
+        src/autoinput/linux/internal_data.h
+    )
+endif()
 
 
 ######################################################################################################################################
@@ -127,8 +149,23 @@ endif(WIN32)
 set(PROJECT_INCLUDE ${PROJECT_INCLUDE} src)
 target_sources(${PROJECT_NAME} PRIVATE src/autoinput/main.cpp ${PROJECT_SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_INCLUDE})
-target_link_libraries(${PROJECT_NAME} PRIVATE tomlplusplus::tomlplusplus)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+        tomlplusplus::tomlplusplus
+        Microsoft.GSL::GSL
+)
 configure_autoinput_target(${PROJECT_NAME})
+
+if (UNIX AND NOT APPLE)
+    find_package(X11)
+    find_library(XTST_LIBRARY Xtst)
+    if (X11_FOUND AND XTST_LIBRARY)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${X11_LIBRARIES} ${XTST_LIBRARY})
+        target_compile_definitions(${PROJECT_NAME} PRIVATE AUTOINPUT_WITH_X11=1)
+    else()
+        target_compile_definitions(${PROJECT_NAME} PRIVATE AUTOINPUT_WITH_X11=0)
+        message(WARNING "X11 or XTest not found. X11 backend will be disabled.")
+    endif()
+endif()
 
 # Enable precompiled headers
 target_precompile_headers(${PROJECT_NAME} PRIVATE src/pch.h)
@@ -145,6 +182,15 @@ add_executable(${PROJECT_NAME}_tests
         tests/autoinput/utilsTest.cpp
         tests/autoinput/argumentsTest.cpp
         tests/autoinput/configTest.cpp
+        tests/autoinput/positionalArgumentsTest.cpp
+        tests/autoinput/mouseTriggerLogicTest.cpp
+        tests/autoinput/settingsTest.cpp
+        tests/autoinput/handlerTest.cpp
+        tests/autoinput/mousePrioritizationTest.cpp
+        tests/autoinput/linuxBackendTest.cpp
+        tests/autoinput/signalCleanupTest.cpp
+        tests/autoinput/linuxDispatchTest.cpp
+        src/autoinput/linux/autoinput_linux.cpp
         ${PROJECT_SOURCES}
 )
 
@@ -153,9 +199,20 @@ target_include_directories(${PROJECT_NAME}_tests PRIVATE ${PROJECT_INCLUDE})
 target_link_libraries(${PROJECT_NAME}_tests
     PRIVATE
     GTest::gtest_main
+    GTest::gmock
     tomlplusplus::tomlplusplus
+    Microsoft.GSL::GSL
 )
 configure_autoinput_target(${PROJECT_NAME}_tests)
+
+if (UNIX AND NOT APPLE)
+    if (X11_FOUND AND XTST_LIBRARY)
+        target_link_libraries(${PROJECT_NAME}_tests PRIVATE ${X11_LIBRARIES} ${XTST_LIBRARY})
+        target_compile_definitions(${PROJECT_NAME}_tests PRIVATE AUTOINPUT_WITH_X11=1)
+    else()
+        target_compile_definitions(${PROJECT_NAME}_tests PRIVATE AUTOINPUT_WITH_X11=0)
+    endif()
+endif()
 
 target_precompile_headers(${PROJECT_NAME}_tests PRIVATE src/pch.h)
 

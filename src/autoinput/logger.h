@@ -3,16 +3,9 @@
  * @author djsquiddy
  * @date July 2026
  */
-
 #ifndef INCLUDE_AUTOINPUT_LOGGER_H
 #define INCLUDE_AUTOINPUT_LOGGER_H
 #pragma once
-#include <string_view>
-#include <chrono>
-#include <format>
-#include <fstream>
-#include <mutex>
-#include <source_location>
 
 namespace autoinput
 {
@@ -34,7 +27,7 @@ namespace autoinput
 
     // Overload the insertion operator
     inline std::ostream& operator<<(std::ostream& os, const LogLevel level) { return os << getLogLevelPrefix(level); }
-    inline std::ostream& getConsoleStream(LogLevel level);
+    std::ostream& getConsoleStream(LogLevel level);
 
     // Helper class to enable: Logger::info << "msg";
     class LogStream
@@ -47,7 +40,8 @@ namespace autoinput
 
         // Template operator<< to accept any streamable type
         template <typename T>
-        LogStream& operator<<(const T& value) {
+        LogStream& operator<<(const T& value)
+        {
             m_buffer << value;
             return *this;
         }
@@ -79,6 +73,7 @@ namespace autoinput
         {
             instance().log_impl(level, msg, loc);
         }
+
         template <typename... Args>
         static void log(const LogLevel level, std::format_string<Args...> fmt, Args&&... args)
         {
@@ -94,6 +89,7 @@ namespace autoinput
             const std::string msg = std::format(fmt, std::forward<Args>(args)...);
             instance().log_impl(LogLevel::Print, msg, std::source_location::current());
         }
+
         static void info(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
         static void info(std::format_string<Args...> fmt, Args&&... args)
@@ -141,10 +137,14 @@ namespace autoinput
         static LogStream errorStream(std::source_location loc = std::source_location::current());
         static LogStream fatalStream(std::source_location loc = std::source_location::current());
 
+        static bool isDebugModeEnabled();
+
         static void setLogLevel(LogLevel logLevel);
+        static LogLevel getLogLevel();
         static void flush();
         // Optional: Allow configuring the file path at runtime
         static void setFile(const std::string& filename);
+        static const std::string& getFileName();
 
     private:
         friend class LogStream;
@@ -155,12 +155,16 @@ namespace autoinput
 
         void log_impl(LogLevel level, std::string_view msg, std::source_location loc = std::source_location::current());
         void flush_impl();
+
         void setLogLevel_impl(LogLevel logLevel);
+        LogLevel getLogLevel_impl() const;
+
         void setFile_impl(const std::string& filename);
-        LogLevel m_logLevel{ LogLevel::Debug };
+        const std::string& getFileName_impl() const;
+        LogLevel m_logLevel{ LogLevel::Info };
+        std::string m_fileName{};
         std::ofstream m_fileStream;
-        std::mutex m_mutex;
-        std::once_flag m_onceFlag;
+        mutable std::mutex m_mutex;
     };
 }
 

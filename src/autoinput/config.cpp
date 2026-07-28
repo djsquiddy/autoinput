@@ -15,7 +15,7 @@ namespace autoinput
         {
             const auto cmd = table["command"];
             tryGetTableValue(cmd, "action", configData.action);
-            if (const auto buttonCfg = table["button"])
+            if (const auto buttonCfg = cmd["button"])
             {
                 if (buttonCfg.is_string())
                 {
@@ -31,7 +31,7 @@ namespace autoinput
                     }
                 }
             }
-            if (const auto startCfg = table["start"])
+            if (const auto startCfg = cmd["start"])
             {
                 if (startCfg.is_string())
                 {
@@ -44,6 +44,22 @@ namespace autoinput
                     for (toml::node& btn : *btns)
                     {
                         configData.startKeys.emplace_back(btn.as_string()->value_or(""));
+                    }
+                }
+            }
+            if (const auto keyCfg = cmd["key"])
+            {
+                if (keyCfg.is_string())
+                {
+                    std::string key;
+                    tryGetTableValue(cmd, "key", key);
+                    configData.keys.emplace_back(key);
+                }
+                else if (toml::array* ks = keyCfg.as_array())
+                {
+                    for (toml::node& k : *ks)
+                    {
+                        configData.keys.emplace_back(k.as_string()->value_or(""));
                     }
                 }
             }

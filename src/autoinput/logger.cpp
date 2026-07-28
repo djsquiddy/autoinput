@@ -1,3 +1,8 @@
+/**
+ * @file logger.cpp
+ * @author djsquiddy
+ * @date July 2026
+ */
 #include "logger.h"
 #include "utils.h"
 
@@ -147,6 +152,12 @@ namespace autoinput
         return {instance(), LogLevel::Fatal, loc};
     }
 
+    bool Logger::isDebugModeEnabled()
+    {
+        using logLevel_t = std::underlying_type_t<LogLevel>;
+        return static_cast<logLevel_t>(getLogLevel()) >= static_cast<logLevel_t>(LogLevel::Debug);
+    }
+
     void Logger::fatal(const std::string_view msg, const std::source_location loc)
     {
         instance().log_impl(LogLevel::Fatal, msg, loc);
@@ -163,6 +174,12 @@ namespace autoinput
         }
         else
         {
+            using logLevel_t = std::underlying_type_t<LogLevel>;
+            if (static_cast<logLevel_t>(getLogLevel_impl()) > static_cast<logLevel_t>(level))
+            {
+                return;
+            }
+
             formatted = std::format("[{}] {} | {}:{}:{} | {}\n",
                 level,
                 std::format("{:%F %T}", std::chrono::zoned_time{std::chrono::current_zone(), std::chrono::system_clock::now()}),
@@ -173,7 +190,7 @@ namespace autoinput
             );
             consoleMsg = std::format("[{}] | {}", level, msg);
         }
-
+#ifndef AUTOINPUT_TESTING
         std::scoped_lock lock(m_mutex);
         getConsoleStream(level) << consoleMsg;
         if (m_fileStream.is_open())
@@ -181,6 +198,7 @@ namespace autoinput
             m_fileStream << formatted;
             m_fileStream.flush();
         }
+#endif
     }
 
     void Logger::setLogLevel(const LogLevel logLevel)
@@ -192,6 +210,17 @@ namespace autoinput
     {
         std::scoped_lock lock(m_mutex);
         m_logLevel = logLevel;
+    }
+
+    LogLevel Logger::getLogLevel()
+    {
+        return instance().getLogLevel_impl();
+    }
+
+    LogLevel Logger::getLogLevel_impl() const
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_logLevel;
     }
 
     void Logger::flush()
@@ -225,5 +254,16 @@ namespace autoinput
         {
             throw std::runtime_error("Failed to open log file: " + filename);
         }
+    }
+
+    const std::string& Logger::getFileName()
+    {
+        return instance().getFileName_impl();
+    }
+
+    const std::string& Logger::getFileName_impl() const
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_fileName;
     }
 }

@@ -158,6 +158,13 @@ namespace autoinput
         EXPECT_FALSE(static_cast<bool>(key.modifier & KeyModifier::Meta));
     }
 
+    TEST(KeyFromStringTest, ParsesSpecialKeys)
+    {
+        EXPECT_EQ(Key::fromString("end").character, "end");
+        EXPECT_EQ(Key::fromString("esc").character, "esc");
+        EXPECT_EQ(Key::fromString("space").character, "space");
+    }
+
     TEST(KeyHandlerTest, StoresKey)
     {
         const Key key{
