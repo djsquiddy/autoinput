@@ -16,8 +16,8 @@ public:
     MOCK_METHOD(void, cleanup, (), (override));
     MOCK_METHOD(void, keyPress, (const Key& key), (override));
     MOCK_METHOD(void, keyRelease, (const Key& key), (override));
-    MOCK_METHOD(void, mousePress, (MouseButton button), (override));
-    MOCK_METHOD(void, mouseRelease, (MouseButton button), (override));
+    MOCK_METHOD(void, mousePress, (const Mouse& mouse), (override));
+    MOCK_METHOD(void, mouseRelease, (const Mouse& mouse), (override));
 };
 
 class HandlerTest : public ::testing::Test
@@ -66,10 +66,10 @@ TEST_F(HandlerTest, KeyHandlerPressAndRelease)
 
 TEST_F(HandlerTest, MouseHandlerPressAndRelease)
 {
-    MouseButton button = MouseButton::LEFT;
-    MouseHandler handler(button);
+    Mouse mouse(MouseButton::LEFT);
+    MouseHandler handler(mouse);
 
-    EXPECT_CALL(*mockPtr, mousePress(button)).Times(Exactly(1));
+    EXPECT_CALL(*mockPtr, mousePress(mouse)).Times(Exactly(1));
     handler.press();
     EXPECT_TRUE(handler.isPressed());
 
@@ -77,7 +77,7 @@ TEST_F(HandlerTest, MouseHandlerPressAndRelease)
     EXPECT_CALL(*mockPtr, mousePress(_)).Times(0);
     handler.press();
 
-    EXPECT_CALL(*mockPtr, mouseRelease(button)).Times(Exactly(1));
+    EXPECT_CALL(*mockPtr, mouseRelease(mouse)).Times(Exactly(1));
     handler.release();
     EXPECT_FALSE(handler.isPressed());
 

@@ -150,6 +150,33 @@ namespace autoinput
     };
     AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(KeyModifier);
 
+    struct Mouse
+    {
+        Mouse() = default;
+        Mouse(MouseButton b) : button(b) {}
+        Mouse(MouseButton b, KeyModifier m) : button(b), modifier(m) {}
+
+        MouseButton button{ MouseButton::NONE };
+        KeyModifier modifier{ KeyModifier::None };
+
+        [[nodiscard]] static Mouse fromString(const std::string_view& keyValue);
+        [[nodiscard]] std::string toString() const;
+        bool operator==(const Mouse& rhs) const
+        {
+            return this->button == rhs.button && this->modifier == rhs.modifier;
+        }
+    };
+
+    template<>
+    struct HashFunction<Mouse>
+    {
+        size_t operator()(const Mouse& mouse) const
+        {
+            using button_t = std::underlying_type_t<MouseButton>;
+            return std::hash<button_t>()(static_cast<button_t>(mouse.button)) ^ std::hash<KeyModifier>()(mouse.modifier);
+        }
+    };
+
     struct Key
     {
         std::string character{};
@@ -222,6 +249,20 @@ struct std::formatter<autoinput::MouseButton>
     auto format(const autoinput::MouseButton mouseButton, std::format_context& ctx) const
     {
         return std::format_to(ctx.out(), "{}", autoinput::mouseButtonToString(mouseButton));
+    }
+};
+
+template<>
+struct std::formatter<autoinput::Mouse>
+{
+    constexpr auto parse(std::format_parse_context& ctx)
+    {
+        return ctx.begin();
+    }
+
+    auto format(const autoinput::Mouse mouse, std::format_context& ctx) const
+    {
+        return std::format_to(ctx.out(), "{}", mouse.toString());
     }
 };
 

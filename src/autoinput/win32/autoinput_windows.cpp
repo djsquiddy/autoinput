@@ -71,6 +71,77 @@ namespace autoinput
                 return 0;
             }
         }
+
+        std::string getActiveApplicationName()
+        {
+            const HWND hwnd = GetForegroundWindow();
+            if (hwnd == nullptr)
+            {
+                return "";
+            }
+
+            DWORD processId;
+            GetWindowThreadProcessId(hwnd, &processId);
+
+            const HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+            if (hProcess == nullptr)
+            {
+                return "";
+            }
+
+            char processName[MAX_PATH];
+            // ReSharper disable once CppZeroConstantCanBeReplacedWithNullptr
+            if (GetModuleBaseNameA(hProcess, NULL, processName, sizeof(processName))) // NOLINT(*-use-nullptr)
+            {
+                CloseHandle(hProcess);
+                return { processName };
+            }
+
+            CloseHandle(hProcess);
+            return "";
+        }
+
+        std::vector<std::string> getRunningApplicationNames()
+        {
+            std::set<std::string> names;
+            auto callback = [](HWND hwnd, LPARAM lParam) -> BOOL
+            {
+                if (!IsWindowVisible(hwnd))
+                {
+                    return TRUE;
+                }
+
+                DWORD processId;
+                GetWindowThreadProcessId(hwnd, &processId);
+
+                HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+                if (hProcess == nullptr)
+                {
+                    return TRUE;
+                }
+
+                char processName[MAX_PATH];
+                // ReSharper disable once CppZeroConstantCanBeReplacedWithNullptr
+                if (GetModuleBaseNameA(hProcess, NULL, processName, sizeof(processName))) // NOLINT(*-use-nullptr)
+                {
+                    reinterpret_cast<std::set<std::string>*>(lParam)->insert(std::string(processName));
+                }
+
+                CloseHandle(hProcess);
+                return TRUE;
+            };
+
+            EnumWindows(callback, reinterpret_cast<LPARAM>(&names));
+
+            return { names.begin(), names.end() };
+        }
+
+        std::filesystem::path getExecutablePath()
+        {
+            char buffer[MAX_PATH];
+            GetModuleFileNameA(NULL, buffer, MAX_PATH);
+            return std::filesystem::path(buffer).parent_path();
+        }
     }
 
     namespace
@@ -348,48 +419,76 @@ namespace autoinput
                 sendKeyboardInputs(inputs);
             }
 
-            void mousePress(MouseButton button) override
+            void mousePress(const Mouse& mouse) override
             {
-                INPUT input{};
-                input.type = INPUT_MOUSE;
-                switch (button)
+                std::vector<INPUT> inputs;
+                const std::vector<WORD> modifiers = modifierVirtualKeys(mouse.modifier);
+                inputs.reserve(modifiers.size() + 1);
+                for (const WORD modifier : modifiers)
                 {
-                case MouseButton::LEFT: input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN; break;
-                case MouseButton::MIDDLE: input.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN; break;
-                case MouseButton::RIGHT: input.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN; break;
+                    inputs.push_back(keyboardInput(modifier));
+                }
+
+                INPUT mouseInput{};
+                mouseInput.type = INPUT_MOUSE;
+                switch (mouse.button)
+                {
+                case MouseButton::LEFT: mouseInput.mi.dwFlags = MOUSEEVENTF_LEFTDOWN; break;
+                case MouseButton::MIDDLE: mouseInput.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN; break;
+                case MouseButton::RIGHT: mouseInput.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN; break;
                 case MouseButton::BACK:
-                    input.mi.dwFlags = MOUSEEVENTF_XDOWN;
-                    input.mi.mouseData = XBUTTON1;
+                    mouseInput.mi.dwFlags = MOUSEEVENTF_XDOWN;
+                    mouseInput.mi.mouseData = XBUTTON1;
                     break;
                 case MouseButton::FORWARD:
-                    input.mi.dwFlags = MOUSEEVENTF_XDOWN;
-                    input.mi.mouseData = XBUTTON2;
+                    mouseInput.mi.dwFlags = MOUSEEVENTF_XDOWN;
+                    mouseInput.mi.mouseData = XBUTTON2;
                     break;
-                default: return;
+                default: break;
                 }
-                SendInput(1, &input, sizeof(INPUT));
+
+                if (mouseInput.mi.dwFlags != 0)
+                {
+                    inputs.push_back(mouseInput);
+                }
+
+                sendKeyboardInputs(inputs);
             }
 
-            void mouseRelease(MouseButton button) override
+            void mouseRelease(const Mouse& mouse) override
             {
-                INPUT input{};
-                input.type = INPUT_MOUSE;
-                switch (button)
+                std::vector<INPUT> inputs;
+
+                INPUT mouseInput{};
+                mouseInput.type = INPUT_MOUSE;
+                switch (mouse.button)
                 {
-                case MouseButton::LEFT: input.mi.dwFlags = MOUSEEVENTF_LEFTUP; break;
-                case MouseButton::MIDDLE: input.mi.dwFlags = MOUSEEVENTF_MIDDLEUP; break;
-                case MouseButton::RIGHT: input.mi.dwFlags = MOUSEEVENTF_RIGHTUP; break;
+                case MouseButton::LEFT: mouseInput.mi.dwFlags = MOUSEEVENTF_LEFTUP; break;
+                case MouseButton::MIDDLE: mouseInput.mi.dwFlags = MOUSEEVENTF_MIDDLEUP; break;
+                case MouseButton::RIGHT: mouseInput.mi.dwFlags = MOUSEEVENTF_RIGHTUP; break;
                 case MouseButton::BACK:
-                    input.mi.dwFlags = MOUSEEVENTF_XUP;
-                    input.mi.mouseData = XBUTTON1;
+                    mouseInput.mi.dwFlags = MOUSEEVENTF_XUP;
+                    mouseInput.mi.mouseData = XBUTTON1;
                     break;
                 case MouseButton::FORWARD:
-                    input.mi.dwFlags = MOUSEEVENTF_XUP;
-                    input.mi.mouseData = XBUTTON2;
+                    mouseInput.mi.dwFlags = MOUSEEVENTF_XUP;
+                    mouseInput.mi.mouseData = XBUTTON2;
                     break;
-                default: return;
+                default: break;
                 }
-                SendInput(1, &input, sizeof(INPUT));
+
+                if (mouseInput.mi.dwFlags != 0)
+                {
+                    inputs.push_back(mouseInput);
+                }
+
+                const std::vector<WORD> modifiers = modifierVirtualKeys(mouse.modifier);
+                for (const auto modifier : std::views::reverse(modifiers))
+                {
+                    inputs.push_back(keyboardInput(modifier, KEYEVENTF_KEYUP));
+                }
+
+                sendKeyboardInputs(inputs);
             }
         };
     }
@@ -425,22 +524,22 @@ namespace autoinput
     bool MouseInput::isBackButtonDown() const 
     { 
         const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
-        return winData && winData->wParam == WM_XBUTTONDOWN && winData->mouseStruct->mouseData == XBUTTON1;
+        return winData && winData->wParam == WM_XBUTTONDOWN && HIWORD(winData->mouseStruct->mouseData) == XBUTTON1;
     }
     bool MouseInput::isBackButtonUp() const 
     { 
         const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
-        return winData && winData->wParam == WM_XBUTTONUP && winData->mouseStruct->mouseData == XBUTTON1;
+        return winData && winData->wParam == WM_XBUTTONUP && HIWORD(winData->mouseStruct->mouseData) == XBUTTON1;
     }
     bool MouseInput::isForwardButtonUp() const 
     { 
         const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
-        return winData && winData->wParam == WM_XBUTTONUP && winData->mouseStruct->mouseData == XBUTTON2;
+        return winData && winData->wParam == WM_XBUTTONUP && HIWORD(winData->mouseStruct->mouseData) == XBUTTON2;
     }
     bool MouseInput::isForwardButtonDown() const 
     { 
         const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
-        return winData && winData->wParam == WM_XBUTTONDOWN && winData->mouseStruct->mouseData == XBUTTON2;
+        return winData && winData->wParam == WM_XBUTTONDOWN && HIWORD(winData->mouseStruct->mouseData) == XBUTTON2;
     }
     bool MouseInput::isMiddleButtonUp() const 
     { 

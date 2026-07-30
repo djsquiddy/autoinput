@@ -141,7 +141,7 @@ namespace autoinput
         EXPECT_TRUE(arguments.postParseArguments());
 
         ASSERT_EQ(arguments.buttons.size(), 1);
-        EXPECT_EQ(arguments.buttons.front(), MouseButton::LEFT);
+        EXPECT_EQ(arguments.buttons.front().button, MouseButton::LEFT);
     }
 
     TEST(ProgramArgumentsTest, PostParseArgumentsDefaultsToStartAndEndKeys)
@@ -157,8 +157,8 @@ namespace autoinput
     TEST(ProgramArgumentsTest, PostParseArgumentsResizesStartKeysToButtonCount)
     {
         ProgramArguments arguments;
-        arguments.buttons.emplace_back(MouseButton::LEFT);
-        arguments.buttons.emplace_back(MouseButton::RIGHT);
+        arguments.buttons.emplace_back(Mouse(MouseButton::LEFT));
+        arguments.buttons.emplace_back(Mouse(MouseButton::RIGHT));
         arguments.startKeys.emplace_back("f2");
         arguments.endKey = "f3";
 
@@ -184,7 +184,7 @@ namespace autoinput
     TEST(ProgramArgumentsTest, PostParseArgumentsResizesStartKeysToTargetCount)
     {
         ProgramArguments arguments;
-        arguments.buttons.emplace_back(MouseButton::LEFT);
+        arguments.buttons.emplace_back(Mouse(MouseButton::LEFT));
         arguments.keys.emplace_back(Key{ .character = "a" });
         arguments.startKeys.emplace_back("f2");
         arguments.endKey = "f3";
@@ -209,12 +209,73 @@ namespace autoinput
         char endVal[] = "f3";
         char* argv[] = { program, typeOpt, typeVal, buttonOpt, buttonVal, startOpt, startVal, endOpt, endVal };
 
-        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv)));
+        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
         EXPECT_EQ(arguments.actionState, ActionState::HOLD);
         ASSERT_EQ(arguments.buttons.size(), 1);
-        EXPECT_EQ(arguments.buttons.front(), MouseButton::LEFT);
+        EXPECT_EQ(arguments.buttons.front().button, MouseButton::LEFT);
         ASSERT_EQ(arguments.startKeys.size(), 1);
         EXPECT_EQ(arguments.startKeys.front(), "f2");
         EXPECT_EQ(arguments.endKey, "f3");
     }
+
+    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesApplicationName)
+    {
+        ProgramArguments arguments;
+        char program[] = "autoinput";
+        char appOpt[] = "--app";
+        char appVal[] = "notepad.exe";
+        char* argv[] = { program, appOpt, appVal };
+
+        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
+        EXPECT_EQ(arguments.applicationName, "notepad.exe");
+    }
+
+    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesListApplications)
+    {
+        ProgramArguments arguments;
+        char program[] = "autoinput";
+        char listOpt[] = "--list-apps";
+        char* argv[] = { program, listOpt };
+
+        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
+        EXPECT_TRUE(arguments.listApplications);
+    }
+
+    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesShortListApplications)
+    {
+        ProgramArguments arguments;
+        char program[] = "autoinput";
+        char listOpt[] = "-L";
+        char* argv[] = { program, listOpt };
+
+        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
+        EXPECT_TRUE(arguments.listApplications);
+    }
+
+    TEST(ProgramArgumentsTest, ParseArgumentsHandlesMissingLogArgument)
+    {
+        ProgramArguments arguments;
+        char program[] = "autoinput";
+        char logOpt[] = "-l";
+        char* argv[] = { program, logOpt };
+
+        EXPECT_FALSE(arguments.parseArguments(gsl::make_span(argv)));
+    }
+    TEST(ProgramArgumentsTest, ParsesBlacklistArguments)
+    {
+        char program[] = "autoinput";
+        char blacklistOption[] = "--blacklist";
+        char blacklistValue[] = "game.exe";
+        char shortBlacklistOption[] = "-B";
+        char shortBlacklistValue[] = "other.exe";
+        std::vector<char*> args = { program, blacklistOption, blacklistValue, shortBlacklistOption, shortBlacklistValue };
+
+        ProgramArguments programArguments;
+        EXPECT_TRUE(programArguments.parseArguments(args, false));
+
+        EXPECT_EQ(programArguments.blacklist.size(), 2);
+        EXPECT_EQ(programArguments.blacklist[0], "game.exe");
+        EXPECT_EQ(programArguments.blacklist[1], "other.exe");
+    }
+
 }

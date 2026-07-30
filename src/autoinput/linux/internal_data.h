@@ -7,8 +7,6 @@
 #define INCLUDE_AUTOINPUT_LINUX_INTERNAL_DATA_H
 #pragma once
 
-#include <cstdint>
-#include <memory>
 #include "autoinput/backend.h"
 
 #if defined(__linux__)
@@ -129,6 +127,9 @@ namespace autoinput
         bool Mouse_isForwardButtonDown(const MouseData& data);
         bool Mouse_isForwardButtonUp(const MouseData& data);
         void Mouse_printInfo(const MouseData& data);
+
+        std::string getActiveApplicationName();
+        std::vector<std::string> getRunningApplicationNames();
     }
 }
 

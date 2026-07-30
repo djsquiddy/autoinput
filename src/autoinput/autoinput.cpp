@@ -12,9 +12,42 @@ namespace autoinput
 {
     std::unique_ptr<PlatformBackend> g_backend = nullptr;
 
+    bool Program::isApplicationBlacklisted() const
+    {
+        if (m_arguments.blacklist.empty())
+        {
+            return false;
+        }
+
+        const std::string activeApp = toLowerCase(platform::getActiveApplicationName());
+        for (const std::string& app : m_arguments.blacklist)
+        {
+            if (activeApp.find(toLowerCase(app)) != std::string::npos)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     bool Program::processKeyEvent(KeyboardInput&& input)
     {
         input.printInfo();
+
+        if (isApplicationBlacklisted())
+        {
+            return false;
+        }
+
+        if (!m_arguments.applicationName.empty())
+        {
+            const std::string activeApp = toLowerCase(platform::getActiveApplicationName());
+            const std::string targetApp = toLowerCase(m_arguments.applicationName);
+            if (activeApp.find(targetApp) == std::string::npos)
+            {
+                return false;
+            }
+        }
 
         if (!input.isKeyDown())
         {
@@ -23,6 +56,7 @@ namespace autoinput
 
         const auto [charKey, functionKey, vk, modifier] = input.getKeyState();
         bool handled = false;
+        bool started = false;
 
         for (const KeyInfo& keyInfo : m_keyInfo)
         {
@@ -33,8 +67,9 @@ namespace autoinput
                 if (keyInfo.isStartKey)
                 {
                     start(keyInfo);
+                    started = true;
                 }
-                else
+                else if (!started)
                 {
                     end();
                 }
@@ -49,6 +84,21 @@ namespace autoinput
     {
         input.printInfo();
 
+        if (isApplicationBlacklisted())
+        {
+            return false;
+        }
+
+        if (!m_arguments.applicationName.empty())
+        {
+            const std::string activeApp = toLowerCase(platform::getActiveApplicationName());
+            const std::string targetApp = toLowerCase(m_arguments.applicationName);
+            if (activeApp.find(targetApp) == std::string::npos)
+            {
+                return false;
+            }
+        }
+
         const auto [trigger, isDown] = input.getButtonState();
 
         if (trigger == MouseButton::NONE || !isDown)
@@ -57,6 +107,8 @@ namespace autoinput
         }
 
         bool handled = false;
+        bool started = false;
+
         for (const KeyInfo& keyInfo : m_keyInfo)
         {
             if (keyInfo.triggerButton == trigger)
@@ -64,8 +116,9 @@ namespace autoinput
                 if (keyInfo.isStartKey)
                 {
                     start(keyInfo);
+                    started = true;
                 }
-                else
+                else if (!started)
                 {
                     end();
                 }
@@ -78,9 +131,9 @@ namespace autoinput
 
     void Program::start(const KeyInfo& keyInfo)
     {
-        if (keyInfo.mouseButton != MouseButton::NONE)
+        if (keyInfo.mouse.button != MouseButton::NONE)
         {
-            MouseHandler& handler = m_mouseHandlers.at(keyInfo.mouseButton);
+            MouseHandler& handler = m_mouseHandlers.at(keyInfo.mouse);
             if (keyInfo.action == ActionState::HOLD)
             {
                 handler.togglePressState();
@@ -110,16 +163,58 @@ namespace autoinput
         for (auto& mouseHandler : m_mouseHandlers | std::views::values)
         {
             mouseHandler.release();
-            mouseHandler.setActive(false);
+            if (mouseHandler.getActive())
+            {
+                mouseHandler.setActive(false);
+                if (mouseHandler.m_autoclickerThread)
+                {
+                    m_zombieThreads.push_back(std::move(mouseHandler.m_autoclickerThread));
+                }
+            }
         }
 
         for (auto& keyHandler : m_keyHandlers | std::views::values)
         {
             keyHandler.release();
-            keyHandler.setActive(false);
+            if (keyHandler.getActive())
+            {
+                keyHandler.setActive(false);
+                if (keyHandler.m_autoclickerThread)
+                {
+                    m_zombieThreads.push_back(std::move(keyHandler.m_autoclickerThread));
+                }
+            }
         }
 
         platform::signalEnd();
+    }
+
+    void Program::joinThreads()
+    {
+        for (auto& mouseHandler : m_mouseHandlers | std::views::values)
+        {
+            if (mouseHandler.m_autoclickerThread && mouseHandler.m_autoclickerThread->joinable())
+            {
+                mouseHandler.m_autoclickerThread->join();
+            }
+        }
+
+        for (auto& keyHandler : m_keyHandlers | std::views::values)
+        {
+            if (keyHandler.m_autoclickerThread && keyHandler.m_autoclickerThread->joinable())
+            {
+                keyHandler.m_autoclickerThread->join();
+            }
+        }
+
+        for (auto& thread : m_zombieThreads)
+        {
+            if (thread && thread->joinable())
+            {
+                thread->join();
+            }
+        }
+        m_zombieThreads.clear();
     }
 
     void Program::printProgramInfo() const
@@ -141,9 +236,9 @@ namespace autoinput
             }
 
             std::string actionStr = keyInfo.isStartKey ? "start " : "stop ";
-            if (keyInfo.mouseButton != MouseButton::NONE)
+            if (keyInfo.mouse.button != MouseButton::NONE)
             {
-                actionStr += std::format("{} button", mouseButtonToString(keyInfo.mouseButton));
+                actionStr += std::format("{} button", keyInfo.mouse.toString());
             }
             else if (!keyInfo.key.character.empty())
             {
@@ -162,13 +257,18 @@ namespace autoinput
         {
             handler.release();
             handler.setActive(false);
-            handler.m_autoclickerThread->join();
+            if (handler.m_autoclickerThread)
+            {
+                m_zombieThreads.push_back(std::move(handler.m_autoclickerThread));
+            }
             return;
         }
 
         auto delayData = m_arguments.delayData;
+        auto applicationName = m_arguments.applicationName;
+        auto blacklist = m_arguments.blacklist;
         handler.setActive(true);
-        handler.m_autoclickerThread = std::make_unique<std::thread>([&handler, delayData]()
+        handler.m_autoclickerThread = std::make_unique<std::thread>([&handler, delayData, applicationName, blacklist]()
         {
             while (handler.getActive())
             {
@@ -176,6 +276,38 @@ namespace autoinput
                 {
                     // Make sure we didn't just disable the callback.
                     break;
+                }
+
+                const std::string activeApp = toLowerCase(platform::getActiveApplicationName());
+                if (!blacklist.empty())
+                {
+                    bool isBlacklisted = false;
+                    for (const std::string& app : blacklist)
+                    {
+                        if (activeApp.find(toLowerCase(app)) != std::string::npos)
+                        {
+                            isBlacklisted = true;
+                            break;
+                        }
+                    }
+
+                    if (isBlacklisted)
+                    {
+                        // Blacklisted application in focus, stop autoclicking
+                        handler.setActive(false);
+                        break;
+                    }
+                }
+
+                if (!applicationName.empty())
+                {
+                    const std::string targetApp = toLowerCase(applicationName);
+                    if (activeApp.find(targetApp) == std::string::npos)
+                    {
+                        // Application lost focus, stop autoclicking
+                        handler.setActive(false);
+                        break;
+                    }
                 }
 
                 handler.press();
@@ -197,9 +329,9 @@ namespace autoinput
 
     void Program::init()
     {
-        for (auto& button : m_arguments.buttons)
+        for (auto& mouse : m_arguments.buttons)
         {
-            m_mouseHandlers[button] = MouseHandler{button};
+            m_mouseHandlers[mouse] = MouseHandler{mouse};
         }
 
         for (auto& key : m_arguments.keys)
@@ -207,10 +339,10 @@ namespace autoinput
             m_keyHandlers[key] = KeyHandler{key};
         }
 
-        auto processKeyString = [this](const std::string& keyStr, MouseButton button, Key targetKey, ActionState action, bool isStart) {
+        auto processKeyString = [this](const std::string& keyStr, const Mouse mouse, Key targetKey, const ActionState action, const bool isStart) {
             const auto mouseTrigger = mouseButtonFromArguments(keyStr);
             KeyInfo info{
-                .mouseButton = button,
+                .mouse = mouse,
                 .key = std::move(targetKey),
                 .action = action,
                 .isStartKey = isStart,
@@ -250,11 +382,11 @@ namespace autoinput
             }
             else if (i < buttonCount + keyCount)
             {
-                processKeyString(m_arguments.startKeys[i], MouseButton::NONE, m_arguments.keys[i - buttonCount], action, true);
+                processKeyString(m_arguments.startKeys[i], Mouse{}, m_arguments.keys[i - buttonCount], action, true);
             }
         }
 
-        processKeyString(m_arguments.endKey, MouseButton::NONE, {}, ActionState::CLICK, false);
+        processKeyString(m_arguments.endKey, Mouse{}, {}, ActionState::CLICK, false);
     }
 
     bool installHooks()

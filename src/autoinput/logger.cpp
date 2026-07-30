@@ -32,7 +32,7 @@ namespace autoinput
         {
             return LogLevel::Fatal;
         }
-        throw std::runtime_error(std::string("Could not parse ") + std::string(str) + " into a valid log level");
+        return LogLevel::Unknown;
     }
 
     std::string getLogLevelPrefix(const LogLevel level, const bool isShorthand)
@@ -180,9 +180,16 @@ namespace autoinput
                 return;
             }
 
+            std::string timeStr;
+            try {
+                timeStr = std::format("{:%F %T}", std::chrono::zoned_time{std::chrono::current_zone(), std::chrono::system_clock::now()});
+            } catch (...) {
+                timeStr = "UNKNOWN TIME";
+            }
+
             formatted = std::format("[{}] {} | {}:{}:{} | {}\n",
                 level,
-                std::format("{:%F %T}", std::chrono::zoned_time{std::chrono::current_zone(), std::chrono::system_clock::now()}),
+                timeStr,
                 std::filesystem::path(loc.file_name()).filename().string(),
                 loc.function_name(),
                 loc.line(),
@@ -196,7 +203,10 @@ namespace autoinput
         if (m_fileStream.is_open())
         {
             m_fileStream << formatted;
-            m_fileStream.flush();
+            if (level >= LogLevel::Warning)
+            {
+                m_fileStream.flush();
+            }
         }
 #endif
     }

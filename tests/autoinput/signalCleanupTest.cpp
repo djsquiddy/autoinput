@@ -14,8 +14,8 @@ public:
     MOCK_METHOD(void, cleanup, (), (override));
     MOCK_METHOD(void, keyPress, (const Key& key), (override));
     MOCK_METHOD(void, keyRelease, (const Key& key), (override));
-    MOCK_METHOD(void, mousePress, (MouseButton button), (override));
-    MOCK_METHOD(void, mouseRelease, (MouseButton button), (override));
+    MOCK_METHOD(void, mousePress, (const Mouse& mouse), (override));
+    MOCK_METHOD(void, mouseRelease, (const Mouse& mouse), (override));
 };
 
 TEST(SignalCleanupTest, SignalEndCallsCleanup)

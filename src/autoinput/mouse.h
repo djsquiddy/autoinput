@@ -44,16 +44,18 @@ namespace autoinput
     {
     public:
         MouseHandler() = default;
-        explicit MouseHandler(const MouseButton mouseButton) : m_mouseButton{mouseButton} { }
+        explicit MouseHandler(const Mouse mouse) : m_mouse{mouse} { }
+        explicit MouseHandler(const MouseButton mouseButton) : m_mouse{mouseButton} { }
         MouseHandler(const MouseHandler& rhs) = default;
         MouseHandler(MouseHandler&& rhs) noexcept;
         MouseHandler& operator=(const MouseHandler& rhs);
         MouseHandler& operator=(MouseHandler&& rhs) noexcept;
 
-        [[nodiscard]] std::string getName() const override { return mouseButtonToString(m_mouseButton); }
-        [[nodiscard]] std::string getButtonName() const { return mouseButtonToString(m_mouseButton); }
+        [[nodiscard]] std::string getName() const override { return m_mouse.toString(); }
+        [[nodiscard]] std::string getButtonName() const { return m_mouse.toString(); }
 
-        [[nodiscard]] MouseButton getMouseButton() const { return m_mouseButton; }
+        [[nodiscard]] Mouse getMouse() const { return m_mouse; }
+        [[nodiscard]] MouseButton getMouseButton() const { return m_mouse.button; }
 
         void togglePressState() override;
 
@@ -63,7 +65,7 @@ namespace autoinput
         void release() override;
 
     private:
-        MouseButton m_mouseButton{ MouseButton::NONE };
+        Mouse m_mouse{};
     };
 
     template<>
@@ -71,14 +73,13 @@ namespace autoinput
     {
         size_t operator()(const MouseHandler& handler) const
         {
-            using button_t = std::underlying_type_t<MouseButton>;
-            return std::hash<button_t>()(static_cast<button_t>(handler.getMouseButton()));
+            return HashFunction<Mouse>()(handler.getMouse());
         }
     };
 
     inline MouseHandler::MouseHandler(MouseHandler&& rhs) noexcept
         : InputHandler(std::move(rhs))
-        , m_mouseButton{ rhs.m_mouseButton }
+        , m_mouse{ std::move(rhs.m_mouse) }
     {
     }
 
@@ -90,7 +91,7 @@ namespace autoinput
         }
 
         InputHandler::operator=(std::move(rhs));
-        this->m_mouseButton = rhs.m_mouseButton;
+        this->m_mouse = rhs.m_mouse;
         return *this;
     }
 
@@ -102,7 +103,7 @@ namespace autoinput
         }
 
         InputHandler::operator=(rhs);
-        this->m_mouseButton = rhs.m_mouseButton;
+        this->m_mouse = rhs.m_mouse;
         return *this;
     }
 
@@ -119,7 +120,7 @@ namespace autoinput
 
     inline bool MouseHandler::operator==(const MouseHandler& rhs) const
     {
-        return this->m_mouseButton == rhs.m_mouseButton;
+        return this->m_mouse == rhs.m_mouse;
     }
 }
 #endif // INCLUDE_AUTOINPUT_MOUSE_H

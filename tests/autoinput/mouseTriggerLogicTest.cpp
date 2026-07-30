@@ -15,7 +15,7 @@ namespace autoinput
         char* argv[] = {(char*)"autoinput", (char*)"left", (char*)"-s", (char*)"back", (char*)"-e", (char*)"forward"};
         int argc = sizeof(argv) / sizeof(char*);
 
-        program.arguments().parseArguments(gsl::make_span(argv, argc));
+        ASSERT_TRUE(program.arguments().parseArguments(gsl::make_span(argv, argc)));
         program.init();
 
         const auto& keyInfo = program.getKeyInfo();
@@ -24,7 +24,7 @@ namespace autoinput
 
         // Start key info
         EXPECT_EQ(keyInfo[0].triggerButton, MouseButton::BACK);
-        EXPECT_EQ(keyInfo[0].mouseButton, MouseButton::LEFT);
+        EXPECT_EQ(keyInfo[0].mouse.button, MouseButton::LEFT);
         EXPECT_TRUE(keyInfo[0].isStartKey);
 
         // End key info

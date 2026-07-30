@@ -27,14 +27,14 @@ namespace autoinput
     void MouseHandler::press()
     {
         if (m_isPressed || !g_backend) return;
-        g_backend->mousePress(m_mouseButton);
+        g_backend->mousePress(m_mouse);
         m_isPressed = true;
     }
 
     void MouseHandler::release()
     {
         if (!m_isPressed || !g_backend) return;
-        g_backend->mouseRelease(m_mouseButton);
+        g_backend->mouseRelease(m_mouse);
         m_isPressed = false;
     }
 }

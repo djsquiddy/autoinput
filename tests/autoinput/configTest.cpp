@@ -178,6 +178,65 @@ key = ["a", "b"]
         std::filesystem::remove(path);
     }
 
+    TEST(ConfigTest, LoadConfigDataParsesApplicationName)
+    {
+        const std::filesystem::path path = makeTemporaryConfigFile(
+            "autoinput_config_app_test.toml",
+            R"toml(
+[command]
+application = "notepad.exe"
+)toml"
+        );
+
+        const std::optional<ConfigData> configData = loadConfigData(path);
+
+        ASSERT_TRUE(configData.has_value());
+        EXPECT_EQ(configData->application, "notepad.exe");
+
+        std::filesystem::remove(path);
+    }
+
+    TEST(ConfigTest, LoadConfigDataParsesBlacklist)
+    {
+        const std::filesystem::path path = makeTemporaryConfigFile(
+            "autoinput_config_blacklist_test.toml",
+            R"toml(
+[command]
+action = "click"
+blacklist = ["game.exe", "other.exe"]
+)toml"
+        );
+
+        const std::optional<ConfigData> configData = loadConfigData(path);
+
+        ASSERT_TRUE(configData.has_value());
+        EXPECT_EQ(configData->blacklist.size(), 2);
+        EXPECT_EQ(configData->blacklist[0], "game.exe");
+        EXPECT_EQ(configData->blacklist[1], "other.exe");
+
+        std::filesystem::remove(path);
+    }
+
+    TEST(ConfigTest, LoadConfigDataParsesSingleBlacklist)
+    {
+        const std::filesystem::path path = makeTemporaryConfigFile(
+            "autoinput_config_single_blacklist_test.toml",
+            R"toml(
+[command]
+action = "click"
+blacklist = "only.exe"
+)toml"
+        );
+
+        const std::optional<ConfigData> configData = loadConfigData(path);
+
+        ASSERT_TRUE(configData.has_value());
+        EXPECT_EQ(configData->blacklist.size(), 1);
+        EXPECT_EQ(configData->blacklist[0], "only.exe");
+
+        std::filesystem::remove(path);
+    }
+
     TEST(ConfigTest, TryGetTableValueReturnsTrueWhenValueExists)
     {
         const toml::table table{

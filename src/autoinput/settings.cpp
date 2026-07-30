@@ -32,6 +32,16 @@ namespace autoinput
             tryGetTableValue(*defaults, "release", m_defaults.release);
             tryGetTableValue(*defaults, "action", m_defaults.action);
             tryGetTableValue(*defaults, "button", m_defaults.button);
+            if (const auto blacklist = defaults->get("blacklist"); blacklist && blacklist->is_array())
+            {
+                for (auto& item : *blacklist->as_array())
+                {
+                    if (item.is_string())
+                    {
+                        m_defaults.blacklist.push_back(item.as_string()->get());
+                    }
+                }
+            }
         }
 
         return true;

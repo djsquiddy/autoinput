@@ -1,6 +1,8 @@
 @echo off
 setlocal
 set "CURRENT_DIR=%~dp0"
+set "BuildType=Release"
+set "BuildType=Debug"
 
 pushd "%CURRENT_DIR%\.."
 
@@ -11,7 +13,7 @@ pushd "%CURRENT_DIR%\.."
 
     pushd build
         echo Running CMake...
-        cmake -G Ninja .. || goto :end
+        cmake -G Ninja -DCMAKE_BUILD_TYPE=%BuildType% .. || goto :end
         echo Finished running CMake.
         echo Rebuilding...
         ninja || goto :end

@@ -14,7 +14,8 @@ namespace autoinput
     {
         SUCCESS = EXIT_SUCCESS,
         INVALID_PARAM = 101,
-        FAILED_TO_INSTALL_HOOKS = 102
+        FAILED_TO_INSTALL_HOOKS = 102,
+        UNHANDLED_EXCEPTION = 103
     };
 
     std::string toLowerCase(std::string_view sv);

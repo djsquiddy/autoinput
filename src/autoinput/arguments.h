@@ -35,15 +35,18 @@ namespace autoinput
         ProgramArguments();
         ~ProgramArguments() override = default;
         std::string programName{};
-        std::vector<MouseButton> buttons{};
+        std::vector<Mouse> buttons{};
         std::vector<Key> keys{};
         std::vector<std::string> startKeys{};
         std::vector<ActionState> targetActions{};
         std::string endKey{};
+        std::string applicationName{};
+        std::vector<std::string> blacklist{};
+        bool listApplications{ false };
         ActionState actionState{ ActionState::INVALID };
         WaitDelayData delayData{};
 
-        [[nodiscard]] bool parseArguments(gsl::span<char*> args);
+        [[nodiscard]] bool parseArguments(gsl::span<char*> args, bool loadSettings = false);
 
         [[nodiscard]] bool postParseArguments();
         void printUsage(bool verbose = false) const;

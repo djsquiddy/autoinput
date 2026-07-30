@@ -15,10 +15,10 @@ namespace autoinput
         {
             return minWaitPressDelay;
         }
-        static std::random_device rd; // obtain a random number from hardware
-        static std::mt19937 gen(rd()); // seed the generator
+        thread_local std::random_device rd; 
+        thread_local std::mt19937 gen(rd()); 
         std::uniform_int_distribution<> distribution(gsl::narrow_cast<int>(minWaitPressDelay.count()),
-            gsl::narrow_cast<int>(maxWaitPressDelay.count())); // define the range
+            gsl::narrow_cast<int>(maxWaitPressDelay.count())); 
         return std::chrono::milliseconds(distribution(gen));
     }
 
@@ -28,10 +28,10 @@ namespace autoinput
         {
             return minWaitReleaseDelay;
         }
-        static std::random_device rd; // obtain a random number from hardware
-        static std::mt19937 gen(rd()); // seed the generator
+        thread_local std::random_device rd; 
+        thread_local std::mt19937 gen(rd()); 
         std::uniform_int_distribution<> distribution(gsl::narrow_cast<int>(minWaitReleaseDelay.count()),
-            gsl::narrow_cast<int>(maxWaitReleaseDelay.count())); // define the range
+            gsl::narrow_cast<int>(maxWaitReleaseDelay.count())); 
         return std::chrono::milliseconds(distribution(gen));
     }
 
@@ -162,9 +162,12 @@ namespace autoinput
     {
     }
 
-    bool ProgramArguments::parseArguments(const gsl::span<char*> args)
+    bool ProgramArguments::parseArguments(const gsl::span<char*> args, const bool loadSettings)
     {
-        m_settings.load();
+        if (loadSettings)
+        {
+            m_settings.load();
+        }
 
         if (!args.empty())
         {
@@ -188,7 +191,19 @@ namespace autoinput
             if (arg == "-l" || arg == "--log")
             {
                 const std::string_view logLevelStr = safeGetNextArgument(++i, args);
+                if (logLevelStr.empty())
+                {
+                    printUsage();
+                    Logger::fatal("The parameter {} needs an argument. Choices: {{d,debug,i,info,w,warn,warning,e,error,f,fatal}}\n", arg);
+                    return false;
+                }
                 const LogLevel logLevel = logLevelFromString(logLevelStr);
+                if (logLevel == LogLevel::Unknown)
+                {
+                    printUsage();
+                    Logger::fatal("Invalid parameter {} for log level. Choices: {{d,debug,i,info,w,warn,warning,e,error,f,fatal}}\n", logLevelStr);
+                    return false;
+                }
                 Logger::setLogLevel(logLevel);
                 continue;
             }
@@ -247,6 +262,31 @@ namespace autoinput
                 {
                     return false;
                 }
+            }
+            else if (arg == "-a" || arg == "--app" || arg == "--application")
+            {
+                applicationName = safeGetNextArgument(++i, args);
+                if (applicationName.empty())
+                {
+                    printUsage();
+                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    return false;
+                }
+            }
+            else if (arg == "-B" || arg == "--blacklist")
+            {
+                const std::string_view blacklistApp = safeGetNextArgument(++i, args);
+                if (blacklistApp.empty())
+                {
+                    printUsage();
+                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    return false;
+                }
+                blacklist.emplace_back(blacklistApp);
+            }
+            else if (arg == "-L" || arg == "--list-apps")
+            {
+                listApplications = true;
             }
             else if (arg == "-w" || arg == "--wait" || arg == "--press-wait" || arg == "--release-wait")
             {
@@ -313,9 +353,10 @@ namespace autoinput
                     }
                 };
 
-                if (const auto button = mouseButtonFromArguments(arg); button != MouseButton::NONE)
+                const auto mouse = Mouse::fromString(arg);
+                if (mouse.button != MouseButton::NONE)
                 {
-                    if (button == MouseButton::BACK || button == MouseButton::FORWARD)
+                    if (mouse.button == MouseButton::BACK || mouse.button == MouseButton::FORWARD)
                     {
                         if ((buttons.size() + keys.size()) == startKeys.size())
                         {
@@ -326,7 +367,7 @@ namespace autoinput
                             continue;
                         }
                     }
-                    buttons.emplace_back(button);
+                    buttons.emplace_back(mouse);
                     registerTarget();
                     continue;
                 }
@@ -359,7 +400,12 @@ namespace autoinput
 
     bool ProgramArguments::postParseArguments()
     {
-        const auto& [start, end, press, release, action, button] = m_settings.getDefaults();
+        const auto& [start, end, press, release, action, button, settingsBlacklist] = m_settings.getDefaults();
+
+        if (!settingsBlacklist.empty())
+        {
+            blacklist.insert(blacklist.end(), settingsBlacklist.begin(), settingsBlacklist.end());
+        }
 
         if (actionState == ActionState::INVALID)
         {
@@ -378,9 +424,9 @@ namespace autoinput
         {
             if (!button.empty())
             {
-                if (const auto mouseButton = mouseButtonFromArguments(button); mouseButton != MouseButton::NONE)
+                if (const auto mouse = Mouse::fromString(button); mouse.button != MouseButton::NONE)
                 {
-                    buttons.emplace_back(mouseButton);
+                    buttons.emplace_back(mouse);
                 }
             }
 
@@ -445,8 +491,8 @@ namespace autoinput
         Logger::print("{} -t, --type {{click,c,hold,h}}\n", optionPrefix);
         Logger::print("{} What kind of action event to use. (Can be positional)\n", optionUsagePrefix);
 #if AUTOINPUT_HOOK_MOUSE_ENABLED
-        Logger::print("{} -b, --btn, --button {{left,l,right,r,middle,m,back,forward}} [{{left,l,right,r,middle,m,back,forward}} ...]\n", optionPrefix);
-        Logger::print("{} Which button to press. (Default: left) (Can be positional)\n", optionUsagePrefix);
+        Logger::print("{} -b, --btn, --button {{button}} [{{button}} ...]\n", optionPrefix);
+        Logger::print("{} Which button to press. (Default: left) (Can be positional). Modifiers like shift+left are supported.\n", optionUsagePrefix);
 #endif // AUTOINPUT_HOOK_MOUSE_ENABLED
 #if AUTOINPUT_HOOK_KEYBOARD_ENABLED
         Logger::print("{} -k, --key {{key}} [{{key}} ...]\n", optionPrefix);
@@ -456,6 +502,12 @@ namespace autoinput
         Logger::print("{} Key that is used to start the autoclicker. If button presses need separate start/stop binding the order matters here.\n", optionUsagePrefix);
         Logger::print("{} -e, --end-key END_KEY\n", optionPrefix);
         Logger::print("{} Key that is used to end the autoclicker.\n", optionUsagePrefix);
+        Logger::print("{} -a, --app, --application APPLICATION_NAME\n", optionPrefix);
+        Logger::print("{} Only listen for inputs when this application is in focus.\n", optionUsagePrefix);
+        Logger::print("{} -B, --blacklist APPLICATION_NAME\n", optionPrefix);
+        Logger::print("{} Do not run when this application is in focus.\n", optionUsagePrefix);
+        Logger::print("{} -L, --list-apps\n", optionPrefix);
+        Logger::print("{} List all currently running application names and exit.\n", optionUsagePrefix);
         Logger::print("{} -w, --wait WAIT_TIME\n", optionPrefix);
         Logger::print("{} Max duration to wait before auto clicking. {}\n", optionUsagePrefix, bold("Type must be set to click"));
         Logger::print("{} Can use a time range by using {{min}}..{{max}} with each click being random between the range. See examples for usage.\n", optionUsagePrefix);
@@ -513,12 +565,20 @@ namespace autoinput
             Logger::print("{}{} click ctrl+v f2\n", exampleCmdPrefix, programName);
             ++index;
             Logger::print("\n");
+            Logger::print("{}{}) click the 'shift+left' mouse button when pressing F2:\n", examplePrefix, index);
+            Logger::print("{}{} click shift+left f2\n", exampleCmdPrefix, programName);
+            ++index;
+            Logger::print("\n");
             Logger::print("{}{}) use a configuration file named 'gaming':\n", examplePrefix, index);
             Logger::print("{}{} --config gaming\n", exampleCmdPrefix, programName);
             ++index;
             Logger::print("\n");
             Logger::print("{}{}) run with debug logging enabled:\n", examplePrefix, index);
             Logger::print("{}{} -l debug hold left\n", exampleCmdPrefix, programName);
+            ++index;
+            Logger::print("\n");
+            Logger::print("{}{}) hold the left click but stop running if notepad is in focus:\n", examplePrefix, index);
+            Logger::print("{}{} hold left --blacklist notepad.exe\n", exampleCmdPrefix, programName);
         }
 
         Logger::flush();
@@ -558,9 +618,9 @@ namespace autoinput
             {
                 for (auto& button : configData.buttons)
                 {
-                    if (const auto mouseButton = mouseButtonFromArguments(button); mouseButton != MouseButton::NONE)
+                    if (const auto mouse = Mouse::fromString(button); mouse.button != MouseButton::NONE)
                     {
-                        buttons.emplace_back(mouseButton);
+                        buttons.emplace_back(mouse);
                     }
                     else
                     {
@@ -589,6 +649,14 @@ namespace autoinput
             if (!configData.endKey.empty())
             {
                 endKey = configData.endKey;
+            }
+            if (!configData.application.empty())
+            {
+                applicationName = configData.application;
+            }
+            if (!configData.blacklist.empty())
+            {
+                blacklist.insert(blacklist.end(), configData.blacklist.begin(), configData.blacklist.end());
             }
             if (!configData.pressWait.empty())
             {
@@ -648,9 +716,10 @@ namespace autoinput
                 // We were able to process at least one argument.
                 break;
             }
-            if (const auto mouseButton = mouseButtonFromArguments(button); mouseButton != MouseButton::NONE)
+            const auto mouse = Mouse::fromString(button);
+            if (mouse.button != MouseButton::NONE)
             {
-                buttons.emplace_back(mouseButton);
+                buttons.emplace_back(mouse);
             }
             else
             {
@@ -667,6 +736,12 @@ namespace autoinput
     bool ProgramArguments::parseKey(const gsl::span<char*> args, int& i)
     {
         std::string_view keyValue = safeGetNextArgument(++i, args);
+        if (keyValue.empty())
+        {
+            printUsage();
+            Logger::fatal("The parameter -k/--key needs an argument.\n");
+            return false;
+        }
         Key key = Key::fromString(keyValue);
         keys.emplace_back(key);
         return true;
@@ -700,7 +775,14 @@ namespace autoinput
 
     bool ProgramArguments::parseEndKey(const gsl::span<char*> args, int& i)
     {
+        const std::string_view arg = args[i];
         endKey = safeGetNextArgument(++i, args);
+        if (endKey.empty())
+        {
+            printUsage();
+            Logger::fatal("The parameter {} needs an argument.\n", arg);
+            return false;
+        }
         return true;
     }
 

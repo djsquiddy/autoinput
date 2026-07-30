@@ -16,6 +16,9 @@ namespace autoinput
         void signalEnd();
         void setupSignalHandler();
         int32_t getVirtualKey(const Key& key);
+        std::string getActiveApplicationName();
+        std::vector<std::string> getRunningApplicationNames();
+        std::filesystem::path getExecutablePath();
     }
 }
 

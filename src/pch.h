@@ -31,6 +31,7 @@
 #include <optional>  // IWYU pragma: export
 #include <random>  // IWYU pragma: export
 #include <ranges>  // IWYU pragma: export
+#include <set>  // IWYU pragma: export
 #include <source_location>  // IWYU pragma: export
 #include <sstream>  // IWYU pragma: export
 #include <stdexcept>  // IWYU pragma: export

@@ -25,16 +25,19 @@ namespace autoinput
         bool processMouseEvent(const MouseInput& input);
         void start(const KeyInfo& keyInfo);
         void end();
+        void joinThreads();
 
         [[nodiscard]] const std::vector<KeyInfo>& getKeyInfo() const { return m_keyInfo; }
 
         void printProgramInfo() const;
+        [[nodiscard]] bool isApplicationBlacklisted() const;
 
     private:
-        std::unordered_map<MouseButton, MouseHandler, HashFunction<MouseButton>> m_mouseHandlers{};
+        std::unordered_map<Mouse, MouseHandler, HashFunction<Mouse>> m_mouseHandlers{};
         std::unordered_map<Key, KeyHandler, HashFunction<Key>> m_keyHandlers{};
         ProgramArguments m_arguments{};
         std::vector<KeyInfo> m_keyInfo{};
+        std::vector<std::unique_ptr<std::thread>> m_zombieThreads{};
 
         void startAutoClicker(InputHandler& handler);
     };

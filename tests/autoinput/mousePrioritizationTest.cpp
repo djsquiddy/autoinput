@@ -53,7 +53,7 @@ TEST(MousePrioritizationTest, GetButtonStatePrioritization)
     
     // Test Back button
     MSLLHOOKSTRUCT msStruct;
-    msStruct.mouseData = XBUTTON1;
+    msStruct.mouseData = MAKELONG(0, XBUTTON1);
     winData.wParam = WM_XBUTTONDOWN;
     winData.mouseStruct = &msStruct;
     data.internal = winData;
@@ -65,7 +65,7 @@ TEST(MousePrioritizationTest, GetButtonStatePrioritization)
     }
     
     // Test Forward button
-    msStruct.mouseData = XBUTTON2;
+    msStruct.mouseData = MAKELONG(0, XBUTTON2);
     winData.wParam = WM_XBUTTONDOWN;
     winData.mouseStruct = &msStruct;
     data.internal = winData;

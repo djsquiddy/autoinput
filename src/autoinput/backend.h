@@ -23,8 +23,8 @@ namespace autoinput
         
         virtual void keyPress(const Key& key) = 0;
         virtual void keyRelease(const Key& key) = 0;
-        virtual void mousePress(MouseButton button) = 0;
-        virtual void mouseRelease(MouseButton button) = 0;
+        virtual void mousePress(const Mouse& mouse) = 0;
+        virtual void mouseRelease(const Mouse& mouse) = 0;
     };
 
     extern std::unique_ptr<PlatformBackend> g_backend;
@@ -38,8 +38,8 @@ namespace autoinput
         
         void keyPress(const Key& key) override { Logger::info("[FAKE] Pressing key: {}\n", key.toString()); }
         void keyRelease(const Key& key) override { Logger::info("[FAKE] Releasing key: {}\n", key.toString()); }
-        void mousePress(MouseButton button) override { Logger::info("[FAKE] Pressing mouse button: {}\n", button); }
-        void mouseRelease(MouseButton button) override { Logger::info("[FAKE] Releasing mouse button: {}\n", button); }
+        void mousePress(const Mouse& mouse) override { Logger::info("[FAKE] Pressing mouse: {}\n", mouse.toString()); }
+        void mouseRelease(const Mouse& mouse) override { Logger::info("[FAKE] Releasing mouse: {}\n", mouse.toString()); }
     };
 
 #ifdef _WIN32

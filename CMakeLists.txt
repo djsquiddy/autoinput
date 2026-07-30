@@ -26,6 +26,13 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 include(configure_gsl)
 include(configure_toml_plusplus)
 include(configure_googletest)
+
+# Sets the `variable` to `value` if the `variable` is not already defined
+function(set_if_not_defined variable value)
+    if(NOT DEFINED ${variable})
+        set(${variable} "${value}" PARENT_SCOPE)
+    endif()
+endfunction()
 ######################################################################################################################################
 # Versioning
 ######################################################################################################################################
@@ -38,6 +45,18 @@ mark_as_advanced(VERSION_MAJOR VERSION_MINOR VERSION_PATCH)
 message(STATUS "Processing ${PROJECT_NAME}")
 message(STATUS "Setting up version ${VERSION}")
 ######################################################################################################################################
+# Installation
+######################################################################################################################################
+# Only override the install prefix when CMake hasn't received one from the
+# command line or cache (i.e. it is still the CMake-generated default).
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_LIST_DIR}/output/" CACHE PATH "Installation prefix" FORCE)
+endif()
+
+set_if_not_defined(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set_if_not_defined(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set_if_not_defined(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+######################################################################################################################################
 # Program Executables
 ######################################################################################################################################
 add_executable(${PROJECT_NAME})
@@ -49,8 +68,6 @@ option(ENABLE_MOUSE_HOOK "Enable the mouse listeners" ON)
 option(ENABLE_FAKE_HOOK "Enable only logging the events instead of actually performing them" OFF)
 
 function(configure_autoinput_target target_name)
-    target_compile_definitions(${target_name} PRIVATE CONFIGS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/configs")
-
     if (ENABLE_KEYBOARD_HOOK)
         target_compile_definitions(${target_name} PRIVATE AUTOINPUT_HOOK_KEYBOARD_ENABLED=1)
     else()
@@ -81,6 +98,12 @@ function(configure_autoinput_target target_name)
         target_compile_definitions(${target_name} PRIVATE NOMINMAX)
         target_compile_definitions(${target_name} PRIVATE _CRT_SECURE_NO_WARNINGS)
     endif()
+
+    install(TARGETS ${target_name}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
 endfunction()
 
 ######################################################################################################################################
@@ -187,12 +210,18 @@ add_executable(${PROJECT_NAME}_tests
         tests/autoinput/settingsTest.cpp
         tests/autoinput/handlerTest.cpp
         tests/autoinput/mousePrioritizationTest.cpp
-        tests/autoinput/linuxBackendTest.cpp
+        tests/autoinput/windowsMouseTest.cpp
         tests/autoinput/signalCleanupTest.cpp
-        tests/autoinput/linuxDispatchTest.cpp
-        src/autoinput/linux/autoinput_linux.cpp
+        tests/autoinput/mouseModifierTest.cpp
         ${PROJECT_SOURCES}
 )
+
+if (UNIX AND NOT APPLE)
+    target_sources(${PROJECT_NAME}_tests PRIVATE
+        tests/autoinput/linuxBackendTest.cpp
+        tests/autoinput/linuxDispatchTest.cpp
+    )
+endif()
 
 target_include_directories(${PROJECT_NAME}_tests PRIVATE ${PROJECT_INCLUDE})
 
@@ -204,6 +233,11 @@ target_link_libraries(${PROJECT_NAME}_tests
     Microsoft.GSL::GSL
 )
 configure_autoinput_target(${PROJECT_NAME}_tests)
+
+add_custom_command(TARGET ${PROJECT_NAME}_tests POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_CURRENT_SOURCE_DIR}/configs"
+    "$<TARGET_FILE_DIR:${PROJECT_NAME}_tests>/configs")
 
 if (UNIX AND NOT APPLE)
     if (X11_FOUND AND XTST_LIBRARY)

@@ -6,6 +6,7 @@
 #define TOML_IMPLEMENTATION
 #include "config.h"
 #include "logger.h"
+#include "platform.h"
 
 namespace autoinput
 {
@@ -64,6 +65,23 @@ namespace autoinput
                 }
             }
             tryGetTableValue(cmd, "end", configData.endKey);
+            tryGetTableValue(cmd, "application", configData.application);
+            if (const auto blacklistCfg = cmd["blacklist"])
+            {
+                if (blacklistCfg.is_string())
+                {
+                    std::string app;
+                    tryGetTableValue(cmd, "blacklist", app);
+                    configData.blacklist.emplace_back(app);
+                }
+                else if (toml::array* apps = blacklistCfg.as_array())
+                {
+                    for (toml::node& app : *apps)
+                    {
+                        configData.blacklist.emplace_back(app.as_string()->value_or(""));
+                    }
+                }
+            }
             if (const auto waitTime = cmd["time"].as_table())
             {
                 tryGetTableValue(*waitTime, "press", configData.pressWait);
@@ -74,7 +92,7 @@ namespace autoinput
 
     const std::filesystem::path& getConfigsPath()
     {
-        static const std::filesystem::path configsPath = CONFIGS_PATH;
+        static const std::filesystem::path configsPath = platform::getExecutablePath() / "configs";
         return configsPath;
     }
 

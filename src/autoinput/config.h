@@ -24,6 +24,8 @@ namespace autoinput
         std::string endKey;
         std::string pressWait;
         std::string releaseWait;
+        std::string application;
+        std::vector<std::string> blacklist;
     };
 
     const std::filesystem::path& getConfigsPath();

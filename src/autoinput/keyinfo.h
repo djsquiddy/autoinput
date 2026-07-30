@@ -19,7 +19,7 @@ namespace autoinput
         int32_t virtualKey{ 0 };
         MouseButton triggerButton{ MouseButton::NONE };
         Key triggerKey{};
-        MouseButton mouseButton{ MouseButton::NONE };
+        Mouse mouse{};
         Key key{};
         ActionState action{ ActionState::CLICK };
         bool isStartKey{ false };

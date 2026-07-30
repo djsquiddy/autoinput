@@ -183,21 +183,36 @@ namespace autoinput
                 XFlush(g_display);
             }
 
-            void mousePress(MouseButton button) override
+            void mousePress(const Mouse& mouse) override
             {
                 if (!g_display) return;
-                const unsigned int xButton = toX11Button(button);
+                const unsigned int xButton = toX11Button(mouse.button);
                 if (xButton == 0) return;
+
+                // Modifiers
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Shift)) XTestFakeKeyEvent(g_display, XKeysymToKeycode(g_display, XK_Shift_L), True, 0);
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Ctrl)) XTestFakeKeyEvent(g_display, XKeysymToKeycode(g_display, XK_Control_L), True, 0);
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Alt)) XTestFakeKeyEvent(g_display, XKeysymToKeycode(g_display, XK_Alt_L), True, 0);
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Meta)) XTestFakeKeyEvent(g_display, XKeysymToKeycode(g_display, XK_Super_L), True, 0);
+
                 XTestFakeButtonEvent(g_display, xButton, True, 0);
                 XFlush(g_display);
             }
 
-            void mouseRelease(MouseButton button) override
+            void mouseRelease(const Mouse& mouse) override
             {
                 if (!g_display) return;
-                const unsigned int xButton = toX11Button(button);
+                const unsigned int xButton = toX11Button(mouse.button);
                 if (xButton == 0) return;
+
                 XTestFakeButtonEvent(g_display, xButton, False, 0);
+
+                // Modifiers
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Meta)) XTestFakeKeyEvent(g_display, XKeysymToKeycode(g_display, XK_Super_L), False, 0);
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Alt)) XTestFakeKeyEvent(g_display, XKeysymToKeycode(g_display, XK_Alt_L), False, 0);
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Ctrl)) XTestFakeKeyEvent(g_display, XKeysymToKeycode(g_display, XK_Control_L), False, 0);
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Shift)) XTestFakeKeyEvent(g_display, XKeysymToKeycode(g_display, XK_Shift_L), False, 0);
+
                 XFlush(g_display);
             }
         };
@@ -206,6 +221,58 @@ namespace autoinput
     int32_t getX11VirtualKey(const X11KeyboardData& data)
     {
         return static_cast<int32_t>(data.event.keycode - 8);
+    }
+
+    std::string getX11ActiveApplicationName()
+    {
+        if (!g_display) return "";
+
+        Window focusedWindow;
+        int revert_to;
+        XGetInputFocus(g_display, &focusedWindow, &revert_to);
+
+        if (focusedWindow == None || focusedWindow == PointerRoot) return "";
+
+        XClassHint classHint;
+        if (XGetClassHint(g_display, focusedWindow, &classHint))
+        {
+            std::string name = classHint.res_name ? classHint.res_name : "";
+            if (classHint.res_name) XFree(classHint.res_name);
+            if (classHint.res_class) XFree(classHint.res_class);
+            return name;
+        }
+
+        return "";
+    }
+
+    std::vector<std::string> getX11RunningApplicationNames()
+    {
+        if (!g_display) return {};
+
+        std::set<std::string> names;
+        Window root_return, parent_return;
+        Window* children_return;
+        unsigned int nchildren_return;
+
+        if (XQueryTree(g_display, g_rootWindow, &root_return, &parent_return, &children_return, &nchildren_return))
+        {
+            for (unsigned int i = 0; i < nchildren_return; ++i)
+            {
+                XClassHint classHint;
+                if (XGetClassHint(g_display, children_return[i], &classHint))
+                {
+                    if (classHint.res_name)
+                    {
+                        names.insert(classHint.res_name);
+                        XFree(classHint.res_name);
+                    }
+                    if (classHint.res_class) XFree(classHint.res_class);
+                }
+            }
+            if (children_return) XFree(children_return);
+        }
+
+        return { names.begin(), names.end() };
     }
 
     std::unique_ptr<PlatformBackend> createX11Backend()

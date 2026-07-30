@@ -20,6 +20,7 @@ namespace autoinput
         std::string release{};
         std::string action{};
         std::string button{};
+        std::vector<std::string> blacklist{};
     };
 
     class Settings

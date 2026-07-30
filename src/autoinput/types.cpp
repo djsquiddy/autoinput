@@ -75,6 +75,62 @@ namespace autoinput
         return modifierStr;
     }
 
+    Mouse Mouse::fromString(const std::string_view& keyValue)
+    {
+        const std::vector<std::string> result = keyValue
+            | std::views::split('+')
+            | std::views::transform([](auto&& range) {
+                std::string s(range.begin(), range.end());
+                std::ranges::transform(s, s.begin(), [](unsigned char c) {
+                    return std::tolower(c);
+                });
+                return s;
+            })
+            | std::ranges::to<std::vector>();
+
+        Mouse mouse{};
+        for (const std::string& s : result)
+        {
+            if (s == "ctrl")
+            {
+                mouse.modifier |= KeyModifier::Ctrl;
+            }
+            else if (s == "shift")
+            {
+                mouse.modifier |= KeyModifier::Shift;
+            }
+            else if (s == "alt")
+            {
+                mouse.modifier |= KeyModifier::Alt;
+            }
+            else if (s == "meta")
+            {
+                mouse.modifier |= KeyModifier::Meta;
+            }
+            else
+            {
+                const auto button = mouseButtonFromArguments(s);
+                if (button != MouseButton::NONE)
+                {
+                    mouse.button = button;
+                }
+            }
+        }
+        return mouse;
+    }
+
+    std::string Mouse::toString() const
+    {
+        const std::string modifiers = autoinput::toString(modifier);
+        const std::string buttonStr = mouseButtonToString(button);
+        if (modifiers.empty())
+        {
+            return buttonStr;
+        }
+
+        return modifiers + '+' + buttonStr;
+    }
+
     Key Key::fromString(const std::string_view& keyValue)
     {
         // 1. Split the view

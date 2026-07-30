@@ -93,9 +93,17 @@ namespace autoinput
             {
                 setupUinput();
                 
-                // Open all input devices for listening
-                for (const auto& entry : std::filesystem::directory_iterator("/dev/input"))
+                std::error_code ec;
+                if (!std::filesystem::exists("/dev/input", ec) || !std::filesystem::is_directory("/dev/input", ec))
                 {
+                    Logger::error("Failed to access /dev/input\n");
+                    return false;
+                }
+
+                // Open all input devices for listening
+                for (const auto& entry : std::filesystem::directory_iterator("/dev/input", ec))
+                {
+                    if (ec) break;
                     if (entry.path().filename().string().starts_with("event"))
                     {
                         int fd = open(entry.path().c_str(), O_RDONLY | O_NONBLOCK);
@@ -103,6 +111,12 @@ namespace autoinput
                     }
                 }
                 
+                if (g_evdevFds.empty())
+                {
+                    Logger::error("No input devices found in /dev/input\n");
+                    return false;
+                }
+
                 return true;
             }
 
@@ -127,13 +141,15 @@ namespace autoinput
                                     {
                                         if (ie.code >= BTN_MOUSE && ie.code < BTN_JOYSTICK)
                                         {
-                                            WaylandMouseData data{ ie.code, ie.value };
-                                            g_program->processMouseEvent(MouseInput{ MouseData{ data } });
+                                            WaylandMouseData wData{ ie.code, ie.value };
+                                            MouseData mData{ wData };
+                                            g_program->processMouseEvent(MouseInput{ mData });
                                         }
                                         else
                                         {
-                                            WaylandKeyboardData data{ ie.code, ie.value };
-                                            g_program->processKeyEvent(KeyboardInput{ KeyboardData{ data } });
+                                            WaylandKeyboardData wData{ ie.code, ie.value };
+                                            KeyboardData kData{ wData };
+                                            g_program->processKeyEvent(KeyboardInput{ kData });
                                         }
                                     }
                                 }
@@ -186,21 +202,34 @@ namespace autoinput
                 emit(g_uinputFd, EV_SYN, SYN_REPORT, 0);
             }
 
-            void mousePress(MouseButton button) override
+            void mousePress(const Mouse& mouse) override
             {
                 if (g_uinputFd < 0) return;
-                uint16_t code = toEvdevButton(button);
+                uint16_t code = toEvdevButton(mouse.button);
                 if (code == 0) return;
+
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Shift)) emit(g_uinputFd, EV_KEY, KEY_LEFTSHIFT, 1);
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Ctrl)) emit(g_uinputFd, EV_KEY, KEY_LEFTCTRL, 1);
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Alt)) emit(g_uinputFd, EV_KEY, KEY_LEFTALT, 1);
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Meta)) emit(g_uinputFd, EV_KEY, KEY_LEFTMETA, 1);
+
                 emit(g_uinputFd, EV_KEY, code, 1);
                 emit(g_uinputFd, EV_SYN, SYN_REPORT, 0);
             }
 
-            void mouseRelease(MouseButton button) override
+            void mouseRelease(const Mouse& mouse) override
             {
                 if (g_uinputFd < 0) return;
-                uint16_t code = toEvdevButton(button);
+                uint16_t code = toEvdevButton(mouse.button);
                 if (code == 0) return;
+
                 emit(g_uinputFd, EV_KEY, code, 0);
+
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Meta)) emit(g_uinputFd, EV_KEY, KEY_LEFTMETA, 0);
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Alt)) emit(g_uinputFd, EV_KEY, KEY_LEFTALT, 0);
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Ctrl)) emit(g_uinputFd, EV_KEY, KEY_LEFTCTRL, 0);
+                if (static_cast<bool>(mouse.modifier & KeyModifier::Shift)) emit(g_uinputFd, EV_KEY, KEY_LEFTSHIFT, 0);
+
                 emit(g_uinputFd, EV_SYN, SYN_REPORT, 0);
             }
         };
@@ -209,6 +238,18 @@ namespace autoinput
     int32_t getWaylandVirtualKey(const WaylandKeyboardData& data)
     {
         return static_cast<int32_t>(data.code);
+    }
+
+    std::string getWaylandActiveApplicationName()
+    {
+        // Wayland does not allow getting the focused window name for security reasons
+        // unless using a compositor-specific protocol or a portal.
+        return "";
+    }
+
+    std::vector<std::string> getWaylandRunningApplicationNames()
+    {
+        return {};
     }
 
     std::unique_ptr<PlatformBackend> createWaylandBackend()

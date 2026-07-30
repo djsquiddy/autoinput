@@ -132,6 +132,32 @@ namespace autoinput
             if (const auto* x11 = std::any_cast<X11MouseData>(&data.internal)) printX11MouseInfo(*x11);
             if (const auto* way = std::any_cast<WaylandMouseData>(&data.internal)) printWaylandMouseInfo(*way);
         }
+
+        std::string getActiveApplicationName()
+        {
+            extern std::string getX11ActiveApplicationName();
+            extern std::string getWaylandActiveApplicationName();
+
+            const char* sessionType = std::getenv("XDG_SESSION_TYPE");
+            if (sessionType && std::string(sessionType) == "wayland")
+            {
+                return getWaylandActiveApplicationName();
+            }
+            return getX11ActiveApplicationName();
+        }
+
+        std::vector<std::string> getRunningApplicationNames()
+        {
+            extern std::vector<std::string> getX11RunningApplicationNames();
+            extern std::vector<std::string> getWaylandRunningApplicationNames();
+
+            const char* sessionType = std::getenv("XDG_SESSION_TYPE");
+            if (sessionType && std::string(sessionType) == "wayland")
+            {
+                return getWaylandRunningApplicationNames();
+            }
+            return getX11RunningApplicationNames();
+        }
     }
 
 #if defined(__linux__)
@@ -308,6 +334,28 @@ namespace autoinput
             auto it = linuxKeys.find(key.character);
             if (it != linuxKeys.end()) return it->second;
             return 0;
+        }
+
+        std::string getActiveApplicationName()
+        {
+            return linux_dispatch::getActiveApplicationName();
+        }
+
+        std::vector<std::string> getRunningApplicationNames()
+        {
+            return linux_dispatch::getRunningApplicationNames();
+        }
+
+        std::filesystem::path getExecutablePath()
+        {
+            char buffer[1024];
+            ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+            if (len != -1)
+            {
+                buffer[len] = '\0';
+                return std::filesystem::path(buffer).parent_path();
+            }
+            return std::filesystem::current_path();
         }
     }
 #endif

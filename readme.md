@@ -4,11 +4,12 @@ A versatile C++ utility for automating mouse and keyboard input on Windows and L
 
 ### Features
 
-- **Autoclicker**: Simulate mouse clicks (left, right, middle) at specified intervals.
+- **Autoclicker**: Simulate mouse clicks (left, right, middle) at specified intervals. Support for keyboard modifiers (e.g., `shift+left`) is included.
 - **Auto-keypresser**: Simulate keyboard input.
 - **Flexible Triggering**: Start and stop actions using global hotkeys.
+- **Focus Management**: Ability to whitelist or blacklist specific applications to prevent automation from running when they are in focus.
 - **Delay Randomization**: Support for randomized press and release delays (e.g., `500ms..1s`).
-- **Configuration Support**: Load complex action mappings from TOML files.
+- **Configuration Support**: Load complex action mappings from TOML files. The program automatically looks for a `configs/` directory relative to its executable.
 - **Safety First**: Integrated with Microsoft GSL for robust memory management.
 - **Cross-platform Support**: Works on Windows (via `SendInput`), Linux X11 (via `XTest`), and Linux Wayland (via `uinput`).
 
@@ -46,10 +47,13 @@ autoinput [options]
 #### Command Line Options
 
 - `[type] {click|hold}`: Set the action type (optional, defaults to `click`).
-- `[button] {left|right|middle|back|forward}`: Select mouse buttons to automate.
+- `[button] {left|right|middle|back|forward}`: Select mouse buttons to automate. Modifiers like `shift+left` or `ctrl+alt+right` are supported.
 - `[key] {key}`: Select keyboard keys to automate.
 - `-s, --start, --start-key START_KEYS`: Hotkey(s) or mouse buttons (e.g., `back`, `forward`) to start the automation (defaults to `f2`).
 - `-e, --end, --end-key END_KEY`: Hotkey or mouse button (e.g., `back`, `forward`) to stop the automation (defaults to `f3`).
+- `-a, --app, --application APPLICATION_NAME`: Only listen for inputs when this application is in focus.
+- `-B, --blacklist APPLICATION_NAME`: Do not run when this application is in focus.
+- `-L, --list-apps`: List all currently running application names and exit.
 - `-w, --wait TIME`: Max duration to wait before auto clicking (e.g., `2s`).
 - `--press-wait RANGE`: Randomized delay while button/key is pressed (e.g., `100ms..200ms`).
 - `--release-wait RANGE`: Randomized delay between actions (e.g., `1s..2s`).
@@ -78,14 +82,24 @@ autoinput [options]
     autoinput left --press-wait 1s..2s
     ```
 
-3.  **Use a configuration file**:
+5.  **Use a combination with modifiers**:
+    ```bash
+    autoinput click shift+left f2
+    ```
+
+6.  **Hold left click but stop if notepad is in focus**:
+    ```bash
+    autoinput hold left --blacklist notepad.exe
+    ```
+
+7.  **Use a configuration file**:
     ```bash
     autoinput -c core-keeper-fishing
     ```
 
 ### Configuration Format
 
-Settings can be defined in `.toml` files located in the `configs/` directory:
+Settings can be defined in `.toml` files. The program looks for these in a `configs/` directory located next to the `autoinput` binary:
 
 ```toml
 [command]
@@ -93,6 +107,7 @@ action = 'click'
 button = 'right'
 start = 'f2'
 end = 'f3'
+blacklist = ['notepad.exe', 'calculator.exe']
 
 [command.time]
 press = '500ms..750ms'
