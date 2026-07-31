@@ -98,3 +98,15 @@ TEST_F(HandlerTest, HandlerWithNullBackend)
     mouseHandler.press();
     EXPECT_FALSE(mouseHandler.isPressed());
 }
+
+TEST_F(HandlerTest, PauseState)
+{
+    KeyHandler handler(Key::fromString("a"));
+    EXPECT_FALSE(handler.getPaused());
+    
+    handler.setPaused(true);
+    EXPECT_TRUE(handler.getPaused());
+    
+    handler.setPaused(false);
+    EXPECT_FALSE(handler.getPaused());
+}

@@ -117,6 +117,11 @@ namespace autoinput
                     return false;
                 }
 
+                if (g_program)
+                {
+                    g_program->onFocusChanged(getWaylandActiveApplicationName());
+                }
+
                 return true;
             }
 

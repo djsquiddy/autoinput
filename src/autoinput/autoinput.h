@@ -29,8 +29,14 @@ namespace autoinput
 
         [[nodiscard]] const std::vector<KeyInfo>& getKeyInfo() const { return m_keyInfo; }
 
+#ifdef AUTOINPUT_TESTING
+        auto& getMouseHandlers() { return m_mouseHandlers; }
+        auto& getKeyHandlers() { return m_keyHandlers; }
+#endif
+
         void printProgramInfo() const;
         [[nodiscard]] bool isApplicationBlacklisted() const;
+        void onFocusChanged(const std::string& activeApp);
 
     private:
         std::unordered_map<Mouse, MouseHandler, HashFunction<Mouse>> m_mouseHandlers{};

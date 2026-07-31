@@ -160,6 +160,23 @@ namespace autoinput
         std::unique_ptr<KeyboardData> g_keyboardData;
         HHOOK g_hMouseHook = nullptr;
         std::unique_ptr<MouseData> g_mouseData;
+        HWINEVENTHOOK g_hFocusHook = nullptr;
+
+        void CALLBACK WinEventProc(
+            HWINEVENTHOOK hWinEventHook,
+            DWORD event,
+            HWND hwnd,
+            LONG idObject,
+            LONG idChild,
+            DWORD dwEventThread,
+            DWORD dwmsEventTime
+        )
+        {
+            if (event == EVENT_SYSTEM_FOREGROUND && g_program)
+            {
+                g_program->onFocusChanged(platform::getActiveApplicationName());
+            }
+        }
 
         WORD getVirtualKeyFromString(const std::string& keyStr)
         {
@@ -377,6 +394,27 @@ namespace autoinput
                     return false;
                 }
 
+                g_hFocusHook = SetWinEventHook(
+                    EVENT_SYSTEM_FOREGROUND,
+                    EVENT_SYSTEM_FOREGROUND,
+                    NULL,
+                    WinEventProc,
+                    0,
+                    0,
+                    WINEVENT_OUTOFCONTEXT
+                );
+
+                if (!g_hFocusHook)
+                {
+                    Logger::error("SetWinEventHook for Focus failed: {}\n", GetLastError());
+                    return false;
+                }
+
+                if (g_program)
+                {
+                    g_program->onFocusChanged(platform::getActiveApplicationName());
+                }
+
                 return true;
             }
 
@@ -401,6 +439,11 @@ namespace autoinput
                 {
                     UnhookWindowsHookEx(g_hMouseHook);
                     g_hMouseHook = nullptr;
+                }
+                if (g_hFocusHook)
+                {
+                    UnhookWinEvent(g_hFocusHook);
+                    g_hFocusHook = nullptr;
                 }
             }
 

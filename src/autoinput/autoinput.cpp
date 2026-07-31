@@ -250,6 +250,51 @@ namespace autoinput
         Logger::flush();
     }
 
+    void Program::onFocusChanged(const std::string& activeApp)
+    {
+        const std::string lowerActiveApp = toLowerCase(activeApp);
+        bool shouldPause = false;
+
+        if (!m_arguments.blacklist.empty())
+        {
+            for (const std::string& app : m_arguments.blacklist)
+            {
+                if (lowerActiveApp.find(toLowerCase(app)) != std::string::npos)
+                {
+                    shouldPause = true;
+                    break;
+                }
+            }
+        }
+
+        if (!m_arguments.applicationName.empty())
+        {
+            const std::string targetApp = toLowerCase(m_arguments.applicationName);
+            if (lowerActiveApp.find(targetApp) == std::string::npos)
+            {
+                shouldPause = true;
+            }
+        }
+
+        for (auto& handler : m_mouseHandlers | std::views::values)
+        {
+            handler.setPaused(shouldPause);
+        }
+        for (auto& handler : m_keyHandlers | std::views::values)
+        {
+            handler.setPaused(shouldPause);
+        }
+
+        if (shouldPause)
+        {
+            Logger::debug("Application lost focus or blacklisted application focused, pausing auto-pressing.\n");
+        }
+        else
+        {
+            Logger::debug("Application focused, resuming auto-pressing.\n");
+        }
+    }
+
     // ReSharper disable once CppMemberFunctionMayBeConst
     void Program::startAutoClicker(InputHandler& handler) // NOLINT(*-make-member-function-const)
     {
@@ -265,59 +310,32 @@ namespace autoinput
         }
 
         auto delayData = m_arguments.delayData;
-        auto applicationName = m_arguments.applicationName;
-        auto blacklist = m_arguments.blacklist;
         handler.setActive(true);
-        handler.m_autoclickerThread = std::make_unique<std::thread>([&handler, delayData, applicationName, blacklist]()
+        handler.m_autoclickerThread = std::make_unique<std::thread>([&handler, delayData]()
         {
             while (handler.getActive())
             {
-                if (!handler.getActive())
+                if (handler.getPaused())
                 {
-                    // Make sure we didn't just disable the callback.
-                    break;
-                }
-
-                const std::string activeApp = toLowerCase(platform::getActiveApplicationName());
-                if (!blacklist.empty())
-                {
-                    bool isBlacklisted = false;
-                    for (const std::string& app : blacklist)
+                    if (handler.isPressed())
                     {
-                        if (activeApp.find(toLowerCase(app)) != std::string::npos)
-                        {
-                            isBlacklisted = true;
-                            break;
-                        }
+                        handler.release();
                     }
-
-                    if (isBlacklisted)
-                    {
-                        // Blacklisted application in focus, stop autoclicking
-                        handler.setActive(false);
-                        break;
-                    }
-                }
-
-                if (!applicationName.empty())
-                {
-                    const std::string targetApp = toLowerCase(applicationName);
-                    if (activeApp.find(targetApp) == std::string::npos)
-                    {
-                        // Application lost focus, stop autoclicking
-                        handler.setActive(false);
-                        break;
-                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    continue;
                 }
 
                 handler.press();
                 const auto pressWaitTime = std::chrono::milliseconds(delayData.getPressDelay());
                 Logger::debug("Pressed: {}, waiting: {}", handler.getName(), pressWaitTime);
                 std::this_thread::sleep_for(pressWaitTime);
-                if (!handler.getActive())
+                if (!handler.getActive() || handler.getPaused())
                 {
-                    // Make sure we didn't just disable the callback.
-                    break;
+                    if (handler.isPressed())
+                    {
+                        handler.release();
+                    }
+                    continue;
                 }
                 handler.release();
                 const auto releaseWaitTime = std::chrono::milliseconds(delayData.getReleaseDelay());

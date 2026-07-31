@@ -16,7 +16,10 @@ namespace autoinput
     {
         Display* g_display = nullptr;
         Window g_rootWindow = 0;
+        Atom g_activeWindowAtom = 0;
         bool g_running = true;
+
+        std::string getX11ActiveApplicationName();
 
         unsigned int toX11Modifier(KeyModifier modifier)
         {
@@ -69,6 +72,7 @@ namespace autoinput
         public:
             bool installHooks() override
             {
+                XInitThreads();
                 g_display = XOpenDisplay(nullptr);
                 if (!g_display)
                 {
@@ -103,6 +107,14 @@ namespace autoinput
                     }
                 }
 
+                XSelectInput(g_display, g_rootWindow, PropertyChangeMask);
+                g_activeWindowAtom = XInternAtom(g_display, "_NET_ACTIVE_WINDOW", False);
+
+                if (g_program)
+                {
+                    g_program->onFocusChanged(getX11ActiveApplicationName());
+                }
+
                 return true;
             }
 
@@ -126,6 +138,10 @@ namespace autoinput
                         {
                             mouseData.event = event.xbutton;
                             g_program->processMouseEvent(MouseInput{ MouseData{ mouseData } });
+                        }
+                        else if (event.type == PropertyNotify && event.xproperty.atom == g_activeWindowAtom)
+                        {
+                            g_program->onFocusChanged(getX11ActiveApplicationName());
                         }
                     }
                     else

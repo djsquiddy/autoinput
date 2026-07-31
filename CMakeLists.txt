@@ -220,6 +220,7 @@ add_executable(${PROJECT_NAME}_tests
         tests/autoinput/mouseModifierTest.cpp
         tests/autoinput/userSettingsTest.cpp
         tests/autoinput/saveConfigTest.cpp
+        tests/autoinput/focusTest.cpp
         ${PROJECT_SOURCES}
 )
 
