@@ -339,6 +339,7 @@ namespace autoinput
     void printX11MouseInfo(const X11MouseData& data)
     {
         if (!Logger::isDebugModeEnabled()) return;
+        if (data.event.type != ButtonPress && data.event.type != ButtonRelease) return;
         Logger::debug("[{}] button={} state={}\n", 
             data.event.type == ButtonPress ? "DOWN" : "UP", 
             data.event.button, 

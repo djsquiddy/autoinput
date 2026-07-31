@@ -39,6 +39,7 @@
 #include <string_view>  // IWYU pragma: export
 #include <string>  // IWYU pragma: export
 #include <thread>  // IWYU pragma: export
+#include <type_traits>  // IWYU pragma: export
 #include <unordered_map>  // IWYU pragma: export
 #include <variant>  // IWYU pragma: export
 #include <vector>  // IWYU pragma: export

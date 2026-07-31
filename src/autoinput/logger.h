@@ -53,6 +53,21 @@ namespace autoinput
         std::ostringstream m_buffer;
     };
 
+    // Helper for format strings that captures source location
+    template <typename... Args>
+    struct Fmt
+    {
+        std::format_string<Args...> value;
+        std::source_location loc;
+
+        template <typename T>
+        explicit consteval Fmt(const T& s, const std::source_location l = std::source_location::current())
+            : value(s)
+            , loc(l)
+        {
+        }
+    };
+
     class Logger
     {
     public:
@@ -75,59 +90,59 @@ namespace autoinput
         }
 
         template <typename... Args>
-        static void log(const LogLevel level, std::format_string<Args...> fmt, Args&&... args)
+        static void log(const LogLevel level, Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
         {
-            const std::string msg = std::format(fmt, std::forward<Args>(args)...);
-            instance().log_impl(level, msg, std::source_location::current());
+            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+            instance().log_impl(level, msg, fmt.loc);
         }
 
         // Convenience wrappers for specific levels
         static void print(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
-        static void print(std::format_string<Args...> fmt, Args&&... args)
+        static void print(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
         {
-            const std::string msg = std::format(fmt, std::forward<Args>(args)...);
-            instance().log_impl(LogLevel::Print, msg, std::source_location::current());
+            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+            instance().log_impl(LogLevel::Print, msg, fmt.loc);
         }
 
         static void info(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
-        static void info(std::format_string<Args...> fmt, Args&&... args)
+        static void info(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
         {
-            const std::string msg = std::format(fmt, std::forward<Args>(args)...);
-            instance().log_impl(LogLevel::Info, msg, std::source_location::current());
+            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+            instance().log_impl(LogLevel::Info, msg, fmt.loc);
         }
 
         static void debug(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
-        static void debug(std::format_string<Args...> fmt, Args&&... args)
+        static void debug(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
         {
-            const std::string msg = std::format(fmt, std::forward<Args>(args)...);
-            instance().log_impl(LogLevel::Debug, msg, std::source_location::current());
+            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+            instance().log_impl(LogLevel::Debug, msg, fmt.loc);
         }
 
         static void warn(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
-        static void warn(std::format_string<Args...> fmt, Args&&... args)
+        static void warn(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
         {
-            const std::string msg = std::format(fmt, std::forward<Args>(args)...);
-            instance().log_impl(LogLevel::Warning, msg, std::source_location::current());
+            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+            instance().log_impl(LogLevel::Warning, msg, fmt.loc);
         }
 
         static void error(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
-        static void error(std::format_string<Args...> fmt, Args&&... args)
+        static void error(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
         {
-            const std::string msg = std::format(fmt, std::forward<Args>(args)...);
-            instance().log_impl(LogLevel::Error, msg, std::source_location::current());
+            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+            instance().log_impl(LogLevel::Error, msg, fmt.loc);
         }
 
         static void fatal(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
-        static void fatal(std::format_string<Args...> fmt, Args&&... args)
+        static void fatal(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
         {
-            const std::string msg = std::format(fmt, std::forward<Args>(args)...);
-            instance().log_impl(LogLevel::Fatal, msg, std::source_location::current());
+            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+            instance().log_impl(LogLevel::Fatal, msg, fmt.loc);
         }
 
         static LogStream debugStream(std::source_location loc = std::source_location::current());
@@ -174,7 +189,7 @@ template <>
 struct std::formatter<autoinput::LogLevel>
 {
     // Parse format specifications (e.g., "{:s}" for string, "{:c}" for char)
-    constexpr auto parse(std::format_parse_context& ctx)  // NOLINT(*-convert-member-functions-to-static)
+    constexpr auto parse(const std::format_parse_context& ctx)  // NOLINT(*-convert-member-functions-to-static)
     {
         auto it = ctx.begin();
         if (it != ctx.end() && *it != '}')

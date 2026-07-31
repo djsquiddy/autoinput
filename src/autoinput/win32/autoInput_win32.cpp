@@ -640,6 +640,10 @@ namespace autoinput
         else if (isBackButtonUp()) { type = "UP"; button = "Back"; }
         else if (isForwardButtonDown()) { type = "DOWN"; button = "Forward"; }
         else if (isForwardButtonUp()) { type = "UP"; button = "Forward"; }
+        else
+        {
+            return;
+        }
 
         Logger::debug("[{}] Mouse {} button\n", type, button);
     }
