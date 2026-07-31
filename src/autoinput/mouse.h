@@ -46,16 +46,34 @@ namespace autoinput
         MouseHandler() = default;
         explicit MouseHandler(const Mouse mouse) : m_mouse{mouse} { }
         explicit MouseHandler(const MouseButton mouseButton) : m_mouse{mouseButton} { }
-        MouseHandler(const MouseHandler& rhs) = default;
+        MouseHandler(const MouseHandler& rhs);
         MouseHandler(MouseHandler&& rhs) noexcept;
         MouseHandler& operator=(const MouseHandler& rhs);
         MouseHandler& operator=(MouseHandler&& rhs) noexcept;
 
-        [[nodiscard]] std::string getName() const override { return m_mouse.toString(); }
-        [[nodiscard]] std::string getButtonName() const { return m_mouse.toString(); }
+        [[nodiscard]] std::string getName() const override
+        {
+            std::shared_lock lock(m_mouseMutex);
+            return m_mouse.toString();
+        }
 
-        [[nodiscard]] Mouse getMouse() const { return m_mouse; }
-        [[nodiscard]] MouseButton getMouseButton() const { return m_mouse.button; }
+        [[nodiscard]] std::string getButtonName() const
+        {
+            std::shared_lock lock(m_mouseMutex);
+            return m_mouse.toString();
+        }
+
+        [[nodiscard]] Mouse getMouse() const
+        {
+            std::shared_lock lock(m_mouseMutex);
+            return m_mouse;
+        }
+
+        [[nodiscard]] MouseButton getMouseButton() const
+        {
+            std::shared_lock lock(m_mouseMutex);
+            return m_mouse.button;
+        }
 
         void togglePressState() override;
 
@@ -66,6 +84,7 @@ namespace autoinput
 
     private:
         Mouse m_mouse{};
+        mutable std::shared_mutex m_mouseMutex;
     };
 
     template<>
@@ -77,10 +96,18 @@ namespace autoinput
         }
     };
 
+    inline MouseHandler::MouseHandler(const MouseHandler& rhs)
+        : InputHandler(rhs)
+    {
+        std::shared_lock lock(rhs.m_mouseMutex);
+        m_mouse = rhs.m_mouse;
+    }
+
     inline MouseHandler::MouseHandler(MouseHandler&& rhs) noexcept
         : InputHandler(std::move(rhs))
-        , m_mouse{ std::move(rhs.m_mouse) }
     {
+        std::unique_lock lock(rhs.m_mouseMutex);
+        m_mouse = std::move(rhs.m_mouse);
     }
 
     inline MouseHandler& MouseHandler::operator=(MouseHandler&& rhs) noexcept
@@ -90,8 +117,12 @@ namespace autoinput
             return *this;
         }
 
+        std::unique_lock lock1(m_mouseMutex, std::defer_lock);
+        std::unique_lock lock2(rhs.m_mouseMutex, std::defer_lock);
+        std::lock(lock1, lock2);
+
         InputHandler::operator=(std::move(rhs));
-        this->m_mouse = rhs.m_mouse;
+        this->m_mouse = std::move(rhs.m_mouse);
         return *this;
     }
 
@@ -101,6 +132,10 @@ namespace autoinput
         {
             return *this;
         }
+
+        std::unique_lock lock1(m_mouseMutex, std::defer_lock);
+        std::shared_lock lock2(rhs.m_mouseMutex, std::defer_lock);
+        std::lock(lock1, lock2);
 
         InputHandler::operator=(rhs);
         this->m_mouse = rhs.m_mouse;
@@ -120,6 +155,14 @@ namespace autoinput
 
     inline bool MouseHandler::operator==(const MouseHandler& rhs) const
     {
+        if (this == &rhs)
+        {
+            return true;
+        }
+
+        std::shared_lock lock1(m_mouseMutex, std::defer_lock);
+        std::shared_lock lock2(rhs.m_mouseMutex, std::defer_lock);
+        std::lock(lock1, lock2);
         return this->m_mouse == rhs.m_mouse;
     }
 }

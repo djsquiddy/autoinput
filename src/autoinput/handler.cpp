@@ -12,29 +12,41 @@ namespace autoinput
 {
     void KeyHandler::press()
     {
-        if (m_isPressed || !g_backend) return;
-        g_backend->keyPress(m_key);
-        m_isPressed = true;
+        if (!g_backend) return;
+        if (bool expected = false; m_isPressed.compare_exchange_strong(expected, true))
+        {
+            std::shared_lock lock(m_keyMutex);
+            g_backend->keyPress(m_key);
+        }
     }
 
     void KeyHandler::release()
     {
-        if (!m_isPressed || !g_backend) return;
-        g_backend->keyRelease(m_key);
-        m_isPressed = false;
+        if (!g_backend) return;
+        if (bool expected = true; m_isPressed.compare_exchange_strong(expected, false))
+        {
+            std::shared_lock lock(m_keyMutex);
+            g_backend->keyRelease(m_key);
+        }
     }
 
     void MouseHandler::press()
     {
-        if (m_isPressed || !g_backend) return;
-        g_backend->mousePress(m_mouse);
-        m_isPressed = true;
+        if (!g_backend) return;
+        if (bool expected = false; m_isPressed.compare_exchange_strong(expected, true))
+        {
+            std::shared_lock lock(m_mouseMutex);
+            g_backend->mousePress(m_mouse);
+        }
     }
 
     void MouseHandler::release()
     {
-        if (!m_isPressed || !g_backend) return;
-        g_backend->mouseRelease(m_mouse);
-        m_isPressed = false;
+        if (!g_backend) return;
+        if (bool expected = true; m_isPressed.compare_exchange_strong(expected, false))
+        {
+            std::shared_lock lock(m_mouseMutex);
+            g_backend->mouseRelease(m_mouse);
+        }
     }
 }

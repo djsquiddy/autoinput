@@ -30,27 +30,27 @@ namespace autoinput
         virtual void press() = 0;
         virtual void release() = 0;
         [[nodiscard]] virtual std::string getName() const = 0;
-        [[nodiscard]] bool isPressed() const { return m_isPressed; }
+        [[nodiscard]] bool isPressed() const { return m_isPressed.load(); }
 
     protected:
         std::atomic<bool> m_isActive{ false };
         std::atomic<bool> m_isPaused{ false };
-        bool m_isPressed{ false };
+        std::atomic<bool> m_isPressed{ false };
         std::unique_ptr<std::thread> m_autoclickerThread{ nullptr };
 
         friend class Program;
     };
 
     inline InputHandler::InputHandler(const InputHandler& rhs)
-        : m_isPressed{ rhs.m_isPressed }
     {
+        m_isPressed.store(rhs.m_isPressed.load());
         m_isActive.store(rhs.m_isActive.load());
         m_isPaused.store(rhs.m_isPaused.load());
     }
 
     inline InputHandler::InputHandler(InputHandler&& rhs) noexcept
-        : m_isPressed{ rhs.m_isPressed }
     {
+        m_isPressed.store(rhs.m_isPressed.load());
         m_isActive.store(rhs.m_isActive.load());
         m_isPaused.store(rhs.m_isPaused.load());
     }
@@ -59,7 +59,7 @@ namespace autoinput
     {
         if (this != &rhs)
         {
-            m_isPressed = rhs.m_isPressed;
+            m_isPressed.store(rhs.m_isPressed.load());
             m_isActive.store(rhs.m_isActive.load());
             m_isPaused.store(rhs.m_isPaused.load());
         }
@@ -70,7 +70,7 @@ namespace autoinput
     {
         if (this != &rhs)
         {
-            m_isPressed = rhs.m_isPressed;
+            m_isPressed.store(rhs.m_isPressed.load());
             m_isActive.store(rhs.m_isActive.load());
             m_isPaused.store(rhs.m_isPaused.load());
         }

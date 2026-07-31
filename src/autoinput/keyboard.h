@@ -42,15 +42,28 @@ namespace autoinput
     public:
         KeyHandler() = default;
         explicit KeyHandler(Key key) : m_key{std::move(key)} {}
-        KeyHandler(const KeyHandler& rhs) = default;
+        KeyHandler(const KeyHandler& rhs);
         KeyHandler(KeyHandler&& rhs) noexcept;
         KeyHandler& operator=(const KeyHandler& rhs);
         KeyHandler& operator=(KeyHandler&& rhs) noexcept;
 
-        [[nodiscard]] std::string getName() const override { return m_key.toString(); }
-        [[nodiscard]] std::string getKeyValue() const { return m_key.toString(); }
+        [[nodiscard]] std::string getName() const override
+        {
+            std::shared_lock lock(m_keyMutex);
+            return m_key.toString();
+        }
 
-        [[nodiscard]] Key getKey() const { return m_key; }
+        [[nodiscard]] std::string getKeyValue() const
+        {
+            std::shared_lock lock(m_keyMutex);
+            return m_key.toString();
+        }
+
+        [[nodiscard]] Key getKey() const
+        {
+            std::shared_lock lock(m_keyMutex);
+            return m_key;
+        }
 
         void togglePressState() override;
 
@@ -61,6 +74,7 @@ namespace autoinput
 
     private:
         Key m_key{};
+        mutable std::shared_mutex m_keyMutex;
     };
 
     template<>
@@ -73,10 +87,18 @@ namespace autoinput
         }
     };
 
+    inline KeyHandler::KeyHandler(const KeyHandler& rhs)
+        : InputHandler(rhs)
+    {
+        std::shared_lock lock(rhs.m_keyMutex);
+        m_key = rhs.m_key;
+    }
+
     inline KeyHandler::KeyHandler(KeyHandler&& rhs) noexcept
         : InputHandler(std::move(rhs))
-        , m_key{ std::move(rhs.m_key) }
     {
+        std::unique_lock lock(rhs.m_keyMutex);
+        m_key = std::move(rhs.m_key);
     }
 
     inline KeyHandler& KeyHandler::operator=(KeyHandler&& rhs) noexcept
@@ -86,8 +108,12 @@ namespace autoinput
             return *this;
         }
 
+        std::unique_lock lock1(m_keyMutex, std::defer_lock);
+        std::unique_lock lock2(rhs.m_keyMutex, std::defer_lock);
+        std::lock(lock1, lock2);
+
         InputHandler::operator=(std::move(rhs));
-        this->m_key = rhs.m_key;
+        this->m_key = std::move(rhs.m_key);
         return *this;
     }
 
@@ -97,6 +123,10 @@ namespace autoinput
         {
             return *this;
         }
+
+        std::unique_lock lock1(m_keyMutex, std::defer_lock);
+        std::shared_lock lock2(rhs.m_keyMutex, std::defer_lock);
+        std::lock(lock1, lock2);
 
         InputHandler::operator=(rhs);
         this->m_key = rhs.m_key;
@@ -116,6 +146,14 @@ namespace autoinput
 
     inline bool KeyHandler::operator==(const KeyHandler& rhs) const
     {
+        if (this == &rhs)
+        {
+            return true;
+        }
+
+        std::shared_lock lock1(m_keyMutex, std::defer_lock);
+        std::shared_lock lock2(rhs.m_keyMutex, std::defer_lock);
+        std::lock(lock1, lock2);
         return this->m_key == rhs.m_key;
     }
 }
