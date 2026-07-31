@@ -1,8 +1,8 @@
 @echo off
 setlocal
 set "CURRENT_DIR=%~dp0"
-set "BuildType=Release"
-set "BuildType=Debug"
+set "BuildType=%~1"
+if "%BuildType%"=="" set "BuildType=Release"
 
 pushd "%CURRENT_DIR%\.."
 
@@ -19,7 +19,7 @@ pushd "%CURRENT_DIR%\.."
         ninja || goto :end
         echo Finished rebuilding.
         echo Running tests...
-        .\autoinput_tests.exe || goto :end
+        .\bin\autoinput_tests.exe || goto :end
         echo Finished running tests.
     popd
 popd

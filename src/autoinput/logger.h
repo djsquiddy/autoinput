@@ -60,8 +60,9 @@ namespace autoinput
         std::format_string<Args...> value;
         std::source_location loc;
 
+        // ReSharper disable once CppNonExplicitConvertingConstructor
         template <typename T>
-        explicit consteval Fmt(const T& s, const std::source_location l = std::source_location::current())
+        consteval Fmt(const T& s, const std::source_location l = std::source_location::current())
             : value(s)
             , loc(l)
         {
@@ -77,73 +78,38 @@ namespace autoinput
         Logger(Logger&&) = delete;
         Logger& operator=(Logger&&) = delete;
 
-        static Logger& instance()
-        {
-            static Logger instance;
-            return instance;
-        }
+        static Logger& instance();
 
         // Generic log method with format arguments
-        static void log(const LogLevel level, const std::string_view msg, const std::source_location loc = std::source_location::current())
-        {
-            instance().log_impl(level, msg, loc);
-        }
+        static void log(LogLevel level, std::string_view msg, std::source_location loc = std::source_location::current());
 
         template <typename... Args>
-        static void log(const LogLevel level, Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
-        {
-            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
-            instance().log_impl(level, msg, fmt.loc);
-        }
+        static void log(LogLevel level, Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
 
         // Convenience wrappers for specific levels
         static void print(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
-        static void print(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
-        {
-            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
-            instance().log_impl(LogLevel::Print, msg, fmt.loc);
-        }
+        static void print(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
 
         static void info(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
-        static void info(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
-        {
-            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
-            instance().log_impl(LogLevel::Info, msg, fmt.loc);
-        }
+        static void info(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
 
         static void debug(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
-        static void debug(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
-        {
-            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
-            instance().log_impl(LogLevel::Debug, msg, fmt.loc);
-        }
+        static void debug(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
 
         static void warn(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
-        static void warn(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
-        {
-            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
-            instance().log_impl(LogLevel::Warning, msg, fmt.loc);
-        }
+        static void warn(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
 
         static void error(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
-        static void error(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
-        {
-            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
-            instance().log_impl(LogLevel::Error, msg, fmt.loc);
-        }
+        static void error(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
 
         static void fatal(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
-        static void fatal(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
-        {
-            const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
-            instance().log_impl(LogLevel::Fatal, msg, fmt.loc);
-        }
+        static void fatal(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
 
         static LogStream debugStream(std::source_location loc = std::source_location::current());
         static LogStream printStream(std::source_location loc = std::source_location::current());
@@ -181,6 +147,55 @@ namespace autoinput
         std::ofstream m_fileStream;
         mutable std::mutex m_mutex;
     };
+
+    template <typename ... Args>
+    void Logger::log(const LogLevel level, Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
+    {
+        const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+        instance().log_impl(level, msg, fmt.loc);
+    }
+
+    template <typename ... Args>
+    void Logger::print(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
+    {
+        const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+        instance().log_impl(LogLevel::Print, msg, fmt.loc);
+    }
+
+    template <typename ... Args>
+    void Logger::info(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
+    {
+        const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+        instance().log_impl(LogLevel::Info, msg, fmt.loc);
+    }
+
+    template <typename ... Args>
+    void Logger::debug(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
+    {
+        const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+        instance().log_impl(LogLevel::Debug, msg, fmt.loc);
+    }
+
+    template <typename ... Args>
+    void Logger::warn(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
+    {
+        const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+        instance().log_impl(LogLevel::Warning, msg, fmt.loc);
+    }
+
+    template <typename ... Args>
+    void Logger::error(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
+    {
+        const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+        instance().log_impl(LogLevel::Error, msg, fmt.loc);
+    }
+
+    template <typename ... Args>
+    void Logger::fatal(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
+    {
+        const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+        instance().log_impl(LogLevel::Fatal, msg, fmt.loc);
+    }
 }
 
 // ReSharper disable CppMemberFunctionMayBeStatic

@@ -122,6 +122,17 @@ namespace autoinput
         return {instance(), LogLevel::Print, loc};
     }
 
+    Logger& Logger::instance()
+    {
+        static Logger instance;
+        return instance;
+    }
+
+    void Logger::log(const LogLevel level, const std::string_view msg, const std::source_location loc)
+    {
+        instance().log_impl(level, msg, loc);
+    }
+
     void Logger::print(const std::string_view msg, const std::source_location loc)
     {
         instance().log_impl(LogLevel::Print, msg, loc);

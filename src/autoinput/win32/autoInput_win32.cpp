@@ -10,7 +10,6 @@
 #include "autoinput/types.h"
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
-
 #include "internalData_win32.h"
 
 namespace autoinput
@@ -26,7 +25,7 @@ namespace autoinput
         {
             DWORD g_mainThreadId = 0;
 
-            BOOL WINAPI ConsoleHandler(DWORD dwType)
+            BOOL WINAPI ConsoleHandler(const DWORD dwType)
             {
                 if (dwType == CTRL_C_EVENT)
                 {
