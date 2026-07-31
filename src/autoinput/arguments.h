@@ -26,6 +26,7 @@ namespace autoinput
 
         [[nodiscard]] std::chrono::milliseconds getPressDelay() const;
         [[nodiscard]] std::chrono::milliseconds getReleaseDelay() const;
+        [[nodiscard]] std::string toString(bool isPressWait) const;
         bool parseWaitTimeDelay(std::string_view waitTimeDelayArg, bool isPressWait);
     };
 
@@ -41,6 +42,7 @@ namespace autoinput
         std::vector<ActionState> targetActions{};
         std::string endKey{};
         std::string applicationName{};
+        std::string saveConfigName{};
         std::vector<std::string> blacklist{};
         bool listApplications{ false };
         ActionState actionState{ ActionState::INVALID };
@@ -50,6 +52,7 @@ namespace autoinput
 
         [[nodiscard]] bool postParseArguments();
         void printUsage(bool verbose = false) const;
+        [[nodiscard]] ConfigData toConfigData() const;
 
         bool parseConfigArguments(gsl::span<char*> args, int& i);
         bool parseActionState(gsl::span<char*> args, int& i);

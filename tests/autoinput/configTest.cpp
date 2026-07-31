@@ -82,7 +82,8 @@ end = "f3"
         const std::optional<ConfigData> configData = loadConfigData(path);
 
         ASSERT_TRUE(configData.has_value());
-        EXPECT_EQ(configData->action, "click");
+        ASSERT_EQ(configData->commands.size(), 1);
+        EXPECT_EQ(configData->commands[0].action, "click");
         EXPECT_EQ(configData->endKey, "f3");
 
         std::filesystem::remove(path);
@@ -106,8 +107,9 @@ release = "1s..2s"
         const std::optional<ConfigData> configData = loadConfigData(path);
 
         ASSERT_TRUE(configData.has_value());
-        EXPECT_EQ(configData->pressWait, "100ms..250ms");
-        EXPECT_EQ(configData->releaseWait, "1s..2s");
+        ASSERT_EQ(configData->commands.size(), 1);
+        EXPECT_EQ(configData->commands[0].pressWait, "100ms..250ms");
+        EXPECT_EQ(configData->commands[0].releaseWait, "1s..2s");
 
         std::filesystem::remove(path);
     }
@@ -126,11 +128,12 @@ start = ["f2", "f4"]
         const std::optional<ConfigData> configData = loadConfigData(path);
 
         ASSERT_TRUE(configData.has_value());
-        ASSERT_EQ(configData->buttons.size(), 1);
-        EXPECT_EQ(configData->buttons[0], "left");
-        ASSERT_EQ(configData->startKeys.size(), 2);
-        EXPECT_EQ(configData->startKeys[0], "f2");
-        EXPECT_EQ(configData->startKeys[1], "f4");
+        ASSERT_EQ(configData->commands.size(), 1);
+        ASSERT_EQ(configData->commands[0].buttons.size(), 1);
+        EXPECT_EQ(configData->commands[0].buttons[0], "left");
+        ASSERT_EQ(configData->commands[0].startKeys.size(), 2);
+        EXPECT_EQ(configData->commands[0].startKeys[0], "f2");
+        EXPECT_EQ(configData->commands[0].startKeys[1], "f4");
 
         std::filesystem::remove(path);
     }
@@ -149,11 +152,12 @@ start = "f2"
         const std::optional<ConfigData> configData = loadConfigData(path);
 
         ASSERT_TRUE(configData.has_value());
-        ASSERT_EQ(configData->buttons.size(), 2);
-        EXPECT_EQ(configData->buttons[0], "left");
-        EXPECT_EQ(configData->buttons[1], "right");
-        ASSERT_EQ(configData->startKeys.size(), 1);
-        EXPECT_EQ(configData->startKeys[0], "f2");
+        ASSERT_EQ(configData->commands.size(), 1);
+        ASSERT_EQ(configData->commands[0].buttons.size(), 2);
+        EXPECT_EQ(configData->commands[0].buttons[0], "left");
+        EXPECT_EQ(configData->commands[0].buttons[1], "right");
+        ASSERT_EQ(configData->commands[0].startKeys.size(), 1);
+        EXPECT_EQ(configData->commands[0].startKeys[0], "f2");
 
         std::filesystem::remove(path);
     }
@@ -171,9 +175,10 @@ key = ["a", "b"]
         const std::optional<ConfigData> configData = loadConfigData(path);
 
         ASSERT_TRUE(configData.has_value());
-        ASSERT_EQ(configData->keys.size(), 2);
-        EXPECT_EQ(configData->keys[0], "a");
-        EXPECT_EQ(configData->keys[1], "b");
+        ASSERT_EQ(configData->commands.size(), 1);
+        ASSERT_EQ(configData->commands[0].keys.size(), 2);
+        EXPECT_EQ(configData->commands[0].keys[0], "a");
+        EXPECT_EQ(configData->commands[0].keys[1], "b");
 
         std::filesystem::remove(path);
     }
@@ -210,7 +215,7 @@ blacklist = ["game.exe", "other.exe"]
         const std::optional<ConfigData> configData = loadConfigData(path);
 
         ASSERT_TRUE(configData.has_value());
-        EXPECT_EQ(configData->blacklist.size(), 2);
+        ASSERT_EQ(configData->blacklist.size(), 2);
         EXPECT_EQ(configData->blacklist[0], "game.exe");
         EXPECT_EQ(configData->blacklist[1], "other.exe");
 
@@ -231,8 +236,54 @@ blacklist = "only.exe"
         const std::optional<ConfigData> configData = loadConfigData(path);
 
         ASSERT_TRUE(configData.has_value());
-        EXPECT_EQ(configData->blacklist.size(), 1);
+        ASSERT_EQ(configData->blacklist.size(), 1);
         EXPECT_EQ(configData->blacklist[0], "only.exe");
+
+        std::filesystem::remove(path);
+    }
+
+    TEST(ConfigTest, LoadConfigDataParsesMultipleCommands)
+    {
+        const std::filesystem::path path = makeTemporaryConfigFile(
+            "autoinput_config_multi_command_test.toml",
+            R"toml(
+end = "f10"
+application = "notepad.exe"
+blacklist = ["discord.exe"]
+
+[[command]]
+action = "click"
+button = "left"
+start = "f8"
+
+[[command]]
+action = "hold"
+key = "a"
+start = "f9"
+)toml"
+        );
+
+        const std::optional<ConfigData> configData = loadConfigData(path);
+
+        ASSERT_TRUE(configData.has_value());
+        ASSERT_EQ(configData->commands.size(), 2);
+
+        EXPECT_EQ(configData->commands[0].action, "click");
+        ASSERT_EQ(configData->commands[0].buttons.size(), 1);
+        EXPECT_EQ(configData->commands[0].buttons[0], "left");
+        ASSERT_EQ(configData->commands[0].startKeys.size(), 1);
+        EXPECT_EQ(configData->commands[0].startKeys[0], "f8");
+
+        EXPECT_EQ(configData->commands[1].action, "hold");
+        ASSERT_EQ(configData->commands[1].keys.size(), 1);
+        EXPECT_EQ(configData->commands[1].keys[0], "a");
+        ASSERT_EQ(configData->commands[1].startKeys.size(), 1);
+        EXPECT_EQ(configData->commands[1].startKeys[0], "f9");
+
+        EXPECT_EQ(configData->endKey, "f10");
+        EXPECT_EQ(configData->application, "notepad.exe");
+        ASSERT_EQ(configData->blacklist.size(), 1);
+        EXPECT_EQ(configData->blacklist[0], "discord.exe");
 
         std::filesystem::remove(path);
     }

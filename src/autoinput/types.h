@@ -208,6 +208,7 @@ namespace autoinput
     MouseButton mouseButtonFromArguments(std::string_view button);
     std::string mouseButtonToString(const MouseButton& mouseButton);
     int32_t parseStringToInt(std::string_view value);
+    std::string actionStateToString(ActionState actionState);
 }
 
 // ReSharper disable CppMemberFunctionMayBeStatic

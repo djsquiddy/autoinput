@@ -15,15 +15,20 @@
 
 namespace autoinput
 {
-    struct ConfigData
+    struct CommandData
     {
         std::string action;
         std::vector<std::string> buttons;
         std::vector<std::string> keys;
         std::vector<std::string> startKeys;
-        std::string endKey;
         std::string pressWait;
         std::string releaseWait;
+    };
+
+    struct ConfigData
+    {
+        std::vector<CommandData> commands;
+        std::string endKey;
         std::string application;
         std::vector<std::string> blacklist;
     };
@@ -32,6 +37,7 @@ namespace autoinput
     std::filesystem::path getUserConfigsPath();
     std::filesystem::path getConfigFilePath(const std::string& filePath);
     std::optional<ConfigData> loadConfigData(const std::filesystem::path& configPath);
+    bool saveConfigData(const ConfigData& configData, const std::filesystem::path& configPath);
     bool doesConfigDataExists(const std::filesystem::path& configPath);
 
     template <typename node_type, typename date_type>

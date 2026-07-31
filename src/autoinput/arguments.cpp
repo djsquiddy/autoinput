@@ -35,6 +35,27 @@ namespace autoinput
         return std::chrono::milliseconds(distribution(gen));
     }
 
+    std::string WaitDelayData::toString(const bool isPressWait) const
+    {
+        auto formatDuration = [](const std::chrono::milliseconds ms) -> std::string {
+            if (ms.count() == 0) return "0ms";
+            if (ms.count() % 60000 == 0) return std::to_string(ms.count() / 60000) + "m";
+            if (ms.count() % 1000 == 0) return std::to_string(ms.count() / 1000) + "s";
+            return std::to_string(ms.count()) + "ms";
+        };
+
+        if (isPressWait)
+        {
+            if (!hasPress) return "";
+            if (usePressRange) return formatDuration(minWaitPressDelay) + ".." + formatDuration(maxWaitPressDelay);
+            return formatDuration(minWaitPressDelay);
+        }
+        
+        if (!hasRelease) return "";
+        if (useReleaseRange) return formatDuration(minWaitReleaseDelay) + ".." + formatDuration(maxWaitReleaseDelay);
+        return formatDuration(minWaitReleaseDelay);
+    }
+
     bool WaitDelayData::parseWaitTimeDelay(std::string_view waitTimeDelayArg, const bool isPressWait)
     {
         if (waitTimeDelayArg.empty())
@@ -147,11 +168,13 @@ namespace autoinput
         if (isPressWait)
         {
             hasPress = true;
+            usePressRange = false;
             minWaitPressDelay = maxWaitPressDelay = waitNumber.getMilliseconds();
         }
         else
         {
             hasRelease = true;
+            useReleaseRange = false;
             minWaitReleaseDelay = maxWaitReleaseDelay = waitNumber.getMilliseconds();
         }
         return true;
@@ -288,9 +311,19 @@ namespace autoinput
             {
                 listApplications = true;
             }
+            else if (arg == "-S" || arg == "--save-config")
+            {
+                saveConfigName = safeGetNextArgument(++i, args);
+                if (saveConfigName.empty())
+                {
+                    printUsage();
+                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    return false;
+                }
+            }
             else if (arg == "-w" || arg == "--wait" || arg == "--press-wait" || arg == "--release-wait")
             {
-                if (arg.contains("press"))
+                if (arg == "-w" || arg == "--wait" || arg.contains("press"))
                 {
                     if (!parsePressWaitTime(args, i))
                     {
@@ -477,7 +510,7 @@ namespace autoinput
 
     void ProgramArguments::printUsage(const bool verbose) const
     {
-        Logger::print("usage {} [-h] [{{click,hold}}] [{{left,right,middle,key}} ...] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME]\n\n", programName);
+        Logger::print("usage {} [-h] [{{click,hold}}] [{{left,right,middle,key}} ...] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME] [-S SAVE_CONFIG_NAME]\n\n", programName);
         Logger::print("options\n");
         const auto optionPrefix = std::string(4, ' ');
         const auto optionUsagePrefix = std::string(10, ' ');
@@ -508,6 +541,8 @@ namespace autoinput
         Logger::print("{} Do not run when this application is in focus.\n", optionUsagePrefix);
         Logger::print("{} -L, --list-apps\n", optionPrefix);
         Logger::print("{} List all currently running application names and exit.\n", optionUsagePrefix);
+        Logger::print("{} -S, --save-config SAVE_CONFIG_NAME\n", optionPrefix);
+        Logger::print("{} Save the current configuration into a named configuration in the user configurations and exit.\n", optionUsagePrefix);
         Logger::print("{} -w, --wait WAIT_TIME\n", optionPrefix);
         Logger::print("{} Max duration to wait before auto clicking. {}\n", optionUsagePrefix, bold("Type must be set to click"));
         Logger::print("{} Can use a time range by using {{min}}..{{max}} with each click being random between the range. See examples for usage.\n", optionUsagePrefix);
@@ -584,6 +619,47 @@ namespace autoinput
         Logger::flush();
     }
 
+    ConfigData ProgramArguments::toConfigData() const
+    {
+        ConfigData data;
+        data.endKey = endKey;
+        data.application = applicationName;
+        data.blacklist = blacklist;
+
+        const size_t buttonCount = buttons.size();
+        const size_t keyCount = keys.size();
+        const size_t targetCount = buttonCount + keyCount;
+        const size_t actionCount = targetActions.size();
+        const size_t startKeyCount = startKeys.size();
+
+        for (size_t i = 0; i < targetCount; ++i)
+        {
+            CommandData cmd;
+            cmd.action = actionStateToString(i < actionCount ? targetActions[i] : ActionState::CLICK);
+
+            if (i < buttonCount)
+            {
+                cmd.buttons.push_back(buttons[i].toString());
+            }
+            else
+            {
+                cmd.keys.push_back(keys[i - buttonCount].toString());
+            }
+
+            if (i < startKeyCount)
+            {
+                cmd.startKeys.push_back(startKeys[i]);
+            }
+
+            cmd.pressWait = delayData.toString(true);
+            cmd.releaseWait = delayData.toString(false);
+
+            data.commands.push_back(std::move(cmd));
+        }
+
+        return data;
+    }
+
     bool ProgramArguments::parseConfigArguments(gsl::span<char*> args, int& i)
     {
         // TODO: implement
@@ -605,22 +681,17 @@ namespace autoinput
         if (const auto foundConfigData = autoinput::loadConfigData(configPath); foundConfigData.has_value())
         {
             const auto& configData = *foundConfigData;
-            if (!configData.action.empty())
+            for (const auto& cmd : configData.commands)
             {
-                actionState = actionStateFromArguments(configData.action);
-                if (actionState == ActionState::INVALID)
-                {
-                    Logger::fatal("Invalid parameter {} for action type. Choices: {{click,hold}}\n", configData.action);
-                    return false;
-                }
-            }
-            if (!configData.buttons.empty())
-            {
-                for (auto& button : configData.buttons)
+                const auto state = actionStateFromArguments(cmd.action);
+                const auto action = state != ActionState::INVALID ? state : ActionState::CLICK;
+
+                for (const auto& button : cmd.buttons)
                 {
                     if (const auto mouse = Mouse::fromString(button); mouse.button != MouseButton::NONE)
                     {
-                        buttons.emplace_back(mouse);
+                        buttons.push_back(mouse);
+                        targetActions.push_back(action);
                     }
                     else
                     {
@@ -629,23 +700,36 @@ namespace autoinput
                         return false;
                     }
                 }
-            }
+
 #if AUTOINPUT_HOOK_KEYBOARD_ENABLED
-            if (!configData.keys.empty())
-            {
-                for (auto& key : configData.keys)
+                for (const auto& key : cmd.keys)
                 {
-                    keys.emplace_back(Key::fromString(key));
+                    keys.push_back(Key::fromString(key));
+                    targetActions.push_back(action);
                 }
-            }
 #endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
-            if (!configData.startKeys.empty())
-            {
-                for (auto& key : configData.startKeys)
+
+                for (const auto& startKey : cmd.startKeys)
                 {
-                    startKeys.emplace_back(key);
+                    startKeys.push_back(startKey);
+                }
+
+                if (!cmd.pressWait.empty())
+                {
+                    if (const auto isValidWaitDelay = delayData.parseWaitTimeDelay(cmd.pressWait, true); !isValidWaitDelay)
+                    {
+                        return false;
+                    }
+                }
+                if (!cmd.releaseWait.empty())
+                {
+                    if (const auto isValidWaitDelay = delayData.parseWaitTimeDelay(cmd.releaseWait, false); !isValidWaitDelay)
+                    {
+                        return false;
+                    }
                 }
             }
+
             if (!configData.endKey.empty())
             {
                 endKey = configData.endKey;
@@ -657,20 +741,6 @@ namespace autoinput
             if (!configData.blacklist.empty())
             {
                 blacklist.insert(blacklist.end(), configData.blacklist.begin(), configData.blacklist.end());
-            }
-            if (!configData.pressWait.empty())
-            {
-                if (const auto isValidWaitDelay = delayData.parseWaitTimeDelay(configData.pressWait, true); !isValidWaitDelay)
-                {
-                    return false;
-                }
-            }
-            if (!configData.releaseWait.empty())
-            {
-                if (const auto isValidWaitDelay = delayData.parseWaitTimeDelay(configData.releaseWait, false); !isValidWaitDelay)
-                {
-                    return false;
-                }
             }
         }
 

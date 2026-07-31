@@ -214,6 +214,20 @@ namespace autoinput
         return ActionState::INVALID;
     }
 
+    std::string actionStateToString(const ActionState actionState)
+    {
+        switch (actionState)
+        {
+        case ActionState::CLICK:
+            return "click";
+        case ActionState::HOLD:
+            return "hold";
+        case ActionState::INVALID:
+        default:
+            return "invalid";
+        }
+    }
+
     MouseButton mouseButtonFromArguments(const std::string_view button)
     {
         if (button == "l" || button == "left")

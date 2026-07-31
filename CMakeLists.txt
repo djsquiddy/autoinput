@@ -219,6 +219,7 @@ add_executable(${PROJECT_NAME}_tests
         tests/autoinput/signalCleanupTest.cpp
         tests/autoinput/mouseModifierTest.cpp
         tests/autoinput/userSettingsTest.cpp
+        tests/autoinput/saveConfigTest.cpp
         ${PROJECT_SOURCES}
 )
 

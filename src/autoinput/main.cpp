@@ -42,6 +42,39 @@ int main(int argc, char* argv[])
             return static_cast<int>(ErrorCode::SUCCESS);
         }
 
+        if (!g_program->arguments().saveConfigName.empty())
+        {
+            const std::string& saveConfigName = g_program->arguments().saveConfigName;
+            std::filesystem::path dumpPath = getUserConfigsPath();
+            if (dumpPath.empty())
+            {
+                Logger::fatal("Could not determine user configuration directory.\n");
+                return static_cast<int>(ErrorCode::FAILED_TO_LOAD_CONFIG);
+            }
+
+            if (!std::filesystem::exists(dumpPath))
+            {
+                std::filesystem::create_directories(dumpPath);
+            }
+
+            std::string fileName = saveConfigName;
+            if (!fileName.ends_with(".toml"))
+            {
+                fileName += ".toml";
+            }
+            dumpPath /= fileName;
+
+            const ConfigData configData = g_program->arguments().toConfigData();
+            if (saveConfigData(configData, dumpPath))
+            {
+                std::cout << "Configuration saved to " << dumpPath.string() << "\n";
+                return static_cast<int>(ErrorCode::SUCCESS);
+            }
+            
+            Logger::fatal("Failed to save configuration to {}\n", dumpPath.string());
+            return static_cast<int>(ErrorCode::FAILED_TO_LOAD_CONFIG);
+        }
+
         g_program->init();
         g_program->printProgramInfo();
         platform::setupSignalHandler();
