@@ -31,6 +31,7 @@ namespace autoinput
         std::string endKey;
         std::string application;
         std::vector<std::string> blacklist;
+        bool appendBlacklist = true;
     };
 
     const std::filesystem::path& getConfigsPath();

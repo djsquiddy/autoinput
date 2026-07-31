@@ -123,6 +123,27 @@ blacklist = ["app3.exe"]
         EXPECT_EQ(defaults.blacklist[0], "app3.exe");
     }
 
+    TEST_F(UserSettingsTest, UserBlacklistAppendsToBuiltinBlacklistWhenFlagIsSet)
+    {
+        createSettingsFile(m_builtinConfigsDir / "settings.toml", R"toml(
+blacklist = ["app1.exe", "app2.exe"]
+)toml");
+
+        createSettingsFile(m_tempHome / ".autoinput" / "settings.toml", R"toml(
+appendBlacklist = true
+blacklist = ["app3.exe"]
+)toml");
+
+        Settings settings;
+        ASSERT_TRUE(settings.load());
+
+        const auto& defaults = settings.getDefaults();
+        ASSERT_EQ(defaults.blacklist.size(), 3);
+        EXPECT_EQ(defaults.blacklist[0], "app1.exe");
+        EXPECT_EQ(defaults.blacklist[1], "app2.exe");
+        EXPECT_EQ(defaults.blacklist[2], "app3.exe");
+    }
+
     TEST_F(UserSettingsTest, LoadReturnsTrueIfOnlyUserLevelExists)
     {
         createSettingsFile(m_tempHome / ".autoinput" / "settings.toml", R"toml(

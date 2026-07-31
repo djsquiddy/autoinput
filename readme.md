@@ -9,7 +9,8 @@ A versatile C++ utility for automating mouse and keyboard input on Windows and L
 - **Flexible Triggering**: Start and stop actions using global hotkeys.
 - **Focus Management**: Ability to whitelist or blacklist specific applications to prevent automation from running when they are in focus.
 - **Delay Randomization**: Support for randomized press and release delays (e.g., `500ms..1s`).
-- **Configuration Support**: Load complex action mappings from TOML files. The program automatically looks for a `configs/` directory relative to its executable.
+- **Configuration Support**: Load complex action mappings from TOML files. The program looks for configurations in the `configs/` directory relative to its executable and in the user-level directory (`~/.autoinput/` on Linux, `%USERPROFILE%/.autoinput/` on Windows). User-level configurations in `settings.toml` automatically override built-in defaults.
+- **Multi-command Support**: Run multiple independent automation commands simultaneously from a single configuration file.
 - **Safety First**: Integrated with Microsoft GSL for robust memory management.
 - **Cross-platform Support**: Works on Windows (via `SendInput`), Linux X11 (via `XTest`), and Linux Wayland (via `uinput`).
 
@@ -77,6 +78,7 @@ autoinput [options]
 - `--release-wait RANGE`: Randomized delay between actions (e.g., `1s..2s`).
 - `-c, --config FILE`: Load settings from a TOML configuration file.
 - `-l, --log LEVEL`: Set logging level (debug, info, warning, error).
+- `-S, --save-config NAME`: Save the current active configuration to the user-level configuration directory as `NAME.toml`.
 
 #### Examples
 
@@ -115,19 +117,44 @@ autoinput [options]
     autoinput -c core-keeper-fishing
     ```
 
-### Configuration Format
+8.  **Save current setup to a user configuration**:
+    ```bash
+    autoinput hold left f2 --press-wait 100ms..200ms --save-config my-setup
+    ```
 
-Settings can be defined in `.toml` files. The program looks for these in a `configs/` directory located next to the `autoinput` binary:
+### Configuration
+
+The application supports loading settings from TOML files.
+
+#### Locations
+
+1.  **Built-in**: The `configs/` directory next to the executable.
+2.  **User**: `~/.autoinput/` (Linux) or `%USERPROFILE%/.autoinput/` (Windows).
+
+The `settings.toml` file in the user directory is automatically loaded and takes precedence over the built-in `settings.toml`.
+
+#### Format
+
+You can define one or more commands using `[[command]]` blocks. Global settings like `end`, `application` (whitelist), and `blacklist` can be defined at the top level.
 
 ```toml
-[command]
-action = 'click'
-button = 'right'
-start = 'f2'
+# Global settings
 end = 'f3'
-blacklist = ['notepad.exe', 'calculator.exe']
+application = 'MyGame.exe'
+blacklist = ['overlay.exe']
+appendBlacklist = true # Set to false to replace the existing blacklist instead of appending
+
+[[command]]
+action = 'click'
+button = 'left'
+start = 'f2'
 
 [command.time]
-press = '500ms..750ms'
-release = '4s..6s'
+press = '10ms..50ms'
+release = '1s..2s'
+
+[[command]]
+action = 'hold'
+button = 'right'
+start = 'f4'
 ```

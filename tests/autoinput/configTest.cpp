@@ -218,6 +218,7 @@ blacklist = ["game.exe", "other.exe"]
         ASSERT_EQ(configData->blacklist.size(), 2);
         EXPECT_EQ(configData->blacklist[0], "game.exe");
         EXPECT_EQ(configData->blacklist[1], "other.exe");
+        EXPECT_TRUE(configData->appendBlacklist);
 
         std::filesystem::remove(path);
     }
@@ -230,6 +231,7 @@ blacklist = ["game.exe", "other.exe"]
 [command]
 action = "click"
 blacklist = "only.exe"
+appendBlacklist = false
 )toml"
         );
 
@@ -238,6 +240,7 @@ blacklist = "only.exe"
         ASSERT_TRUE(configData.has_value());
         ASSERT_EQ(configData->blacklist.size(), 1);
         EXPECT_EQ(configData->blacklist[0], "only.exe");
+        EXPECT_FALSE(configData->appendBlacklist);
 
         std::filesystem::remove(path);
     }

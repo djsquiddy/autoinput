@@ -1,2 +1,12 @@
 start = 'f2'
 end = 'f3'
+blacklist = [
+    "Explorer.EXE",
+    "Discord.exe",
+    "WindowsTerminal.exe",
+    "Zed.exe",
+    "cmd.exe",
+    "brave.exe",
+    "steamwebhelper.exe",
+    "clion64.exe"
+]

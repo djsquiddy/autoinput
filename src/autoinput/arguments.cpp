@@ -625,6 +625,9 @@ namespace autoinput
         data.endKey = endKey;
         data.application = applicationName;
         data.blacklist = blacklist;
+        data.appendBlacklist = true; // CLI arguments always append or we don't have enough info to know if they intended to replace.
+        // Actually, we don't store appendBlacklist in ProgramArguments itself.
+        // For now, let's just keep the default true.
 
         const size_t buttonCount = buttons.size();
         const size_t keyCount = keys.size();
@@ -740,6 +743,10 @@ namespace autoinput
             }
             if (!configData.blacklist.empty())
             {
+                if (!configData.appendBlacklist)
+                {
+                    blacklist.clear();
+                }
                 blacklist.insert(blacklist.end(), configData.blacklist.begin(), configData.blacklist.end());
             }
         }

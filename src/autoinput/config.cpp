@@ -89,6 +89,7 @@ namespace autoinput
                 // For backward compatibility, check for global fields inside the single command table
                 tryGetTableValue(cmdNode, "end", configData.endKey);
                 tryGetTableValue(cmdNode, "application", configData.application);
+                tryGetTableValue(cmdNode, "appendBlacklist", configData.appendBlacklist);
 
                 if (const auto blacklistCfg = cmdNode["blacklist"])
                 {
@@ -120,6 +121,7 @@ namespace autoinput
             // Also allow global fields at the top level
             tryGetTableValue(table, "end", configData.endKey);
             tryGetTableValue(table, "application", configData.application);
+            tryGetTableValue(table, "appendBlacklist", configData.appendBlacklist);
             if (const auto blacklistCfg = table["blacklist"])
             {
                 if (blacklistCfg.is_string())
@@ -244,6 +246,7 @@ namespace autoinput
             {
                 command.insert("application", configData.application);
             }
+            command.insert("appendBlacklist", configData.appendBlacklist);
             
             auto insertStringOrArrayToTable = [&](toml::table& target, const std::string_view key, const std::vector<std::string>& values) {
                 if (values.size() == 1)
@@ -282,6 +285,7 @@ namespace autoinput
             {
                 table.insert("application", configData.application);
             }
+            table.insert("appendBlacklist", configData.appendBlacklist);
 
             auto insertStringOrArrayToTable = [&](toml::table& target, const std::string_view key, const std::vector<std::string>& values) {
                 if (values.size() == 1)
