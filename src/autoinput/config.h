@@ -29,6 +29,7 @@ namespace autoinput
     };
 
     const std::filesystem::path& getConfigsPath();
+    std::filesystem::path getUserConfigsPath();
     std::filesystem::path getConfigFilePath(const std::string& filePath);
     std::optional<ConfigData> loadConfigData(const std::filesystem::path& configPath);
     bool doesConfigDataExists(const std::filesystem::path& configPath);

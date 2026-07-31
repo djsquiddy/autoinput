@@ -1,10 +1,10 @@
 /**
- * @file internal_data.h
+ * @file internalData_linux.h
  * @author djsquiddy
  * @date July 2026
  */
-#ifndef INCLUDE_AUTOINPUT_LINUX_INTERNAL_DATA_H
-#define INCLUDE_AUTOINPUT_LINUX_INTERNAL_DATA_H
+#ifndef INCLUDE_AUTOINPUT_LINUX_INTERNALDATA_LINUX_H
+#define INCLUDE_AUTOINPUT_LINUX_INTERNALDATA_LINUX_H
 #pragma once
 
 #include "autoinput/backend.h"
@@ -133,4 +133,4 @@ namespace autoinput
     }
 }
 
-#endif // INCLUDE_AUTOINPUT_LINUX_INTERNAL_DATA_H
+#endif // INCLUDE_AUTOINPUT_LINUX_INTERNALDATA_LINUX_H

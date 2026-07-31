@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "autoinput/keyboard.h"
 #include "autoinput/mouse.h"
-#include "autoinput/linux/internal_data.h"
+#include "autoinput/linux/internalData_linux.h"
 
 // Mock implementations of platform-specific functions
 namespace autoinput

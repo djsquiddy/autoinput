@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "autoinput/backend.h"
-#include "autoinput/linux/internal_data.h"
+#include "autoinput/linux/internalData_linux.h"
 #include "autoinput/logger.h"
 
 #ifdef _WIN32

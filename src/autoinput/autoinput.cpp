@@ -1,9 +1,9 @@
 /**
- * @file autoinput.cpp
+ * @file autoInput.cpp
  * @author djsquiddy
  * @date March 2026
  */
-#include "autoinput.h"
+#include "autoInput.h"
 #include "logger.h"
 #include "platform.h"
 #include "backend.h"

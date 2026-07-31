@@ -38,6 +38,24 @@ cmake ..
 make
 ```
 
+### Shell Completion
+
+#### Clink (Windows)
+
+If you use [Clink](https://chrisant996.github.io/clink/) for `cmd.exe` on Windows, you can enable autocompletion by copying the `scripts/autoinput_completion.lua` file into your Clink scripts directory (usually `%LOCALAPPDATA%\clink`).
+
+#### Zsh (Linux/WSL)
+
+To enable autocompletion in Zsh, add the `scripts/` directory to your `$fpath` in your `~/.zshrc` and initialize completion:
+
+```zsh
+fpath=(/path/to/autoinput/scripts $fpath)
+autoload -Uz compinit
+compinit
+```
+
+Alternatively, you can copy the `scripts/_autoinput` file to a directory already in your `$fpath` (e.g., `/usr/local/share/zsh/site-functions`).
+
 ### Usage
 
 ```bash

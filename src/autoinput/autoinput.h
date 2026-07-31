@@ -1,5 +1,5 @@
 /**
- * @file autoinput.h
+ * @file autoInput.h
  * @author djsquiddy
  * @date March 2026
  */
@@ -10,7 +10,7 @@
 #include "arguments.h"
 #include "mouse.h"
 #include "keyboard.h"
-#include "keyinfo.h"
+#include "keyInfo.h"
 #include "types.h"
 
 namespace autoinput

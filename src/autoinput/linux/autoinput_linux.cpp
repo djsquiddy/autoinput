@@ -1,16 +1,16 @@
 /**
- * @file autoinput_linux.cpp
+ * @file autoInput_linux.cpp
  * @author djsquiddy
  * @date July 2026
  */
-#include "autoinput/autoinput.h"
+#include "autoinput/autoInput.h"
 #include "autoinput/mouse.h"
 #include "autoinput/keyboard.h"
 #include "autoinput/logger.h"
 #include "autoinput/types.h"
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
-#include "internal_data.h"
+#include "internalData_linux.h"
 
 namespace autoinput
 {
@@ -356,6 +356,16 @@ namespace autoinput
                 return std::filesystem::path(buffer).parent_path();
             }
             return std::filesystem::current_path();
+        }
+
+        std::filesystem::path getUserHomePath()
+        {
+            const char* home = std::getenv("HOME");
+            if (home)
+            {
+                return std::filesystem::path(home);
+            }
+            return std::filesystem::path();
         }
     }
 #endif

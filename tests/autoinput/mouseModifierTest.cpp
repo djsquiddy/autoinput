@@ -5,7 +5,7 @@
  */
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "autoinput/autoinput.h"
+#include "autoinput/autoInput.h"
 #include "autoinput/backend.h"
 #include "autoinput/arguments.h"
 

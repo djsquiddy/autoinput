@@ -33,6 +33,11 @@ function(set_if_not_defined variable value)
         set(${variable} "${value}" PARENT_SCOPE)
     endif()
 endfunction()
+function(set_global_if_not_defined var_name default_value doc_string)
+    if(NOT DEFINED ${var_name})
+        set(${var_name} "${default_value}" CACHE PATH "${doc_string}")
+    endif()
+endfunction()
 ######################################################################################################################################
 # Versioning
 ######################################################################################################################################
@@ -53,9 +58,9 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_LIST_DIR}/output/" CACHE PATH "Installation prefix" FORCE)
 endif()
 
-set_if_not_defined(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set_if_not_defined(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set_if_not_defined(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set_global_if_not_defined(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin" "Where to place the executables.")
+set_global_if_not_defined(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" "Where to place compiled dynamic libraries.")
+set_global_if_not_defined(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" "Where to place compiled static libraries.")
 ######################################################################################################################################
 # Program Executables
 ######################################################################################################################################
@@ -128,7 +133,7 @@ endif()
 
 set(PROJECT_SOURCES ${PROJECT_SOURCES}
     src/pch.cpp
-    src/autoinput/autoinput.h
+    src/autoinput/autoInput.h
     src/autoinput/backend.h
     src/autoinput/arguments.cpp
     src/autoinput/arguments.h
@@ -136,9 +141,9 @@ set(PROJECT_SOURCES ${PROJECT_SOURCES}
     src/autoinput/types.cpp
     src/autoinput/mouse.h
     src/autoinput/keyboard.h
-    src/autoinput/keyinfo.h
+    src/autoinput/keyInfo.h
     src/autoinput/platform.h
-    src/autoinput/autoinput.cpp
+    src/autoinput/autoInput.cpp
     src/autoinput/utils.h
     src/autoinput/utils.cpp
     src/autoinput/logger.h
@@ -153,15 +158,15 @@ set(PROJECT_SOURCES ${PROJECT_SOURCES}
 
 if (WIN32)
     set(PROJECT_SOURCES ${PROJECT_SOURCES}
-        src/autoinput/win32/autoinput_windows.cpp
-        src/autoinput/win32/internal_data_win32.h
+        src/autoinput/win32/autoInput_win32.cpp
+        src/autoinput/win32/internalData_win32.h
     )
 elseif (UNIX AND NOT APPLE)
     set(PROJECT_SOURCES ${PROJECT_SOURCES} 
-        src/autoinput/linux/autoinput_linux.cpp
-        src/autoinput/linux/autoinput_x11.cpp
-        src/autoinput/linux/autoinput_wayland.cpp
-        src/autoinput/linux/internal_data.h
+        src/autoinput/linux/autoInput_linux.cpp
+        src/autoinput/linux/autoInput_x11.cpp
+        src/autoinput/linux/autoInput_wayland.cpp
+        src/autoinput/linux/internalData_linux.h
     )
 endif()
 
@@ -210,16 +215,17 @@ add_executable(${PROJECT_NAME}_tests
         tests/autoinput/settingsTest.cpp
         tests/autoinput/handlerTest.cpp
         tests/autoinput/mousePrioritizationTest.cpp
-        tests/autoinput/windowsMouseTest.cpp
+        tests/autoinput/mouseTest_win32.cpp
         tests/autoinput/signalCleanupTest.cpp
         tests/autoinput/mouseModifierTest.cpp
+        tests/autoinput/userSettingsTest.cpp
         ${PROJECT_SOURCES}
 )
 
 if (UNIX AND NOT APPLE)
     target_sources(${PROJECT_NAME}_tests PRIVATE
-        tests/autoinput/linuxBackendTest.cpp
-        tests/autoinput/linuxDispatchTest.cpp
+        tests/autoinput/backendTest_linux.cpp
+        tests/autoinput/dispatchTest_linux.cpp
     )
 endif()
 

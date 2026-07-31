@@ -1,5 +1,5 @@
 /**
- * @file keyinfo.h
+ * @file keyInfo.h
  * @author djsquiddy
  * @date July 2026
  */

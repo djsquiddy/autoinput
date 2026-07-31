@@ -10,16 +10,28 @@ namespace autoinput
 {
     bool Settings::load(const std::optional<std::filesystem::path>& path)
     {
-        const auto settingsPath = path.value_or(getConfigsPath() / "settings.toml");
-        if (!std::filesystem::exists(settingsPath))
+        if (path.has_value())
+        {
+            return loadFromFile(path.value());
+        }
+
+        const bool loadedBuiltIn = loadFromFile(getConfigsPath() / "settings.toml");
+        const bool loadedUser = loadFromFile(getUserConfigsPath() / "settings.toml");
+
+        return loadedBuiltIn || loadedUser;
+    }
+
+    bool Settings::loadFromFile(const std::filesystem::path& path)
+    {
+        if (!std::filesystem::exists(path))
         {
             return false;
         }
 
-        toml::parse_result result = toml::parse_file(settingsPath.string());
+        toml::parse_result result = toml::parse_file(path.string());
         if (!result)
         {
-            Logger::errorStream() << "Parsing settings failed:\n" << result.error();
+            Logger::errorStream() << "Parsing settings failed for " << path << ":\n" << result.error();
             return false;
         }
 
@@ -34,6 +46,7 @@ namespace autoinput
             tryGetTableValue(*defaults, "button", m_defaults.button);
             if (const auto blacklist = defaults->get("blacklist"); blacklist && blacklist->is_array())
             {
+                m_defaults.blacklist.clear();
                 for (auto& item : *blacklist->as_array())
                 {
                     if (item.is_string())

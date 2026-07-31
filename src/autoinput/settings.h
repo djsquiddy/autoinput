@@ -31,6 +31,7 @@ namespace autoinput
         [[nodiscard]] const DefaultSettings& getDefaults() const { return m_defaults; }
 
     private:
+        bool loadFromFile(const std::filesystem::path& path);
         DefaultSettings m_defaults;
     };
 }

@@ -19,6 +19,7 @@ namespace autoinput
         std::string getActiveApplicationName();
         std::vector<std::string> getRunningApplicationNames();
         std::filesystem::path getExecutablePath();
+        std::filesystem::path getUserHomePath();
     }
 }
 

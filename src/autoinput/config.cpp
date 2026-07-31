@@ -95,6 +95,16 @@ namespace autoinput
         static const std::filesystem::path configsPath = platform::getExecutablePath() / "configs";
         return configsPath;
     }
+    
+    std::filesystem::path getUserConfigsPath()
+    {
+        const std::filesystem::path home = platform::getUserHomePath();
+        if (home.empty())
+        {
+            return std::filesystem::path();
+        }
+        return home / ".autoinput";
+    }
 
     std::filesystem::path getConfigFilePath(const std::string& filePath)
     {

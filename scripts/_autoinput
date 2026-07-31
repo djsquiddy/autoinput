@@ -1,0 +1,60 @@
+#compdef autoinput
+
+_autoinput() {
+    local -a log_levels action_types mouse_buttons common_keys modifiers all_pos
+    log_levels=(debug info warn warning error fatal d i w e f)
+    action_types=(click hold c h)
+    mouse_buttons=(left right middle back forward l r m)
+    modifiers=(ctrl+ shift+ alt+ meta+)
+    common_keys=(
+        a b c d e f g h i j k l m n o p q r s t u v w x y z
+        0 1 2 3 4 5 6 7 8 9
+        f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12
+        enter space tab backspace escape delete insert home end pageup pagedown
+        up down left right
+    )
+
+    local -a keys_with_mods mouse_buttons_with_mods
+    keys_with_mods=($common_keys)
+    mouse_buttons_with_mods=($mouse_buttons)
+
+    for mod in $modifiers; do
+        for k in $common_keys; do
+            keys_with_mods+=("${mod}${k}")
+        done
+        for b in $mouse_buttons; do
+            mouse_buttons_with_mods+=("${mod}${b}")
+        done
+    done
+
+    all_pos=($action_types $mouse_buttons_with_mods $keys_with_mods)
+
+    _arguments -s \
+        '(-h --help)'{-h,--help}'[Show help]' \
+        '(-l --log)'{-l,--log}'[Set logging level]:log level:($log_levels)' \
+        '(-c --config)'{-c,--config}'[Load configuration file]:config file:_autoinput_configs' \
+        '(-t --type)'{-t,--type}'[Set action type]:action type:($action_types)' \
+        '(-b --btn --button)'{-b,--btn,--button}'[Select mouse button]:mouse button:($mouse_buttons_with_mods)' \
+        '(-k --key)'{-k,--key}'[Select keyboard key]:key:($keys_with_mods)' \
+        '(-s --start --start-key)'{-s,--start,--start-key}'[Hotkey to start automation]:key:($keys_with_mods)' \
+        '(-e --end --end-key)'{-e,--end,--end-key}'[Hotkey to stop automation]:key:($keys_with_mods)' \
+        '(-a --app --application)'{-a,--app,--application}'[Focus application]:application:' \
+        '(-B --blacklist)'{-B,--blacklist}'[Blacklist application]:application:' \
+        '(-L --list-apps)'{-L,--list-apps}'[List running applications]' \
+        '(-w --wait)'{-w,--wait}'[Max wait duration]:time:' \
+        '--press-wait[Randomized press delay]:range:' \
+        '--release-wait[Randomized release delay]:range:' \
+        '*:positional arguments:($all_pos)'
+}
+
+_autoinput_configs() {
+    local -a configs
+    # Program looks for configs/ directory relative to its executable.
+    # For shell completion, we assume it's in the current directory or we just list what's in ./configs.
+    configs=(configs/*.(toml|tosd)(N:t:r))
+    if [[ ${#configs} -gt 0 ]]; then
+        _describe 'configs' configs
+    fi
+}
+
+_autoinput "$@"

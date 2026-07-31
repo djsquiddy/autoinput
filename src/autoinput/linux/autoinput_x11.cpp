@@ -1,14 +1,14 @@
 /**
- * @file autoinput_linux.cpp
+ * @file autoInput_x11.cpp
  * @author djsquiddy
  * @date July 2026
  */
-#include "autoinput/autoinput.h"
+#include "autoinput/autoInput.h"
 #include "autoinput/mouse.h"
 #include "autoinput/keyboard.h"
 #include "autoinput/logger.h"
 #include "autoinput/types.h"
-#include "internal_data.h"
+#include "internalData_linux.h"
 
 namespace autoinput
 {

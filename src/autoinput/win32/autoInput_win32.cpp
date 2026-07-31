@@ -1,9 +1,9 @@
 /**
- * @file autoinput_windows.cpp
+ * @file autoInput_win32.cpp
  * @author djsquiddy
  * @date March 2026
  */
-#include "autoinput/autoinput.h"
+#include "autoinput/autoInput.h"
 #include "autoinput/mouse.h"
 #include "autoinput/keyboard.h"
 #include "autoinput/logger.h"
@@ -11,7 +11,7 @@
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
 
-#include "internal_data_win32.h"
+#include "internalData_win32.h"
 
 namespace autoinput
 {
@@ -141,6 +141,16 @@ namespace autoinput
             char buffer[MAX_PATH];
             GetModuleFileNameA(NULL, buffer, MAX_PATH);
             return std::filesystem::path(buffer).parent_path();
+        }
+
+        std::filesystem::path getUserHomePath()
+        {
+            const char* userProfile = std::getenv("USERPROFILE");
+            if (userProfile)
+            {
+                return std::filesystem::path(userProfile);
+            }
+            return std::filesystem::path();
         }
     }
 

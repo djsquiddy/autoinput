@@ -6,7 +6,7 @@
 #include <gtest/gtest.h>
 #include <set>
 #include <thread>
-#include "autoinput/autoinput.h"
+#include "autoinput/autoInput.h"
 #include "autoinput/backend.h"
 
 namespace autoinput
