@@ -36,15 +36,15 @@ namespace autoinput
         }
 
         toml::table table = std::move(result).table();
-        if (const auto defaults = table["defaults"].as_table())
-        {
-            tryGetTableValue(*defaults, "start", m_defaults.start);
-            tryGetTableValue(*defaults, "end", m_defaults.end);
-            tryGetTableValue(*defaults, "press", m_defaults.press);
-            tryGetTableValue(*defaults, "release", m_defaults.release);
-            tryGetTableValue(*defaults, "action", m_defaults.action);
-            tryGetTableValue(*defaults, "button", m_defaults.button);
-            if (const auto blacklist = defaults->get("blacklist"); blacklist && blacklist->is_array())
+        
+        auto applySettings = [&](const toml::table& t) {
+            tryGetTableValue(t, "start", m_defaults.start);
+            tryGetTableValue(t, "end", m_defaults.end);
+            tryGetTableValue(t, "press", m_defaults.press);
+            tryGetTableValue(t, "release", m_defaults.release);
+            tryGetTableValue(t, "action", m_defaults.action);
+            tryGetTableValue(t, "button", m_defaults.button);
+            if (const auto blacklist = t.get("blacklist"); blacklist && blacklist->is_array())
             {
                 m_defaults.blacklist.clear();
                 for (auto& item : *blacklist->as_array())
@@ -55,6 +55,15 @@ namespace autoinput
                     }
                 }
             }
+        };
+
+        // Apply top-level settings
+        applySettings(table);
+
+        // Also apply [defaults] if it exists (for backward compatibility)
+        if (const auto defaults = table["defaults"].as_table())
+        {
+            applySettings(*defaults);
         }
 
         return true;

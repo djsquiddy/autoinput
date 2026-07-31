@@ -82,6 +82,29 @@ start = "f10"
         EXPECT_TRUE(defaults.release.empty());
         EXPECT_TRUE(defaults.action.empty());
         EXPECT_TRUE(defaults.button.empty());
+        
+        std::filesystem::remove(path);
+    }
+
+    TEST(SettingsTest, LoadParsesTopLevelSettings)
+    {
+        const std::filesystem::path path = makeTemporarySettingsFile(
+            "autoinput_settings_top_level_test.toml",
+            R"toml(
+start = "f10"
+end = "f11"
+blacklist = ["app1.exe"]
+)toml"
+        );
+
+        Settings settings;
+        ASSERT_TRUE(settings.load(path));
+
+        const auto& defaults = settings.getDefaults();
+        EXPECT_EQ(defaults.start, "f10");
+        EXPECT_EQ(defaults.end, "f11");
+        ASSERT_EQ(defaults.blacklist.size(), 1);
+        EXPECT_EQ(defaults.blacklist[0], "app1.exe");
 
         std::filesystem::remove(path);
     }

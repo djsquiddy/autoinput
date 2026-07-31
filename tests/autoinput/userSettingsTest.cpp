@@ -89,13 +89,11 @@ namespace autoinput
     TEST_F(UserSettingsTest, UserSettingsOverrideBuiltin)
     {
         createSettingsFile(m_builtinConfigsDir / "settings.toml", R"toml(
-[defaults]
 start = "f1"
 end = "f2"
 )toml");
 
         createSettingsFile(m_tempHome / ".autoinput" / "settings.toml", R"toml(
-[defaults]
 start = "f3"
 )toml");
 
@@ -110,12 +108,10 @@ start = "f3"
     TEST_F(UserSettingsTest, UserBlacklistReplacesBuiltinBlacklist)
     {
         createSettingsFile(m_builtinConfigsDir / "settings.toml", R"toml(
-[defaults]
 blacklist = ["app1.exe", "app2.exe"]
 )toml");
 
         createSettingsFile(m_tempHome / ".autoinput" / "settings.toml", R"toml(
-[defaults]
 blacklist = ["app3.exe"]
 )toml");
 
@@ -130,7 +126,6 @@ blacklist = ["app3.exe"]
     TEST_F(UserSettingsTest, LoadReturnsTrueIfOnlyUserLevelExists)
     {
         createSettingsFile(m_tempHome / ".autoinput" / "settings.toml", R"toml(
-[defaults]
 start = "f10"
 )toml");
 
@@ -143,7 +138,6 @@ start = "f10"
     TEST_F(UserSettingsTest, LoadReturnsTrueIfOnlyBuiltinExists)
     {
         createSettingsFile(m_builtinConfigsDir / "settings.toml", R"toml(
-[defaults]
 start = "f11"
 )toml");
 
