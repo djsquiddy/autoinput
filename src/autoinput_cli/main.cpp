@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
         }
         else
         {
-            Logger::info("Application started.");
+            Logger::info("Application started.\n");
         }
 
         if (g_program->arguments().listApplications)
@@ -41,14 +41,14 @@ int main(int argc, char* argv[])
             const auto apps = platform::getRunningApplicationNames();
             if (apps.empty())
             {
-                std::cout << "No running applications found or listing not supported on this platform.\n";
+                Logger::print("No running applications found or listing not supported on this platform.\n");
             }
             else
             {
-                std::cout << "Currently running applications:\n";
+                Logger::print("Currently running applications:\n");
                 for (const auto& app : apps)
                 {
-                    std::cout << "  - " << app << "\n";
+                    Logger::print("  - {}\n", app);
                 }
             }
             return static_cast<int>(ErrorCode::SUCCESS);
@@ -59,7 +59,7 @@ int main(int argc, char* argv[])
             auto listConfigsFromDir = [](const std::filesystem::path& path, const std::string& label) {
                 if (std::filesystem::exists(path) && std::filesystem::is_directory(path))
                 {
-                    std::cout << label << " configurations (in " << path.string() << "):\n";
+                    Logger::print("{} configuration (in {}):\n", label, path.string());
                     bool found = false;
                     for (const auto& entry : std::filesystem::directory_iterator(path))
                     {
@@ -70,15 +70,15 @@ int main(int argc, char* argv[])
                             {
                                 continue;
                             }
-                            std::cout << "  - " << name << "\n";
+                            Logger::print("  - {}\n", name);
                             found = true;
                         }
                     }
                     if (!found)
                     {
-                        std::cout << "  (none)\n";
+                        Logger::print("  (none)\n");
                     }
-                    std::cout << "\n";
+                    Logger::print("\n");
                 }
             };
 
@@ -112,14 +112,14 @@ int main(int argc, char* argv[])
             const ConfigData configData = g_program->arguments().toConfigData();
             if (saveConfigData(configData, dumpPath, g_program->arguments().getSettings().getDefaults()))
             {
-                std::cout << "Configuration saved to " << dumpPath.string() << "\n";
+                Logger::print("Configuration saved to {}\n", dumpPath.string());
                 return static_cast<int>(ErrorCode::SUCCESS);
             }
-            
+
             Logger::fatal("Failed to save configuration to {}\n", dumpPath.string());
             return static_cast<int>(ErrorCode::FAILED_TO_LOAD_CONFIG);
         }
-        
+
         if (!g_program->arguments().validateConfigName.empty())
         {
             const std::string& validateConfigName = g_program->arguments().validateConfigName;
@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
                 }
                 else
                 {
-                    std::cout << "Configuration is valid: " << validateConfigName << "\n";
+                    Logger::print("Configuration is valid: {}\n", validateConfigName);
                 }
                 return static_cast<int>(ErrorCode::SUCCESS);
             }
@@ -187,7 +187,7 @@ int main(int argc, char* argv[])
         {
             return static_cast<int>(ErrorCode::FAILED_TO_INSTALL_HOOKS);
         }
-        
+
         g_program->setBackend(std::move(backend));
         if (!g_program->init())
         {
@@ -200,7 +200,7 @@ int main(int argc, char* argv[])
         }
         g_program->printProgramInfo();
         platform::setupSignalHandler();
-        std::cout << "Global keyboard listener started. Press Ctrl+C to exit.\n\n";
+        Logger::print("Global keyboard listener started. Press Ctrl+C to exit.\n\n");
         runListener();
         if (g_program)
         {
