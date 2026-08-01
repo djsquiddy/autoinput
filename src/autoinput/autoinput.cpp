@@ -351,16 +351,17 @@ namespace autoinput
         });
     }
 
-    void Program::init()
+    void Program::init(IPlatformBackend* backend)
     {
+        m_backend = backend;
         for (auto& mouse : m_arguments.buttons)
         {
-            m_mouseHandlers[mouse] = MouseHandler{mouse};
+            m_mouseHandlers[mouse] = MouseHandler{mouse, m_backend};
         }
 
         for (auto& key : m_arguments.keys)
         {
-            m_keyHandlers[key] = KeyHandler{key};
+            m_keyHandlers[key] = KeyHandler{key, m_backend};
         }
 
         auto processKeyString = [this](const std::string& keyStr, const Mouse mouse, Key targetKey, const ActionState action, const bool isStart) {
@@ -415,11 +416,6 @@ namespace autoinput
 
     bool installHooks()
     {
-        if (!BackendRegistry::getBackend())
-        {
-            BackendRegistry::setBackend(BackendFactory::createPlatformBackend());
-        }
-        
         IPlatformBackend* backend = BackendRegistry::getBackend();
         if (!backend) return false;
         return backend->installHooks();

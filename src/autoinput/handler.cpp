@@ -13,7 +13,7 @@ namespace autoinput
 {
     void KeyHandler::press()
     {
-        IPlatformBackend* backend = BackendRegistry::getBackend();
+        IPlatformBackend* backend = m_backend;
         if (!backend) return;
         if (bool expected = false; m_isPressed.compare_exchange_strong(expected, true))
         {
@@ -24,7 +24,7 @@ namespace autoinput
 
     void KeyHandler::release()
     {
-        IPlatformBackend* backend = BackendRegistry::getBackend();
+        IPlatformBackend* backend = m_backend;
         if (!backend) return;
         if (bool expected = true; m_isPressed.compare_exchange_strong(expected, false))
         {
@@ -35,7 +35,7 @@ namespace autoinput
 
     void MouseHandler::press()
     {
-        IPlatformBackend* backend = BackendRegistry::getBackend();
+        IPlatformBackend* backend = m_backend;
         if (!backend) return;
         if (bool expected = false; m_isPressed.compare_exchange_strong(expected, true))
         {
@@ -46,7 +46,7 @@ namespace autoinput
 
     void MouseHandler::release()
     {
-        IPlatformBackend* backend = BackendRegistry::getBackend();
+        IPlatformBackend* backend = m_backend;
         if (!backend) return;
         if (bool expected = true; m_isPressed.compare_exchange_strong(expected, false))
         {

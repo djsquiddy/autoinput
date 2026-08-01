@@ -48,7 +48,7 @@ protected:
 TEST_F(HandlerTest, KeyHandlerPressAndRelease)
 {
     Key key = Key::fromString("a");
-    KeyHandler handler(key);
+    KeyHandler handler(key, mockPtr);
 
     EXPECT_CALL(*mockPtr, keyPress(key)).Times(Exactly(1));
     handler.press();
@@ -70,7 +70,7 @@ TEST_F(HandlerTest, KeyHandlerPressAndRelease)
 TEST_F(HandlerTest, MouseHandlerPressAndRelease)
 {
     Mouse mouse(MouseButton::LEFT);
-    MouseHandler handler(mouse);
+    MouseHandler handler(mouse, mockPtr);
 
     EXPECT_CALL(*mockPtr, mousePress(mouse)).Times(Exactly(1));
     handler.press();
@@ -91,13 +91,11 @@ TEST_F(HandlerTest, MouseHandlerPressAndRelease)
 
 TEST_F(HandlerTest, HandlerWithNullBackend)
 {
-    test::ScopedBackendOverride nullOverride(nullptr);
-    
-    KeyHandler keyHandler(Key::fromString("a"));
+    KeyHandler keyHandler(Key::fromString("a"), nullptr);
     keyHandler.press();
     EXPECT_FALSE(keyHandler.isPressed()); // Should not be pressed if backend is null
 
-    MouseHandler mouseHandler(MouseButton::LEFT);
+    MouseHandler mouseHandler(MouseButton::LEFT, nullptr);
     mouseHandler.press();
     EXPECT_FALSE(mouseHandler.isPressed());
 }

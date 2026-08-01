@@ -15,10 +15,12 @@
 
 namespace autoinput
 {
+    class IPlatformBackend;
+
     class InputHandler
     {
     public:
-        InputHandler() = default;
+        explicit InputHandler(IPlatformBackend* backend = nullptr) : m_backend(backend) {}
         virtual ~InputHandler() = default;
         InputHandler(const InputHandler& rhs);
         InputHandler(InputHandler&& rhs) noexcept;
@@ -38,6 +40,7 @@ namespace autoinput
         [[nodiscard]] bool isPressed() const { return m_isPressed.load(); }
 
     protected:
+        IPlatformBackend* m_backend{ nullptr };
         std::atomic<bool> m_isActive{ false };
         std::atomic<bool> m_isPaused{ false };
         std::atomic<bool> m_isPressed{ false };
@@ -47,6 +50,7 @@ namespace autoinput
     };
 
     inline InputHandler::InputHandler(const InputHandler& rhs)
+        : m_backend(rhs.m_backend)
     {
         m_isPressed.store(rhs.m_isPressed.load());
         m_isActive.store(rhs.m_isActive.load());
@@ -54,16 +58,19 @@ namespace autoinput
     }
 
     inline InputHandler::InputHandler(InputHandler&& rhs) noexcept
+        : m_backend(rhs.m_backend)
     {
         m_isPressed.store(rhs.m_isPressed.load());
         m_isActive.store(rhs.m_isActive.load());
         m_isPaused.store(rhs.m_isPaused.load());
+        rhs.m_backend = nullptr;
     }
 
     inline InputHandler& InputHandler::operator=(const InputHandler& rhs)
     {
         if (this != &rhs)
         {
+            m_backend = rhs.m_backend;
             m_isPressed.store(rhs.m_isPressed.load());
             m_isActive.store(rhs.m_isActive.load());
             m_isPaused.store(rhs.m_isPaused.load());
@@ -75,9 +82,11 @@ namespace autoinput
     {
         if (this != &rhs)
         {
+            m_backend = rhs.m_backend;
             m_isPressed.store(rhs.m_isPressed.load());
             m_isActive.store(rhs.m_isActive.load());
             m_isPaused.store(rhs.m_isPaused.load());
+            rhs.m_backend = nullptr;
         }
         return *this;
     }

@@ -7,6 +7,8 @@
 #include "autoinput/utils.h"
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
+#include "autoinput/backendContext.h"
+#include "autoinput/backendFactory.h"
 
 int main(int argc, char* argv[])
 {
@@ -108,15 +110,22 @@ int main(int argc, char* argv[])
             return static_cast<int>(ErrorCode::FAILED_TO_LOAD_CONFIG);
         }
 
-        g_program->init();
-        g_program->printProgramInfo();
-        platform::setupSignalHandler();
-        std::cout << "Global keyboard listener started. Press Ctrl+C to exit.\n\n";
+        auto backend = BackendFactory::createPlatformBackend();
+        if (!backend)
+        {
+            return static_cast<int>(ErrorCode::FAILED_TO_INSTALL_HOOKS);
+        }
+        BackendRegistry::setBackend(std::move(backend));
+
+        g_program->init(BackendRegistry::getBackend());
 
         if (!installHooks())
         {
             return static_cast<int>(ErrorCode::FAILED_TO_INSTALL_HOOKS);
         }
+        g_program->printProgramInfo();
+        platform::setupSignalHandler();
+        std::cout << "Global keyboard listener started. Press Ctrl+C to exit.\n\n";
         runListener();
         if (g_program)
         {

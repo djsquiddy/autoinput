@@ -26,7 +26,7 @@ namespace autoinput
     {
     public:
         ProgramArguments& arguments() { return m_arguments; }
-        void init();
+        void init(IPlatformBackend* backend = nullptr);
         
         bool processKeyEvent(KeyboardInput&& input);
         bool processMouseEvent(const MouseInput& input);
@@ -46,6 +46,7 @@ namespace autoinput
         void onFocusChanged(const std::string& activeApp);
 
     private:
+        IPlatformBackend* m_backend{ nullptr };
         std::unordered_map<Mouse, MouseHandler, HashFunction<Mouse>> m_mouseHandlers{};
         std::unordered_map<Key, KeyHandler, HashFunction<Key>> m_keyHandlers{};
         ProgramArguments m_arguments{};

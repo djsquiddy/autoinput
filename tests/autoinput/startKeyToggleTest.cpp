@@ -51,7 +51,7 @@ namespace autoinput
         int argc = sizeof(argv) / sizeof(char*);
 
         ASSERT_TRUE(program.arguments().parseArguments(gsl::make_span(argv, argc)));
-        program.init();
+        program.init(m_backend);
 
         const auto& keyInfo = program.getKeyInfo();
         
@@ -76,7 +76,7 @@ namespace autoinput
         int argc = sizeof(argv) / sizeof(char*);
 
         ASSERT_TRUE(program.arguments().parseArguments(gsl::make_span(argv, argc)));
-        program.init();
+        program.init(m_backend);
 
         const auto& keyInfo = program.getKeyInfo();
         // Expecting 2 KeyInfo for F2 (both for LEFT)

@@ -48,7 +48,7 @@ namespace autoinput
     {
     public:
         KeyHandler() = default;
-        explicit KeyHandler(Key key) : m_key{std::move(key)} {}
+        explicit KeyHandler(Key key, IPlatformBackend* backend = nullptr) : InputHandler(backend), m_key{std::move(key)} {}
         KeyHandler(const KeyHandler& rhs);
         KeyHandler(KeyHandler&& rhs) noexcept;
         KeyHandler& operator=(const KeyHandler& rhs);

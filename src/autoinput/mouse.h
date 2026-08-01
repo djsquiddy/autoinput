@@ -49,8 +49,8 @@ namespace autoinput
     {
     public:
         MouseHandler() = default;
-        explicit MouseHandler(const Mouse mouse) : m_mouse{mouse} { }
-        explicit MouseHandler(const MouseButton mouseButton) : m_mouse{mouseButton} { }
+        explicit MouseHandler(const Mouse mouse, IPlatformBackend* backend = nullptr) : InputHandler(backend), m_mouse{mouse} { }
+        explicit MouseHandler(const MouseButton mouseButton, IPlatformBackend* backend = nullptr) : InputHandler(backend), m_mouse{mouseButton} { }
         MouseHandler(const MouseHandler& rhs);
         MouseHandler(MouseHandler&& rhs) noexcept;
         MouseHandler& operator=(const MouseHandler& rhs);

@@ -57,11 +57,9 @@ TEST(MouseModifierTest, ProgramTriggersShiftLeftClick)
     int argc = sizeof(argv) / sizeof(char*);
 
     ASSERT_TRUE(program.arguments().parseArguments(gsl::make_span(argv, argc)));
-    program.init();
-
     auto mock = std::make_unique<MockMouseModifierBackend>();
     MockMouseModifierBackend* mockPtr = mock.get();
-    test::ScopedBackendOverride backendOverride(std::move(mock));
+    program.init(mockPtr);
 
     const auto& keyInfo = program.getKeyInfo();
     ASSERT_EQ(keyInfo.size(), 2); // start and end
