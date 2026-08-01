@@ -4,6 +4,8 @@
 # License MIT: https://github.com/microsoft/GSL/blob/v4.2.2/LICENSE
 #==========================================================
 include(FetchContent)
+set(FETCHCONTENT_QUIET FALSE)
+
 FetchContent_Declare(
         GSL
         GIT_REPOSITORY "https://github.com/microsoft/GSL.git"

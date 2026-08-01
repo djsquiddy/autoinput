@@ -4,6 +4,8 @@
 # License MIT: https://github.com/marzer/tomlplusplus/blob/v3.4.0/LICENSE
 #==========================================================
 include(FetchContent)
+set(FETCHCONTENT_QUIET FALSE)
+
 FetchContent_Declare(
         tomlplusplus
         GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
