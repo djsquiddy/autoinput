@@ -4,17 +4,32 @@
 
 local function configs_matcher(word)
     local configs = {}
-    local handle = io.popen('dir /b configs 2>nul')
-    if handle then
-        for line in handle:lines() do
-            local name = line:match("^(.*)%.toml$") or line:match("^(.*)%.tosd$")
-            if name then
-                table.insert(configs, name)
-            end
-        end
-        handle:close()
+    local paths = {"configs", "../configs"}
+    
+    local home = os.getenv("USERPROFILE") or os.getenv("HOME")
+    if home then
+        table.insert(paths, home .. "/.autoinput")
     end
-    return configs
+
+    for _, path in ipairs(paths) do
+        local cmd = 'dir /b "' .. path .. '" 2>nul'
+        local handle = io.popen(cmd)
+        if handle then
+            for line in handle:lines() do
+                local name = line:match("^(.*)%.toml$")
+                if name then
+                    configs[name] = true
+                end
+            end
+            handle:close()
+        end
+    end
+
+    local results = {}
+    for name, _ in pairs(configs) do
+        table.insert(results, name)
+    end
+    return results
 end
 
 local log_levels = {"debug", "info", "warn", "warning", "error", "fatal", "d", "i", "w", "e", "f"}
@@ -53,8 +68,8 @@ autoinput_parser:set_flags(
     "-h", "--help",
     "-l" .. clink.arg.new_parser(log_levels),
     "--log" .. clink.arg.new_parser(log_levels),
-    "-c" .. clink.arg.new_parser(configs_matcher),
-    "--config" .. clink.arg.new_parser(configs_matcher),
+    "-c" .. clink.arg.new_parser({configs_matcher}),
+    "--config" .. clink.arg.new_parser({configs_matcher}),
     "-t" .. clink.arg.new_parser(action_types),
     "--type" .. clink.arg.new_parser(action_types),
     "-b" .. clink.arg.new_parser(mouse_buttons_with_mods),
@@ -74,6 +89,9 @@ autoinput_parser:set_flags(
     "-B" .. clink.arg.new_parser(),
     "--blacklist" .. clink.arg.new_parser(),
     "-L", "--list-apps",
+    "-C", "--list-configs",
+    "-S" .. clink.arg.new_parser({configs_matcher}),
+    "--save-config" .. clink.arg.new_parser({configs_matcher}),
     "-w" .. clink.arg.new_parser(),
     "--wait" .. clink.arg.new_parser(),
     "--press-wait" .. clink.arg.new_parser(),
@@ -85,3 +103,4 @@ autoinput_parser:set_arguments({
 })
 
 clink.arg.register_parser("autoinput", autoinput_parser)
+clink.arg.register_parser("run.cmd", autoinput_parser)

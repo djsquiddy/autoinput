@@ -42,9 +42,21 @@ make
 
 ### Shell Completion
 
+You can use the provided scripts to automatically install or update shell completions.
+
+**Windows:**
+```cmd
+.\scripts\install.cmd
+```
+
+**Linux/Zsh (Bash/Zsh):**
+```bash
+./scripts/install.sh
+```
+
 #### Clink (Windows)
 
-If you use [Clink](https://chrisant996.github.io/clink/) for `cmd.exe` on Windows, you can enable autocompletion by copying the `scripts/autoinput_completion.lua` file into your Clink scripts directory (usually `%LOCALAPPDATA%\clink`).
+If you use [Clink](https://chrisant996.github.io/clink/) for `cmd.exe` on Windows, you can also manually enable autocompletion by copying the `scripts/autoinput_completion.lua` file into your Clink scripts directory (usually `%LOCALAPPDATA%\clink`).
 
 #### Zsh (Linux/WSL)
 

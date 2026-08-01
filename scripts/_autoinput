@@ -41,6 +41,8 @@ _autoinput() {
         '(-a --app --application)'{-a,--app,--application}'[Focus application]:application:' \
         '(-B --blacklist)'{-B,--blacklist}'[Blacklist application]:application:' \
         '(-L --list-apps)'{-L,--list-apps}'[List running applications]' \
+        '(-C --list-configs)'{-C,--list-configs}'[List valid configurations]' \
+        '(-S --save-config)'{-S,--save-config}'[Save current configuration]:config file:_autoinput_configs' \
         '(-w --wait)'{-w,--wait}'[Max wait duration]:time:' \
         '--press-wait[Randomized press delay]:range:' \
         '--release-wait[Randomized release delay]:range:' \
@@ -50,8 +52,13 @@ _autoinput() {
 _autoinput_configs() {
     local -a configs
     # Program looks for configs/ directory relative to its executable.
-    # For shell completion, we assume it's in the current directory or we just list what's in ./configs.
-    configs=(configs/*.(toml|tosd)(N:t:r))
+    # For shell completion, we assume it's in the current directory, ../configs, or ~/.autoinput.
+    configs=(
+        configs/*.toml(N:t:r)
+        ../configs/*.toml(N:t:r)
+        ~/.autoinput/*.toml(N:t:r)
+    )
+    typeset -U configs
     if [[ ${#configs} -gt 0 ]]; then
         _describe 'configs' configs
     fi
