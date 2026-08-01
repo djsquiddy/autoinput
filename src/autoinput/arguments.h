@@ -69,6 +69,11 @@ namespace autoinput
         static std::string_view safeGetNextArgument(int32_t i, gsl::span<char*> args);
 
     private:
+        bool parseEarlyOptions(gsl::span<char*> args);
+        bool parseCommandOptions(gsl::span<char*> args);
+        bool parsePositionalArgument(std::string_view arg, gsl::span<char*> args, int& i);
+        void applyDefaults();
+
         Settings m_settings;
     };
 }

@@ -9,9 +9,6 @@
 #include "autoinput/cliHelpFormatter.h"
 #include "autoinput/logger.h"
 #include "autoinput/config.h"
-#include <random>
-#include <cctype>
-#include <algorithm>
 
 namespace autoinput
 {
@@ -31,6 +28,7 @@ namespace autoinput
         {
             programName = args[0];
         }
+
         if (args.size() <= 1)
         {
             // We only get the program name listed.
@@ -38,6 +36,21 @@ namespace autoinput
             return false;
         }
 
+        if (!parseEarlyOptions(args))
+        {
+            return false;
+        }
+
+        if (!parseCommandOptions(args))
+        {
+            return false;
+        }
+
+        return postParseArguments();
+    }
+
+    bool ProgramArguments::parseEarlyOptions(gsl::span<char*> args)
+    {
         for (int i = 1; i < args.size(); ++i)
         {
             const std::string_view arg = args[i];
@@ -74,7 +87,11 @@ namespace autoinput
                 }
             }
         }
+        return true;
+    }
 
+    bool ProgramArguments::parseCommandOptions(gsl::span<char*> args)
+    {
         for (int i = 1; i < args.size(); ++i)
         {
             const std::string_view arg = args[i];
@@ -188,89 +205,103 @@ namespace autoinput
             }
             else
             {
-                // Positional argument
-                const auto state = actionStateFromArguments(arg);
-                if (state != ActionState::INVALID)
+                if (!parsePositionalArgument(arg, args, i))
                 {
-                    actionState = state;
-                    continue;
+                    return false;
                 }
-
-                auto registerTarget = [&]() {
-                    targetActions.emplace_back(actionState != ActionState::INVALID ? actionState : ActionState::CLICK);
-
-                    // Look ahead for potential start key
-                    if (const std::string_view nextArg = safeGetNextArgument(i + 1, args); !nextArg.empty() && !nextArg.starts_with('-'))
-                    {
-                        const bool isNextAction = actionStateFromArguments(nextArg) != ActionState::INVALID;
-                        const auto [character, modifier] = Key::fromString(nextArg);
-                        const bool isNextFunctionKey = modifier == KeyModifier::Function;
-
-                        // We treat it as a start key if it's a function key or if it's a trigger button (back/forward)
-                        // and it's not a standard action.
-                        if (!isNextAction)
-                        {
-                            bool isPotentialStartKey = isNextFunctionKey;
-                            if (const auto nextButton = mouseButtonFromArguments(nextArg); nextButton == MouseButton::BACK || nextButton == MouseButton::FORWARD)
-                            {
-                                isPotentialStartKey = true;
-                            }
-
-                            if (isPotentialStartKey)
-                            {
-                                startKeys.emplace_back(nextArg);
-                                ++i;
-                            }
-                        }
-                    }
-                };
-
-                const auto mouse = Mouse::fromString(arg);
-                if (mouse.button != MouseButton::NONE)
-                {
-                    if (mouse.button == MouseButton::BACK || mouse.button == MouseButton::FORWARD)
-                    {
-                        if ((buttons.size() + keys.size()) == startKeys.size())
-                        {
-                            // Trigger for default target
-                            buttons.emplace_back(MouseButton::LEFT);
-                            targetActions.emplace_back(actionState != ActionState::INVALID ? actionState : ActionState::CLICK);
-                            startKeys.emplace_back(arg);
-                            continue;
-                        }
-                    }
-                    buttons.emplace_back(mouse);
-                    registerTarget();
-                    continue;
-                }
-
-#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
-                if (Key key = Key::fromString(arg); !key.character.empty() || key.modifier != KeyModifier::None)
-                {
-                    if (key.modifier == KeyModifier::Function)
-                    {
-                        if ((buttons.size() + keys.size()) == startKeys.size())
-                        {
-                            // Trigger for default target
-                            buttons.emplace_back(MouseButton::LEFT);
-                            targetActions.emplace_back(actionState != ActionState::INVALID ? actionState : ActionState::CLICK);
-                            startKeys.emplace_back(arg);
-                            continue;
-                        }
-                    }
-                    keys.emplace_back(key);
-                    registerTarget();
-                    continue;
-                }
-#endif
-                Logger::warn("Unrecognized positional argument: {}\n", arg);
             }
         }
+        return true;
+    }
 
-        return postParseArguments();
+    bool ProgramArguments::parsePositionalArgument(const std::string_view arg, const gsl::span<char*> args, int& i)
+    {
+        // Positional argument
+        const auto state = actionStateFromArguments(arg);
+        if (state != ActionState::INVALID)
+        {
+            actionState = state;
+            return true;
+        }
+
+        auto registerTarget = [&]() {
+            targetActions.emplace_back(actionState != ActionState::INVALID ? actionState : ActionState::CLICK);
+
+            // Look ahead for potential start key
+            if (const std::string_view nextArg = safeGetNextArgument(i + 1, args); !nextArg.empty() && !nextArg.starts_with('-'))
+            {
+                const bool isNextAction = actionStateFromArguments(nextArg) != ActionState::INVALID;
+                const auto [character, modifier] = Key::fromString(nextArg);
+                const bool isNextFunctionKey = modifier == KeyModifier::Function;
+
+                // We treat it as a start key if it's a function key or if it's a trigger button (back/forward)
+                // and it's not a standard action.
+                if (!isNextAction)
+                {
+                    bool isPotentialStartKey = isNextFunctionKey;
+                    if (const auto nextButton = mouseButtonFromArguments(nextArg); nextButton == MouseButton::BACK || nextButton == MouseButton::FORWARD)
+                    {
+                        isPotentialStartKey = true;
+                    }
+
+                    if (isPotentialStartKey)
+                    {
+                        startKeys.emplace_back(nextArg);
+                        ++i;
+                    }
+                }
+            }
+        };
+
+        const auto mouse = Mouse::fromString(arg);
+        if (mouse.button != MouseButton::NONE)
+        {
+            if (mouse.button == MouseButton::BACK || mouse.button == MouseButton::FORWARD)
+            {
+                if ((buttons.size() + keys.size()) == startKeys.size())
+                {
+                    // Trigger for default target
+                    buttons.emplace_back(MouseButton::LEFT);
+                    targetActions.emplace_back(actionState != ActionState::INVALID ? actionState : ActionState::CLICK);
+                    startKeys.emplace_back(arg);
+                    return true;
+                }
+            }
+            buttons.emplace_back(mouse);
+            registerTarget();
+            return true;
+        }
+
+#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
+        if (Key key = Key::fromString(arg); !key.character.empty() || key.modifier != KeyModifier::None)
+        {
+            if (key.modifier == KeyModifier::Function)
+            {
+                if ((buttons.size() + keys.size()) == startKeys.size())
+                {
+                    // Trigger for default target
+                    buttons.emplace_back(MouseButton::LEFT);
+                    targetActions.emplace_back(actionState != ActionState::INVALID ? actionState : ActionState::CLICK);
+                    startKeys.emplace_back(arg);
+                    return true;
+                }
+            }
+            keys.emplace_back(key);
+            registerTarget();
+            return true;
+        }
+#endif
+        Logger::warn("Unrecognized positional argument: {}\n", arg);
+        return true;
     }
 
     bool ProgramArguments::postParseArguments()
+    {
+        applyDefaults();
+        return true;
+    }
+
+    void ProgramArguments::applyDefaults()
     {
         const auto& [start, end, press, release, action, button, settingsBlacklist] = m_settings.getDefaults();
 
@@ -343,8 +374,6 @@ namespace autoinput
                 startKeys.resize(targetCount, startKeys.back());
             }
         }
-
-        return true;
     }
 
     void ProgramArguments::printUsage(const bool verbose) const
