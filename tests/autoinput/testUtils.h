@@ -23,9 +23,39 @@
 #endif
 
 #include "autoinput/backend.h"
+#include "autoinput/environment.h"
+#include <map>
 
 namespace autoinput::test
 {
+    /**
+     * @brief A fake environment for testing.
+     */
+    class FakeEnvironment : public IEnvironment
+    {
+    public:
+        std::filesystem::path executablePath() const override { return m_executablePath; }
+        std::filesystem::path userHomePath() const override { return m_userHomePath; }
+        std::optional<std::string> environmentVariable(std::string_view name) const override
+        {
+            auto it = m_variables.find(std::string(name));
+            if (it != m_variables.end())
+            {
+                return it->second;
+            }
+            return std::nullopt;
+        }
+
+        void setExecutablePath(std::filesystem::path path) { m_executablePath = std::move(path); }
+        void setUserHomePath(std::filesystem::path path) { m_userHomePath = std::move(path); }
+        void setEnvironmentVariable(std::string name, std::string value) { m_variables[std::move(name)] = std::move(value); }
+
+    private:
+        std::filesystem::path m_executablePath;
+        std::filesystem::path m_userHomePath;
+        std::map<std::string, std::string, std::less<>> m_variables;
+    };
+
     /**
      * @brief Helper to temporarily set an environment variable and restore it on destruction.
      */

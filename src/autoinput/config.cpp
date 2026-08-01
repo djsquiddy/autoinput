@@ -9,6 +9,7 @@
 #include "autoinput/utils.h"
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
+#include "autoinput/environment.h"
 
 namespace autoinput
 {
@@ -144,13 +145,27 @@ namespace autoinput
 
     const std::filesystem::path& getConfigsPath()
     {
-        static const std::filesystem::path configsPath = platform::getExecutablePath() / "configs";
+        return getConfigsPath(SystemEnvironment::instance());
+    }
+
+    const std::filesystem::path& getConfigsPath(const IEnvironment& environment)
+    {
+        static std::filesystem::path configsPath;
+        if (configsPath.empty())
+        {
+            configsPath = environment.executablePath() / "configs";
+        }
         return configsPath;
     }
     
     std::filesystem::path getUserConfigsPath()
     {
-        const std::filesystem::path home = platform::getUserHomePath();
+        return getUserConfigsPath(SystemEnvironment::instance());
+    }
+
+    std::filesystem::path getUserConfigsPath(const IEnvironment& environment)
+    {
+        const std::filesystem::path home = environment.userHomePath();
         if (home.empty())
         {
             return {};

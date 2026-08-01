@@ -5,6 +5,7 @@
  */
 #include "autoinput/backendFactory.h"
 #include "autoinput/logger.h"
+#include "autoinput/environment.h"
 #include <cstdlib>
 #include <string>
 
@@ -18,6 +19,11 @@ namespace autoinput
 {
     std::unique_ptr<IPlatformBackend> BackendFactory::createPlatformBackend()
     {
+        return createPlatformBackend(SystemEnvironment::instance());
+    }
+
+    std::unique_ptr<IPlatformBackend> BackendFactory::createPlatformBackend(const IEnvironment& environment)
+    {
 #if AUTOINPUT_FAKE_HOOK
         Logger::info("Fake hook enabled, actions will be logged but not performed.\n");
         return std::make_unique<FakeBackend>();
@@ -25,15 +31,15 @@ namespace autoinput
 #ifdef _WIN32
         return createWindowsBackend();
 #else
-        return detectLinuxBackend();
+        return detectLinuxBackend(environment);
 #endif
 #endif
     }
 
-    std::unique_ptr<IPlatformBackend> BackendFactory::detectLinuxBackend()
+    std::unique_ptr<IPlatformBackend> BackendFactory::detectLinuxBackend(const IEnvironment& environment)
     {
-        const char* sessionType = std::getenv("XDG_SESSION_TYPE");
-        bool isWayland = sessionType && std::string(sessionType) == "wayland";
+        auto sessionType = environment.environmentVariable("XDG_SESSION_TYPE");
+        bool isWayland = sessionType && *sessionType == "wayland";
 
         if (isWayland)
         {

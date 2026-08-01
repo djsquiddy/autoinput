@@ -7,6 +7,8 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/backend.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/backendFactory.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/backendFactory.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/environment.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/environment.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/waitDelay.cpp

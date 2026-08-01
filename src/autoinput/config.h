@@ -14,6 +14,7 @@
 #include <optional>
 #include <string_view>
 #include "autoinput/defaults.h"
+#include "autoinput/environment.h"
 
 #if defined(__cpp_exceptions) && __cpp_exceptions
     #define TOML_EXCEPTIONS 0 // only necessary if you've left them enabled in your compiler
@@ -54,6 +55,9 @@ namespace autoinput
 
     const std::filesystem::path& getConfigsPath();
     std::filesystem::path getUserConfigsPath();
+
+    const std::filesystem::path& getConfigsPath(const IEnvironment& environment);
+    std::filesystem::path getUserConfigsPath(const IEnvironment& environment);
     std::filesystem::path getConfigFilePath(const std::string& filePath);
     std::optional<ConfigData> loadConfigData(const std::filesystem::path& configPath);
     bool saveConfigData(const ConfigData& configData, const std::filesystem::path& configPath, const std::optional<DefaultSettings>& defaults = std::nullopt);

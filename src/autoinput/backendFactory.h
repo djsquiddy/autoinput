@@ -8,6 +8,7 @@
 #pragma once
 
 #include "autoinput/backend.h"
+#include "autoinput/environment.h"
 #include <memory>
 
 namespace autoinput
@@ -25,11 +26,19 @@ namespace autoinput
         static std::unique_ptr<IPlatformBackend> createPlatformBackend();
 
         /**
+         * @brief Creates a platform backend using a specific environment.
+         * @param environment The environment to use for detection.
+         * @return A unique pointer to the created backend, or nullptr if none could be created.
+         */
+        static std::unique_ptr<IPlatformBackend> createPlatformBackend(const IEnvironment& environment);
+
+    private:
+        /**
          * @brief Internal helper to detect the appropriate Linux backend.
-         * Exposed for testing purposes.
+         * @param environment The environment to use for detection.
          * @return A unique pointer to the detected Linux backend.
          */
-        static std::unique_ptr<IPlatformBackend> detectLinuxBackend();
+        static std::unique_ptr<IPlatformBackend> detectLinuxBackend(const IEnvironment& environment);
     };
 }
 
