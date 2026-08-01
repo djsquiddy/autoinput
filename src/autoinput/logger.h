@@ -7,6 +7,18 @@
 #define INCLUDE_AUTOINPUT_LOGGER_H
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <source_location>
+#include <format>
+#include <atomic>
+#include <mutex>
+#include <type_traits>
+
 namespace autoinput
 {
     class Logger;

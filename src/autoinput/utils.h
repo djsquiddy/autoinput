@@ -8,6 +8,13 @@
 #define INCLUDE_AUTOINPUT_UTILS_H
 #pragma once
 
+#include <cstdint>
+#include <cstdlib>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <gsl/gsl>
+
 namespace autoinput
 {
     enum class ErrorCode : int32_t

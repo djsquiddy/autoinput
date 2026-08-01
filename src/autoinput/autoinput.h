@@ -7,6 +7,12 @@
 #define INCLUDE_AUTOINPUT_AUTOINPUT_H
 #pragma once
 
+#include <vector>
+#include <string>
+#include <unordered_map>
+#include <memory>
+#include <thread>
+
 #include "autoinput/arguments.h"
 #include "autoinput/mouse.h"
 #include "autoinput/keyboard.h"

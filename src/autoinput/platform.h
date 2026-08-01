@@ -7,6 +7,11 @@
 #define INCLUDE_AUTOINPUT_PLATFORM_H
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <filesystem>
+
 namespace autoinput
 {
     struct Key;

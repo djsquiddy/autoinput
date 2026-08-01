@@ -8,6 +8,12 @@
 #define INCLUDE_AUTOINPUT_CONFIG_H
 #pragma once
 
+#include <string>
+#include <vector>
+#include <filesystem>
+#include <optional>
+#include <string_view>
+
 #if defined(__cpp_exceptions) && __cpp_exceptions
     #define TOML_EXCEPTIONS 0 // only necessary if you've left them enabled in your compiler
 #endif // defined(__cpp_exceptions) && __cpp_exceptions

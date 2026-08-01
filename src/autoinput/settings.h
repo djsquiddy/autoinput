@@ -8,6 +8,12 @@
 #define INCLUDE_AUTOINPUT_SETTINGS_H
 #pragma once
 
+#include <string>
+#include <string_view>
+#include <vector>
+#include <cstdint>
+#include <gsl/gsl>
+
 #include "autoinput/config.h"
 
 namespace autoinput

@@ -22,9 +22,4 @@ add_custom_command(TARGET ${PROJECT_NAME}_tests POST_BUILD
         "$<TARGET_FILE_DIR:${PROJECT_NAME}_tests>/configs"
 )
 
-target_precompile_headers(${PROJECT_NAME}_tests
-        PRIVATE
-        ${CMAKE_SOURCE_DIR}/src/pch.h
-)
-
 gtest_discover_tests(${PROJECT_NAME}_tests)

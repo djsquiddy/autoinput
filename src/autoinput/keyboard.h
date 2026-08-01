@@ -7,6 +7,13 @@
 #define INCLUDE_AUTOINPUT_KEYBOARD_H
 #pragma once
 
+#include <string>
+#include <shared_mutex>
+#include <mutex>
+#include <cstdint>
+#include <utility>
+#include <functional>
+
 #include "autoinput/types.h"
 #include "autoinput/handlerState.h"
 

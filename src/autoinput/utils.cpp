@@ -5,6 +5,10 @@
  */
 
 #include "autoinput/utils.h"
+#include <algorithm>
+#include <ranges>
+#include <cctype>
+#include <sstream>
 
 std::string autoinput::toLowerCase(std::string_view sv)
 {

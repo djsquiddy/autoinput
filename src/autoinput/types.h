@@ -48,6 +48,16 @@
 
 // NOLINTEND(bugprone-macro-parentheses)
 
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <any>
+#include <type_traits>
+#include <functional>
+#include <iostream>
+#include <format>
+
 namespace autoinput
 {
     struct KeyboardData

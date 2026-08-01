@@ -7,6 +7,10 @@
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
+#include <ranges>
+#include <format>
+#include <cctype>
+#include <algorithm>
 
 namespace autoinput
 {

@@ -5,6 +5,9 @@
  */
 #include "autoinput/logger.h"
 #include "autoinput/utils.h"
+#include <chrono>
+#include <filesystem>
+#include <stdexcept>
 
 
 namespace autoinput

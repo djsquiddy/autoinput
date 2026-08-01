@@ -11,6 +11,14 @@
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
 #include "internalData_win32.h"
+#include <set>
+#include <ranges>
+#include <unordered_map>
+#include <string>
+#include <vector>
+#include <filesystem>
+#include <stdexcept>
+#include <cstdlib>
 
 namespace autoinput
 {

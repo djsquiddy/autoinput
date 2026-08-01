@@ -7,6 +7,11 @@
 #define INCLUDE_AUTOINPUT_LINUX_INTERNALDATA_LINUX_H
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "autoinput/backend.h"
 
 #if defined(__linux__)

@@ -37,6 +37,11 @@ function(configure_autoinput_target target_name)
         )
     endif()
 
+    target_precompile_headers(${target_name}
+            PRIVATE
+            ${CMAKE_SOURCE_DIR}/src/pch.h
+    )
+
     install(TARGETS ${target_name}
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

@@ -6,6 +6,9 @@
 #include "autoinput/arguments.h"
 #include "autoinput/logger.h"
 #include "autoinput/config.h"
+#include <random>
+#include <cctype>
+#include <algorithm>
 
 namespace autoinput
 {

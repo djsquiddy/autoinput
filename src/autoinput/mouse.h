@@ -7,6 +7,11 @@
 #define INCLUDE_AUTOINPUT_MOUSE_H
 #pragma once
 
+#include <string>
+#include <shared_mutex>
+#include <mutex>
+#include <utility>
+
 #include "autoinput/types.h"
 #include "autoinput/handlerState.h"
 

@@ -7,6 +7,13 @@
 #define INCLUDE_AUTOINPUT_PROGRAM_ARGUMENTS_H
 #pragma once
 
+#include <chrono>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <cstdint>
+#include <gsl/gsl>
+
 #include "autoinput/utils.h"
 #include "autoinput/types.h"
 #include "autoinput/settings.h"

@@ -7,6 +7,10 @@
 #define INCLUDE_AUTOINPUT_BACKEND_H
 #pragma once
 
+#include <memory>
+#include <thread>
+#include <chrono>
+
 #include "autoinput/types.h"
 #include "autoinput/logger.h"
 

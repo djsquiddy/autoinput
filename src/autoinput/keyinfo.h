@@ -8,6 +8,8 @@
 #define INCLUDE_AUTOINPUT_KEYINFO_H
 #pragma once
 
+#include <cstdint>
+
 #include "autoinput/types.h"
 
 namespace autoinput

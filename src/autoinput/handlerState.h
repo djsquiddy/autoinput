@@ -8,6 +8,11 @@
 #define INCLUDE_AUTOINPUT_INPUT_HANDLER_H
 #pragma once
 
+#include <string>
+#include <atomic>
+#include <memory>
+#include <thread>
+
 namespace autoinput
 {
     class InputHandler

@@ -6,6 +6,11 @@
 #include "autoinput/types.h"
 #include "autoinput/logger.h"
 #include "autoinput/utils.h"
+#include <algorithm>
+#include <ranges>
+#include <cctype>
+#include <charconv>
+#include <system_error>
 
 namespace autoinput
 {
