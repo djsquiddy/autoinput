@@ -163,7 +163,21 @@ namespace autoinput
         {
             configFilePath = filePath + ".toml";
         }
-        return getConfigsPath() / configFilePath;
+
+        const std::filesystem::path userPath = getUserConfigsPath() / configFilePath;
+        if (std::filesystem::exists(userPath))
+        {
+            return userPath;
+        }
+
+        const std::filesystem::path globalPath = getConfigsPath() / configFilePath;
+        if (std::filesystem::exists(globalPath))
+        {
+            return globalPath;
+        }
+
+        Logger::error("Configuration could not be found: {}", filePath);
+        return globalPath;
     }
 
     std::optional<ConfigData> loadConfigData(const std::filesystem::path& configPath)

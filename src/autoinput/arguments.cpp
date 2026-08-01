@@ -684,7 +684,6 @@ namespace autoinput
         if (!doesConfigDataExists(configPath))
         {
             printUsage();
-            Logger::error("Configuration could not be found at: {}", configPath.string());
             return false;
         }
         if (const auto foundConfigData = autoinput::loadConfigData(configPath); foundConfigData.has_value())
