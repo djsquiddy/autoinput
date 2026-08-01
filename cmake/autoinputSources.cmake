@@ -7,6 +7,8 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/backend.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/waitDelay.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/waitDelay.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/cliHelpFormatter.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/cliHelpFormatter.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/types.h
@@ -22,6 +24,8 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/logger.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/config.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/config.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/runtimeConfig.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/runtimeConfig.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/handlerState.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/settings.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/settings.h
@@ -53,6 +57,7 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/utilsTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/argumentsTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/runtimeConfigTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/positionalArgumentsTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseTriggerLogicTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/settingsTest.cpp
