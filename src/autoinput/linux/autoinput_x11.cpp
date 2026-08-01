@@ -231,6 +231,18 @@ namespace autoinput
 
                 XFlush(g_display);
             }
+
+            BackendCapabilities capabilities() const override
+            {
+                return {
+                    .keyboardHooks = true,
+                    .mouseHooks = true,
+                    .focusDetection = true,
+                    .listApplications = true,
+                    .syntheticKeyboardInput = true,
+                    .syntheticMouseInput = true
+                };
+            }
         };
     }
 

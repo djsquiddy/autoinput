@@ -237,6 +237,18 @@ namespace autoinput
 
                 emit(g_uinputFd, EV_SYN, SYN_REPORT, 0);
             }
+
+            BackendCapabilities capabilities() const override
+            {
+                return {
+                    .keyboardHooks = true,
+                    .mouseHooks = true,
+                    .focusDetection = false,
+                    .listApplications = false,
+                    .syntheticKeyboardInput = true,
+                    .syntheticMouseInput = true
+                };
+            }
         };
     }
 

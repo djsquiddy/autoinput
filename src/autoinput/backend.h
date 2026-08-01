@@ -16,6 +16,16 @@
 
 namespace autoinput
 {
+    struct BackendCapabilities
+    {
+        bool keyboardHooks = false;
+        bool mouseHooks = false;
+        bool focusDetection = false;
+        bool listApplications = false;
+        bool syntheticKeyboardInput = false;
+        bool syntheticMouseInput = false;
+    };
+
     class IPlatformBackend
     {
     public:
@@ -28,6 +38,8 @@ namespace autoinput
         virtual void keyRelease(const Key& key) = 0;
         virtual void mousePress(const Mouse& mouse) = 0;
         virtual void mouseRelease(const Mouse& mouse) = 0;
+
+        virtual BackendCapabilities capabilities() const = 0;
     };
 
     class FakeBackend : public IPlatformBackend
@@ -41,6 +53,18 @@ namespace autoinput
         void keyRelease(const Key& key) override { Logger::info("[FAKE] Releasing key: {}\n", key.toString()); }
         void mousePress(const Mouse& mouse) override { Logger::info("[FAKE] Pressing mouse: {}\n", mouse.toString()); }
         void mouseRelease(const Mouse& mouse) override { Logger::info("[FAKE] Releasing mouse: {}\n", mouse.toString()); }
+
+        BackendCapabilities capabilities() const override
+        {
+            return {
+                .keyboardHooks = true,
+                .mouseHooks = true,
+                .focusDetection = true,
+                .listApplications = true,
+                .syntheticKeyboardInput = true,
+                .syntheticMouseInput = true
+            };
+        }
     };
 
 #ifdef _WIN32

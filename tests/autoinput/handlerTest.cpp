@@ -25,6 +25,7 @@ public:
     MOCK_METHOD(void, keyRelease, (const Key& key), (override));
     MOCK_METHOD(void, mousePress, (const Mouse& mouse), (override));
     MOCK_METHOD(void, mouseRelease, (const Mouse& mouse), (override));
+    BackendCapabilities capabilities() const override { return {}; }
 };
 
 class HandlerTest : public ::testing::Test
