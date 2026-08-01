@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
             dumpPath /= fileName;
 
             const ConfigData configData = g_program->arguments().toConfigData();
-            if (saveConfigData(configData, dumpPath))
+            if (saveConfigData(configData, dumpPath, g_program->arguments().getSettings().getDefaults()))
             {
                 std::cout << "Configuration saved to " << dumpPath.string() << "\n";
                 return static_cast<int>(ErrorCode::SUCCESS);

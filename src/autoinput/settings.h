@@ -12,17 +12,6 @@
 
 namespace autoinput
 {
-    struct DefaultSettings
-    {
-        std::string start{};
-        std::string end{};
-        std::string press{};
-        std::string release{};
-        std::string action{};
-        std::string button{};
-        std::vector<std::string> blacklist{};
-    };
-
     class Settings
     {
     public:

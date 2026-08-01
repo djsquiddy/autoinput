@@ -25,6 +25,17 @@ namespace autoinput
         std::string releaseWait;
     };
 
+    struct DefaultSettings
+    {
+        std::string start{};
+        std::string end{};
+        std::string press{};
+        std::string release{};
+        std::string action{};
+        std::string button{};
+        std::vector<std::string> blacklist{};
+    };
+
     struct ConfigData
     {
         std::vector<CommandData> commands;
@@ -38,7 +49,7 @@ namespace autoinput
     std::filesystem::path getUserConfigsPath();
     std::filesystem::path getConfigFilePath(const std::string& filePath);
     std::optional<ConfigData> loadConfigData(const std::filesystem::path& configPath);
-    bool saveConfigData(const ConfigData& configData, const std::filesystem::path& configPath);
+    bool saveConfigData(const ConfigData& configData, const std::filesystem::path& configPath, const std::optional<DefaultSettings>& defaults = std::nullopt);
     bool doesConfigDataExists(const std::filesystem::path& configPath);
 
     template <typename node_type, typename date_type>

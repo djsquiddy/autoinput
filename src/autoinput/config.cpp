@@ -5,6 +5,8 @@
  */
 #define TOML_IMPLEMENTATION
 #include "autoinput/config.h"
+
+#include "utils.h"
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
 
@@ -200,7 +202,7 @@ namespace autoinput
         return std::filesystem::exists(configPath);
     }
 
-    bool saveConfigData(const ConfigData& configData, const std::filesystem::path& configPath)
+    bool saveConfigData(const ConfigData& configData, const std::filesystem::path& configPath, const std::optional<DefaultSettings>& defaults)
     {
         toml::table table;
 
@@ -208,10 +210,18 @@ namespace autoinput
             toml::table t;
             if (!cmd.action.empty())
             {
-                t.insert("action", cmd.action);
+                if (!defaults.has_value() || cmd.action != defaults->action)
+                {
+                    t.insert("action", cmd.action);
+                }
             }
 
-            auto insertStringOrArrayToTable = [&](toml::table& target, const std::string_view key, const std::vector<std::string>& values) {
+            auto insertStringOrArrayToTable = [&](toml::table& target, const std::string_view key, const std::vector<std::string>& values, const std::optional<std::string>& defaultValue = std::nullopt) {
+                if (defaultValue.has_value() && values.size() == 1 && values[0] == *defaultValue)
+                {
+                    return;
+                }
+                
                 if (values.size() == 1)
                 {
                     target.insert(key, values[0]);
@@ -227,25 +237,53 @@ namespace autoinput
                 }
             };
 
-            insertStringOrArrayToTable(t, "button", cmd.buttons);
+            insertStringOrArrayToTable(t, "button", cmd.buttons, defaults.has_value() ? std::make_optional(defaults->button) : std::nullopt);
             insertStringOrArrayToTable(t, "key", cmd.keys);
-            insertStringOrArrayToTable(t, "start", cmd.startKeys);
+            insertStringOrArrayToTable(t, "start", cmd.startKeys, defaults.has_value() ? std::make_optional(defaults->start) : std::nullopt);
 
             if (!cmd.pressWait.empty() || !cmd.releaseWait.empty())
             {
                 toml::table waitTime;
                 if (!cmd.pressWait.empty())
                 {
-                    waitTime.insert("press", cmd.pressWait);
+                    if (!defaults.has_value() || cmd.pressWait != defaults->press)
+                    {
+                        waitTime.insert("press", cmd.pressWait);
+                    }
                 }
                 if (!cmd.releaseWait.empty())
                 {
-                    waitTime.insert("release", cmd.releaseWait);
+                    if (!defaults.has_value() || cmd.releaseWait != defaults->release)
+                    {
+                        waitTime.insert("release", cmd.releaseWait);
+                    }
                 }
-                t.insert("time", std::move(waitTime));
+                if (!waitTime.empty())
+                {
+                    t.insert("time", std::move(waitTime));
+                }
             }
             return t;
         };
+
+        auto filterBlacklist = [&](const std::vector<std::string>& blacklist) {
+            if (!defaults.has_value())
+            {
+                return blacklist;
+            }
+
+            std::vector<std::string> filtered;
+            for (const auto& item : blacklist)
+            {
+                if (!contains(defaults->blacklist, item))
+                {
+                    filtered.push_back(item);
+                }
+            }
+            return filtered;
+        };
+
+        const auto filteredBlacklist = filterBlacklist(configData.blacklist);
 
         if (configData.commands.size() == 1)
         {
@@ -253,13 +291,20 @@ namespace autoinput
             // Put global fields inside the command table for backward compatibility when there's only one command
             if (!configData.endKey.empty())
             {
-                command.insert("end", configData.endKey);
+                if (!defaults.has_value() || configData.endKey != defaults->end)
+                {
+                    command.insert("end", configData.endKey);
+                }
             }
             if (!configData.application.empty())
             {
                 command.insert("application", configData.application);
             }
-            command.insert("appendBlacklist", configData.appendBlacklist);
+            
+            if (!configData.appendBlacklist)
+            {
+                command.insert("appendBlacklist", false);
+            }
             
             auto insertStringOrArrayToTable = [&](toml::table& target, const std::string_view key, const std::vector<std::string>& values) {
                 if (values.size() == 1)
@@ -276,7 +321,7 @@ namespace autoinput
                     target.insert(key, std::move(arr));
                 }
             };
-            insertStringOrArrayToTable(command, "blacklist", configData.blacklist);
+            insertStringOrArrayToTable(command, "blacklist", filteredBlacklist);
 
             table.insert("command", std::move(command));
         }
@@ -292,13 +337,20 @@ namespace autoinput
             // Put global fields at top level when there are multiple commands
             if (!configData.endKey.empty())
             {
-                table.insert("end", configData.endKey);
+                if (!defaults.has_value() || configData.endKey != defaults->end)
+                {
+                    table.insert("end", configData.endKey);
+                }
             }
             if (!configData.application.empty())
             {
                 table.insert("application", configData.application);
             }
-            table.insert("appendBlacklist", configData.appendBlacklist);
+            
+            if (!configData.appendBlacklist)
+            {
+                table.insert("appendBlacklist", false);
+            }
 
             auto insertStringOrArrayToTable = [&](toml::table& target, const std::string_view key, const std::vector<std::string>& values) {
                 if (values.size() == 1)
@@ -315,7 +367,7 @@ namespace autoinput
                     target.insert(key, std::move(arr));
                 }
             };
-            insertStringOrArrayToTable(table, "blacklist", configData.blacklist);
+            insertStringOrArrayToTable(table, "blacklist", filteredBlacklist);
         }
 
         if (!configPath.parent_path().empty() && !std::filesystem::exists(configPath.parent_path()))

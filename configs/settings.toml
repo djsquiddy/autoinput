@@ -1,5 +1,3 @@
-start = 'f2'
-end = 'f3'
 blacklist = [
     "Explorer.EXE",
     "Discord.exe",

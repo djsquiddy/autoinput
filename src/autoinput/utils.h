@@ -22,6 +22,18 @@ namespace autoinput
     std::string toLowerCase(std::string_view sv);
 
     std::string join(gsl::span<const std::string> vec, const std::string& delim);
+    template <typename T>
+    bool contains(std::vector<T> vec, const T& element)
+    {
+        for (const auto& item : vec)
+        {
+            if (item == element)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
     class NonCopyable
     {

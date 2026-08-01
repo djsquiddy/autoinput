@@ -54,6 +54,8 @@ namespace autoinput
         [[nodiscard]] bool postParseArguments();
         void printUsage(bool verbose = false) const;
         [[nodiscard]] ConfigData toConfigData() const;
+        [[nodiscard]] const Settings& getSettings() const { return m_settings; }
+        [[nodiscard]] Settings& getSettings() { return m_settings; }
 
         bool parseConfigArguments(gsl::span<char*> args, int& i);
         bool parseActionState(gsl::span<char*> args, int& i);

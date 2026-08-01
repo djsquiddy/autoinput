@@ -13,6 +13,7 @@ A versatile C++ utility for automating mouse and keyboard input on Windows and L
 - **Multi-command Support**: Run multiple independent automation commands simultaneously from a single configuration file.
 - **Safety First**: Integrated with Microsoft GSL for robust memory management.
 - **Cross-platform Support**: Works on Windows (via `SendInput`), Linux X11 (via `XTest`), and Linux Wayland (via `uinput`).
+- **No Network Dependencies**: No external network connections or dependencies. No telemetry or analytics.
 
 ### Requirements
 
