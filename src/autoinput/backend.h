@@ -48,7 +48,7 @@ namespace autoinput
 #ifdef _WIN32
     std::unique_ptr<IPlatformBackend> createWindowsBackend();
 #else
-    std::unique_ptr<PlatformBackend> createLinuxBackend();
+    std::unique_ptr<IPlatformBackend> createLinuxBackend();
 #endif
 }
 
