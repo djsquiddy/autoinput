@@ -3,44 +3,29 @@
 #include <filesystem>
 #include "autoinput/config.h"
 #include "autoinput/platform.h"
+#include "testUtils.h"
 
 namespace autoinput
 {
     class ConfigLookupTest : public ::testing::Test
     {
     protected:
-        void SetUp() override
-        {
-            // Use a temporary directory for tests
-            tempDir = std::filesystem::temp_directory_path() / "autoinput_test_config";
-            if (std::filesystem::exists(tempDir))
-            {
-                std::filesystem::remove_all(tempDir);
-            }
-            std::filesystem::create_directories(tempDir);
-
-            // Mock USERPROFILE for getUserHomePath
+        ConfigLookupTest()
+            : tempDir("autoinput_test_config")
 #ifdef _WIN32
-            _putenv_s("USERPROFILE", tempDir.string().c_str());
+            , scopedHome("USERPROFILE", tempDir.path().string())
 #else
-            setenv("HOME", tempDir.string().c_str(), 1);
+            , scopedHome("HOME", tempDir.path().string())
 #endif
-            
-            // Note: getConfigsPath() is harder to mock as it's based on executable path.
-            // We'll rely on the fact that it currently points to [exec_dir]/configs.
-        }
+        {}
 
-        void TearDown() override
-        {
-            std::filesystem::remove_all(tempDir);
-        }
-
-        std::filesystem::path tempDir;
+        test::TemporaryDirectory tempDir;
+        test::ScopedEnvironmentVariable scopedHome;
     };
 
     TEST_F(ConfigLookupTest, FindInUserConfigDir)
     {
-        std::filesystem::path userConfigDir = tempDir / ".autoinput";
+        std::filesystem::path userConfigDir = tempDir.path() / ".autoinput";
         std::filesystem::create_directories(userConfigDir);
         
         std::filesystem::path configFile = userConfigDir / "test_user_config.toml";
@@ -77,7 +62,7 @@ namespace autoinput
 
     TEST_F(ConfigLookupTest, UserConfigPriorityOverGlobal)
     {
-        std::filesystem::path userConfigDir = tempDir / ".autoinput";
+        std::filesystem::path userConfigDir = tempDir.path() / ".autoinput";
         std::filesystem::create_directories(userConfigDir);
         
         std::filesystem::path userConfigFile = userConfigDir / "priority_test.toml";

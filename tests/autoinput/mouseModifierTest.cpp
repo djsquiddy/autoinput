@@ -8,6 +8,7 @@
 #include "autoinput/autoInput.h"
 #include "autoinput/backend.h"
 #include "autoinput/arguments.h"
+#include "testUtils.h"
 
 using namespace autoinput;
 using ::testing::Exactly;
@@ -60,7 +61,7 @@ TEST(MouseModifierTest, ProgramTriggersShiftLeftClick)
 
     auto mock = std::make_unique<MockMouseModifierBackend>();
     MockMouseModifierBackend* mockPtr = mock.get();
-    g_backend = std::move(mock);
+    test::ScopedBackendOverride backendOverride(std::move(mock));
 
     const auto& keyInfo = program.getKeyInfo();
     ASSERT_EQ(keyInfo.size(), 2); // start and end
@@ -69,6 +70,4 @@ TEST(MouseModifierTest, ProgramTriggersShiftLeftClick)
     EXPECT_CALL(*mockPtr, mousePress(expectedMouse)).Times(Exactly(1));
     
     program.start(keyInfo[0]);
-
-    g_backend.reset();
 }

@@ -8,6 +8,7 @@
 #include <thread>
 #include "autoinput/autoInput.h"
 #include "autoinput/backend.h"
+#include "testUtils.h"
 
 namespace autoinput
 {
@@ -30,16 +31,17 @@ namespace autoinput
         {
             auto backend = std::make_unique<TrackingBackend>();
             m_backend = backend.get();
-            g_backend = std::move(backend);
+            m_override = std::make_unique<test::ScopedBackendOverride>(std::move(backend));
         }
 
         void TearDown() override
         {
-            g_backend.reset();
+            m_override.reset();
             m_backend = nullptr;
         }
 
         TrackingBackend* m_backend = nullptr;
+        std::unique_ptr<test::ScopedBackendOverride> m_override;
     };
 
     TEST_F(StartKeyToggleTest, StartKeyTogglesSingleAction)

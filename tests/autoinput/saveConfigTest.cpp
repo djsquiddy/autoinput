@@ -17,55 +17,24 @@
 #include "autoinput/config.h"
 #include "autoinput/platform.h"
 #include "autoinput/types.h"
+#include "testUtils.h"
 
 namespace autoinput
 {
-    namespace
-    {
-        void setEnvVar(const std::string& name, const std::string& value)
-        {
-#ifdef _WIN32
-            SetEnvironmentVariableA(name.c_str(), value.c_str());
-            _putenv((name + "=" + value).c_str());
-#else
-            setenv(name.c_str(), value.c_str(), 1);
-#endif
-        }
-    }
-
     class DumpTest : public ::testing::Test
     {
     protected:
-        void SetUp() override
-        {
-            m_tempHome = std::filesystem::temp_directory_path() / "autoinput_dump_test_home";
-            std::filesystem::remove_all(m_tempHome);
-            std::filesystem::create_directories(m_tempHome);
-            
+        DumpTest()
+            : m_tempHome("autoinput_dump_test_home")
 #ifdef _WIN32
-            const char* oldProfile = std::getenv("USERPROFILE");
-            if (oldProfile) m_oldEnv = oldProfile;
-            setEnvVar("USERPROFILE", m_tempHome.string());
+            , m_scopedHome("USERPROFILE", m_tempHome.path().string())
 #else
-            const char* oldHome = std::getenv("HOME");
-            if (oldHome) m_oldEnv = oldHome;
-            setEnvVar("HOME", m_tempHome.string());
+            , m_scopedHome("HOME", m_tempHome.path().string())
 #endif
-        }
+        {}
 
-        void TearDown() override
-        {
-            std::filesystem::remove_all(m_tempHome);
-            
-#ifdef _WIN32
-            setEnvVar("USERPROFILE", m_oldEnv);
-#else
-            setEnvVar("HOME", m_oldEnv);
-#endif
-        }
-
-        std::filesystem::path m_tempHome;
-        std::string m_oldEnv;
+        test::TemporaryDirectory m_tempHome;
+        test::ScopedEnvironmentVariable m_scopedHome;
     };
 
     TEST_F(DumpTest, SaveConfigCreatesCorrectFile)

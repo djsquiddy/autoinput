@@ -7,6 +7,7 @@
 #include <gmock/gmock.h>
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
+#include "testUtils.h"
 
 using namespace autoinput;
 using ::testing::Exactly;
@@ -27,11 +28,9 @@ TEST(SignalCleanupTest, SignalEndCallsCleanup)
 {
     auto mock = std::make_unique<MockCleanupBackend>();
     MockCleanupBackend* mockPtr = mock.get();
-    g_backend = std::move(mock);
+    test::ScopedBackendOverride backendOverride(std::move(mock));
 
     EXPECT_CALL(*mockPtr, cleanup()).Times(Exactly(1));
     
     platform::signalEnd();
-    
-    g_backend.reset();
 }

@@ -7,14 +7,15 @@
 #include <gtest/gtest.h>
 
 #include "autoinput/config.h"
+#include "testUtils.h"
 
 namespace autoinput
 {
     namespace
     {
-        std::filesystem::path makeTemporaryConfigFile(const std::string& fileName, const std::string& contents)
+        std::filesystem::path makeConfigFile(const std::filesystem::path& dir, const std::string& fileName, const std::string& contents)
         {
-            const std::filesystem::path path = std::filesystem::temp_directory_path() / fileName;
+            const std::filesystem::path path = dir / fileName;
 
             std::ofstream file{ path };
             file << contents;
@@ -40,37 +41,37 @@ namespace autoinput
 
     TEST(ConfigTest, DoesConfigDataExistsReturnsTrueForExistingFile)
     {
-        const std::filesystem::path path = makeTemporaryConfigFile(
+        test::TemporaryDirectory tempDir("config_test_exists");
+        const std::filesystem::path path = makeConfigFile(
+            tempDir.path(),
             "autoinput_existing_config_test.toml",
             "[command]\naction = \"click\"\n"
         );
 
         EXPECT_TRUE(doesConfigDataExists(path));
-
-        std::filesystem::remove(path);
     }
 
     TEST(ConfigTest, DoesConfigDataExistsReturnsFalseForMissingFile)
     {
-        const std::filesystem::path path = std::filesystem::temp_directory_path() / "autoinput_missing_config_test.toml";
-
-        std::filesystem::remove(path);
+        test::TemporaryDirectory tempDir("config_test_missing");
+        const std::filesystem::path path = tempDir.path() / "autoinput_missing_config_test.toml";
 
         EXPECT_FALSE(doesConfigDataExists(path));
     }
 
     TEST(ConfigTest, LoadConfigDataReturnsNulloptForMissingFile)
     {
-        const std::filesystem::path path = std::filesystem::temp_directory_path() / "autoinput_missing_load_config_test.toml";
-
-        std::filesystem::remove(path);
+        test::TemporaryDirectory tempDir("config_test_missing_load");
+        const std::filesystem::path path = tempDir.path() / "autoinput_missing_load_config_test.toml";
 
         EXPECT_FALSE(loadConfigData(path).has_value());
     }
 
     TEST(ConfigTest, LoadConfigDataParsesCommandActionAndEndKey)
     {
-        const std::filesystem::path path = makeTemporaryConfigFile(
+        test::TemporaryDirectory tempDir("config_test_parse");
+        const std::filesystem::path path = makeConfigFile(
+            tempDir.path(),
             "autoinput_config_action_end_test.toml",
             R"toml(
 [command]
@@ -85,13 +86,13 @@ end = "f3"
         ASSERT_EQ(configData->commands.size(), 1);
         EXPECT_EQ(configData->commands[0].action, "click");
         EXPECT_EQ(configData->endKey, "f3");
-
-        std::filesystem::remove(path);
     }
 
     TEST(ConfigTest, LoadConfigDataParsesWaitTimes)
     {
-        const std::filesystem::path path = makeTemporaryConfigFile(
+        test::TemporaryDirectory tempDir("config_test_wait");
+        const std::filesystem::path path = makeConfigFile(
+            tempDir.path(),
             "autoinput_config_wait_test.toml",
             R"toml(
 [command]
@@ -110,13 +111,13 @@ release = "1s..2s"
         ASSERT_EQ(configData->commands.size(), 1);
         EXPECT_EQ(configData->commands[0].pressWait, "100ms..250ms");
         EXPECT_EQ(configData->commands[0].releaseWait, "1s..2s");
-
-        std::filesystem::remove(path);
     }
 
     TEST(ConfigTest, LoadConfigDataParsesButtonAndStartKeys)
     {
-        const std::filesystem::path path = makeTemporaryConfigFile(
+        test::TemporaryDirectory tempDir("config_test_button_start");
+        const std::filesystem::path path = makeConfigFile(
+            tempDir.path(),
             "autoinput_config_button_start_test.toml",
             R"toml(
 [command]
@@ -134,13 +135,13 @@ start = ["f2", "f4"]
         ASSERT_EQ(configData->commands[0].startKeys.size(), 2);
         EXPECT_EQ(configData->commands[0].startKeys[0], "f2");
         EXPECT_EQ(configData->commands[0].startKeys[1], "f4");
-
-        std::filesystem::remove(path);
     }
 
     TEST(ConfigTest, LoadConfigDataParsesMultipleButtonsAndSingleStartKey)
     {
-        const std::filesystem::path path = makeTemporaryConfigFile(
+        test::TemporaryDirectory tempDir("config_test_multi_button");
+        const std::filesystem::path path = makeConfigFile(
+            tempDir.path(),
             "autoinput_config_multi_button_test.toml",
             R"toml(
 [command]
@@ -158,13 +159,13 @@ start = "f2"
         EXPECT_EQ(configData->commands[0].buttons[1], "right");
         ASSERT_EQ(configData->commands[0].startKeys.size(), 1);
         EXPECT_EQ(configData->commands[0].startKeys[0], "f2");
-
-        std::filesystem::remove(path);
     }
 
     TEST(ConfigTest, LoadConfigDataParsesKeys)
     {
-        const std::filesystem::path path = makeTemporaryConfigFile(
+        test::TemporaryDirectory tempDir("config_test_keys");
+        const std::filesystem::path path = makeConfigFile(
+            tempDir.path(),
             "autoinput_config_keys_test.toml",
             R"toml(
 [command]
@@ -179,13 +180,13 @@ key = ["a", "b"]
         ASSERT_EQ(configData->commands[0].keys.size(), 2);
         EXPECT_EQ(configData->commands[0].keys[0], "a");
         EXPECT_EQ(configData->commands[0].keys[1], "b");
-
-        std::filesystem::remove(path);
     }
 
     TEST(ConfigTest, LoadConfigDataParsesApplicationName)
     {
-        const std::filesystem::path path = makeTemporaryConfigFile(
+        test::TemporaryDirectory tempDir("config_test_app");
+        const std::filesystem::path path = makeConfigFile(
+            tempDir.path(),
             "autoinput_config_app_test.toml",
             R"toml(
 [command]
@@ -197,13 +198,13 @@ application = "notepad.exe"
 
         ASSERT_TRUE(configData.has_value());
         EXPECT_EQ(configData->application, "notepad.exe");
-
-        std::filesystem::remove(path);
     }
 
     TEST(ConfigTest, LoadConfigDataParsesBlacklist)
     {
-        const std::filesystem::path path = makeTemporaryConfigFile(
+        test::TemporaryDirectory tempDir("config_test_blacklist");
+        const std::filesystem::path path = makeConfigFile(
+            tempDir.path(),
             "autoinput_config_blacklist_test.toml",
             R"toml(
 [command]
@@ -219,13 +220,13 @@ blacklist = ["game.exe", "other.exe"]
         EXPECT_EQ(configData->blacklist[0], "game.exe");
         EXPECT_EQ(configData->blacklist[1], "other.exe");
         EXPECT_TRUE(configData->appendBlacklist);
-
-        std::filesystem::remove(path);
     }
 
     TEST(ConfigTest, LoadConfigDataParsesSingleBlacklist)
     {
-        const std::filesystem::path path = makeTemporaryConfigFile(
+        test::TemporaryDirectory tempDir("config_test_single_blacklist");
+        const std::filesystem::path path = makeConfigFile(
+            tempDir.path(),
             "autoinput_config_single_blacklist_test.toml",
             R"toml(
 [command]
@@ -241,13 +242,13 @@ appendBlacklist = false
         ASSERT_EQ(configData->blacklist.size(), 1);
         EXPECT_EQ(configData->blacklist[0], "only.exe");
         EXPECT_FALSE(configData->appendBlacklist);
-
-        std::filesystem::remove(path);
     }
 
     TEST(ConfigTest, LoadConfigDataParsesMultipleCommands)
     {
-        const std::filesystem::path path = makeTemporaryConfigFile(
+        test::TemporaryDirectory tempDir("config_test_multi_command");
+        const std::filesystem::path path = makeConfigFile(
+            tempDir.path(),
             "autoinput_config_multi_command_test.toml",
             R"toml(
 end = "f10"
@@ -287,8 +288,6 @@ start = "f9"
         EXPECT_EQ(configData->application, "notepad.exe");
         ASSERT_EQ(configData->blacklist.size(), 1);
         EXPECT_EQ(configData->blacklist[0], "discord.exe");
-
-        std::filesystem::remove(path);
     }
 
     TEST(ConfigTest, TryGetTableValueReturnsTrueWhenValueExists)

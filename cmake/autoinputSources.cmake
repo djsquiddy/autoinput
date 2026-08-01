@@ -62,6 +62,7 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/focusTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configLookupTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/testEnvironment.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/testUtils.h
     )
 
     if(UNIX AND NOT APPLE)

@@ -16,21 +16,12 @@
 #include "autoinput/settings.h"
 #include "autoinput/config.h"
 #include "autoinput/platform.h"
+#include "testUtils.h"
 
 namespace autoinput
 {
     namespace
     {
-        void setEnvVar(const std::string& name, const std::string& value)
-        {
-#ifdef _WIN32
-            SetEnvironmentVariableA(name.c_str(), value.c_str());
-            _putenv((name + "=" + value).c_str());
-#else
-            setenv(name.c_str(), value.c_str(), 1);
-#endif
-        }
-
         void createSettingsFile(const std::filesystem::path& path, const std::string& contents)
         {
             std::filesystem::create_directories(path.parent_path());
@@ -43,47 +34,34 @@ namespace autoinput
     class UserSettingsTest : public ::testing::Test
     {
     protected:
+        UserSettingsTest()
+            : m_tempHome("autoinput_user_settings_test")
+#ifdef _WIN32
+            , m_scopedHome("USERPROFILE", m_tempHome.path().string())
+#else
+            , m_scopedHome("HOME", m_tempHome.path().string())
+#endif
+        {}
+
         void SetUp() override
         {
-            m_tempHome = std::filesystem::temp_directory_path() / "autoinput_test_home";
-            std::filesystem::create_directories(m_tempHome);
-            
-            // Backup old env var
-#ifdef _WIN32
-            const char* oldProfile = std::getenv("USERPROFILE");
-            if (oldProfile) m_oldEnv = oldProfile;
-            setEnvVar("USERPROFILE", m_tempHome.string());
-#else
-            const char* oldHome = std::getenv("HOME");
-            if (oldHome) m_oldEnv = oldHome;
-            setEnvVar("HOME", m_tempHome.string());
-#endif
-
             // Ensure built-in configs dir exists
             m_builtinConfigsDir = platform::getExecutablePath() / "configs";
             std::filesystem::create_directories(m_builtinConfigsDir);
             
             // Clean up any existing settings files
             std::filesystem::remove(m_builtinConfigsDir / "settings.toml");
-            std::filesystem::remove(m_tempHome / ".autoinput" / "settings.toml");
+            // No need to clean up temp home, it's a new unique directory each time
         }
 
         void TearDown() override
         {
-            std::filesystem::remove_all(m_tempHome);
             std::filesystem::remove(m_builtinConfigsDir / "settings.toml");
-            
-            // Restore old env var
-#ifdef _WIN32
-            setEnvVar("USERPROFILE", m_oldEnv);
-#else
-            setEnvVar("HOME", m_oldEnv);
-#endif
         }
 
-        std::filesystem::path m_tempHome;
+        test::TemporaryDirectory m_tempHome;
+        test::ScopedEnvironmentVariable m_scopedHome;
         std::filesystem::path m_builtinConfigsDir;
-        std::string m_oldEnv;
     };
 
     TEST_F(UserSettingsTest, UserSettingsOverrideBuiltin)

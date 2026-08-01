@@ -7,12 +7,7 @@
 #include "autoinput/backend.h"
 #include "autoinput/linux/internalData_linux.h"
 #include "autoinput/logger.h"
-
-#ifdef _WIN32
-#include <cstdlib>
-#define setenv(name, value, overwrite) _putenv_s(name, value)
-#define unsetenv(name) _putenv_s(name, "")
-#endif
+#include "testUtils.h"
 
 namespace autoinput
 {
@@ -50,23 +45,21 @@ namespace autoinput
 
 TEST(LinuxBackendTest, DetectsWayland)
 {
-    setenv("XDG_SESSION_TYPE", "wayland", 1);
+    test::ScopedEnvironmentVariable env("XDG_SESSION_TYPE", "wayland");
     auto backend = autoinput::test_detectLinuxBackend();
     EXPECT_NE(backend, nullptr);
-    unsetenv("XDG_SESSION_TYPE");
 }
 
 TEST(LinuxBackendTest, DetectsX11)
 {
-    setenv("XDG_SESSION_TYPE", "x11", 1);
+    test::ScopedEnvironmentVariable env("XDG_SESSION_TYPE", "x11");
     auto backend = autoinput::test_detectLinuxBackend();
     EXPECT_NE(backend, nullptr);
-    unsetenv("XDG_SESSION_TYPE");
 }
 
 TEST(LinuxBackendTest, FallbackToX11)
 {
-    unsetenv("XDG_SESSION_TYPE");
+    test::ScopedEnvironmentVariable env("XDG_SESSION_TYPE", std::nullopt); // Ensure it's unset
     auto backend = autoinput::test_detectLinuxBackend();
     EXPECT_NE(backend, nullptr);
 }

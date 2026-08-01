@@ -8,6 +8,7 @@
 #include "autoinput/keyboard.h"
 #include "autoinput/mouse.h"
 #include "autoinput/backend.h"
+#include "testUtils.h"
 
 using namespace autoinput;
 using ::testing::_;
@@ -30,21 +31,18 @@ class HandlerTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        mockBackend = std::make_unique<MockPlatformBackend>();
-        g_backend = std::move(mockBackend);
-        // We need a pointer to the mock that remains valid after g_backend takes ownership
-        // But g_backend is a unique_ptr, so we can't easily keep a pointer to it if we want to reset it.
-        // Let's use a raw pointer to the mock for expectations.
-        mockPtr = dynamic_cast<MockPlatformBackend*>(g_backend.get());
+        auto mock = std::make_unique<MockPlatformBackend>();
+        mockPtr = mock.get();
+        m_override = std::make_unique<test::ScopedBackendOverride>(std::move(mock));
     }
 
     void TearDown() override
     {
-        g_backend.reset();
+        m_override.reset();
     }
 
     MockPlatformBackend* mockPtr{ nullptr };
-    std::unique_ptr<MockPlatformBackend> mockBackend;
+    std::unique_ptr<test::ScopedBackendOverride> m_override;
 };
 
 TEST_F(HandlerTest, KeyHandlerPressAndRelease)
@@ -93,7 +91,7 @@ TEST_F(HandlerTest, MouseHandlerPressAndRelease)
 
 TEST_F(HandlerTest, HandlerWithNullBackend)
 {
-    g_backend.reset();
+    test::ScopedBackendOverride nullOverride(nullptr);
     
     KeyHandler keyHandler(Key::fromString("a"));
     keyHandler.press();
