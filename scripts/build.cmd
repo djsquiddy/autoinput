@@ -4,14 +4,14 @@ set "CURRENT_DIR=%~dp0"
 set "BuildType=%~1"
 if "%BuildType%"=="" set "BuildType=Release"
 
-pushd "%CURRENT_DIR%\.."
+pushd "%CURRENT_DIR%\.." || exit /b 1
 
     if not exist build (
         echo creating build directory.
-        mkdir build
+        mkdir build || goto :end
     )
 
-    pushd build
+    pushd build || goto :end
         echo Running CMake...
         cmake -G Ninja -DCMAKE_BUILD_TYPE=%BuildType% .. || goto :end
         echo Finished running CMake.
@@ -25,5 +25,10 @@ pushd "%CURRENT_DIR%\.."
 popd
 
 :end
+    set "RET=%ERRORLEVEL%"
+    if %RET% neq 0 (
+        endlocal
+        exit /b %RET%
+    )
     endlocal
-    goto :EOF
+    exit /b 0
