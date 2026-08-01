@@ -208,7 +208,12 @@ namespace autoinput
             );
             consoleMsg = std::format("[{}] | {}", level, msg);
         }
-#ifndef AUTOINPUT_TESTING
+
+        if (isTesting_impl())
+        {
+            return;
+        }
+
         std::scoped_lock lock(m_mutex);
         getConsoleStream(level) << consoleMsg;
         if (m_fileStream.is_open())
@@ -219,7 +224,6 @@ namespace autoinput
                 m_fileStream.flush();
             }
         }
-#endif
     }
 
     void Logger::setLogLevel(const LogLevel logLevel)
@@ -229,7 +233,6 @@ namespace autoinput
 
     void Logger::setLogLevel_impl(const LogLevel logLevel)
     {
-        std::scoped_lock lock(m_mutex);
         m_logLevel = logLevel;
     }
 
@@ -240,8 +243,27 @@ namespace autoinput
 
     LogLevel Logger::getLogLevel_impl() const
     {
-        std::scoped_lock lock(m_mutex);
-        return m_logLevel;
+        return m_logLevel.load();
+    }
+
+    void Logger::setTesting(const bool testing)
+    {
+        instance().setTesting_impl(testing);
+    }
+
+    bool Logger::isTesting()
+    {
+        return instance().isTesting_impl();
+    }
+
+    void Logger::setTesting_impl(const bool testing)
+    {
+        m_isTesting = testing;
+    }
+
+    bool Logger::isTesting_impl() const
+    {
+        return m_isTesting.load();
     }
 
     void Logger::flush()

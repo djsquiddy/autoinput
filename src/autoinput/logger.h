@@ -123,6 +123,8 @@ namespace autoinput
         static void setLogLevel(LogLevel logLevel);
         static LogLevel getLogLevel();
         static void flush();
+        static void setTesting(bool testing);
+        static bool isTesting();
         // Optional: Allow configuring the file path at runtime
         static void setFile(const std::string& filename);
         static const std::string& getFileName();
@@ -140,9 +142,13 @@ namespace autoinput
         void setLogLevel_impl(LogLevel logLevel);
         LogLevel getLogLevel_impl() const;
 
+        void setTesting_impl(bool testing);
+        bool isTesting_impl() const;
+
         void setFile_impl(const std::string& filename);
         const std::string& getFileName_impl() const;
-        LogLevel m_logLevel{ LogLevel::Info };
+        std::atomic<LogLevel> m_logLevel{ LogLevel::Info };
+        std::atomic<bool> m_isTesting{ false };
         std::string m_fileName{};
         std::ofstream m_fileStream;
         mutable std::mutex m_mutex;
