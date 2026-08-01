@@ -116,7 +116,10 @@ int main(int argc, char* argv[])
         }
         
         g_program->setBackend(std::move(backend));
-        g_program->init();
+        if (!g_program->init())
+        {
+            return static_cast<int>(ErrorCode::FAILED_TO_INSTALL_HOOKS);
+        }
 
         if (!installHooks())
         {

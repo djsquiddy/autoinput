@@ -35,17 +35,15 @@ protected:
         g_program = std::make_unique<Program>();
         auto mock = std::make_unique<MockPlatformBackend>();
         mockPtr = mock.get();
-        m_override = std::make_unique<test::ScopedBackendOverride>(std::move(mock));
+        g_program->setBackend(std::move(mock));
     }
 
     void TearDown() override
     {
-        m_override.reset();
         g_program.reset();
     }
 
     MockPlatformBackend* mockPtr{ nullptr };
-    std::unique_ptr<test::ScopedBackendOverride> m_override;
 };
 
 TEST_F(HandlerTest, KeyHandlerPressAndRelease)

@@ -18,6 +18,7 @@ protected:
     void SetUp() override
     {
         g_program = std::make_unique<Program>();
+        g_program->setBackend(std::make_unique<FakeBackend>());
     }
 
     void TearDown() override
@@ -33,7 +34,7 @@ TEST_F(FocusTest, PauseOnBlacklistedApp)
     // Add some handlers
     g_program->arguments().buttons = {MouseButton::LEFT};
     g_program->arguments().keys = {Key::fromString("a")};
-    g_program->init();
+    ASSERT_TRUE(g_program->init());
     
     // Initially not paused
     for (auto& [mouse, handler] : g_program->getMouseHandlers())
@@ -76,7 +77,7 @@ TEST_F(FocusTest, PauseOnLostFocusFromTargetApp)
     
     // Add some handlers
     g_program->arguments().buttons = {MouseButton::LEFT};
-    g_program->init();
+    ASSERT_TRUE(g_program->init());
     
     g_program->onFocusChanged("mygame.exe");
     EXPECT_FALSE(g_program->getMouseHandlers().begin()->second.getPaused());

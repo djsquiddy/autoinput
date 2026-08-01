@@ -34,7 +34,7 @@ namespace autoinput
         [[nodiscard]] IPlatformBackend* getBackend() const { return m_backend.get(); }
         std::unique_ptr<IPlatformBackend> releaseBackend() { return std::move(m_backend); }
 
-        void init();
+        bool init();
         
         bool installHooks();
         void runListener();

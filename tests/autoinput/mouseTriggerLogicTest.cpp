@@ -16,7 +16,8 @@ namespace autoinput
         int argc = sizeof(argv) / sizeof(char*);
 
         ASSERT_TRUE(program.arguments().parseArguments(gsl::make_span(argv, argc)));
-        program.init();
+        program.setBackend(std::make_unique<FakeBackend>());
+        ASSERT_TRUE(program.init());
 
         const auto& keyInfo = program.getKeyInfo();
         // Expecting 2 KeyInfo: one for start (back) and one for end (forward)

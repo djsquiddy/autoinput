@@ -30,8 +30,8 @@ TEST(SignalCleanupTest, SignalEndCallsCleanup)
     g_program = std::make_unique<Program>();
     auto mock = std::make_unique<MockCleanupBackend>();
     MockCleanupBackend* mockPtr = mock.get();
-    test::ScopedBackendOverride backendOverride(std::move(mock));
-
+    g_program->setBackend(std::move(mock));
+    
     EXPECT_CALL(*mockPtr, cleanup()).Times(Exactly(1));
     
     platform::signalEnd();

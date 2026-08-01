@@ -7,7 +7,6 @@
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
-#include "autoinput/backendContext.h"
 #include "autoinput/backendFactory.h"
 #include <ranges>
 #include <format>
@@ -384,8 +383,14 @@ namespace autoinput
         });
     }
 
-    void Program::init()
+    bool Program::init()
     {
+        if (!m_backend)
+        {
+            Logger::error("Program::init() called without a backend!\n");
+            return false;
+        }
+
         IPlatformBackend* backendPtr = m_backend.get();
         for (auto& mouse : m_arguments.buttons)
         {
@@ -445,6 +450,7 @@ namespace autoinput
         }
 
         processKeyString(m_arguments.endKey, Mouse{}, {}, ActionState::CLICK, false);
+        return true;
     }
 
     bool installHooks()

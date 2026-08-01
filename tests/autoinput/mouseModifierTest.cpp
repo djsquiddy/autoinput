@@ -60,7 +60,7 @@ TEST(MouseModifierTest, ProgramTriggersShiftLeftClick)
     auto mock = std::make_unique<MockMouseModifierBackend>();
     MockMouseModifierBackend* mockPtr = mock.get();
     program.setBackend(std::move(mock));
-    program.init();
+    ASSERT_TRUE(program.init());
 
     const auto& keyInfo = program.getKeyInfo();
     ASSERT_EQ(keyInfo.size(), 2); // start and end

@@ -29,19 +29,11 @@ namespace autoinput
     protected:
         void SetUp() override
         {
-            auto backend = std::make_unique<TrackingBackend>();
-            m_backend = backend.get();
-            m_override = std::make_unique<test::ScopedBackendOverride>(std::move(backend));
         }
 
         void TearDown() override
         {
-            m_override.reset();
-            m_backend = nullptr;
         }
-
-        TrackingBackend* m_backend = nullptr;
-        std::unique_ptr<test::ScopedBackendOverride> m_override;
     };
 
     TEST_F(StartKeyToggleTest, StartKeyTogglesSingleAction)
@@ -55,7 +47,7 @@ namespace autoinput
         auto trackingBackend = std::make_unique<TrackingBackend>();
         auto* trackingBackendPtr = trackingBackend.get();
         program.setBackend(std::move(trackingBackend));
-        program.init();
+        ASSERT_TRUE(program.init());
 
         const auto& keyInfo = program.getKeyInfo();
         
@@ -84,7 +76,7 @@ namespace autoinput
         auto trackingBackend = std::make_unique<TrackingBackend>();
         auto* trackingBackendPtr = trackingBackend.get();
         program.setBackend(std::move(trackingBackend));
-        program.init();
+        ASSERT_TRUE(program.init());
 
         const auto& keyInfo = program.getKeyInfo();
         // Expecting 2 KeyInfo for F2 (both for LEFT)

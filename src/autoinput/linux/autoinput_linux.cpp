@@ -4,13 +4,11 @@
  * @date July 2026
  */
 #include "autoinput/autoInput.h"
-#include "autoinput/mouse.h"
 #include "autoinput/keyboard.h"
 #include "autoinput/logger.h"
 #include "autoinput/types.h"
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
-#include "autoinput/backendContext.h"
 #include "autoinput/linux/internalData_linux.h"
 
 namespace autoinput

@@ -23,7 +23,6 @@
 #endif
 
 #include "autoinput/backend.h"
-#include "autoinput/backendContext.h"
 #include "autoinput/environment.h"
 #include <map>
 
@@ -186,11 +185,6 @@ namespace autoinput::test
     private:
         std::filesystem::path m_path;
     };
-
-    /**
-     * @brief Helper to temporarily override the global backend.
-     */
-    using ScopedBackendOverride = autoinput::ScopedBackendOverride;
 }
 
 #endif // INCLUDE_AUTOINPUT_TEST_UTILS_H
