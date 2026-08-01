@@ -24,7 +24,7 @@ target_precompile_headers(autoinput_core
 )
 
 add_executable(${PROJECT_NAME}
-        autoinput/main.cpp
+        autoinput_cli/main.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

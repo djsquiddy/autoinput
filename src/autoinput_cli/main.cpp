@@ -3,10 +3,10 @@
  * @author djsquiddy
  * @date July 2026
  */
-#include "autoInput.h"
-#include "utils.h"
-#include "logger.h"
-#include "platform.h"
+#include "autoinput/autoInput.h"
+#include "autoinput/utils.h"
+#include "autoinput/logger.h"
+#include "autoinput/platform.h"
 
 int main(int argc, char* argv[])
 {
