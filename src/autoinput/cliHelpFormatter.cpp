@@ -4,6 +4,7 @@
 * @date August 2026
 */
 #include "autoinput/cliHelpFormatter.h"
+#include "autoinput/defaults.h"
 #include "autoinput/logger.h"
 #include "autoinput/config.h"
 #include "autoinput/types.h"
@@ -27,7 +28,7 @@ namespace autoinput
         Logger::print("{} What kind of action event to use. (Can be positional)\n", optionUsagePrefix);
 #if AUTOINPUT_HOOK_MOUSE_ENABLED
         Logger::print("{} -b, --btn, --button {{button}} [{{button}} ...]\n", optionPrefix);
-        Logger::print("{} Which button to press. (Default: left) (Can be positional). Modifiers like shift+left are supported.\n", optionUsagePrefix);
+        Logger::print("{} Which button to press. (Default: {}) (Can be positional). Modifiers like shift+left are supported.\n", optionUsagePrefix, defaults::DefaultMouseButtonName);
 #endif // AUTOINPUT_HOOK_MOUSE_ENABLED
 #if AUTOINPUT_HOOK_KEYBOARD_ENABLED
         Logger::print("{} -k, --key {{key}} [{{key}} ...]\n", optionPrefix);
@@ -59,8 +60,8 @@ namespace autoinput
             const auto exampleNotePrefix = std::string(10, ' ') + "Note: ";
             int32_t index = 1;
             Logger::print("examples:\n");
-            Logger::print("{}{}) hold the left click when pressing F2 and stopping on F3 (Defaults):\n", examplePrefix, index);
-            Logger::print("{}{} hold left\n", exampleCmdPrefix, programName);
+            Logger::print("{}{}) hold the {} click when pressing {} and stopping on {} (Defaults):\n", examplePrefix, index, defaults::DefaultMouseButtonName, defaults::StartKey, defaults::EndKey);
+            Logger::print("{}{} hold {}\n", exampleCmdPrefix, programName, defaults::DefaultMouseButtonName);
             ++index;
             Logger::print("\n");
             Logger::print("{}{}) hold the left click when pressing F2, or hold the right click when pressing F3 and stop on F4:\n", examplePrefix, index);

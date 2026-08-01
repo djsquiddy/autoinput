@@ -209,9 +209,6 @@ namespace autoinput
         }
     };
 
-    constexpr int32_t PRESS_FPS = 10;
-    constexpr int32_t DEFAULT_DELAY = 1 / PRESS_FPS;
-
     constexpr int32_t INVALID_KEY = -1;
 
     ActionState actionStateFromArguments(std::string_view actionType);

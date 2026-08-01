@@ -4,6 +4,7 @@
  * @date March 2026
  */
 #include "autoinput/types.h"
+#include "autoinput/defaults.h"
 #include "autoinput/logger.h"
 #include "autoinput/utils.h"
 #include <algorithm>
@@ -208,7 +209,7 @@ namespace autoinput
 
     ActionState actionStateFromArguments(const std::string_view actionType)
     {
-        if (actionType == "c" || actionType == "click")
+        if (actionType == "c" || actionType == defaults::DefaultActionName)
         {
             return ActionState::CLICK;
         }
@@ -224,7 +225,7 @@ namespace autoinput
         switch (actionState)
         {
         case ActionState::CLICK:
-            return "click";
+            return std::string{ defaults::DefaultActionName };
         case ActionState::HOLD:
             return "hold";
         case ActionState::INVALID:
@@ -235,7 +236,7 @@ namespace autoinput
 
     MouseButton mouseButtonFromArguments(const std::string_view button)
     {
-        if (button == "l" || button == "left")
+        if (button == "l" || button == defaults::DefaultMouseButtonName)
         {
             return MouseButton::LEFT;
         }
@@ -263,7 +264,7 @@ namespace autoinput
         switch (mouseButton)
         {
         case MouseButton::LEFT:
-            return std::string{ "left" };
+            return std::string{ defaults::DefaultMouseButtonName };
         case MouseButton::MIDDLE:
             return std::string{ "middle" };
         case MouseButton::RIGHT:

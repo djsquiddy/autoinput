@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 
 #include "autoinput/settings.h"
+#include "autoinput/defaults.h"
 
 namespace autoinput
 {
@@ -77,11 +78,11 @@ start = "f10"
 
         const auto& defaults = settings.getDefaults();
         EXPECT_EQ(defaults.start, "f10");
-        EXPECT_TRUE(defaults.end.empty());
+        EXPECT_EQ(defaults.end, defaults::EndKey);
         EXPECT_TRUE(defaults.press.empty());
         EXPECT_TRUE(defaults.release.empty());
-        EXPECT_TRUE(defaults.action.empty());
-        EXPECT_TRUE(defaults.button.empty());
+        EXPECT_EQ(defaults.action, defaults::DefaultActionName);
+        EXPECT_EQ(defaults.button, defaults::DefaultMouseButtonName);
         
         std::filesystem::remove(path);
     }

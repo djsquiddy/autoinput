@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <optional>
 #include <string_view>
+#include "autoinput/defaults.h"
 
 #if defined(__cpp_exceptions) && __cpp_exceptions
     #define TOML_EXCEPTIONS 0 // only necessary if you've left them enabled in your compiler
@@ -33,12 +34,12 @@ namespace autoinput
 
     struct DefaultSettings
     {
-        std::string start{};
-        std::string end{};
+        std::string start{ defaults::StartKey };
+        std::string end{ defaults::EndKey };
         std::string press{};
         std::string release{};
-        std::string action{};
-        std::string button{};
+        std::string action{ defaults::DefaultActionName };
+        std::string button{ defaults::DefaultMouseButtonName };
         std::vector<std::string> blacklist{};
     };
 

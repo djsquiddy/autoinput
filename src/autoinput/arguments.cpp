@@ -4,6 +4,7 @@
  * @date March 2026
  */
 #include "autoinput/arguments.h"
+#include "autoinput/defaults.h"
 #include "autoinput/cliHelpFormatter.h"
 #include "autoinput/logger.h"
 #include "autoinput/config.h"
@@ -489,11 +490,11 @@ namespace autoinput
 
         if (startKeys.empty())
         {
-            startKeys.emplace_back(!start.empty() ? start : "f2");
+            startKeys.emplace_back(!start.empty() ? start : defaults::StartKey);
         }
         if (endKey.empty())
         {
-            endKey = !end.empty() ? end : "f3";
+            endKey = !end.empty() ? end : defaults::EndKey;
         }
 
         if (!delayData.hasPress && !press.empty())

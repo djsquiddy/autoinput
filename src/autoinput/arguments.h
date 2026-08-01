@@ -15,6 +15,7 @@
 #include <gsl/gsl>
 
 #include "autoinput/utils.h"
+#include "autoinput/defaults.h"
 #include "autoinput/types.h"
 #include "autoinput/settings.h"
 #include "autoinput/config.h"
@@ -23,10 +24,10 @@ namespace autoinput
 {
     struct WaitDelayData
     {
-        std::chrono::milliseconds minWaitPressDelay{ DEFAULT_DELAY };
-        std::chrono::milliseconds maxWaitPressDelay{ DEFAULT_DELAY };
-        std::chrono::milliseconds minWaitReleaseDelay{ DEFAULT_DELAY };
-        std::chrono::milliseconds maxWaitReleaseDelay{ DEFAULT_DELAY };
+        std::chrono::milliseconds minWaitPressDelay{ defaults::DefaultDelay };
+        std::chrono::milliseconds maxWaitPressDelay{ defaults::DefaultDelay };
+        std::chrono::milliseconds minWaitReleaseDelay{ defaults::DefaultDelay };
+        std::chrono::milliseconds maxWaitReleaseDelay{ defaults::DefaultDelay };
         bool usePressRange{ false };
         bool hasPress{ false };
         bool useReleaseRange{ false };

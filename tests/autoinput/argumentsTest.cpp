@@ -9,6 +9,18 @@
 
 namespace autoinput
 {
+    TEST(WaitDelayDataTest, HasCorrectDefaultValues)
+    {
+        WaitDelayData delayData;
+
+        EXPECT_EQ(delayData.minWaitPressDelay, std::chrono::milliseconds{ 100 });
+        EXPECT_EQ(delayData.maxWaitPressDelay, std::chrono::milliseconds{ 100 });
+        EXPECT_EQ(delayData.minWaitReleaseDelay, std::chrono::milliseconds{ 100 });
+        EXPECT_EQ(delayData.maxWaitReleaseDelay, std::chrono::milliseconds{ 100 });
+        EXPECT_FALSE(delayData.hasPress);
+        EXPECT_FALSE(delayData.hasRelease);
+    }
+
     TEST(WaitDelayDataTest, RejectsEmptyWaitTime)
     {
         WaitDelayData delayData;
