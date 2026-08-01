@@ -220,6 +220,15 @@ namespace autoinput
                 // Already handled in first pass, but skip its value
                 safeGetNextArgument(++i, args);
             }
+            else if (arg == "--json")
+            {
+                // Already handled in first pass
+            }
+            else if (arg == "-l" || arg == "--log")
+            {
+                // Already handled in first pass, but skip its value
+                safeGetNextArgument(++i, args);
+            }
             else if (arg.starts_with('-'))
             {
                 Logger::warn("Unknown argument: {}\n", arg);

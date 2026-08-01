@@ -177,4 +177,40 @@ namespace autoinput::test
         EXPECT_NE(result.output.find("\"valid\": false"), std::string::npos);
         EXPECT_NE(result.output.find("Configuration file not found"), std::string::npos);
     }
+
+    TEST(ValidateConfigCliTest, JsonOutputIsClean)
+    {
+        TemporaryDirectory tempDir("cli_clean_json");
+        std::filesystem::path configPath = tempDir.path() / "valid.toml";
+        std::ofstream file(configPath);
+        file << "end = \"f3\"\n[[command]]\naction = \"click\"\nbutton = \"left\"\nstart = \"f2\"\n";
+        file.close();
+
+        // Try both orderings
+        const std::vector<std::string> commands = {
+            quotePath(AUTOINPUT_EXE_PATH) + " --validate-config " + quotePath(configPath) + " --json",
+            quotePath(AUTOINPUT_EXE_PATH) + " --json --validate-config " + quotePath(configPath)
+        };
+
+        for (const auto& command : commands)
+        {
+            auto result = runCommand(command);
+            EXPECT_EQ(result.exitCode, 0);
+            
+            // The output should not contain any warnings
+            EXPECT_EQ(result.output.find("[WARNING]"), std::string::npos) << "Found warning in command: " << command;
+            EXPECT_EQ(result.output.find("Unknown argument: --json"), std::string::npos) << "Found unknown argument warning in command: " << command;
+            
+            // The output should start with a JSON object (ignoring whitespace)
+            size_t firstBrace = result.output.find('{');
+            ASSERT_NE(firstBrace, std::string::npos) << "Could not find '{' in command: " << command;
+            std::string prefix = result.output.substr(0, firstBrace);
+            
+            // Check that prefix only contains whitespace
+            for (char c : prefix)
+            {
+                EXPECT_TRUE(std::isspace(static_cast<unsigned char>(c))) << "Non-whitespace character found before '{': '" << c << "' in command: " << command;
+            }
+        }
+    }
 }
