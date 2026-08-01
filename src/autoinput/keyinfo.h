@@ -8,7 +8,7 @@
 #define INCLUDE_AUTOINPUT_KEYINFO_H
 #pragma once
 
-#include "types.h"
+#include "autoinput/types.h"
 
 namespace autoinput
 {

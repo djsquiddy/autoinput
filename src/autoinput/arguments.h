@@ -7,9 +7,9 @@
 #define INCLUDE_AUTOINPUT_PROGRAM_ARGUMENTS_H
 #pragma once
 
-#include "utils.h"
-#include "types.h"
-#include "settings.h"
+#include "autoinput/utils.h"
+#include "autoinput/types.h"
+#include "autoinput/settings.h"
 
 namespace autoinput
 {

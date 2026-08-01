@@ -3,9 +3,9 @@
  * @author djsquiddy
  * @date March 2026
  */
-#include "types.h"
-#include "logger.h"
-#include "utils.h"
+#include "autoinput/types.h"
+#include "autoinput/logger.h"
+#include "autoinput/utils.h"
 
 namespace autoinput
 {

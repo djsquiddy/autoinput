@@ -4,10 +4,9 @@
  * @date July 2026
  */
 #define TOML_IMPLEMENTATION
-#include "config.h"
-#include "logger.h"
-#include "platform.h"
-#include <fstream>
+#include "autoinput/config.h"
+#include "autoinput/logger.h"
+#include "autoinput/platform.h"
 
 namespace autoinput
 {

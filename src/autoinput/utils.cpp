@@ -4,7 +4,7 @@
  * @date April 2026
  */
 
-#include "utils.h"
+#include "autoinput/utils.h"
 
 std::string autoinput::toLowerCase(std::string_view sv)
 {

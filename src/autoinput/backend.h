@@ -7,8 +7,8 @@
 #define INCLUDE_AUTOINPUT_BACKEND_H
 #pragma once
 
-#include "types.h"
-#include "logger.h"
+#include "autoinput/types.h"
+#include "autoinput/logger.h"
 
 namespace autoinput
 {

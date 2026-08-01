@@ -3,10 +3,10 @@
  * @author djsquiddy
  * @date March 2026
  */
-#include "autoInput.h"
-#include "logger.h"
-#include "platform.h"
-#include "backend.h"
+#include "autoinput/autoInput.h"
+#include "autoinput/logger.h"
+#include "autoinput/platform.h"
+#include "autoinput/backend.h"
 
 namespace autoinput
 {

@@ -3,8 +3,8 @@
  * @author djsquiddy
  * @date July 2026
  */
-#include "logger.h"
-#include "utils.h"
+#include "autoinput/logger.h"
+#include "autoinput/utils.h"
 
 
 namespace autoinput

@@ -7,11 +7,11 @@
 #define INCLUDE_AUTOINPUT_AUTOINPUT_H
 #pragma once
 
-#include "arguments.h"
-#include "mouse.h"
-#include "keyboard.h"
-#include "keyInfo.h"
-#include "types.h"
+#include "autoinput/arguments.h"
+#include "autoinput/mouse.h"
+#include "autoinput/keyboard.h"
+#include "autoinput/keyInfo.h"
+#include "autoinput/types.h"
 
 namespace autoinput
 {

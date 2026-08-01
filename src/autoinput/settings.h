@@ -8,7 +8,7 @@
 #define INCLUDE_AUTOINPUT_SETTINGS_H
 #pragma once
 
-#include "config.h"
+#include "autoinput/config.h"
 
 namespace autoinput
 {

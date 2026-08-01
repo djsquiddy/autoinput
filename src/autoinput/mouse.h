@@ -7,8 +7,8 @@
 #define INCLUDE_AUTOINPUT_MOUSE_H
 #pragma once
 
-#include "types.h"
-#include "handlerState.h"
+#include "autoinput/types.h"
+#include "autoinput/handlerState.h"
 
 namespace autoinput
 {
