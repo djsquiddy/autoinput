@@ -311,6 +311,10 @@ namespace autoinput
             {
                 listApplications = true;
             }
+            else if (arg == "-C" || arg == "--list-configs")
+            {
+                listConfigs = true;
+            }
             else if (arg == "-S" || arg == "--save-config")
             {
                 saveConfigName = safeGetNextArgument(++i, args);
@@ -541,6 +545,8 @@ namespace autoinput
         Logger::print("{} Do not run when this application is in focus.\n", optionUsagePrefix);
         Logger::print("{} -L, --list-apps\n", optionPrefix);
         Logger::print("{} List all currently running application names and exit.\n", optionUsagePrefix);
+        Logger::print("{} -C, --list-configs\n", optionPrefix);
+        Logger::print("{} List all valid configuration names and exit.\n", optionUsagePrefix);
         Logger::print("{} -S, --save-config SAVE_CONFIG_NAME\n", optionPrefix);
         Logger::print("{} Save the current configuration into a named configuration in the user configurations and exit.\n", optionUsagePrefix);
         Logger::print("{} -w, --wait WAIT_TIME\n", optionPrefix);

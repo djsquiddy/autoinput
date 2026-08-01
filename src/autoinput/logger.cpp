@@ -86,7 +86,7 @@ namespace autoinput
         m_logger.log_impl(m_level, m_buffer.str(), m_loc);
     }
 
-    // Default to console only, or call set_file() early in main()
+    // Default to console only, or call setFile()
     Logger::Logger() = default;
 
     Logger::~Logger()

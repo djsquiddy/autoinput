@@ -277,5 +277,27 @@ namespace autoinput
         EXPECT_EQ(programArguments.blacklist[0], "game.exe");
         EXPECT_EQ(programArguments.blacklist[1], "other.exe");
     }
+    
+    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesListConfigs)
+    {
+        ProgramArguments arguments;
+        char program[] = "autoinput";
+        char listOpt[] = "--list-configs";
+        char* argv[] = { program, listOpt };
+
+        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
+        EXPECT_TRUE(arguments.listConfigs);
+    }
+
+    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesShortListConfigs)
+    {
+        ProgramArguments arguments;
+        char program[] = "autoinput";
+        char listOpt[] = "-C";
+        char* argv[] = { program, listOpt };
+
+        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
+        EXPECT_TRUE(arguments.listConfigs);
+    }
 
 }

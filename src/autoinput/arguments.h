@@ -45,6 +45,7 @@ namespace autoinput
         std::string saveConfigName{};
         std::vector<std::string> blacklist{};
         bool listApplications{ false };
+        bool listConfigs{ false };
         ActionState actionState{ ActionState::INVALID };
         WaitDelayData delayData{};
 

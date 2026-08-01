@@ -42,6 +42,39 @@ int main(int argc, char* argv[])
             return static_cast<int>(ErrorCode::SUCCESS);
         }
 
+        if (g_program->arguments().listConfigs)
+        {
+            auto listConfigsFromDir = [](const std::filesystem::path& path, const std::string& label) {
+                if (std::filesystem::exists(path) && std::filesystem::is_directory(path))
+                {
+                    std::cout << label << " configurations (in " << path.string() << "):\n";
+                    bool found = false;
+                    for (const auto& entry : std::filesystem::directory_iterator(path))
+                    {
+                        if (entry.is_regular_file() && entry.path().extension() == ".toml")
+                        {
+                            const std::string name = entry.path().stem().string();
+                            if (name == "settings")
+                            {
+                                continue;
+                            }
+                            std::cout << "  - " << name << "\n";
+                            found = true;
+                        }
+                    }
+                    if (!found)
+                    {
+                        std::cout << "  (none)\n";
+                    }
+                    std::cout << "\n";
+                }
+            };
+
+            listConfigsFromDir(getConfigsPath(), "Global");
+            listConfigsFromDir(getUserConfigsPath(), "User");
+            return static_cast<int>(ErrorCode::SUCCESS);
+        }
+
         if (!g_program->arguments().saveConfigName.empty())
         {
             const std::string& saveConfigName = g_program->arguments().saveConfigName;

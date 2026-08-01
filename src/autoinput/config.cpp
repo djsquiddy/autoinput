@@ -152,7 +152,7 @@ namespace autoinput
         const std::filesystem::path home = platform::getUserHomePath();
         if (home.empty())
         {
-            return std::filesystem::path();
+            return {};
         }
         return home / ".autoinput";
     }
