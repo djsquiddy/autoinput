@@ -5,6 +5,8 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/backend.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cliHelpFormatter.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cliHelpFormatter.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/types.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/types.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/mouse.h
