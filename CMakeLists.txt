@@ -95,8 +95,9 @@ function(configure_autoinput_target target_name)
         target_compile_definitions(${target_name} PRIVATE AUTOINPUT_TESTING=1)
     endif()
 
-    target_compile_definitions(${target_name} PRIVATE CONFIGS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/configs")
     target_compile_definitions(${target_name} PUBLIC TOML_HEADER_ONLY=0)
+    target_compile_definitions(${target_name} PUBLIC $<$<CONFIG:Debug>:AUTOINPUT_DEBUG>)
+    target_compile_definitions(${target_name} PUBLIC $<$<CONFIG:Release>:AUTOINPUT_RELEASE>)
 
     if (WIN32)
         target_compile_definitions(${target_name} PRIVATE NOGDI)
