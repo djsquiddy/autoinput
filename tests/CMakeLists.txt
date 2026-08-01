@@ -1,24 +1,16 @@
 include(GoogleTest)
 
-autoinput_get_common_sources(AUTOINPUT_COMMON_SOURCES)
 autoinput_get_test_sources(AUTOINPUT_TEST_SOURCES)
 
 add_executable(${PROJECT_NAME}_tests
         ${AUTOINPUT_TEST_SOURCES}
-        ${AUTOINPUT_COMMON_SOURCES}
-)
-
-target_include_directories(${PROJECT_NAME}_tests
-        PRIVATE
-        ${CMAKE_SOURCE_DIR}/src
 )
 
 target_link_libraries(${PROJECT_NAME}_tests
         PRIVATE
+        autoinput_core
         GTest::gtest_main
         GTest::gmock
-        tomlplusplus::tomlplusplus
-        Microsoft.GSL::GSL
 )
 
 configure_autoinput_target(${PROJECT_NAME}_tests)

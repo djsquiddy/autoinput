@@ -5,14 +5,14 @@ function(configure_autoinput_platform target_name)
 
         if(X11_FOUND AND XTST_LIBRARY)
             target_link_libraries(${target_name}
-                    PRIVATE
+                    PUBLIC
                     ${X11_LIBRARIES}
                     ${XTST_LIBRARY}
             )
 
-            target_compile_definitions(${target_name} PRIVATE AUTOINPUT_WITH_X11=1)
+            target_compile_definitions(${target_name} PUBLIC AUTOINPUT_WITH_X11=1)
         else()
-            target_compile_definitions(${target_name} PRIVATE AUTOINPUT_WITH_X11=0)
+            target_compile_definitions(${target_name} PUBLIC AUTOINPUT_WITH_X11=0)
             message(WARNING "X11 or XTest not found. X11 backend will be disabled.")
         endif()
     endif()

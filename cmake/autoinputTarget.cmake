@@ -1,20 +1,20 @@
 function(configure_autoinput_target target_name)
     if(ENABLE_KEYBOARD_HOOK)
-        target_compile_definitions(${target_name} PRIVATE AUTOINPUT_HOOK_KEYBOARD_ENABLED=1)
+        target_compile_definitions(${target_name} PUBLIC AUTOINPUT_HOOK_KEYBOARD_ENABLED=1)
     else()
-        target_compile_definitions(${target_name} PRIVATE AUTOINPUT_HOOK_KEYBOARD_ENABLED=0)
+        target_compile_definitions(${target_name} PUBLIC AUTOINPUT_HOOK_KEYBOARD_ENABLED=0)
     endif()
 
     if(ENABLE_MOUSE_HOOK)
-        target_compile_definitions(${target_name} PRIVATE AUTOINPUT_HOOK_MOUSE_ENABLED=1)
+        target_compile_definitions(${target_name} PUBLIC AUTOINPUT_HOOK_MOUSE_ENABLED=1)
     else()
-        target_compile_definitions(${target_name} PRIVATE AUTOINPUT_HOOK_MOUSE_ENABLED=0)
+        target_compile_definitions(${target_name} PUBLIC AUTOINPUT_HOOK_MOUSE_ENABLED=0)
     endif()
 
     if(ENABLE_FAKE_HOOK)
-        target_compile_definitions(${target_name} PRIVATE AUTOINPUT_FAKE_HOOK=1)
+        target_compile_definitions(${target_name} PUBLIC AUTOINPUT_FAKE_HOOK=1)
     else()
-        target_compile_definitions(${target_name} PRIVATE AUTOINPUT_FAKE_HOOK=0)
+        target_compile_definitions(${target_name} PUBLIC AUTOINPUT_FAKE_HOOK=0)
     endif()
 
     if(target_name STREQUAL "${PROJECT_NAME}_tests")
@@ -30,7 +30,7 @@ function(configure_autoinput_target target_name)
 
     if(WIN32)
         target_compile_definitions(${target_name}
-                PRIVATE
+                PUBLIC
                 NOGDI
                 NOMINMAX
                 _CRT_SECURE_NO_WARNINGS
