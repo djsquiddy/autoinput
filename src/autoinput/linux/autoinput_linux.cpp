@@ -10,7 +10,7 @@
 #include "autoinput/types.h"
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
-#include "internalData_linux.h"
+#include "autoinput/linux/internalData_linux.h"
 
 namespace autoinput
 {

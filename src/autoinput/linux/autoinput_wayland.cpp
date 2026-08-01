@@ -8,7 +8,7 @@
 #include "autoinput/keyboard.h"
 #include "autoinput/logger.h"
 #include "autoinput/types.h"
-#include "internalData_linux.h"
+#include "autoinput/linux/internalData_linux.h"
 
 namespace autoinput
 {
@@ -257,7 +257,7 @@ namespace autoinput
         return {};
     }
 
-    std::unique_ptr<PlatformBackend> createWaylandBackend()
+    std::unique_ptr<IPlatformBackend> createWaylandBackend()
     {
         return std::make_unique<WaylandBackend>();
     }

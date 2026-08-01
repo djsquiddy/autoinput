@@ -6,7 +6,7 @@
 #define TOML_IMPLEMENTATION
 #include "autoinput/config.h"
 
-#include "utils.h"
+#include "autoinput/utils.h"
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
 

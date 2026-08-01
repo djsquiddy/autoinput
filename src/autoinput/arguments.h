@@ -17,6 +17,7 @@
 #include "autoinput/utils.h"
 #include "autoinput/types.h"
 #include "autoinput/settings.h"
+#include "autoinput/config.h"
 
 namespace autoinput
 {

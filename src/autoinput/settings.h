@@ -12,6 +12,8 @@
 #include <string_view>
 #include <vector>
 #include <cstdint>
+#include <optional>
+#include <filesystem>
 #include <gsl/gsl>
 
 #include "autoinput/config.h"

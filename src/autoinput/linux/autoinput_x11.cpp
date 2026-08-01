@@ -8,7 +8,7 @@
 #include "autoinput/keyboard.h"
 #include "autoinput/logger.h"
 #include "autoinput/types.h"
-#include "internalData_linux.h"
+#include "autoinput/linux/internalData_linux.h"
 
 namespace autoinput
 {
@@ -67,7 +67,7 @@ namespace autoinput
             }
         }
 
-        class X11Backend : public PlatformBackend
+        class X11Backend : public IPlatformBackend
         {
         public:
             bool installHooks() override
@@ -291,7 +291,7 @@ namespace autoinput
         return { names.begin(), names.end() };
     }
 
-    std::unique_ptr<PlatformBackend> createX11Backend()
+    std::unique_ptr<IPlatformBackend> createX11Backend()
     {
         return std::make_unique<X11Backend>();
     }

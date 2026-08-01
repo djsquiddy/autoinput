@@ -17,6 +17,7 @@
 #include "autoinput/mouse.h"
 #include "autoinput/keyboard.h"
 #include "autoinput/keyInfo.h"
+#include "autoinput/handlerState.h"
 #include "autoinput/types.h"
 
 namespace autoinput
