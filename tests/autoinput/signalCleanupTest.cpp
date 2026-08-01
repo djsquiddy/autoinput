@@ -1,3 +1,8 @@
+/**
+ * @file signalCleanupTest.cpp
+ * @author djsquiddy
+ * @date August 2026
+ */
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "autoinput/platform.h"

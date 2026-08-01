@@ -1,3 +1,8 @@
+/**
+ * @file platformDispatchTest.cpp
+ * @author djsquiddy
+ * @date August 2026
+ */
 #include <gtest/gtest.h>
 #include "autoinput/keyboard.h"
 #include "autoinput/mouse.h"

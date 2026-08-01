@@ -1,3 +1,8 @@
+/**
+ * @file mousePrioritizationTest.cpp
+ * @author djsquiddy
+ * @date August 2026
+ */
 #include <gtest/gtest.h>
 #include "autoinput/mouse.h"
 

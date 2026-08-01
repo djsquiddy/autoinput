@@ -1,3 +1,8 @@
+/**
+ * @file mouseTest_win32.cpp
+ * @author djsquiddy
+ * @date August 2026
+ */
 #include <gtest/gtest.h>
 #include "autoinput/mouse.h"
 #include "autoinput/win32/internalData_win32.h"
