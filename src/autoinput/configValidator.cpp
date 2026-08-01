@@ -10,10 +10,12 @@
 #include "autoinput/types.h"
 #include "autoinput/waitDelay.h"
 #include "autoinput/configMetadata.h"
+#include "autoinput/utils.h"
 #include <format>
 #include <algorithm>
 #include <cctype>
 #include <string_view>
+#include <iostream>
 
 namespace autoinput
 {
@@ -166,5 +168,29 @@ namespace autoinput
         }
 
         return errors;
+    }
+
+    void printValidationJson(const bool valid, const std::string& configPath, const std::vector<ValidationError>& errors)
+    {
+        std::cout << "{\n";
+        std::cout << "  \"valid\": " << (valid ? "true" : "false") << ",\n";
+        std::cout << "  \"configPath\": \"" << escapeJsonString(configPath) << "\",\n";
+        std::cout << "  \"errors\": [";
+        for (size_t i = 0; i < errors.size(); ++i)
+        {
+            std::cout << "\n    {\n";
+            std::cout << "      \"message\": \"" << escapeJsonString(errors[i].message) << "\"\n";
+            std::cout << "    }";
+            if (i < errors.size() - 1)
+            {
+                std::cout << ",";
+            }
+        }
+        if (!errors.empty())
+        {
+            std::cout << "\n  ";
+        }
+        std::cout << "]\n";
+        std::cout << "}\n";
     }
 }

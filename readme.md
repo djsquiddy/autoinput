@@ -92,6 +92,8 @@ autoinput [options]
 - `-c, --config FILE`: Load settings from a TOML configuration file.
 - `-l, --log LEVEL`: Set logging level (debug, info, warning, error).
 - `-S, --save-config NAME`: Save the current active configuration to the user-level configuration directory as `NAME.toml`.
+- `--validate-config NAME-OR-PATH`: Validate the specified configuration file and exit.
+- `--json`: Output validation results as machine-readable JSON. Only applies to `--validate-config`.
 
 #### Examples
 
@@ -134,6 +136,29 @@ autoinput [options]
     ```bash
     autoinput hold left f2 --press-wait 100ms..200ms --save-config my-setup
     ```
+
+### Configuration Validation
+
+You can validate a configuration file without running the autoclicker. This is useful for verifying complex TOML files or for use in automated scripts.
+
+- **Human-readable output**:
+  ```bash
+  autoinput --validate-config my-config
+  ```
+
+- **Machine-readable JSON output**:
+  ```bash
+  autoinput --validate-config my-config --json
+  ```
+
+Example JSON output for a valid configuration:
+```json
+{
+  "valid": true,
+  "configPath": "C:\\path\\to\\configs\\my-config.toml",
+  "errors": []
+}
+```
 
 ### Configuration
 

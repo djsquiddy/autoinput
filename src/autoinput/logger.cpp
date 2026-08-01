@@ -218,7 +218,10 @@ namespace autoinput
         }
 
         std::scoped_lock lock(m_mutex);
-        getConsoleStream(level) << consoleMsg;
+        if (isConsoleOutputEnabled_impl())
+        {
+            getConsoleStream(level) << consoleMsg;
+        }
         if (m_fileStream.is_open())
         {
             m_fileStream << formatted;
@@ -267,6 +270,26 @@ namespace autoinput
     bool Logger::isTesting_impl() const
     {
         return m_isTesting.load();
+    }
+
+    void Logger::setConsoleOutputEnabled(const bool enabled)
+    {
+        instance().setConsoleOutputEnabled_impl(enabled);
+    }
+
+    bool Logger::isConsoleOutputEnabled()
+    {
+        return instance().isConsoleOutputEnabled_impl();
+    }
+
+    void Logger::setConsoleOutputEnabled_impl(const bool enabled)
+    {
+        m_consoleOutputEnabled = enabled;
+    }
+
+    bool Logger::isConsoleOutputEnabled_impl() const
+    {
+        return m_consoleOutputEnabled.load();
     }
 
     void Logger::flush()

@@ -79,6 +79,11 @@ namespace autoinput
                 Logger::setLogLevel(logLevel);
                 continue;
             }
+            if (arg == "--json")
+            {
+                jsonOutput = true;
+                continue;
+            }
             // We want to parse the configuration first so we can use cli arguments as overrides if need/wanted.
             if (arg == "-c" || arg == "--config")
             {

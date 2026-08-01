@@ -49,6 +49,7 @@ namespace autoinput
     }
 
     std::string join(gsl::span<const std::string> vec, const std::string& delim);
+    std::string escapeJsonString(std::string_view sv);
     template <typename T>
     bool contains(std::vector<T> vec, const T& element)
     {

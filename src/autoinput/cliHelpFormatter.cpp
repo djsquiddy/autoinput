@@ -14,7 +14,7 @@ namespace autoinput
 {
     void CliHelpFormatter::printUsage(const std::string_view programName, const bool verbose)
     {
-        Logger::print("usage {} [-h] [{}] [{{left,right,middle,key}} ...] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME] [-S SAVE_CONFIG_NAME] [--validate-config CONFIG_NAME_OR_PATH]\n\n", programName, ConfigMetadata::validActionChoices());
+        Logger::print("usage {} [-h] [{}] [{{left,right,middle,key}} ...] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME] [-S SAVE_CONFIG_NAME] [--validate-config CONFIG_NAME_OR_PATH] [--json]\n\n", programName, ConfigMetadata::validActionChoices());
         Logger::print("options\n");
         const auto optionPrefix = std::string(4, ' ');
         const auto optionUsagePrefix = std::string(10, ' ');
@@ -51,6 +51,8 @@ namespace autoinput
         Logger::print("{} Save the current configuration into a named configuration in the user configurations and exit.\n", optionUsagePrefix);
         Logger::print("{} --validate-config CONFIG_NAME_OR_PATH\n", optionPrefix);
         Logger::print("{} Validate the specified configuration file and exit.\n", optionUsagePrefix);
+        Logger::print("{} --json\n", optionPrefix);
+        Logger::print("{} Output validation results as machine-readable JSON. Only applies to --validate-config.\n", optionUsagePrefix);
         Logger::print("{} -w, --wait WAIT_TIME\n", optionPrefix);
         Logger::print("{} Max duration to wait before auto clicking. {}\n", optionUsagePrefix, bold("Type must be set to click"));
         Logger::print("{} Can use a time range by using {{min}}..{{max}} with each click being random between the range. See examples for usage.\n", optionUsagePrefix);

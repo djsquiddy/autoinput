@@ -9,6 +9,7 @@
 #include <ranges>
 #include <cctype>
 #include <sstream>
+#include <iomanip>
 
 std::string autoinput::toLowerCase(std::string_view sv)
 {
@@ -28,6 +29,35 @@ std::string autoinput::join(gsl::span<const std::string> vec, const std::string&
         if (i != vec.size() - 1)
         {
             oss << delim;
+        }
+    }
+    return oss.str();
+}
+
+std::string autoinput::escapeJsonString(std::string_view sv)
+{
+    std::ostringstream oss;
+    for (const char c : sv)
+    {
+        switch (c)
+        {
+        case '\"': oss << "\\\""; break;
+        case '\\': oss << "\\\\"; break;
+        case '\b': oss << "\\b"; break;
+        case '\f': oss << "\\f"; break;
+        case '\n': oss << "\\n"; break;
+        case '\r': oss << "\\r"; break;
+        case '\t': oss << "\\t"; break;
+        default:
+            if (static_cast<unsigned char>(c) < 0x20)
+            {
+                oss << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(c);
+            }
+            else
+            {
+                oss << c;
+            }
+            break;
         }
     }
     return oss.str();

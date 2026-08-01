@@ -43,6 +43,14 @@ namespace autoinput
      * @return A vector of validation errors. Empty if valid.
      */
     std::vector<ValidationError> validateRuntimeConfig(const RuntimeConfig& runtimeConfig);
+
+    /**
+     * @brief Prints the validation results as JSON to stdout.
+     * @param valid Whether the configuration is valid.
+     * @param configPath The resolved path to the configuration file.
+     * @param errors The validation errors.
+     */
+    void printValidationJson(bool valid, const std::string& configPath, const std::vector<ValidationError>& errors);
 }
 
 #endif // INCLUDE_AUTOINPUT_CONFIG_VALIDATOR_H

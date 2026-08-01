@@ -43,6 +43,8 @@ _autoinput() {
         '(-L --list-apps)'{-L,--list-apps}'[List running applications]' \
         '(-C --list-configs)'{-C,--list-configs}'[List valid configurations]' \
         '(-S --save-config)'{-S,--save-config}'[Save current configuration]:config file:_autoinput_configs' \
+        '--validate-config[Validate configuration file]:config file:_autoinput_configs' \
+        '--json[Output validation results as machine-readable JSON]' \
         '(-w --wait)'{-w,--wait}'[Max wait duration]:time:' \
         '--press-wait[Randomized press delay]:range:' \
         '--release-wait[Randomized release delay]:range:' \

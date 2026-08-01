@@ -19,11 +19,19 @@ int main(int argc, char* argv[])
         // Configure file output once at startup
 
         Logger::setFile("app.log");
-        Logger::info("Application started.");
         g_program = std::make_unique<Program>();
         if (!g_program->arguments().parseArguments(gsl::make_span(argv, argc), true))
         {
             return static_cast<int>(ErrorCode::INVALID_PARAM);
+        }
+
+        if (g_program->arguments().jsonOutput)
+        {
+            Logger::setConsoleOutputEnabled(false);
+        }
+        else
+        {
+            Logger::info("Application started.");
         }
 
         if (g_program->arguments().listApplications)
@@ -114,31 +122,60 @@ int main(int argc, char* argv[])
         {
             const std::string& validateConfigName = g_program->arguments().validateConfigName;
             const auto configPath = getConfigFilePath(validateConfigName);
+            const bool isJson = g_program->arguments().jsonOutput;
 
             if (!doesConfigDataExists(configPath))
             {
-                Logger::error("Configuration file not found: {}\n", validateConfigName);
+                if (isJson)
+                {
+                    printValidationJson(false, configPath.string(), { ValidationError{ "Configuration file not found" } });
+                }
+                else
+                {
+                    Logger::error("Configuration file not found: {}\n", validateConfigName);
+                }
                 return static_cast<int>(ErrorCode::FAILED_TO_LOAD_CONFIG);
             }
 
             const auto configData = loadConfigData(configPath);
             if (!configData.has_value())
             {
-                Logger::error("Failed to load configuration file: {}\n", validateConfigName);
+                if (isJson)
+                {
+                    printValidationJson(false, configPath.string(), { ValidationError{ "Failed to load configuration file" } });
+                }
+                else
+                {
+                    Logger::error("Failed to load configuration file: {}\n", validateConfigName);
+                }
                 return static_cast<int>(ErrorCode::FAILED_TO_LOAD_CONFIG);
             }
 
             const auto errors = validateConfigData(*configData);
             if (errors.empty())
             {
-                std::cout << "Configuration is valid: " << validateConfigName << "\n";
+                if (isJson)
+                {
+                    printValidationJson(true, configPath.string(), {});
+                }
+                else
+                {
+                    std::cout << "Configuration is valid: " << validateConfigName << "\n";
+                }
                 return static_cast<int>(ErrorCode::SUCCESS);
             }
 
-            Logger::error("Configuration validation failed for {}:\n", validateConfigName);
-            for (const auto& error : errors)
+            if (isJson)
             {
-                Logger::error("  - {}\n", error.message);
+                printValidationJson(false, configPath.string(), errors);
+            }
+            else
+            {
+                Logger::error("Configuration validation failed for {}:\n", validateConfigName);
+                for (const auto& error : errors)
+                {
+                    Logger::error("  - {}\n", error.message);
+                }
             }
             return static_cast<int>(ErrorCode::FAILED_TO_LOAD_CONFIG);
         }

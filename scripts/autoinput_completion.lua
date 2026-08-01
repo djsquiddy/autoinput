@@ -92,6 +92,8 @@ autoinput_parser:set_flags(
     "-C", "--list-configs",
     "-S" .. clink.arg.new_parser({configs_matcher}),
     "--save-config" .. clink.arg.new_parser({configs_matcher}),
+    "--validate-config" .. clink.arg.new_parser({configs_matcher}),
+    "--json",
     "-w" .. clink.arg.new_parser(),
     "--wait" .. clink.arg.new_parser(),
     "--press-wait" .. clink.arg.new_parser(),

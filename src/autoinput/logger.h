@@ -137,6 +137,8 @@ namespace autoinput
         static void flush();
         static void setTesting(bool testing);
         static bool isTesting();
+        static void setConsoleOutputEnabled(bool enabled);
+        static bool isConsoleOutputEnabled();
         // Optional: Allow configuring the file path at runtime
         static void setFile(const std::string& filename);
         static const std::string& getFileName();
@@ -157,10 +159,14 @@ namespace autoinput
         void setTesting_impl(bool testing);
         bool isTesting_impl() const;
 
+        void setConsoleOutputEnabled_impl(bool enabled);
+        bool isConsoleOutputEnabled_impl() const;
+
         void setFile_impl(const std::string& filename);
         const std::string& getFileName_impl() const;
         std::atomic<LogLevel> m_logLevel{ LogLevel::Info };
         std::atomic<bool> m_isTesting{ false };
+        std::atomic<bool> m_consoleOutputEnabled{ true };
         std::string m_fileName{};
         std::ofstream m_fileStream;
         mutable std::mutex m_mutex;

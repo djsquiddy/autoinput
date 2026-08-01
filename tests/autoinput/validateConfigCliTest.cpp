@@ -41,7 +41,13 @@ namespace autoinput::test
         // Redirect stdout and stderr to the temporary file
         std::string fullCommand = command + " > " + quotePath(outputPath) + " 2>&1";
         
+#ifdef _WIN32
+        // On Windows, if there are multiple quotes in the command, cmd /c needs the whole thing quoted.
+        std::string cmdWrapper = "cmd /c \"" + fullCommand + "\"";
+        int rawExitCode = std::system(cmdWrapper.c_str());
+#else
         int rawExitCode = std::system(fullCommand.c_str());
+#endif
         
         // On Windows, std::system returns the exit code directly.
         // On POSIX, we would need WEXITSTATUS(rawExitCode).
@@ -124,5 +130,51 @@ namespace autoinput::test
         EXPECT_EQ(result.exitCode, 0);
         // Validation should take much less than 5 seconds.
         EXPECT_LT(duration.count(), 5);
+    }
+
+    TEST(ValidateConfigCliTest, ValidConfigWithJsonReturnsJson)
+    {
+        TemporaryDirectory tempDir("cli_valid_json");
+        std::filesystem::path configPath = tempDir.path() / "valid.toml";
+        std::ofstream file(configPath);
+        file << "end = \"f3\"\n[[command]]\naction = \"click\"\nbutton = \"left\"\nstart = \"f2\"\n";
+        file.close();
+
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --validate-config " + quotePath(configPath) + " --json";
+        auto result = runCommand(command);
+
+        EXPECT_EQ(result.exitCode, 0);
+        EXPECT_NE(result.output.find("\"valid\": true"), std::string::npos);
+        EXPECT_NE(result.output.find("\"errors\": []"), std::string::npos);
+        EXPECT_NE(result.output.find(configPath.filename().string()), std::string::npos);
+    }
+
+    TEST(ValidateConfigCliTest, InvalidConfigWithJsonReturnsJson)
+    {
+        TemporaryDirectory tempDir("cli_invalid_json");
+        std::filesystem::path configPath = tempDir.path() / "invalid.toml";
+        std::ofstream file(configPath);
+        file << "end = \"f3\"\n[[command]]\naction = \"invalid\"\nbutton = \"left\"\nstart = \"f2\"\n";
+        file.close();
+
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --validate-config " + quotePath(configPath) + " --json";
+        auto result = runCommand(command);
+
+        EXPECT_NE(result.exitCode, 0);
+        EXPECT_NE(result.output.find("\"valid\": false"), std::string::npos);
+        EXPECT_NE(result.output.find("Invalid action: 'invalid'"), std::string::npos);
+    }
+
+    TEST(ValidateConfigCliTest, MissingConfigWithJsonReturnsJson)
+    {
+        TemporaryDirectory tempDir("cli_missing_json");
+        std::filesystem::path configPath = tempDir.path() / "non_existent.toml";
+
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --json --validate-config " + quotePath(configPath);
+        auto result = runCommand(command);
+
+        EXPECT_NE(result.exitCode, 0);
+        EXPECT_NE(result.output.find("\"valid\": false"), std::string::npos);
+        EXPECT_NE(result.output.find("Configuration file not found"), std::string::npos);
     }
 }
