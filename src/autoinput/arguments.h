@@ -72,8 +72,6 @@ namespace autoinput
         /// @return If the string is not an option (starts with '-') and is within the bounds of the argument.
         static std::string_view safeGetNextArgument(int32_t i, gsl::span<char*> args);
 
-        std::unordered_map<std::string, std::function<bool(gsl::span<char*>,int&)>> argumentCallbacks;
-
     private:
         Settings m_settings;
     };
