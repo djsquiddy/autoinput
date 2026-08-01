@@ -7,46 +7,51 @@
 #include "autoinput/keyboard.h"
 #include "autoinput/mouse.h"
 #include "autoinput/backend.h"
+#include "autoinput/backendContext.h"
 
 namespace autoinput
 {
     void KeyHandler::press()
     {
-        if (!g_backend) return;
+        IPlatformBackend* backend = BackendRegistry::getBackend();
+        if (!backend) return;
         if (bool expected = false; m_isPressed.compare_exchange_strong(expected, true))
         {
             std::shared_lock lock(m_keyMutex);
-            g_backend->keyPress(m_key);
+            backend->keyPress(m_key);
         }
     }
 
     void KeyHandler::release()
     {
-        if (!g_backend) return;
+        IPlatformBackend* backend = BackendRegistry::getBackend();
+        if (!backend) return;
         if (bool expected = true; m_isPressed.compare_exchange_strong(expected, false))
         {
             std::shared_lock lock(m_keyMutex);
-            g_backend->keyRelease(m_key);
+            backend->keyRelease(m_key);
         }
     }
 
     void MouseHandler::press()
     {
-        if (!g_backend) return;
+        IPlatformBackend* backend = BackendRegistry::getBackend();
+        if (!backend) return;
         if (bool expected = false; m_isPressed.compare_exchange_strong(expected, true))
         {
             std::shared_lock lock(m_mouseMutex);
-            g_backend->mousePress(m_mouse);
+            backend->mousePress(m_mouse);
         }
     }
 
     void MouseHandler::release()
     {
-        if (!g_backend) return;
+        IPlatformBackend* backend = BackendRegistry::getBackend();
+        if (!backend) return;
         if (bool expected = true; m_isPressed.compare_exchange_strong(expected, false))
         {
             std::shared_lock lock(m_mouseMutex);
-            g_backend->mouseRelease(m_mouse);
+            backend->mouseRelease(m_mouse);
         }
     }
 }

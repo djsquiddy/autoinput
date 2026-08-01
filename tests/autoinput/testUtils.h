@@ -23,6 +23,7 @@
 #endif
 
 #include "autoinput/backend.h"
+#include "autoinput/backendContext.h"
 #include "autoinput/environment.h"
 #include <map>
 
@@ -189,23 +190,7 @@ namespace autoinput::test
     /**
      * @brief Helper to temporarily override the global backend.
      */
-    class ScopedBackendOverride
-    {
-    public:
-        explicit ScopedBackendOverride(std::unique_ptr<IPlatformBackend> newBackend)
-        {
-            m_oldBackend = std::move(autoinput::g_backend);
-            autoinput::g_backend = std::move(newBackend);
-        }
-
-        ~ScopedBackendOverride()
-        {
-            autoinput::g_backend = std::move(m_oldBackend);
-        }
-
-    private:
-        std::unique_ptr<IPlatformBackend> m_oldBackend;
-    };
+    using ScopedBackendOverride = autoinput::ScopedBackendOverride;
 }
 
 #endif // INCLUDE_AUTOINPUT_TEST_UTILS_H

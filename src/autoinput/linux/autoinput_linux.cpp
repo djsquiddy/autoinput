@@ -10,6 +10,7 @@
 #include "autoinput/types.h"
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
+#include "autoinput/backendContext.h"
 #include "autoinput/linux/internalData_linux.h"
 
 namespace autoinput
@@ -279,7 +280,8 @@ namespace autoinput
     {
         void signalEnd()
         {
-            if (g_backend) g_backend->cleanup();
+            IPlatformBackend* backend = BackendRegistry::getBackend();
+            if (backend) backend->cleanup();
 #ifndef AUTOINPUT_TESTING
             std::exit(0);
 #endif

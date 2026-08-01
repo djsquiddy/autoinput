@@ -7,6 +7,7 @@
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
+#include "autoinput/backendContext.h"
 #include "autoinput/backendFactory.h"
 #include <ranges>
 #include <format>
@@ -414,22 +415,25 @@ namespace autoinput
 
     bool installHooks()
     {
-        if (!g_backend)
+        if (!BackendRegistry::getBackend())
         {
-            g_backend = BackendFactory::createPlatformBackend();
+            BackendRegistry::setBackend(BackendFactory::createPlatformBackend());
         }
         
-        if (!g_backend) return false;
-        return g_backend->installHooks();
+        IPlatformBackend* backend = BackendRegistry::getBackend();
+        if (!backend) return false;
+        return backend->installHooks();
     }
 
     void runListener()
     {
-        if (g_backend) g_backend->runListener();
+        IPlatformBackend* backend = BackendRegistry::getBackend();
+        if (backend) backend->runListener();
     }
 
     void cleanup()
     {
-        if (g_backend) g_backend->cleanup();
+        IPlatformBackend* backend = BackendRegistry::getBackend();
+        if (backend) backend->cleanup();
     }
 }

@@ -5,6 +5,8 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/defaults.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/defaults.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/backend.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/backendContext.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/backendContext.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/backendFactory.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/backendFactory.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/environment.h
