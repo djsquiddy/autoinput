@@ -7,6 +7,7 @@
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
+#include "autoinput/backendFactory.h"
 #include <ranges>
 #include <format>
 #include <cctype>
@@ -413,25 +414,13 @@ namespace autoinput
 
     bool installHooks()
     {
-#if AUTOINPUT_FAKE_HOOK
-        Logger::info("Fake hook enabled, actions will be logged but not performed.\n");
-        g_backend = std::make_unique<FakeBackend>();
-        return g_backend->installHooks();
-#else
         if (!g_backend)
         {
-#ifdef _WIN32
-            g_backend = createWindowsBackend();
-#else
-            // On Linux, we call a helper that detects the backend
-            extern std::unique_ptr<IPlatformBackend> detectLinuxBackend();
-            g_backend = detectLinuxBackend();
-#endif
+            g_backend = BackendFactory::createPlatformBackend();
         }
         
         if (!g_backend) return false;
         return g_backend->installHooks();
-#endif
     }
 
     void runListener()

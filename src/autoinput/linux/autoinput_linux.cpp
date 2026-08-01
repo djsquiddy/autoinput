@@ -369,30 +369,4 @@ namespace autoinput
         }
     }
 #endif
-
-#if defined(__linux__)
-    std::unique_ptr<IPlatformBackend> detectLinuxBackend()
-#else
-    std::unique_ptr<IPlatformBackend> detectLinuxBackend_unused()
-#endif
-    {
-        const char* sessionType = std::getenv("XDG_SESSION_TYPE");
-        bool isWayland = sessionType && std::string(sessionType) == "wayland";
-
-        if (isWayland)
-        {
-            Logger::info("Detected Wayland session, using Wayland/uinput backend\n");
-            return createWaylandBackend();
-        }
-        else
-        {
-#if AUTOINPUT_WITH_X11
-            Logger::info("Detected X11 session or unknown, using X11 backend\n");
-            return createX11Backend();
-#else
-            Logger::error("X11 support was not compiled in and this is not a Wayland session.\n");
-            return nullptr;
-#endif
-        }
-    }
 }

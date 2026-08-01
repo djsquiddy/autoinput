@@ -5,6 +5,8 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/defaults.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/defaults.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/backend.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/backendFactory.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/backendFactory.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/waitDelay.cpp
@@ -74,12 +76,12 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/focusTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configLookupTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/testEnvironment.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/backendTest_linux.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/testUtils.h
     )
 
     if(UNIX AND NOT APPLE)
         list(APPEND sources
-                ${CMAKE_SOURCE_DIR}/tests/autoinput/backendTest_linux.cpp
                 ${CMAKE_SOURCE_DIR}/tests/autoinput/dispatchTest_linux.cpp
         )
     endif()
