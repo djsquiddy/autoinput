@@ -67,6 +67,8 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/argumentsTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configValidatorTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/configValidationIntegrationTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/validateConfigCliTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/runtimeConfigTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/positionalArgumentsTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseTriggerLogicTest.cpp

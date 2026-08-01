@@ -36,6 +36,7 @@ namespace autoinput
         std::string endKey{};
         std::string applicationName{};
         std::string saveConfigName{};
+        std::string validateConfigName{};
         std::vector<std::string> blacklist{};
         bool listApplications{ false };
         bool listConfigs{ false };

@@ -8,6 +8,7 @@
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
 #include "autoinput/backendFactory.h"
+#include "autoinput/configValidator.h"
 
 int main(int argc, char* argv[])
 {
@@ -106,6 +107,39 @@ int main(int argc, char* argv[])
             }
             
             Logger::fatal("Failed to save configuration to {}\n", dumpPath.string());
+            return static_cast<int>(ErrorCode::FAILED_TO_LOAD_CONFIG);
+        }
+        
+        if (!g_program->arguments().validateConfigName.empty())
+        {
+            const std::string& validateConfigName = g_program->arguments().validateConfigName;
+            const auto configPath = getConfigFilePath(validateConfigName);
+
+            if (!doesConfigDataExists(configPath))
+            {
+                Logger::error("Configuration file not found: {}\n", validateConfigName);
+                return static_cast<int>(ErrorCode::FAILED_TO_LOAD_CONFIG);
+            }
+
+            const auto configData = loadConfigData(configPath);
+            if (!configData.has_value())
+            {
+                Logger::error("Failed to load configuration file: {}\n", validateConfigName);
+                return static_cast<int>(ErrorCode::FAILED_TO_LOAD_CONFIG);
+            }
+
+            const auto errors = validateConfigData(*configData);
+            if (errors.empty())
+            {
+                std::cout << "Configuration is valid: " << validateConfigName << "\n";
+                return static_cast<int>(ErrorCode::SUCCESS);
+            }
+
+            Logger::error("Configuration validation failed for {}:\n", validateConfigName);
+            for (const auto& error : errors)
+            {
+                Logger::error("  - {}\n", error.message);
+            }
             return static_cast<int>(ErrorCode::FAILED_TO_LOAD_CONFIG);
         }
 

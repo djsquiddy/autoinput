@@ -87,6 +87,16 @@ namespace autoinput
                     return false;
                 }
             }
+            if (arg == "--validate-config")
+            {
+                validateConfigName = safeGetNextArgument(++i, args);
+                if (validateConfigName.empty())
+                {
+                    printUsage();
+                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    return false;
+                }
+            }
         }
         return true;
     }
@@ -196,6 +206,11 @@ namespace autoinput
                 }
             }
             else if (arg == "-c" || arg == "--config")
+            {
+                // Already handled in first pass, but skip its value
+                safeGetNextArgument(++i, args);
+            }
+            else if (arg == "--validate-config")
             {
                 // Already handled in first pass, but skip its value
                 safeGetNextArgument(++i, args);

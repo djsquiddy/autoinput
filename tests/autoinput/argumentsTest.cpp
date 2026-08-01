@@ -312,4 +312,15 @@ namespace autoinput
         EXPECT_TRUE(arguments.listConfigs);
     }
 
+    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesValidateConfig)
+    {
+        ProgramArguments arguments;
+        char program[] = "autoinput";
+        char validateOpt[] = "--validate-config";
+        char validateVal[] = "myconfig";
+        char* argv[] = { program, validateOpt, validateVal };
+
+        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
+        EXPECT_EQ(arguments.validateConfigName, "myconfig");
+    }
 }

@@ -13,6 +13,8 @@ target_link_libraries(${PROJECT_NAME}_tests
         GTest::gmock
 )
 
+target_compile_definitions(${PROJECT_NAME}_tests PRIVATE AUTOINPUT_EXE_PATH="$<TARGET_FILE:autoinput>")
+
 configure_autoinput_target(${PROJECT_NAME}_tests)
 configure_autoinput_platform(${PROJECT_NAME}_tests)
 
