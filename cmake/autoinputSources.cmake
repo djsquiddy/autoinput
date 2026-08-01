@@ -38,6 +38,7 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/settings.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/settings.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/handler.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/terminal.h
     )
 
     if(WIN32)
@@ -82,6 +83,7 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/saveConfigTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/focusTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configLookupTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/statusIndicatorTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/testEnvironment.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/backendTest_linux.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/backendCapabilitiesTest.cpp

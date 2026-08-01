@@ -8,6 +8,7 @@
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
 #include "autoinput/backendFactory.h"
+#include "autoinput/terminal.h"
 #include <ranges>
 #include <format>
 #include <cctype>
@@ -194,6 +195,7 @@ namespace autoinput
                 startAutoClicker(handler);
             }
         }
+        updateStatusIndicator();
     }
 
     void Program::end()
@@ -225,6 +227,7 @@ namespace autoinput
         }
 
         platform::signalEnd();
+        updateStatusIndicator();
     }
 
     void Program::joinThreads()
@@ -330,6 +333,49 @@ namespace autoinput
         else
         {
             Logger::debug("Application focused, resuming auto-pressing.\n");
+        }
+        updateStatusIndicator();
+    }
+
+    void Program::updateStatusIndicator()
+    {
+        if (m_arguments.jsonOutput)
+        {
+            return;
+        }
+
+        bool isActive = false;
+        for (const auto& handler : m_mouseHandlers | std::views::values)
+        {
+            if (handler.getActive() && !handler.getPaused())
+            {
+                isActive = true;
+                break;
+            }
+        }
+        if (!isActive)
+        {
+            for (const auto& handler : m_keyHandlers | std::views::values)
+            {
+                if (handler.getActive() && !handler.getPaused())
+                {
+                    isActive = true;
+                    break;
+                }
+            }
+        }
+
+        if (isActive != m_lastIsActiveIndicator)
+        {
+            if (isActive)
+            {
+                terminal::printStatus("Auto clicking: ", "ACTIVE", terminal::Color::Green);
+            }
+            else
+            {
+                terminal::printStatus("Auto clicking: ", "PAUSED", terminal::Color::Yellow);
+            }
+            m_lastIsActiveIndicator = isActive;
         }
     }
 

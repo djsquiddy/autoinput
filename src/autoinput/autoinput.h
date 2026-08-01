@@ -51,11 +51,13 @@ namespace autoinput
 #ifdef AUTOINPUT_TESTING
         auto& getMouseHandlers() { return m_mouseHandlers; }
         auto& getKeyHandlers() { return m_keyHandlers; }
+        [[nodiscard]] bool getLastIsActiveIndicator() const { return m_lastIsActiveIndicator; }
 #endif
 
         void printProgramInfo() const;
         [[nodiscard]] bool isApplicationBlacklisted() const;
         void onFocusChanged(const std::string& activeApp);
+        void updateStatusIndicator();
 
     private:
         std::unique_ptr<IPlatformBackend> m_backend{ nullptr };
@@ -64,6 +66,7 @@ namespace autoinput
         ProgramArguments m_arguments{};
         std::vector<KeyInfo> m_keyInfo{};
         std::vector<std::unique_ptr<std::thread>> m_zombieThreads{};
+        bool m_lastIsActiveIndicator{ false };
 
         void startAutoClicker(InputHandler& handler);
     };

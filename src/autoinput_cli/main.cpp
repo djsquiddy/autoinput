@@ -9,6 +9,7 @@
 #include "autoinput/platform.h"
 #include "autoinput/backendFactory.h"
 #include "autoinput/configValidator.h"
+#include "autoinput/terminal.h"
 
 int main(int argc, char* argv[])
 {
@@ -18,6 +19,7 @@ int main(int argc, char* argv[])
     {
         // Configure file output once at startup
 
+        terminal::setup();
         Logger::setFile("app.log");
         g_program = std::make_unique<Program>();
         if (!g_program->arguments().parseArguments(gsl::make_span(argv, argc), true))
