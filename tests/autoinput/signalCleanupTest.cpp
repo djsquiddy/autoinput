@@ -6,7 +6,7 @@
 using namespace autoinput;
 using ::testing::Exactly;
 
-class MockCleanupBackend : public PlatformBackend
+class MockCleanupBackend : public IPlatformBackend
 {
 public:
     MOCK_METHOD(bool, installHooks, (), (override));

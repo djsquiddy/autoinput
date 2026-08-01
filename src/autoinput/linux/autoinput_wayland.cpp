@@ -86,7 +86,7 @@ namespace autoinput
             write(fd, &ie, sizeof(ie));
         }
 
-        class WaylandBackend : public PlatformBackend
+        class WaylandBackend : public IPlatformBackend
         {
         public:
             bool installHooks() override

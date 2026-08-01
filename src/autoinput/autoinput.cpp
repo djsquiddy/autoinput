@@ -10,7 +10,7 @@
 
 namespace autoinput
 {
-    std::unique_ptr<PlatformBackend> g_backend = nullptr;
+    std::unique_ptr<IPlatformBackend> g_backend = nullptr;
 
     bool Program::isApplicationBlacklisted() const
     {
@@ -420,7 +420,7 @@ namespace autoinput
             g_backend = createWindowsBackend();
 #else
             // On Linux, we call a helper that detects the backend
-            extern std::unique_ptr<PlatformBackend> detectLinuxBackend();
+            extern std::unique_ptr<IPlatformBackend> detectLinuxBackend();
             g_backend = detectLinuxBackend();
 #endif
         }

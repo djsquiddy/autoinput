@@ -8,7 +8,7 @@ using namespace autoinput;
 using ::testing::_;
 using ::testing::Exactly;
 
-class MockPlatformBackend : public PlatformBackend
+class MockPlatformBackend : public IPlatformBackend
 {
 public:
     MOCK_METHOD(bool, installHooks, (), (override));

@@ -12,24 +12,23 @@
 
 namespace autoinput
 {
-    class PlatformBackend
+    class IPlatformBackend
     {
     public:
-        virtual ~PlatformBackend() = default;
+        virtual ~IPlatformBackend() = default;
         virtual bool installHooks() = 0;
         virtual void runListener() = 0;
         virtual void cleanup() = 0;
-        // TODO: add shutdown that signals to the platform to cleanup.
-        
+
         virtual void keyPress(const Key& key) = 0;
         virtual void keyRelease(const Key& key) = 0;
         virtual void mousePress(const Mouse& mouse) = 0;
         virtual void mouseRelease(const Mouse& mouse) = 0;
     };
 
-    extern std::unique_ptr<PlatformBackend> g_backend;
+    extern std::unique_ptr<IPlatformBackend> g_backend;
 
-    class FakeBackend : public PlatformBackend
+    class FakeBackend : public IPlatformBackend
     {
     public:
         bool installHooks() override { return true; }
@@ -43,7 +42,7 @@ namespace autoinput
     };
 
 #ifdef _WIN32
-    std::unique_ptr<PlatformBackend> createWindowsBackend();
+    std::unique_ptr<IPlatformBackend> createWindowsBackend();
 #else
     std::unique_ptr<PlatformBackend> createLinuxBackend();
 #endif

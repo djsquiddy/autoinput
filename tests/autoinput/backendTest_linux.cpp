@@ -12,18 +12,18 @@
 namespace autoinput
 {
     // Mock versions of the create functions so we don't need the real backends
-    std::unique_ptr<PlatformBackend> createWaylandBackend()
+    std::unique_ptr<IPlatformBackend> createWaylandBackend()
     {
         return std::make_unique<FakeBackend>();
     }
 
-    std::unique_ptr<PlatformBackend> createX11Backend()
+    std::unique_ptr<IPlatformBackend> createX11Backend()
     {
         return std::make_unique<FakeBackend>();
     }
 
     // Copy of detectLinuxBackend logic for testing on all platforms
-    std::unique_ptr<PlatformBackend> test_detectLinuxBackend()
+    std::unique_ptr<IPlatformBackend> test_detectLinuxBackend()
     {
         const char* sessionType = std::getenv("XDG_SESSION_TYPE");
         bool isWayland = sessionType && std::string(sessionType) == "wayland";

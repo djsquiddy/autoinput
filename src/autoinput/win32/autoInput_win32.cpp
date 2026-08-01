@@ -360,7 +360,7 @@ namespace autoinput
             return CallNextHookEx(g_hMouseHook, nCode, wParam, lParam);
         }
 
-        class WindowsBackend : public PlatformBackend
+        class WindowsBackend : public IPlatformBackend
         {
         public:
             bool installHooks() override
@@ -545,7 +545,7 @@ namespace autoinput
         };
     }
 
-    std::unique_ptr<PlatformBackend> createWindowsBackend()
+    std::unique_ptr<IPlatformBackend> createWindowsBackend()
     {
         return std::make_unique<WindowsBackend>();
     }

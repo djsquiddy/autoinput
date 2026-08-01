@@ -12,7 +12,7 @@
 using namespace autoinput;
 using ::testing::Exactly;
 
-class MockMouseModifierBackend : public PlatformBackend
+class MockMouseModifierBackend : public IPlatformBackend
 {
 public:
     MOCK_METHOD(bool, installHooks, (), (override));

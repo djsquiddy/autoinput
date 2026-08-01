@@ -371,9 +371,9 @@ namespace autoinput
 #endif
 
 #if defined(__linux__)
-    std::unique_ptr<PlatformBackend> detectLinuxBackend()
+    std::unique_ptr<IPlatformBackend> detectLinuxBackend()
 #else
-    std::unique_ptr<PlatformBackend> detectLinuxBackend_unused()
+    std::unique_ptr<IPlatformBackend> detectLinuxBackend_unused()
 #endif
     {
         const char* sessionType = std::getenv("XDG_SESSION_TYPE");

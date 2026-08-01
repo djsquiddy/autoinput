@@ -67,8 +67,8 @@ namespace autoinput
         int value;
     };
 
-    std::unique_ptr<PlatformBackend> createWaylandBackend();
-    std::unique_ptr<PlatformBackend> createX11Backend();
+    std::unique_ptr<IPlatformBackend> createWaylandBackend();
+    std::unique_ptr<IPlatformBackend> createX11Backend();
 
     // Platform-specific input helper functions
     bool isX11KeyDown(const X11KeyboardData& data);
