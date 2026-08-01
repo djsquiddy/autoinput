@@ -24,6 +24,8 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/logger.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/config.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/config.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/configValidator.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/configValidator.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/runtimeConfig.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/runtimeConfig.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/handlerState.h
@@ -57,6 +59,7 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/utilsTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/argumentsTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/configValidatorTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/runtimeConfigTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/positionalArgumentsTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseTriggerLogicTest.cpp

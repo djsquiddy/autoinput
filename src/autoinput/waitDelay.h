@@ -31,6 +31,13 @@ namespace autoinput
         [[nodiscard]] std::string toString(bool isPressWait) const;
         bool parseWaitTimeDelay(std::string_view waitTimeDelayArg, bool isPressWait);
     };
+
+    /**
+     * @brief Validates if a string is a valid wait delay representation.
+     * @param wait The wait string to validate.
+     * @return True if valid, false otherwise.
+     */
+    bool isValidWaitDelay(std::string_view wait);
 }
 
 #endif // INCLUDE_AUTOINPUT_WAIT_DELAY_H

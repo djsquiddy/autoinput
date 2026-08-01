@@ -185,4 +185,27 @@ namespace autoinput
         }
         return true;
     }
+
+    bool isValidWaitDelay(std::string_view wait)
+    {
+        if (wait.empty()) return false;
+
+        auto checkPart = [](std::string_view part) {
+            if (part.empty()) return false;
+            size_t i = 0;
+            while (i < part.size() && std::isdigit(static_cast<unsigned char>(part[i]))) i++;
+            if (i == 0) return false; // No digits
+
+            std::string_view unit = part.substr(i);
+            return unit.empty() || unit == "ms" || unit == "s" || unit == "m";
+        };
+
+        if (wait.contains(".."))
+        {
+            size_t pos = wait.find("..");
+            return checkPart(wait.substr(0, pos)) && checkPart(wait.substr(pos + 2));
+        }
+
+        return checkPart(wait);
+    }
 }

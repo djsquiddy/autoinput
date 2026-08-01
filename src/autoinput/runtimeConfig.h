@@ -14,17 +14,13 @@
 #include <variant>
 #include "autoinput/types.h"
 #include "autoinput/waitDelay.h"
+#include "autoinput/configValidator.h"
 
 namespace autoinput
 {
     struct ConfigData;
     struct CommandData;
     class ProgramArguments;
-
-    struct ValidationError
-    {
-        std::string message;
-    };
 
     struct RuntimeCommand
     {

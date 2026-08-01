@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 #include "autoinput/runtimeConfig.h"
+#include "autoinput/config.h"
 
 namespace autoinput
 {
