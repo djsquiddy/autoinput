@@ -7,7 +7,6 @@
 #include "autoinput/utils.h"
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
-#include "autoinput/backendContext.h"
 #include "autoinput/backendFactory.h"
 
 int main(int argc, char* argv[])
@@ -115,9 +114,9 @@ int main(int argc, char* argv[])
         {
             return static_cast<int>(ErrorCode::FAILED_TO_INSTALL_HOOKS);
         }
-        BackendRegistry::setBackend(std::move(backend));
-
-        g_program->init(BackendRegistry::getBackend());
+        
+        g_program->setBackend(std::move(backend));
+        g_program->init();
 
         if (!installHooks())
         {

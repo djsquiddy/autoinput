@@ -30,8 +30,6 @@ namespace autoinput
         virtual void mouseRelease(const Mouse& mouse) = 0;
     };
 
-    extern std::unique_ptr<IPlatformBackend> g_backend;
-
     class FakeBackend : public IPlatformBackend
     {
     public:

@@ -16,7 +16,40 @@
 
 namespace autoinput
 {
-    std::unique_ptr<IPlatformBackend> g_backend = nullptr;
+    Program::Program(std::unique_ptr<IPlatformBackend> backend)
+        : m_backend(std::move(backend))
+    {
+    }
+
+    void Program::setBackend(std::unique_ptr<IPlatformBackend> backend)
+    {
+        m_backend = std::move(backend);
+    }
+
+    bool Program::installHooks()
+    {
+        if (m_backend)
+        {
+            return m_backend->installHooks();
+        }
+        return false;
+    }
+
+    void Program::runListener()
+    {
+        if (m_backend)
+        {
+            m_backend->runListener();
+        }
+    }
+
+    void Program::cleanup()
+    {
+        if (m_backend)
+        {
+            m_backend->cleanup();
+        }
+    }
 
     bool Program::isApplicationBlacklisted() const
     {
@@ -351,17 +384,17 @@ namespace autoinput
         });
     }
 
-    void Program::init(IPlatformBackend* backend)
+    void Program::init()
     {
-        m_backend = backend;
+        IPlatformBackend* backendPtr = m_backend.get();
         for (auto& mouse : m_arguments.buttons)
         {
-            m_mouseHandlers[mouse] = MouseHandler{mouse, m_backend};
+            m_mouseHandlers[mouse] = MouseHandler{mouse, backendPtr};
         }
 
         for (auto& key : m_arguments.keys)
         {
-            m_keyHandlers[key] = KeyHandler{key, m_backend};
+            m_keyHandlers[key] = KeyHandler{key, backendPtr};
         }
 
         auto processKeyString = [this](const std::string& keyStr, const Mouse mouse, Key targetKey, const ActionState action, const bool isStart) {
@@ -416,20 +449,26 @@ namespace autoinput
 
     bool installHooks()
     {
-        IPlatformBackend* backend = BackendRegistry::getBackend();
-        if (!backend) return false;
-        return backend->installHooks();
+        if (g_program)
+        {
+            return g_program->installHooks();
+        }
+        return false;
     }
 
     void runListener()
     {
-        IPlatformBackend* backend = BackendRegistry::getBackend();
-        if (backend) backend->runListener();
+        if (g_program)
+        {
+            g_program->runListener();
+        }
     }
 
     void cleanup()
     {
-        IPlatformBackend* backend = BackendRegistry::getBackend();
-        if (backend) backend->cleanup();
+        if (g_program)
+        {
+            g_program->cleanup();
+        }
     }
 }

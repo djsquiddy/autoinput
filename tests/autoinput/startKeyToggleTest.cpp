@@ -51,21 +51,25 @@ namespace autoinput
         int argc = sizeof(argv) / sizeof(char*);
 
         ASSERT_TRUE(program.arguments().parseArguments(gsl::make_span(argv, argc)));
-        program.init(m_backend);
+        
+        auto trackingBackend = std::make_unique<TrackingBackend>();
+        auto* trackingBackendPtr = trackingBackend.get();
+        program.setBackend(std::move(trackingBackend));
+        program.init();
 
         const auto& keyInfo = program.getKeyInfo();
         
         // Simulate F2 press (Start action)
         program.start(keyInfo[0]);
-        EXPECT_EQ(m_backend->pressCount, 1);
-        EXPECT_EQ(m_backend->releaseCount, 0);
-        EXPECT_EQ(m_backend->lastButton, MouseButton::LEFT);
+        EXPECT_EQ(trackingBackendPtr->pressCount, 1);
+        EXPECT_EQ(trackingBackendPtr->releaseCount, 0);
+        EXPECT_EQ(trackingBackendPtr->lastButton, MouseButton::LEFT);
 
         // Simulate F2 press again (Toggle action)
         program.start(keyInfo[0]);
-        EXPECT_EQ(m_backend->pressCount, 1);
-        EXPECT_EQ(m_backend->releaseCount, 1);
-        EXPECT_EQ(m_backend->lastButton, MouseButton::LEFT);
+        EXPECT_EQ(trackingBackendPtr->pressCount, 1);
+        EXPECT_EQ(trackingBackendPtr->releaseCount, 1);
+        EXPECT_EQ(trackingBackendPtr->lastButton, MouseButton::LEFT);
     }
 
     TEST_F(StartKeyToggleTest, DuplicateActionsCauseToggleIssue)
@@ -76,7 +80,11 @@ namespace autoinput
         int argc = sizeof(argv) / sizeof(char*);
 
         ASSERT_TRUE(program.arguments().parseArguments(gsl::make_span(argv, argc)));
-        program.init(m_backend);
+        
+        auto trackingBackend = std::make_unique<TrackingBackend>();
+        auto* trackingBackendPtr = trackingBackend.get();
+        program.setBackend(std::move(trackingBackend));
+        program.init();
 
         const auto& keyInfo = program.getKeyInfo();
         // Expecting 2 KeyInfo for F2 (both for LEFT)
@@ -94,7 +102,7 @@ namespace autoinput
         
         // Expected: pressCount should be 1 (first start) and releaseCount should be 1 (second start toggles it off)
         // If this is the case, then pressing F2 once actually does nothing visible!
-        EXPECT_EQ(m_backend->pressCount, 1);
-        EXPECT_EQ(m_backend->releaseCount, 1);
+        EXPECT_EQ(trackingBackendPtr->pressCount, 1);
+        EXPECT_EQ(trackingBackendPtr->releaseCount, 1);
     }
 }

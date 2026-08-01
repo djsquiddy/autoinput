@@ -5,6 +5,7 @@
  */
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include "autoinput/autoInput.h"
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
 #include "testUtils.h"
@@ -26,6 +27,7 @@ public:
 
 TEST(SignalCleanupTest, SignalEndCallsCleanup)
 {
+    g_program = std::make_unique<Program>();
     auto mock = std::make_unique<MockCleanupBackend>();
     MockCleanupBackend* mockPtr = mock.get();
     test::ScopedBackendOverride backendOverride(std::move(mock));
@@ -33,4 +35,6 @@ TEST(SignalCleanupTest, SignalEndCallsCleanup)
     EXPECT_CALL(*mockPtr, cleanup()).Times(Exactly(1));
     
     platform::signalEnd();
+
+    g_program.reset();
 }

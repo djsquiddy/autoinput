@@ -5,6 +5,7 @@
  */
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include "autoinput/autoInput.h"
 #include "autoinput/keyboard.h"
 #include "autoinput/mouse.h"
 #include "autoinput/backend.h"
@@ -31,6 +32,7 @@ class HandlerTest : public ::testing::Test
 protected:
     void SetUp() override
     {
+        g_program = std::make_unique<Program>();
         auto mock = std::make_unique<MockPlatformBackend>();
         mockPtr = mock.get();
         m_override = std::make_unique<test::ScopedBackendOverride>(std::move(mock));
@@ -39,6 +41,7 @@ protected:
     void TearDown() override
     {
         m_override.reset();
+        g_program.reset();
     }
 
     MockPlatformBackend* mockPtr{ nullptr };

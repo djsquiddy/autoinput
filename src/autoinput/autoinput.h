@@ -14,6 +14,7 @@
 #include <thread>
 
 #include "autoinput/arguments.h"
+#include "autoinput/backend.h"
 #include "autoinput/mouse.h"
 #include "autoinput/keyboard.h"
 #include "autoinput/keyInfo.h"
@@ -25,9 +26,20 @@ namespace autoinput
     class Program
     {
     public:
+        Program() = default;
+        explicit Program(std::unique_ptr<IPlatformBackend> backend);
+
         ProgramArguments& arguments() { return m_arguments; }
-        void init(IPlatformBackend* backend = nullptr);
+        void setBackend(std::unique_ptr<IPlatformBackend> backend);
+        [[nodiscard]] IPlatformBackend* getBackend() const { return m_backend.get(); }
+        std::unique_ptr<IPlatformBackend> releaseBackend() { return std::move(m_backend); }
+
+        void init();
         
+        bool installHooks();
+        void runListener();
+        void cleanup();
+
         bool processKeyEvent(KeyboardInput&& input);
         bool processMouseEvent(const MouseInput& input);
         void start(const KeyInfo& keyInfo);
@@ -46,7 +58,7 @@ namespace autoinput
         void onFocusChanged(const std::string& activeApp);
 
     private:
-        IPlatformBackend* m_backend{ nullptr };
+        std::unique_ptr<IPlatformBackend> m_backend{ nullptr };
         std::unordered_map<Mouse, MouseHandler, HashFunction<Mouse>> m_mouseHandlers{};
         std::unordered_map<Key, KeyHandler, HashFunction<Key>> m_keyHandlers{};
         ProgramArguments m_arguments{};

@@ -47,7 +47,7 @@ namespace autoinput
 
         void signalEnd()
         {
-            IPlatformBackend* backend = BackendRegistry::getBackend();
+            IPlatformBackend* backend = g_program ? g_program->getBackend() : nullptr;
             if (backend) backend->cleanup();
             
             if (g_mainThreadId != 0 && GetCurrentThreadId() != g_mainThreadId)

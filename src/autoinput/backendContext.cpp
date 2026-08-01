@@ -5,32 +5,45 @@
  */
 #include "autoinput/backendContext.h"
 #include "autoinput/backend.h"
+#include "autoinput/autoInput.h"
 
 namespace autoinput
 {
     void BackendRegistry::setBackend(std::unique_ptr<IPlatformBackend> backend)
     {
-        g_backend = std::move(backend);
+        if (g_program)
+        {
+            g_program->setBackend(std::move(backend));
+        }
     }
 
     IPlatformBackend* BackendRegistry::getBackend()
     {
-        return g_backend.get();
+        return g_program ? g_program->getBackend() : nullptr;
     }
 
     void BackendRegistry::clearBackend()
     {
-        g_backend.reset();
+        if (g_program)
+        {
+            g_program->setBackend(nullptr);
+        }
     }
 
     ScopedBackendOverride::ScopedBackendOverride(std::unique_ptr<IPlatformBackend> newBackend)
     {
-        m_oldBackend = std::move(g_backend);
-        g_backend = std::move(newBackend);
+        if (g_program)
+        {
+            m_oldBackend = g_program->releaseBackend();
+            g_program->setBackend(std::move(newBackend));
+        }
     }
 
     ScopedBackendOverride::~ScopedBackendOverride()
     {
-        g_backend = std::move(m_oldBackend);
+        if (g_program)
+        {
+            g_program->setBackend(std::move(m_oldBackend));
+        }
     }
 }
