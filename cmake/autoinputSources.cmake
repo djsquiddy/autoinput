@@ -28,6 +28,8 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/logger.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/config.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/config.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/configMetadata.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/configMetadata.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/configValidator.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/configValidator.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/runtimeConfig.h
@@ -58,6 +60,7 @@ endfunction()
 function(autoinput_get_test_sources output_var)
     set(sources
             ${CMAKE_SOURCE_DIR}/tests/autoinput/keyTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/configMetadataTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/typesTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/utilsTest.cpp

@@ -9,6 +9,7 @@
 #include "autoinput/runtimeConfig.h"
 #include "autoinput/types.h"
 #include "autoinput/waitDelay.h"
+#include "autoinput/configMetadata.h"
 #include <format>
 #include <algorithm>
 #include <cctype>
@@ -88,11 +89,7 @@ namespace autoinput
                 else if (key.character.length() > 1 && !(static_cast<bool>(key.modifier & KeyModifier::Function)))
                 {
                     // Check if it's a known special key
-                    static const std::vector<std::string_view> specialKeys = {
-                        "esc", "escape", "space", "tab", "enter", "return", "backspace", "ins", "insert",
-                        "del", "delete", "home", "end", "pageup", "pgup", "pagedown", "pgdn", "up", "down",
-                        "left", "right", "capslock", "numlock", "scrolllock", "printscreen", "prtsc", "pause"
-                    };
+                    const auto specialKeys = ConfigMetadata::validSpecialKeyNames();
                     if (std::find(specialKeys.begin(), specialKeys.end(), key.character) == specialKeys.end())
                     {
                         errors.push_back(ValidationError{ std::format("Invalid start key: '{}'", startKeyStr) });

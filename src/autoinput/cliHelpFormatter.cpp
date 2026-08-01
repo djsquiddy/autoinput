@@ -8,27 +8,28 @@
 #include "autoinput/logger.h"
 #include "autoinput/config.h"
 #include "autoinput/types.h"
+#include "autoinput/configMetadata.h"
 
 namespace autoinput
 {
     void CliHelpFormatter::printUsage(const std::string_view programName, const bool verbose)
     {
-        Logger::print("usage {} [-h] [{{click,hold}}] [{{left,right,middle,key}} ...] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME] [-S SAVE_CONFIG_NAME]\n\n", programName);
+        Logger::print("usage {} [-h] [{}] [{{left,right,middle,key}} ...] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME] [-S SAVE_CONFIG_NAME]\n\n", programName, ConfigMetadata::validActionChoices());
         Logger::print("options\n");
         const auto optionPrefix = std::string(4, ' ');
         const auto optionUsagePrefix = std::string(10, ' ');
 
         Logger::print("{} -h, --help\n", optionPrefix);
         Logger::print("{} show this help message with examples and exits.\n", optionUsagePrefix);
-        Logger::print("{} -l, --log [{{d,debug,i,info,w,warn,warning,e,error,f,fatal}}]\n", optionPrefix);
+        Logger::print("{} -l, --log [{}]\n", optionPrefix, ConfigMetadata::validLogLevelChoices());
         Logger::print("{} set the log level. (Choices: debug, info, warning, warn, error, fatal)\n", optionUsagePrefix);
         Logger::print("{} -c --config\n", optionPrefix);
         Logger::print("{} Use the specified configuration found under {}. Extension can be omitted\n", optionUsagePrefix, getConfigsPath().string());
-        Logger::print("{} -t, --type {{click,c,hold,h}}\n", optionPrefix);
+        Logger::print("{} -t, --type {}\n", optionPrefix, ConfigMetadata::validActionChoices());
         Logger::print("{} What kind of action event to use. (Can be positional)\n", optionUsagePrefix);
 #if AUTOINPUT_HOOK_MOUSE_ENABLED
         Logger::print("{} -b, --btn, --button {{button}} [{{button}} ...]\n", optionPrefix);
-        Logger::print("{} Which button to press. (Default: {}) (Can be positional). Modifiers like shift+left are supported.\n", optionUsagePrefix, defaults::DefaultMouseButtonName);
+        Logger::print("{} Which button to press. (Default: {}) (Can be positional). Choices: {}. Modifiers like shift+left are supported.\n", optionUsagePrefix, ConfigMetadata::defaultMouseButtonName(), ConfigMetadata::validMouseButtonChoices());
 #endif // AUTOINPUT_HOOK_MOUSE_ENABLED
 #if AUTOINPUT_HOOK_KEYBOARD_ENABLED
         Logger::print("{} -k, --key {{key}} [{{key}} ...]\n", optionPrefix);

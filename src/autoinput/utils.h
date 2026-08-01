@@ -13,6 +13,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <sstream>
 #include <gsl/gsl>
 
 namespace autoinput
@@ -27,6 +28,25 @@ namespace autoinput
     };
 
     std::string toLowerCase(std::string_view sv);
+
+    template <typename Range>
+    std::string join(const Range& range, const std::string& delim)
+    {
+        std::ostringstream oss;
+        auto it = std::begin(range);
+        auto end = std::end(range);
+        if (it != end)
+        {
+            oss << *it;
+            ++it;
+        }
+        while (it != end)
+        {
+            oss << delim << *it;
+            ++it;
+        }
+        return oss.str();
+    }
 
     std::string join(gsl::span<const std::string> vec, const std::string& delim);
     template <typename T>

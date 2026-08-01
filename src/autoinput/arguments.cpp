@@ -9,6 +9,7 @@
 #include "autoinput/cliHelpFormatter.h"
 #include "autoinput/logger.h"
 #include "autoinput/config.h"
+#include "autoinput/configMetadata.h"
 
 namespace autoinput
 {
@@ -65,14 +66,14 @@ namespace autoinput
                 if (logLevelStr.empty())
                 {
                     printUsage();
-                    Logger::fatal("The parameter {} needs an argument. Choices: {{d,debug,i,info,w,warn,warning,e,error,f,fatal}}\n", arg);
+                    Logger::fatal("The parameter {} needs an argument. Choices: {}\n", arg, ConfigMetadata::validLogLevelChoices());
                     return false;
                 }
                 const LogLevel logLevel = logLevelFromString(logLevelStr);
                 if (logLevel == LogLevel::Unknown)
                 {
                     printUsage();
-                    Logger::fatal("Invalid parameter {} for log level. Choices: {{d,debug,i,info,w,warn,warning,e,error,f,fatal}}\n", logLevelStr);
+                    Logger::fatal("Invalid parameter {} for log level. Choices: {}\n", logLevelStr, ConfigMetadata::validLogLevelChoices());
                     return false;
                 }
                 Logger::setLogLevel(logLevel);
@@ -459,7 +460,7 @@ namespace autoinput
                     }
                     else
                     {
-                        Logger::fatal("Invalid parameter {} for button type. Choices: {{left,right,middle,back,forward}}\n", button);
+                        Logger::fatal("Invalid parameter {} for button type. Choices: {}\n", button, ConfigMetadata::validMouseButtonChoices());
                         printUsage();
                         return false;
                     }
@@ -523,14 +524,14 @@ namespace autoinput
         if (actionType.empty())
         {
             printUsage();
-            Logger::fatal("The parameter {} needs an argument. Choices: {{click,c,hold,h}}\n", arg);
+            Logger::fatal("The parameter {} needs an argument. Choices: {}\n", arg, ConfigMetadata::validActionChoices());
             return false;
         }
         actionState = actionStateFromArguments(actionType);
         if (actionState == ActionState::INVALID)
         {
             printUsage();
-            Logger::fatal("Invalid parameter {} for action type. Choices: {{click,c,hold,h}}\n", actionType);
+            Logger::fatal("Invalid parameter {} for action type. Choices: {}\n", actionType, ConfigMetadata::validActionChoices());
             return false;
         }
         return true;
@@ -546,7 +547,7 @@ namespace autoinput
             if (buttons.empty() && button.empty())
             {
                 printUsage();
-                Logger::fatal("The parameter {} needs an argument. Choices: {{left,l,right,r,middle,m,back,forward}}\n", arg);
+                Logger::fatal("The parameter {} needs an argument. Choices: {}\n", arg, ConfigMetadata::validMouseButtonChoices());
                 return false;
             }
             if (button.empty() && j >= i + 2)
@@ -562,7 +563,7 @@ namespace autoinput
             else
             {
                 printUsage();
-                Logger::fatal("Invalid parameter {} for button type. Choices: {{left,l,right,r,middle,m,back,forward}}\n", button);
+                Logger::fatal("Invalid parameter {} for button type. Choices: {}\n", button, ConfigMetadata::validMouseButtonChoices());
                 return false;
             }
         }
