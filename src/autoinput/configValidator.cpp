@@ -19,6 +19,47 @@
 
 namespace autoinput
 {
+    /**
+     * @brief Validates whether a string represents a valid trigger (keyboard key or mouse button).
+     * @param triggerStr The trigger string to validate.
+     * @return True if valid, false otherwise.
+     */
+    bool isValidTrigger(const std::string& triggerStr)
+    {
+        if (triggerStr.empty())
+        {
+            return false;
+        }
+
+        // 1. First check whether the trigger string maps to a valid mouse button.
+        // We only allow back and forward buttons as triggers by default to avoid accidental triggers 
+        // with primary mouse buttons, but the requirement suggests reusing existing parsing logic.
+        const Mouse mouse = Mouse::fromString(triggerStr);
+        if (mouse.button != MouseButton::NONE)
+        {
+            return true;
+        }
+
+        // 2. If not a mouse button, validate as a keyboard key.
+        const Key key = Key::fromString(triggerStr);
+        if (key.character.empty())
+        {
+            return false;
+        }
+
+        if (key.character.length() > 1 && !(static_cast<bool>(key.modifier & KeyModifier::Function)))
+        {
+            // Check if it's a known special key
+            const auto specialKeys = ConfigMetadata::validSpecialKeyNames();
+            if (std::find(specialKeys.begin(), specialKeys.end(), key.character) == specialKeys.end())
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     std::vector<ValidationError> validateConfigData(const ConfigData& configData)
     {
         std::vector<ValidationError> errors;
@@ -38,7 +79,7 @@ namespace autoinput
             errors.insert(errors.end(), commandErrors.begin(), commandErrors.end());
         }
 
-        if (configData.endKey.empty() || Key::fromString(configData.endKey).character.empty())
+        if (!isValidTrigger(configData.endKey))
         {
             errors.push_back(ValidationError{ std::format("Invalid end key: '{}'", configData.endKey) });
         }
@@ -77,26 +118,9 @@ namespace autoinput
         // Start keys validation
         for (const auto& startKeyStr : command.startKeys)
         {
-            if (startKeyStr.empty())
+            if (!isValidTrigger(startKeyStr))
             {
                 errors.push_back(ValidationError{ std::format("Invalid start key: '{}'", startKeyStr) });
-            }
-            else
-            {
-                Key key = Key::fromString(startKeyStr);
-                if (key.character.empty())
-                {
-                    errors.push_back(ValidationError{ std::format("Invalid start key: '{}'", startKeyStr) });
-                }
-                else if (key.character.length() > 1 && !(static_cast<bool>(key.modifier & KeyModifier::Function)))
-                {
-                    // Check if it's a known special key
-                    const auto specialKeys = ConfigMetadata::validSpecialKeyNames();
-                    if (std::find(specialKeys.begin(), specialKeys.end(), key.character) == specialKeys.end())
-                    {
-                        errors.push_back(ValidationError{ std::format("Invalid start key: '{}'", startKeyStr) });
-                    }
-                }
             }
         }
 

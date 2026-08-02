@@ -179,4 +179,93 @@ namespace autoinput
         ASSERT_FALSE(errors.empty());
         EXPECT_TRUE(errors[0].message.find("Invalid action") != std::string::npos);
     }
+
+    TEST(ConfigValidatorTest, MouseTriggerValidation_StartBackIsValid)
+    {
+        ConfigData config;
+        CommandData cmd;
+        cmd.action = "click";
+        cmd.buttons = {"left"};
+        cmd.startKeys = {"back"};
+        config.commands.push_back(cmd);
+        config.endKey = "f10";
+
+        auto errors = validateConfigData(config);
+        EXPECT_TRUE(errors.empty()) << (errors.empty() ? "" : errors[0].message);
+    }
+
+    TEST(ConfigValidatorTest, MouseTriggerValidation_StartForwardIsValid)
+    {
+        ConfigData config;
+        CommandData cmd;
+        cmd.action = "click";
+        cmd.buttons = {"left"};
+        cmd.startKeys = {"forward"};
+        config.commands.push_back(cmd);
+        config.endKey = "f10";
+
+        auto errors = validateConfigData(config);
+        EXPECT_TRUE(errors.empty()) << (errors.empty() ? "" : errors[0].message);
+    }
+
+    TEST(ConfigValidatorTest, MouseTriggerValidation_EndBackIsValid)
+    {
+        ConfigData config;
+        CommandData cmd;
+        cmd.action = "click";
+        cmd.buttons = {"left"};
+        cmd.startKeys = {"f1"};
+        config.commands.push_back(cmd);
+        config.endKey = "back";
+
+        auto errors = validateConfigData(config);
+        EXPECT_TRUE(errors.empty()) << (errors.empty() ? "" : errors[0].message);
+    }
+
+    TEST(ConfigValidatorTest, MouseTriggerValidation_EndForwardIsValid)
+    {
+        ConfigData config;
+        CommandData cmd;
+        cmd.action = "click";
+        cmd.buttons = {"left"};
+        cmd.startKeys = {"f1"};
+        config.commands.push_back(cmd);
+        config.endKey = "forward";
+
+        auto errors = validateConfigData(config);
+        EXPECT_TRUE(errors.empty()) << (errors.empty() ? "" : errors[0].message);
+    }
+
+    TEST(ConfigValidatorTest, MouseTriggerValidation_InvalidTriggerStillFails)
+    {
+        ConfigData config;
+        CommandData cmd;
+        cmd.action = "click";
+        cmd.startKeys = {"invalid_trigger"};
+        config.commands.push_back(cmd);
+        config.endKey = "f10";
+
+        auto errors = validateConfigData(config);
+        EXPECT_FALSE(errors.empty());
+        EXPECT_TRUE(errors[0].message.find("Invalid start key") != std::string::npos);
+        
+        config.commands[0].startKeys = {"f1"};
+        config.endKey = "invalid_trigger";
+        errors = validateConfigData(config);
+        EXPECT_FALSE(errors.empty());
+        EXPECT_TRUE(errors[0].message.find("Invalid end key") != std::string::npos);
+    }
+
+    TEST(ConfigValidatorTest, MouseTriggerValidation_ExistingKeyboardTriggerStillPasses)
+    {
+        ConfigData config;
+        CommandData cmd;
+        cmd.action = "click";
+        cmd.startKeys = {"f1", "ctrl+a", "space"};
+        config.commands.push_back(cmd);
+        config.endKey = "enter";
+
+        auto errors = validateConfigData(config);
+        EXPECT_TRUE(errors.empty()) << (errors.empty() ? "" : errors[0].message);
+    }
 }
