@@ -138,4 +138,169 @@ namespace autoinput
         ASSERT_EQ(loaded->commands[1].startKeys.size(), 1);
         EXPECT_EQ(loaded->commands[1].startKeys[0], "f9");
     }
+
+    TEST_F(DumpTest, SaveConfigUsesInlineTiming)
+    {
+        ConfigData configData;
+        CommandData cmd;
+        cmd.action = "click";
+        cmd.buttons = {"left"};
+        cmd.pressWait = "100ms";
+        cmd.releaseWait = "250ms";
+        configData.commands.push_back(cmd);
+        configData.endKey = "f6";
+
+        std::filesystem::path dumpPath = m_tempHome.path() / "inline_test.toml";
+        // Note: saveConfigData might use getUserConfigsPath internally if only a filename is given, 
+        // but here we pass a full path.
+        ASSERT_TRUE(saveConfigData(configData, dumpPath));
+
+        std::ifstream file(dumpPath);
+        std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        
+        // Check if it contains the inline table. We accept single or double quotes.
+        bool foundDouble = content.find("time = { press = \"100ms\", release = \"250ms\" }") != std::string::npos;
+        bool foundSingle = content.find("time = { press = '100ms', release = '250ms' }") != std::string::npos;
+        EXPECT_TRUE(foundDouble || foundSingle) << "Actual content:\n" << content;
+
+        // And NOT the nested table
+        EXPECT_EQ(content.find("[command.time]"), std::string::npos);
+    }
+
+    TEST_F(DumpTest, SaveConfigUsesInlineTimingOnlyPress)
+    {
+        ConfigData configData;
+        CommandData cmd;
+        cmd.action = "click";
+        cmd.buttons = {"left"};
+        cmd.pressWait = "100ms";
+        configData.commands.push_back(cmd);
+
+        std::filesystem::path dumpPath = m_tempHome.path() / "inline_press.toml";
+        ASSERT_TRUE(saveConfigData(configData, dumpPath));
+
+        std::ifstream file(dumpPath);
+        std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        
+        bool foundDouble = content.find("time = { press = \"100ms\" }") != std::string::npos;
+        bool foundSingle = content.find("time = { press = '100ms' }") != std::string::npos;
+        EXPECT_TRUE(foundDouble || foundSingle) << "Actual content:\n" << content;
+        EXPECT_EQ(content.find("release ="), std::string::npos);
+    }
+
+    TEST_F(DumpTest, SaveConfigUsesInlineTimingOnlyRelease)
+    {
+        ConfigData configData;
+        CommandData cmd;
+        cmd.action = "click";
+        cmd.buttons = {"left"};
+        cmd.releaseWait = "250ms";
+        configData.commands.push_back(cmd);
+
+        std::filesystem::path dumpPath = m_tempHome.path() / "inline_release.toml";
+        ASSERT_TRUE(saveConfigData(configData, dumpPath));
+
+        std::ifstream file(dumpPath);
+        std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        
+        bool foundDouble = content.find("time = { release = \"250ms\" }") != std::string::npos;
+        bool foundSingle = content.find("time = { release = '250ms' }") != std::string::npos;
+        EXPECT_TRUE(foundDouble || foundSingle) << "Actual content:\n" << content;
+        EXPECT_EQ(content.find("press ="), std::string::npos);
+    }
+
+    TEST_F(DumpTest, SaveConfigUsesInlineTimingMultipleCommands)
+    {
+        ConfigData configData;
+        {
+            CommandData cmd;
+            cmd.action = "click";
+            cmd.buttons = {"left"};
+            cmd.pressWait = "100ms";
+            cmd.releaseWait = "250ms";
+            configData.commands.push_back(cmd);
+        }
+        {
+            CommandData cmd;
+            cmd.action = "hold";
+            cmd.buttons = {"right"};
+            cmd.pressWait = "50ms";
+            cmd.releaseWait = "1s";
+            configData.commands.push_back(cmd);
+        }
+
+        std::filesystem::path dumpPath = m_tempHome.path() / "inline_multi.toml";
+        ASSERT_TRUE(saveConfigData(configData, dumpPath));
+
+        std::ifstream file(dumpPath);
+        std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        
+        EXPECT_TRUE(content.find("time = { press = '100ms', release = '250ms' }") != std::string::npos ||
+                    content.find("time = { press = \"100ms\", release = \"250ms\" }") != std::string::npos);
+        EXPECT_TRUE(content.find("time = { press = '50ms', release = '1s' }") != std::string::npos ||
+                    content.find("time = { press = \"50ms\", release = \"1s\" }") != std::string::npos);
+    }
+
+    TEST_F(DumpTest, SaveConfigOmitsTimingIfDefault)
+    {
+        DefaultSettings defaults;
+        defaults.press = "100ms";
+        defaults.release = "200ms";
+
+        ConfigData configData;
+        CommandData cmd;
+        cmd.action = "click";
+        cmd.buttons = {"left"};
+        cmd.pressWait = "100ms";
+        cmd.releaseWait = "200ms";
+        configData.commands.push_back(cmd);
+
+        std::filesystem::path dumpPath = m_tempHome.path() / "inline_default.toml";
+        ASSERT_TRUE(saveConfigData(configData, dumpPath, defaults));
+
+        std::ifstream file(dumpPath);
+        std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        
+        EXPECT_EQ(content.find("time ="), std::string::npos);
+    }
+
+    TEST_F(DumpTest, SaveAndLoadInlineTiming)
+    {
+        ConfigData configData;
+        CommandData cmd;
+        cmd.action = "click";
+        cmd.buttons = {"left"};
+        cmd.pressWait = "123ms";
+        cmd.releaseWait = "456ms";
+        configData.commands.push_back(cmd);
+
+        std::filesystem::path dumpPath = m_tempHome.path() / "save_load_test.toml";
+        ASSERT_TRUE(saveConfigData(configData, dumpPath));
+
+        auto loaded = loadConfigData(dumpPath);
+        ASSERT_TRUE(loaded.has_value());
+        ASSERT_EQ(loaded->commands.size(), 1);
+        EXPECT_EQ(loaded->commands[0].pressWait, "123ms");
+        EXPECT_EQ(loaded->commands[0].releaseWait, "456ms");
+    }
+
+    TEST_F(DumpTest, LoadNestedTimingCompatibility)
+    {
+        std::filesystem::path configPath = m_tempHome.path() / "nested_compat.toml";
+        {
+            std::ofstream file(configPath);
+            file << "[command]\n"
+                 << "action = \"click\"\n"
+                 << "button = \"left\"\n"
+                 << "[command.time]\n"
+                 << "press = \"789ms\"\n"
+                 << "release = \"1s\"\n";
+        }
+
+        auto loaded = loadConfigData(configPath);
+        ASSERT_TRUE(loaded.has_value());
+        ASSERT_EQ(loaded->commands.size(), 1);
+        EXPECT_EQ(loaded->commands[0].pressWait, "789ms");
+        EXPECT_EQ(loaded->commands[0].releaseWait, "1s");
+    }
 }

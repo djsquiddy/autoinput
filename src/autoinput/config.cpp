@@ -259,6 +259,7 @@ namespace autoinput
             if (!cmd.pressWait.empty() || !cmd.releaseWait.empty())
             {
                 toml::table waitTime;
+                waitTime.is_inline(true);
                 if (!cmd.pressWait.empty())
                 {
                     if (!defaults.has_value() || cmd.pressWait != defaults->press)
