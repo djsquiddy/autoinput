@@ -82,6 +82,7 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseModifierTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/userSettingsTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/saveConfigTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/exclusivityTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/focusTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configLookupTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/statusIndicatorTest.cpp

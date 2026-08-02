@@ -23,6 +23,8 @@ namespace autoinput
                 return;
             }
 
+            tryGetTableValue(*table, "name", commandData.name);
+            tryGetTableValue(*table, "exclusiveGroup", commandData.exclusiveGroup);
             tryGetTableValue(*table, "action", commandData.action);
             if (const auto buttonCfg = (*table)["button"])
             {
@@ -223,6 +225,14 @@ namespace autoinput
 
         auto createCommandTable = [&](const CommandData& cmd) {
             toml::table t;
+            if (!cmd.name.empty())
+            {
+                t.insert("name", cmd.name);
+            }
+            if (!cmd.exclusiveGroup.empty())
+            {
+                t.insert("exclusiveGroup", cmd.exclusiveGroup);
+            }
             if (!cmd.action.empty())
             {
                 if (!defaults.has_value() || cmd.action != defaults->action)

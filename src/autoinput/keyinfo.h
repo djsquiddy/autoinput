@@ -25,6 +25,8 @@ namespace autoinput
         Key key{};
         ActionState action{ ActionState::CLICK };
         bool isStartKey{ false };
+        std::string name;
+        std::string exclusiveGroup;
     };
 }
 

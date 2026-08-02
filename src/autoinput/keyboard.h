@@ -54,7 +54,7 @@ namespace autoinput
         KeyHandler& operator=(const KeyHandler& rhs);
         KeyHandler& operator=(KeyHandler&& rhs) noexcept;
 
-        [[nodiscard]] std::string getName() const override
+        [[nodiscard]] std::string getTargetName() const override
         {
             std::shared_lock lock(m_keyMutex);
             return m_key.toString();

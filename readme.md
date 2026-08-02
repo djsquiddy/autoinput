@@ -11,6 +11,7 @@ A versatile C++ utility for automating mouse and keyboard input on Windows and L
 - **Delay Randomization**: Support for randomized press and release delays (e.g., `500ms..1s`).
 - **Configuration Support**: Load complex action mappings from TOML files. The program looks for configurations in the `configs/` directory relative to its executable and in the user-level directory (`~/.autoinput/` on Linux, `%USERPROFILE%/.autoinput/` on Windows). User-level configurations in `settings.toml` automatically override built-in defaults.
 - **Multi-command Support**: Run multiple independent automation commands simultaneously from a single configuration file.
+- **Mutually Exclusive Command Groups**: Declare groups of commands where only one can be active at a time. Starting one command in a group automatically stops any other active command in the same group.
 - **Safety First**: Integrated with Microsoft GSL for robust memory management.
 - **Cross-platform Support**: Works on Windows (via `SendInput`), Linux X11 (via `XTest`), and Linux Wayland (via `uinput`).
 - **No Network Dependencies**: No external network connections or dependencies. No telemetry or analytics.
@@ -255,6 +256,8 @@ Each command can define its own action, target, start trigger, and timing.
 
 ```toml
     [[command]]
+    name = "left-click"
+    exclusiveGroup = "click-mode"
     action = "click"
     button = "left"
     start = "f2"
@@ -263,13 +266,56 @@ Each command can define its own action, target, start trigger, and timing.
 
 Supported command settings:
 
+- `name`: optional command name used for readability/debugging.
+- `exclusiveGroup`: optional group name used to make commands mutually exclusive.
 - `action`: The automation action. Common values are `"click"` and `"hold"`.
 - `button`: Mouse button to automate, such as `"left"`, `"right"`, `"middle"`, `"back"`, or `"forward"`.
 - `key`: Keyboard key to automate, such as `"space"`, `"enter"`, or `"a"`.
 - `start`: Hotkey or mouse button used to toggle this command.
 - `time`: Timing configuration for the command.
 
-A command should generally use either `button` or `key`.
+#### Mutually Exclusive Command Groups
+
+You can declare that some commands cannot run at the same time by assigning them to the same `exclusiveGroup`. This is useful for cases where multiple automation modes might conflict if run simultaneously.
+
+Behavior:
+- Commands with the same non-empty `exclusiveGroup` are mutually exclusive.
+- Starting one command in an exclusive group automatically stops any other active command in the same group.
+- Commands without an `exclusiveGroup` are independent and can run alongside any other command.
+- Commands in different `exclusiveGroup` values are independent and can run alongside each other.
+
+Example:
+
+```toml
+[[command]]
+name = "left-click"
+exclusiveGroup = "left-click-mode"
+action = "click"
+button = "left"
+start = "back"
+time = { press = "25ms", release = "100ms" }
+
+[[command]]
+name = "shift-left-click"
+exclusiveGroup = "left-click-mode"
+action = "click"
+button = "shift+left"
+start = "forward"
+time = { press = "25ms", release = "100ms" }
+
+[[command]]
+name = "space"
+action = "click"
+key = "space"
+start = "f6"
+time = { press = "50ms", release = "1s" }
+```
+
+In this example:
+- `left-click` and `shift-left-click` belong to the same group (`left-click-mode`).
+- Starting `left-click` will stop `shift-left-click` if it is active.
+- Starting `shift-left-click` will stop `left-click` if it is active.
+- `space` has no `exclusiveGroup` and can run at the same time as either click mode.
 
 #### Timing
 

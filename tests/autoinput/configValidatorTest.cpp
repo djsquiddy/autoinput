@@ -70,17 +70,47 @@ namespace autoinput
         EXPECT_EQ(errors[0].message, "Invalid action: 'invalid'");
     }
 
-    TEST(ConfigValidatorTest, ValidateConfigData_IndexPrefix)
+    TEST(ConfigValidatorTest, ValidateConfigData_DuplicateName)
     {
         ConfigData config;
-        CommandData cmd;
-        cmd.action = "invalid";
-        config.commands.push_back(cmd);
         config.endKey = "f10";
+
+        CommandData cmd1;
+        cmd1.name = "duplicate";
+        cmd1.action = "click";
+        cmd1.buttons = {"left"};
+        config.commands.push_back(cmd1);
+
+        CommandData cmd2;
+        cmd2.name = "duplicate";
+        cmd2.action = "click";
+        cmd2.buttons = {"right"};
+        config.commands.push_back(cmd2);
 
         auto errors = validateConfigData(config);
         ASSERT_FALSE(errors.empty());
-        EXPECT_EQ(errors[0].message, "Command 0: Invalid action: 'invalid'");
+        EXPECT_EQ(errors[0].message, "Duplicate command name: 'duplicate'");
+    }
+
+    TEST(ConfigValidatorTest, ValidateConfigData_EmptyNameAllowed)
+    {
+        ConfigData config;
+        config.endKey = "f10";
+
+        CommandData cmd1;
+        cmd1.name = "";
+        cmd1.action = "click";
+        cmd1.buttons = {"left"};
+        config.commands.push_back(cmd1);
+
+        CommandData cmd2;
+        cmd2.name = "";
+        cmd2.action = "click";
+        cmd2.buttons = {"right"};
+        config.commands.push_back(cmd2);
+
+        auto errors = validateConfigData(config);
+        EXPECT_TRUE(errors.empty());
     }
 
     TEST(ConfigValidatorTest, ValidateConfigData_InvalidButton)

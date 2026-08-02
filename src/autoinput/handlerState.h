@@ -33,10 +33,16 @@ namespace autoinput
         void setPaused(const bool paused) { m_isPaused = paused; }
         [[nodiscard]] bool getPaused() const { return m_isPaused; }
 
+        void setName(const std::string& name) { m_name = name; }
+        [[nodiscard]] std::string getName() const { return m_name.empty() ? getTargetName() : m_name; }
+
+        void setExclusiveGroup(const std::string& group) { m_exclusiveGroup = group; }
+        [[nodiscard]] std::string getExclusiveGroup() const { return m_exclusiveGroup; }
+
         virtual void togglePressState() = 0;
         virtual void press() = 0;
         virtual void release() = 0;
-        [[nodiscard]] virtual std::string getName() const = 0;
+        [[nodiscard]] virtual std::string getTargetName() const = 0;
         [[nodiscard]] bool isPressed() const { return m_isPressed.load(); }
 
     protected:
@@ -44,13 +50,15 @@ namespace autoinput
         std::atomic<bool> m_isActive{ false };
         std::atomic<bool> m_isPaused{ false };
         std::atomic<bool> m_isPressed{ false };
+        std::string m_name;
+        std::string m_exclusiveGroup;
         std::unique_ptr<std::thread> m_autoclickerThread{ nullptr };
 
         friend class Program;
     };
 
     inline InputHandler::InputHandler(const InputHandler& rhs)
-        : m_backend(rhs.m_backend)
+        : m_backend(rhs.m_backend), m_name(rhs.m_name), m_exclusiveGroup(rhs.m_exclusiveGroup)
     {
         m_isPressed.store(rhs.m_isPressed.load());
         m_isActive.store(rhs.m_isActive.load());
@@ -58,7 +66,7 @@ namespace autoinput
     }
 
     inline InputHandler::InputHandler(InputHandler&& rhs) noexcept
-        : m_backend(rhs.m_backend)
+        : m_backend(rhs.m_backend), m_name(std::move(rhs.m_name)), m_exclusiveGroup(std::move(rhs.m_exclusiveGroup))
     {
         m_isPressed.store(rhs.m_isPressed.load());
         m_isActive.store(rhs.m_isActive.load());
@@ -71,6 +79,8 @@ namespace autoinput
         if (this != &rhs)
         {
             m_backend = rhs.m_backend;
+            m_name = rhs.m_name;
+            m_exclusiveGroup = rhs.m_exclusiveGroup;
             m_isPressed.store(rhs.m_isPressed.load());
             m_isActive.store(rhs.m_isActive.load());
             m_isPaused.store(rhs.m_isPaused.load());
@@ -83,6 +93,8 @@ namespace autoinput
         if (this != &rhs)
         {
             m_backend = rhs.m_backend;
+            m_name = std::move(rhs.m_name);
+            m_exclusiveGroup = std::move(rhs.m_exclusiveGroup);
             m_isPressed.store(rhs.m_isPressed.load());
             m_isActive.store(rhs.m_isActive.load());
             m_isPaused.store(rhs.m_isPaused.load());

@@ -139,6 +139,37 @@ namespace autoinput
         EXPECT_EQ(loaded->commands[1].startKeys[0], "f9");
     }
 
+    TEST_F(DumpTest, SaveConfigHandlesNameAndExclusiveGroup)
+    {
+        ConfigData configData;
+        CommandData cmd1;
+        cmd1.name = "cmd1";
+        cmd1.exclusiveGroup = "group1";
+        cmd1.action = "click";
+        cmd1.buttons.push_back("left");
+        cmd1.startKeys.push_back("f2");
+        configData.commands.push_back(cmd1);
+
+        CommandData cmd2;
+        cmd2.name = "cmd2";
+        cmd2.exclusiveGroup = "group1";
+        cmd2.action = "click";
+        cmd2.buttons.push_back("right");
+        cmd2.startKeys.push_back("f4");
+        configData.commands.push_back(cmd2);
+
+        std::filesystem::path dumpPath = getUserConfigsPath() / "group_config.toml";
+        ASSERT_TRUE(saveConfigData(configData, dumpPath));
+
+        auto loaded = loadConfigData(dumpPath);
+        ASSERT_TRUE(loaded.has_value());
+        ASSERT_EQ(loaded->commands.size(), 2);
+        EXPECT_EQ(loaded->commands[0].name, "cmd1");
+        EXPECT_EQ(loaded->commands[0].exclusiveGroup, "group1");
+        EXPECT_EQ(loaded->commands[1].name, "cmd2");
+        EXPECT_EQ(loaded->commands[1].exclusiveGroup, "group1");
+    }
+
     TEST_F(DumpTest, SaveConfigUsesInlineTiming)
     {
         ConfigData configData;

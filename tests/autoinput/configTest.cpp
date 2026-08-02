@@ -75,6 +75,8 @@ namespace autoinput
             "autoinput_config_action_end_test.toml",
             R"toml(
 [command]
+name = "test-command"
+exclusiveGroup = "test-group"
 action = "click"
 end = "f3"
 )toml"
@@ -84,8 +86,51 @@ end = "f3"
 
         ASSERT_TRUE(configData.has_value());
         ASSERT_EQ(configData->commands.size(), 1);
+        EXPECT_EQ(configData->commands[0].name, "test-command");
+        EXPECT_EQ(configData->commands[0].exclusiveGroup, "test-group");
         EXPECT_EQ(configData->commands[0].action, "click");
         EXPECT_EQ(configData->endKey, "f3");
+    }
+
+    TEST(ConfigTest, LoadConfigDataParsesMultipleCommandsWithGroups)
+    {
+        test::TemporaryDirectory tempDir("config_test_multi");
+        const std::filesystem::path path = makeConfigFile(
+            tempDir.path(),
+            "autoinput_config_multi_group_test.toml",
+            R"toml(
+[[command]]
+name = "cmd1"
+exclusiveGroup = "group1"
+action = "click"
+button = "left"
+start = "f2"
+
+[[command]]
+name = "cmd2"
+exclusiveGroup = "group1"
+action = "click"
+button = "right"
+start = "f4"
+
+[[command]]
+name = "cmd3"
+action = "click"
+key = "space"
+start = "f6"
+)toml"
+        );
+
+        const std::optional<ConfigData> configData = loadConfigData(path);
+
+        ASSERT_TRUE(configData.has_value());
+        ASSERT_EQ(configData->commands.size(), 3);
+        EXPECT_EQ(configData->commands[0].name, "cmd1");
+        EXPECT_EQ(configData->commands[0].exclusiveGroup, "group1");
+        EXPECT_EQ(configData->commands[1].name, "cmd2");
+        EXPECT_EQ(configData->commands[1].exclusiveGroup, "group1");
+        EXPECT_EQ(configData->commands[2].name, "cmd3");
+        EXPECT_EQ(configData->commands[2].exclusiveGroup, "");
     }
 
     TEST(ConfigTest, LoadConfigDataParsesWaitTimes)

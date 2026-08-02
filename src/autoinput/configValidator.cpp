@@ -69,9 +69,20 @@ namespace autoinput
             errors.push_back(ValidationError{ "Command list is empty." });
         }
 
+        std::vector<std::string> names;
         for (size_t i = 0; i < configData.commands.size(); ++i)
         {
-            auto commandErrors = validateCommandData(configData.commands[i], i);
+            const auto& cmd = configData.commands[i];
+            if (!cmd.name.empty())
+            {
+                if (std::find(names.begin(), names.end(), cmd.name) != names.end())
+                {
+                    errors.push_back(ValidationError{ std::format("Duplicate command name: '{}'", cmd.name) });
+                }
+                names.push_back(cmd.name);
+            }
+
+            auto commandErrors = validateCommandData(cmd, i);
             for (auto& err : commandErrors)
             {
                 err.message = std::format("Command {}: {}", i, err.message);

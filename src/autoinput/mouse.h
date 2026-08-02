@@ -56,7 +56,7 @@ namespace autoinput
         MouseHandler& operator=(const MouseHandler& rhs);
         MouseHandler& operator=(MouseHandler&& rhs) noexcept;
 
-        [[nodiscard]] std::string getName() const override
+        [[nodiscard]] std::string getTargetName() const override
         {
             std::shared_lock lock(m_mouseMutex);
             return m_mouse.toString();

@@ -170,29 +170,53 @@ namespace autoinput
 
     void Program::start(const KeyInfo& keyInfo)
     {
+        InputHandler* handlerToStart = nullptr;
         if (keyInfo.mouse.button != MouseButton::NONE)
         {
-            MouseHandler& handler = m_mouseHandlers.at(keyInfo.mouse);
-            if (keyInfo.action == ActionState::HOLD)
-            {
-                handler.togglePressState();
-            }
-            else
-            {
-                startAutoClicker(handler);
-            }
+            handlerToStart = &m_mouseHandlers.at(keyInfo.mouse);
         }
-    
-        if (!keyInfo.key.character.empty())
+        else if (!keyInfo.key.character.empty())
         {
-            KeyHandler& handler = m_keyHandlers.at(keyInfo.key);
+            handlerToStart = &m_keyHandlers.at(keyInfo.key);
+        }
+
+        if (handlerToStart)
+        {
+            if (!keyInfo.exclusiveGroup.empty() && !handlerToStart->getActive())
+            {
+                for (auto& mouseHandler : m_mouseHandlers | std::views::values)
+                {
+                    if (mouseHandler.getActive() && mouseHandler.getExclusiveGroup() == keyInfo.exclusiveGroup)
+                    {
+                        mouseHandler.release();
+                        mouseHandler.setActive(false);
+                        if (mouseHandler.m_autoclickerThread)
+                        {
+                            m_zombieThreads.push_back(std::move(mouseHandler.m_autoclickerThread));
+                        }
+                    }
+                }
+                for (auto& keyHandler : m_keyHandlers | std::views::values)
+                {
+                    if (keyHandler.getActive() && keyHandler.getExclusiveGroup() == keyInfo.exclusiveGroup)
+                    {
+                        keyHandler.release();
+                        keyHandler.setActive(false);
+                        if (keyHandler.m_autoclickerThread)
+                        {
+                            m_zombieThreads.push_back(std::move(keyHandler.m_autoclickerThread));
+                        }
+                    }
+                }
+            }
+
             if (keyInfo.action == ActionState::HOLD)
             {
-                handler.togglePressState();
+                handlerToStart->togglePressState();
             }
             else
             {
-                startAutoClicker(handler);
+                startAutoClicker(*handlerToStart);
             }
         }
         updateStatusIndicator();
@@ -438,23 +462,45 @@ namespace autoinput
         }
 
         IPlatformBackend* backendPtr = m_backend.get();
-        for (auto& mouse : m_arguments.buttons)
+        const size_t buttonCount = m_arguments.buttons.size();
+        for (size_t i = 0; i < buttonCount; ++i)
         {
+            auto& mouse = m_arguments.buttons[i];
             m_mouseHandlers[mouse] = MouseHandler{mouse, backendPtr};
+            if (i < m_arguments.commandNames.size())
+            {
+                m_mouseHandlers[mouse].setName(m_arguments.commandNames[i]);
+            }
+            if (i < m_arguments.exclusiveGroups.size())
+            {
+                m_mouseHandlers[mouse].setExclusiveGroup(m_arguments.exclusiveGroups[i]);
+            }
         }
 
-        for (auto& key : m_arguments.keys)
+        const size_t keyCount = m_arguments.keys.size();
+        for (size_t i = 0; i < keyCount; ++i)
         {
+            auto& key = m_arguments.keys[i];
             m_keyHandlers[key] = KeyHandler{key, backendPtr};
+            if (i + buttonCount < m_arguments.commandNames.size())
+            {
+                m_keyHandlers[key].setName(m_arguments.commandNames[i + buttonCount]);
+            }
+            if (i + buttonCount < m_arguments.exclusiveGroups.size())
+            {
+                m_keyHandlers[key].setExclusiveGroup(m_arguments.exclusiveGroups[i + buttonCount]);
+            }
         }
 
-        auto processKeyString = [this](const std::string& keyStr, const Mouse mouse, Key targetKey, const ActionState action, const bool isStart) {
+        auto processKeyString = [this](const std::string& keyStr, const Mouse mouse, Key targetKey, const ActionState action, const bool isStart, const std::string& name = "", const std::string& group = "") {
             const auto mouseTrigger = mouseButtonFromArguments(keyStr);
             KeyInfo info{
                 .mouse = mouse,
                 .key = std::move(targetKey),
                 .action = action,
                 .isStartKey = isStart,
+                .name = name,
+                .exclusiveGroup = group,
             };
 
             if (mouseTrigger != MouseButton::NONE)
@@ -478,20 +524,23 @@ namespace autoinput
             m_keyInfo.emplace_back(std::move(info));
         };
 
-        const size_t buttonCount = m_arguments.buttons.size();
-        const size_t keyCount = m_arguments.keys.size();
         const size_t actionCount = m_arguments.targetActions.size();
+        const size_t nameCount = m_arguments.commandNames.size();
+        const size_t groupCount = m_arguments.exclusiveGroups.size();
 
         for (size_t i = 0; i < m_arguments.startKeys.size(); ++i)
         {
             const auto action = i < actionCount ? m_arguments.targetActions[i] : ActionState::CLICK;
+            const std::string& name = i < nameCount ? m_arguments.commandNames[i] : "";
+            const std::string& group = i < groupCount ? m_arguments.exclusiveGroups[i] : "";
+
             if (i < buttonCount)
             {
-                processKeyString(m_arguments.startKeys[i], m_arguments.buttons[i], {}, action, true);
+                processKeyString(m_arguments.startKeys[i], m_arguments.buttons[i], {}, action, true, name, group);
             }
             else if (i < buttonCount + keyCount)
             {
-                processKeyString(m_arguments.startKeys[i], Mouse{}, m_arguments.keys[i - buttonCount], action, true);
+                processKeyString(m_arguments.startKeys[i], Mouse{}, m_arguments.keys[i - buttonCount], action, true, name, group);
             }
         }
 

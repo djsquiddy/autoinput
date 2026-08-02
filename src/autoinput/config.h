@@ -25,6 +25,8 @@ namespace autoinput
 {
     struct CommandData
     {
+        std::string name;
+        std::string exclusiveGroup;
         std::string action;
         std::vector<std::string> buttons;
         std::vector<std::string> keys;

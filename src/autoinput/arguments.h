@@ -33,6 +33,8 @@ namespace autoinput
         std::vector<Key> keys{};
         std::vector<std::string> startKeys{};
         std::vector<ActionState> targetActions{};
+        std::vector<std::string> commandNames{};
+        std::vector<std::string> exclusiveGroups{};
         std::string endKey{};
         std::string applicationName{};
         std::string saveConfigName{};

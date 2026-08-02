@@ -457,10 +457,14 @@ namespace autoinput
         const size_t targetCount = buttonCount + keyCount;
         const size_t actionCount = targetActions.size();
         const size_t startKeyCount = startKeys.size();
+        const size_t nameCount = commandNames.size();
+        const size_t groupCount = exclusiveGroups.size();
 
         for (size_t i = 0; i < targetCount; ++i)
         {
             CommandData cmd;
+            cmd.name = i < nameCount ? commandNames[i] : "";
+            cmd.exclusiveGroup = i < groupCount ? exclusiveGroups[i] : "";
             cmd.action = actionStateToString(i < actionCount ? targetActions[i] : ActionState::CLICK);
 
             if (i < buttonCount)
@@ -517,6 +521,8 @@ namespace autoinput
                     {
                         buttons.push_back(mouse);
                         targetActions.push_back(action);
+                        commandNames.push_back(cmd.name);
+                        exclusiveGroups.push_back(cmd.exclusiveGroup);
                     }
                     else
                     {
@@ -531,6 +537,8 @@ namespace autoinput
                 {
                     keys.push_back(Key::fromString(key));
                     targetActions.push_back(action);
+                    commandNames.push_back(cmd.name);
+                    exclusiveGroups.push_back(cmd.exclusiveGroup);
                 }
 #endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
 
