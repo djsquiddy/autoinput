@@ -45,6 +45,7 @@ namespace autoinput
         std::string button{ defaults::DefaultMouseButtonName };
         std::vector<std::string> blacklist{};
         std::string statusNotificationMode{ defaults::DefaultStatusNotificationMode };
+        std::string logLevel{ defaults::DefaultLogLevel };
     };
 
     struct ConfigData
@@ -55,14 +56,15 @@ namespace autoinput
         std::vector<std::string> blacklist;
         bool appendBlacklist = true;
         std::string statusNotificationMode;
+        std::string logLevel;
     };
 
-    const std::filesystem::path& getConfigsPath();
-    std::filesystem::path getUserConfigsPath();
+    [[nodiscard]] std::filesystem::path getConfigsPath();
+    [[nodiscard]] std::filesystem::path getUserConfigsPath();
 
-    const std::filesystem::path& getConfigsPath(const IEnvironment& environment);
-    std::filesystem::path getUserConfigsPath(const IEnvironment& environment);
-    std::filesystem::path getConfigFilePath(const std::string& filePath);
+    [[nodiscard]] std::filesystem::path getConfigsPath(const IEnvironment& environment);
+    [[nodiscard]] std::filesystem::path getUserConfigsPath(const IEnvironment& environment);
+    [[nodiscard]] std::filesystem::path getConfigFilePath(const std::string& filePath);
     std::optional<ConfigData> loadConfigData(const std::filesystem::path& configPath);
     bool saveConfigData(const ConfigData& configData, const std::filesystem::path& configPath, const std::optional<DefaultSettings>& defaults = std::nullopt);
     bool duplicateConfig(const std::string& sourceNameOrPath, const std::string& destinationNameOrPath, bool overwrite = false);

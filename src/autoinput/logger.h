@@ -35,6 +35,7 @@ namespace autoinput
     };
 
     LogLevel logLevelFromString(std::string_view str);
+    std::string logLevelToString(LogLevel level);
     std::string getLogLevelPrefix(LogLevel level, bool isShorthand = false);
 
     // Overload the insertion operator

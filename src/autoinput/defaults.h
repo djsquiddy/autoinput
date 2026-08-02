@@ -47,6 +47,11 @@ namespace autoinput::defaults
      * @brief The default status notification mode.
      */
     constexpr std::string_view DefaultStatusNotificationMode = "console";
+
+    /**
+     * @brief The default log level.
+     */
+    constexpr std::string_view DefaultLogLevel = "info";
 }
 
 #endif // INCLUDE_AUTOINPUT_DEFAULTS_H

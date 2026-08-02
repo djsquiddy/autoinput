@@ -38,6 +38,27 @@ namespace autoinput
         return LogLevel::Unknown;
     }
 
+    std::string logLevelToString(const LogLevel level)
+    {
+        switch (level)
+        {
+        case LogLevel::Debug:
+            return "debug";
+        case LogLevel::Print:
+            return "info"; // Or maybe "print"? But info is safer for settings.
+        case LogLevel::Info:
+            return "info";
+        case LogLevel::Warning:
+            return "warning";
+        case LogLevel::Error:
+            return "error";
+        case LogLevel::Fatal:
+            return "fatal";
+        default:
+            return "info";
+        }
+    }
+
     std::string getLogLevelPrefix(const LogLevel level, const bool isShorthand)
     {
         std::string name;

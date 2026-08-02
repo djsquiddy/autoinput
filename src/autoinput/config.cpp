@@ -95,6 +95,7 @@ namespace autoinput
                 tryGetTableValue(cmdNode, "application", configData.application);
                 tryGetTableValue(cmdNode, "appendBlacklist", configData.appendBlacklist);
                 tryGetTableValue(cmdNode, "statusNotificationMode", configData.statusNotificationMode);
+                tryGetTableValue(cmdNode, "logLevel", configData.logLevel);
 
                 if (const auto blacklistCfg = cmdNode["blacklist"])
                 {
@@ -128,6 +129,7 @@ namespace autoinput
             tryGetTableValue(table, "application", configData.application);
             tryGetTableValue(table, "appendBlacklist", configData.appendBlacklist);
             tryGetTableValue(table, "statusNotificationMode", configData.statusNotificationMode);
+            tryGetTableValue(table, "logLevel", configData.logLevel);
             if (const auto blacklistCfg = table["blacklist"])
             {
                 if (blacklistCfg.is_string())
@@ -147,12 +149,12 @@ namespace autoinput
         }
     }
 
-    const std::filesystem::path& getConfigsPath()
+    std::filesystem::path getConfigsPath()
     {
         return getConfigsPath(SystemEnvironment::instance());
     }
 
-    const std::filesystem::path& getConfigsPath(const IEnvironment& environment)
+    std::filesystem::path getConfigsPath(const IEnvironment& environment)
     {
         static std::filesystem::path configsPath;
         if (configsPath.empty())
@@ -406,6 +408,11 @@ namespace autoinput
         if (!configData.statusNotificationMode.empty())
         {
             table.insert_or_assign("statusNotificationMode", configData.statusNotificationMode);
+        }
+
+        if (!configData.logLevel.empty())
+        {
+            table.insert_or_assign("logLevel", configData.logLevel);
         }
 
         std::ofstream file(configPath);

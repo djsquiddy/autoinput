@@ -381,7 +381,7 @@ namespace autoinput
 
     void ProgramArguments::applyDefaults()
     {
-        const auto& [start, end, press, release, action, button, settingsBlacklist, statusNotification] = m_settings.getDefaults();
+        const auto& [start, end, press, release, action, button, settingsBlacklist, statusNotification, settingsLogLevel] = m_settings.getDefaults();
 
         if (!settingsBlacklist.empty())
         {
@@ -393,6 +393,18 @@ namespace autoinput
             if (!statusNotification.empty())
             {
                 statusNotificationMode = statusNotificationModeFromString(statusNotification);
+            }
+        }
+
+        if (Logger::getLogLevel() == LogLevel::Info) // Default
+        {
+            if (!settingsLogLevel.empty())
+            {
+                const LogLevel level = logLevelFromString(settingsLogLevel);
+                if (level != LogLevel::Unknown)
+                {
+                    Logger::setLogLevel(level);
+                }
             }
         }
 
@@ -475,6 +487,7 @@ namespace autoinput
         data.blacklist = blacklist;
         data.appendBlacklist = true; // CLI arguments always append or we don't have enough info to know if they intended to replace.
         data.statusNotificationMode = statusNotificationModeToString(statusNotificationMode);
+        data.logLevel = logLevelToString(Logger::getLogLevel());
         // Actually, we don't store appendBlacklist in ProgramArguments itself.
         // For now, let's just keep the default true.
 
