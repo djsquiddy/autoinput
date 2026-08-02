@@ -103,12 +103,12 @@ namespace autoinput
 
     enum class MouseButton : uint8_t
     {
-        NONE = 0,
-        LEFT = 1 << 0,
-        MIDDLE = 1 << 1,
-        RIGHT = 1 << 2,
-        BACK = 1 << 3,
-        FORWARD = 1 << 4,
+        None = 0,
+        Left = 1 << 0,
+        Middle = 1 << 1,
+        Right = 1 << 2,
+        Back = 1 << 3,
+        Forward = 1 << 4,
     };
 
     template<>
@@ -151,7 +151,7 @@ namespace autoinput
         Mouse(MouseButton b) : button(b) {}
         Mouse(MouseButton b, KeyModifier m) : button(b), modifier(m) {}
 
-        MouseButton button{ MouseButton::NONE };
+        MouseButton button{ MouseButton::None };
         KeyModifier modifier{ KeyModifier::None };
 
         [[nodiscard]] static Mouse fromString(const std::string_view& keyValue);

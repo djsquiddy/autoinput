@@ -22,7 +22,7 @@ namespace autoinput
         EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
         EXPECT_EQ(args.actionState, ActionState::CLICK);
         ASSERT_EQ(args.buttons.size(), 1);
-        EXPECT_EQ(args.buttons[0], MouseButton::LEFT);
+        EXPECT_EQ(args.buttons[0], MouseButton::Left);
         ASSERT_EQ(args.startKeys.size(), 1);
         EXPECT_EQ(args.startKeys[0], "f2");
         EXPECT_EQ(args.endKey, "f3");
@@ -36,7 +36,7 @@ namespace autoinput
         EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
         EXPECT_EQ(args.actionState, ActionState::CLICK);
         ASSERT_EQ(args.buttons.size(), 1);
-        EXPECT_EQ(args.buttons[0], MouseButton::LEFT);
+        EXPECT_EQ(args.buttons[0], MouseButton::Left);
         ASSERT_EQ(args.startKeys.size(), 1);
         EXPECT_EQ(args.startKeys[0], "f2");
         EXPECT_EQ(args.endKey, "f3");
@@ -49,8 +49,8 @@ namespace autoinput
 
         EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
         ASSERT_EQ(args.buttons.size(), 2);
-        EXPECT_EQ(args.buttons[0], MouseButton::LEFT);
-        EXPECT_EQ(args.buttons[1], MouseButton::RIGHT);
+        EXPECT_EQ(args.buttons[0], MouseButton::Left);
+        EXPECT_EQ(args.buttons[1], MouseButton::Right);
         ASSERT_EQ(args.startKeys.size(), 2);
         EXPECT_EQ(args.startKeys[0], "f2");
         EXPECT_EQ(args.startKeys[1], "f2"); // Resized to match target count
@@ -65,8 +65,8 @@ namespace autoinput
         EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
         EXPECT_EQ(args.actionState, ActionState::HOLD);
         ASSERT_EQ(args.buttons.size(), 2);
-        EXPECT_EQ(args.buttons[0], MouseButton::LEFT);
-        EXPECT_EQ(args.buttons[1], MouseButton::RIGHT);
+        EXPECT_EQ(args.buttons[0], MouseButton::Left);
+        EXPECT_EQ(args.buttons[1], MouseButton::Right);
     }
 
     TEST_F(PositionalArgumentsTest, ParsesPositionalKey)
@@ -98,8 +98,8 @@ namespace autoinput
 
         EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
         ASSERT_EQ(args.buttons.size(), 2);
-        EXPECT_EQ(args.buttons[0], MouseButton::LEFT);
-        EXPECT_EQ(args.buttons[1], MouseButton::RIGHT);
+        EXPECT_EQ(args.buttons[0], MouseButton::Left);
+        EXPECT_EQ(args.buttons[1], MouseButton::Right);
         ASSERT_EQ(args.startKeys.size(), 2);
         EXPECT_EQ(args.startKeys[0], "f4");
         EXPECT_EQ(args.startKeys[1], "f5");
@@ -112,8 +112,8 @@ namespace autoinput
 
         EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
         ASSERT_EQ(args.buttons.size(), 2);
-        EXPECT_EQ(args.buttons[0], MouseButton::LEFT);
-        EXPECT_EQ(args.buttons[1], MouseButton::LEFT);
+        EXPECT_EQ(args.buttons[0], MouseButton::Left);
+        EXPECT_EQ(args.buttons[1], MouseButton::Left);
         ASSERT_EQ(args.targetActions.size(), 2);
         EXPECT_EQ(args.targetActions[0], ActionState::CLICK);
         EXPECT_EQ(args.targetActions[1], ActionState::HOLD);
@@ -129,8 +129,8 @@ namespace autoinput
 
         EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
         ASSERT_EQ(args.buttons.size(), 2);
-        EXPECT_EQ(args.buttons[0], MouseButton::LEFT);
-        EXPECT_EQ(args.buttons[1], MouseButton::RIGHT);
+        EXPECT_EQ(args.buttons[0], MouseButton::Left);
+        EXPECT_EQ(args.buttons[1], MouseButton::Right);
         ASSERT_EQ(args.targetActions.size(), 2);
         EXPECT_EQ(args.targetActions[0], ActionState::CLICK);
         EXPECT_EQ(args.targetActions[1], ActionState::HOLD);

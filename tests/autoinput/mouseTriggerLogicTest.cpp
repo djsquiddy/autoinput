@@ -24,12 +24,12 @@ namespace autoinput
         ASSERT_EQ(keyInfo.size(), 2);
 
         // Start key info
-        EXPECT_EQ(keyInfo[0].triggerButton, MouseButton::BACK);
-        EXPECT_EQ(keyInfo[0].mouse.button, MouseButton::LEFT);
+        EXPECT_EQ(keyInfo[0].triggerButton, MouseButton::Back);
+        EXPECT_EQ(keyInfo[0].mouse.button, MouseButton::Left);
         EXPECT_TRUE(keyInfo[0].isStartKey);
 
         // End key info
-        EXPECT_EQ(keyInfo[1].triggerButton, MouseButton::FORWARD);
+        EXPECT_EQ(keyInfo[1].triggerButton, MouseButton::Forward);
         EXPECT_FALSE(keyInfo[1].isStartKey);
     }
 }

@@ -32,7 +32,7 @@ namespace autoinput
         ASSERT_EQ(runtimeConfig.commands.size(), 1);
         EXPECT_EQ(runtimeConfig.commands[0].action, ActionState::CLICK);
         ASSERT_EQ(runtimeConfig.commands[0].buttons.size(), 1);
-        EXPECT_EQ(runtimeConfig.commands[0].buttons[0].button, MouseButton::LEFT);
+        EXPECT_EQ(runtimeConfig.commands[0].buttons[0].button, MouseButton::Left);
         ASSERT_EQ(runtimeConfig.commands[0].keys.size(), 1);
         EXPECT_EQ(runtimeConfig.commands[0].keys[0].character, "a");
         ASSERT_EQ(runtimeConfig.commands[0].startKeys.size(), 1);

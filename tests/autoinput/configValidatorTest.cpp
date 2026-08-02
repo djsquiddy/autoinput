@@ -187,7 +187,7 @@ namespace autoinput
         RuntimeConfig config;
         RuntimeCommand cmd;
         cmd.action = ActionState::CLICK;
-        cmd.buttons = { Mouse(MouseButton::LEFT) };
+        cmd.buttons = { Mouse(MouseButton::Left) };
         cmd.keys = { Key{.character = "a"} };
         cmd.startKeys = { Key{.character = "f1"} };
         config.commands.push_back(cmd);

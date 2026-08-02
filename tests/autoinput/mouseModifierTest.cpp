@@ -34,7 +34,7 @@ TEST(MouseModifierTest, ParsesShiftLeftClick)
 
     ASSERT_TRUE(arguments.parseArguments(gsl::make_span(argv, argc)));
     ASSERT_EQ(arguments.buttons.size(), 1);
-    EXPECT_EQ(arguments.buttons[0].button, MouseButton::LEFT);
+    EXPECT_EQ(arguments.buttons[0].button, MouseButton::Left);
     EXPECT_EQ(arguments.buttons[0].modifier, KeyModifier::Shift);
 }
 
@@ -46,7 +46,7 @@ TEST(MouseModifierTest, ParsesMultipleModifiersWithClick)
 
     ASSERT_TRUE(arguments.parseArguments(gsl::make_span(argv, argc)));
     ASSERT_EQ(arguments.buttons.size(), 1);
-    EXPECT_EQ(arguments.buttons[0].button, MouseButton::RIGHT);
+    EXPECT_EQ(arguments.buttons[0].button, MouseButton::Right);
     EXPECT_TRUE(static_cast<bool>(arguments.buttons[0].modifier & KeyModifier::Ctrl));
     EXPECT_TRUE(static_cast<bool>(arguments.buttons[0].modifier & KeyModifier::Alt));
 }
@@ -66,7 +66,7 @@ TEST(MouseModifierTest, ProgramTriggersShiftLeftClick)
     const auto& keyInfo = program.getKeyInfo();
     ASSERT_EQ(keyInfo.size(), 2); // start and end
 
-    Mouse expectedMouse(MouseButton::LEFT, KeyModifier::Shift);
+    Mouse expectedMouse(MouseButton::Left, KeyModifier::Shift);
     EXPECT_CALL(*mockPtr, mousePress(expectedMouse)).Times(Exactly(1));
     
     program.start(keyInfo[0]);

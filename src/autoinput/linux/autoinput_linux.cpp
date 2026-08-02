@@ -253,17 +253,17 @@ namespace autoinput
 
     MouseInput::ButtonState MouseInput::getButtonState() const
     {
-        if (isLeftButtonDown()) return { MouseButton::LEFT, true };
-        if (isLeftButtonUp()) return { MouseButton::LEFT, false };
-        if (isRightButtonDown()) return { MouseButton::RIGHT, true };
-        if (isRightButtonUp()) return { MouseButton::RIGHT, false };
-        if (isMiddleButtonDown()) return { MouseButton::MIDDLE, true };
-        if (isMiddleButtonUp()) return { MouseButton::MIDDLE, false };
-        if (isBackButtonDown()) return { MouseButton::BACK, true };
-        if (isBackButtonUp()) return { MouseButton::BACK, false };
-        if (isForwardButtonDown()) return { MouseButton::FORWARD, true };
-        if (isForwardButtonUp()) return { MouseButton::FORWARD, false };
-        return { MouseButton::NONE, false };
+        if (isLeftButtonDown()) return { MouseButton::Left, true };
+        if (isLeftButtonUp()) return { MouseButton::Left, false };
+        if (isRightButtonDown()) return { MouseButton::Right, true };
+        if (isRightButtonUp()) return { MouseButton::Right, false };
+        if (isMiddleButtonDown()) return { MouseButton::Middle, true };
+        if (isMiddleButtonUp()) return { MouseButton::Middle, false };
+        if (isBackButtonDown()) return { MouseButton::Back, true };
+        if (isBackButtonUp()) return { MouseButton::Back, false };
+        if (isForwardButtonDown()) return { MouseButton::Forward, true };
+        if (isForwardButtonUp()) return { MouseButton::Forward, false };
+        return { MouseButton::None, false };
     }
 
     void MouseInput::printInfo() const

@@ -18,7 +18,7 @@ namespace autoinput
         void mousePress(const Mouse& mouse) override { lastButton = mouse.button; pressCount++; pressedButtons.insert(mouse.button); }
         void mouseRelease(const Mouse& mouse) override { lastButton = mouse.button; releaseCount++; pressedButtons.erase(mouse.button); }
         
-        MouseButton lastButton = MouseButton::NONE;
+        MouseButton lastButton = MouseButton::None;
         int pressCount = 0;
         int releaseCount = 0;
         std::set<MouseButton> pressedButtons;
@@ -55,13 +55,13 @@ namespace autoinput
         program.start(keyInfo[0]);
         EXPECT_EQ(trackingBackendPtr->pressCount, 1);
         EXPECT_EQ(trackingBackendPtr->releaseCount, 0);
-        EXPECT_EQ(trackingBackendPtr->lastButton, MouseButton::LEFT);
+        EXPECT_EQ(trackingBackendPtr->lastButton, MouseButton::Left);
 
         // Simulate F2 press again (Toggle action)
         program.start(keyInfo[0]);
         EXPECT_EQ(trackingBackendPtr->pressCount, 1);
         EXPECT_EQ(trackingBackendPtr->releaseCount, 1);
-        EXPECT_EQ(trackingBackendPtr->lastButton, MouseButton::LEFT);
+        EXPECT_EQ(trackingBackendPtr->lastButton, MouseButton::Left);
     }
 
     TEST_F(StartKeyToggleTest, DuplicateActionsCauseToggleIssue)

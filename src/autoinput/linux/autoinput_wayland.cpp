@@ -66,11 +66,11 @@ namespace autoinput
         {
             switch (button)
             {
-            case MouseButton::LEFT: return BTN_LEFT;
-            case MouseButton::RIGHT: return BTN_RIGHT;
-            case MouseButton::MIDDLE: return BTN_MIDDLE;
-            case MouseButton::BACK: return BTN_SIDE;
-            case MouseButton::FORWARD: return BTN_EXTRA;
+            case MouseButton::Left: return BTN_LEFT;
+            case MouseButton::Right: return BTN_RIGHT;
+            case MouseButton::Middle: return BTN_MIDDLE;
+            case MouseButton::Back: return BTN_SIDE;
+            case MouseButton::Forward: return BTN_EXTRA;
             default: return 0;
             }
         }

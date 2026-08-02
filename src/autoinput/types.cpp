@@ -81,7 +81,7 @@ namespace autoinput
             else
             {
                 const auto button = mouseButtonFromArguments(s);
-                if (button != MouseButton::NONE)
+                if (button != MouseButton::None)
                 {
                     mouse.button = button;
                 }
@@ -225,42 +225,42 @@ namespace autoinput
     {
         if (button == "l" || button == defaults::DefaultMouseButtonName)
         {
-            return MouseButton::LEFT;
+            return MouseButton::Left;
         }
         if (button == "r" || button == "right")
         {
-            return MouseButton::RIGHT;
+            return MouseButton::Right;
         }
         if (button == "m" || button == "middle")
         {
-            return MouseButton::MIDDLE;
+            return MouseButton::Middle;
         }
         if (button == "back")
         {
-            return MouseButton::BACK;
+            return MouseButton::Back;
         }
         if (button == "forward")
         {
-            return MouseButton::FORWARD;
+            return MouseButton::Forward;
         }
-        return MouseButton::NONE;
+        return MouseButton::None;
     }
 
     std::string mouseButtonToString(const MouseButton& mouseButton)
     {
         switch (mouseButton)
         {
-        case MouseButton::LEFT:
+        case MouseButton::Left:
             return std::string{ defaults::DefaultMouseButtonName };
-        case MouseButton::MIDDLE:
+        case MouseButton::Middle:
             return std::string{ "middle" };
-        case MouseButton::RIGHT:
+        case MouseButton::Right:
             return std::string{ "right" };
-        case MouseButton::BACK:
+        case MouseButton::Back:
             return std::string{ "back" };
-        case MouseButton::FORWARD:
+        case MouseButton::Forward:
             return std::string{ "forward" };
-        case MouseButton::NONE:
+        case MouseButton::None:
         default:
             return std::string{};
         }

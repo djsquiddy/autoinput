@@ -32,7 +32,7 @@ TEST_F(FocusTest, PauseOnBlacklistedApp)
     g_program->arguments().blacklist = {"notepad"};
     
     // Add some handlers
-    g_program->arguments().buttons = {MouseButton::LEFT};
+    g_program->arguments().buttons = {MouseButton::Left};
     g_program->arguments().keys = {Key::fromString("a")};
     ASSERT_TRUE(g_program->init());
     
@@ -76,7 +76,7 @@ TEST_F(FocusTest, PauseOnLostFocusFromTargetApp)
     g_program->arguments().applicationName = "mygame";
     
     // Add some handlers
-    g_program->arguments().buttons = {MouseButton::LEFT};
+    g_program->arguments().buttons = {MouseButton::Left};
     ASSERT_TRUE(g_program->init());
     
     g_program->onFocusChanged("mygame.exe");

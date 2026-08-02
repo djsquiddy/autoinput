@@ -140,7 +140,7 @@ namespace autoinput
 
         const auto [trigger, isDown] = input.getButtonState();
 
-        if (trigger == MouseButton::NONE || !isDown)
+        if (trigger == MouseButton::None || !isDown)
         {
             return false;
         }
@@ -171,7 +171,7 @@ namespace autoinput
     void Program::start(const KeyInfo& keyInfo)
     {
         InputHandler* handlerToStart = nullptr;
-        if (keyInfo.mouse.button != MouseButton::NONE)
+        if (keyInfo.mouse.button != MouseButton::None)
         {
             handlerToStart = &m_mouseHandlers.at(keyInfo.mouse);
         }
@@ -287,7 +287,7 @@ namespace autoinput
         for (const auto& keyInfo : m_keyInfo)
         {
             std::string triggerStr;
-            if (keyInfo.triggerButton != MouseButton::NONE)
+            if (keyInfo.triggerButton != MouseButton::None)
             {
                 triggerStr = std::format("Mouse: {}", mouseButtonToString(keyInfo.triggerButton));
             }
@@ -301,7 +301,7 @@ namespace autoinput
             }
 
             std::string actionStr = keyInfo.isStartKey ? "start " : "stop ";
-            if (keyInfo.mouse.button != MouseButton::NONE)
+            if (keyInfo.mouse.button != MouseButton::None)
             {
                 actionStr += std::format("{} button", keyInfo.mouse.toString());
             }
@@ -511,7 +511,7 @@ namespace autoinput
                 .exclusiveGroup = group,
             };
 
-            if (mouseTrigger != MouseButton::NONE)
+            if (mouseTrigger != MouseButton::None)
             {
                 info.triggerButton = mouseTrigger;
             }

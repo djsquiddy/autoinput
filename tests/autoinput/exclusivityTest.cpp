@@ -32,14 +32,14 @@ namespace autoinput
         args.delayData.maxWaitReleaseDelay = std::chrono::milliseconds(10);
         
         // Command 1: left click, trigger back, group G1
-        args.buttons.push_back(Mouse(MouseButton::LEFT));
+        args.buttons.push_back(Mouse(MouseButton::Left));
         args.startKeys.push_back("back");
         args.targetActions.push_back(ActionState::CLICK);
         args.commandNames.push_back("cmd1");
         args.exclusiveGroups.push_back("G1");
 
         // Command 2: right click, trigger forward, group G1
-        args.buttons.push_back(Mouse(MouseButton::RIGHT));
+        args.buttons.push_back(Mouse(MouseButton::Right));
         args.startKeys.push_back("forward");
         args.targetActions.push_back(ActionState::CLICK);
         args.commandNames.push_back("cmd2");
@@ -57,8 +57,8 @@ namespace autoinput
         auto& mouseHandlers = m_program->getMouseHandlers();
         auto& keyHandlers = m_program->getKeyHandlers();
         
-        Mouse leftMouse(MouseButton::LEFT);
-        Mouse rightMouse(MouseButton::RIGHT);
+        Mouse leftMouse(MouseButton::Left);
+        Mouse rightMouse(MouseButton::Right);
         Key spaceKey{.character = "space"};
 
         // 1. Start cmd1
@@ -105,14 +105,14 @@ namespace autoinput
         args.delayData.maxWaitReleaseDelay = std::chrono::milliseconds(10);
         
         // Command 1: left click, trigger back, group G1
-        args.buttons.push_back(Mouse(MouseButton::LEFT));
+        args.buttons.push_back(Mouse(MouseButton::Left));
         args.startKeys.push_back("back");
         args.targetActions.push_back(ActionState::CLICK);
         args.commandNames.push_back("cmd1");
         args.exclusiveGroups.push_back("G1");
 
         // Command 2: right click, trigger forward, group G2
-        args.buttons.push_back(Mouse(MouseButton::RIGHT));
+        args.buttons.push_back(Mouse(MouseButton::Right));
         args.startKeys.push_back("forward");
         args.targetActions.push_back(ActionState::CLICK);
         args.commandNames.push_back("cmd2");
@@ -121,8 +121,8 @@ namespace autoinput
         ASSERT_TRUE(m_program->init());
 
         auto& mouseHandlers = m_program->getMouseHandlers();
-        Mouse leftMouse(MouseButton::LEFT);
-        Mouse rightMouse(MouseButton::RIGHT);
+        Mouse leftMouse(MouseButton::Left);
+        Mouse rightMouse(MouseButton::Right);
 
         const auto& keyInfo = m_program->getKeyInfo();
         

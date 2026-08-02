@@ -64,8 +64,8 @@ namespace autoinput
 
     TEST(FormatterTest, FormatsMouseButton)
     {
-        EXPECT_EQ(std::format("{}", MouseButton::LEFT), "left");
-        EXPECT_EQ(std::format("{}", MouseButton::NONE), "");
+        EXPECT_EQ(std::format("{}", MouseButton::Left), "left");
+        EXPECT_EQ(std::format("{}", MouseButton::None), "");
     }
 
     TEST(FormatterTest, FormatsKey)

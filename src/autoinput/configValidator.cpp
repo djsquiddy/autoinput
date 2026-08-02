@@ -35,7 +35,7 @@ namespace autoinput
         // We only allow back and forward buttons as triggers by default to avoid accidental triggers 
         // with primary mouse buttons, but the requirement suggests reusing existing parsing logic.
         const Mouse mouse = Mouse::fromString(triggerStr);
-        if (mouse.button != MouseButton::NONE)
+        if (mouse.button != MouseButton::None)
         {
             return true;
         }
@@ -111,7 +111,7 @@ namespace autoinput
         // Buttons validation
         for (const auto& buttonStr : command.buttons)
         {
-            if (Mouse::fromString(buttonStr).button == MouseButton::NONE)
+            if (Mouse::fromString(buttonStr).button == MouseButton::None)
             {
                 errors.push_back(ValidationError{ std::format("Invalid mouse button: '{}'", buttonStr) });
             }
@@ -174,7 +174,7 @@ namespace autoinput
             
             for (const auto& button : command.buttons)
             {
-                if (button.button == MouseButton::NONE)
+                if (button.button == MouseButton::None)
                 {
                     errors.push_back(ValidationError{ std::format("Runtime command {}: Invalid mouse button.", i) });
                 }

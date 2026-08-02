@@ -58,11 +58,11 @@ namespace autoinput
         {
             switch (button)
             {
-            case MouseButton::LEFT: return 1;
-            case MouseButton::MIDDLE: return 2;
-            case MouseButton::RIGHT: return 3;
-            case MouseButton::BACK: return 8;
-            case MouseButton::FORWARD: return 9;
+            case MouseButton::Left: return 1;
+            case MouseButton::Middle: return 2;
+            case MouseButton::Right: return 3;
+            case MouseButton::Back: return 8;
+            case MouseButton::Forward: return 9;
             default: return 0;
             }
         }
@@ -84,7 +84,7 @@ namespace autoinput
 
                 for (const auto& info : g_program->getKeyInfo())
                 {
-                    if (info.triggerButton != MouseButton::NONE)
+                    if (info.triggerButton != MouseButton::None)
                     {
                         const unsigned int button = toX11Button(info.triggerButton);
                         XGrabButton(g_display, button, AnyModifier, g_rootWindow, False, 

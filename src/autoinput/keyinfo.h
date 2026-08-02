@@ -19,7 +19,7 @@ namespace autoinput
         int32_t keyCode{ INVALID_KEY };
         int32_t functionKey{ INVALID_KEY };
         int32_t virtualKey{ 0 };
-        MouseButton triggerButton{ MouseButton::NONE };
+        MouseButton triggerButton{ MouseButton::None };
         Key triggerKey{};
         Mouse mouse{};
         Key key{};

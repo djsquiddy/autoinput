@@ -153,7 +153,7 @@ namespace autoinput
         EXPECT_TRUE(arguments.postParseArguments());
 
         ASSERT_EQ(arguments.buttons.size(), 1);
-        EXPECT_EQ(arguments.buttons.front().button, MouseButton::LEFT);
+        EXPECT_EQ(arguments.buttons.front().button, MouseButton::Left);
     }
 
     TEST(ProgramArgumentsTest, PostParseArgumentsDefaultsToStartAndEndKeys)
@@ -169,8 +169,8 @@ namespace autoinput
     TEST(ProgramArgumentsTest, PostParseArgumentsResizesStartKeysToButtonCount)
     {
         ProgramArguments arguments;
-        arguments.buttons.emplace_back(Mouse(MouseButton::LEFT));
-        arguments.buttons.emplace_back(Mouse(MouseButton::RIGHT));
+        arguments.buttons.emplace_back(Mouse(MouseButton::Left));
+        arguments.buttons.emplace_back(Mouse(MouseButton::Right));
         arguments.startKeys.emplace_back("f2");
         arguments.endKey = "f3";
 
@@ -196,7 +196,7 @@ namespace autoinput
     TEST(ProgramArgumentsTest, PostParseArgumentsResizesStartKeysToTargetCount)
     {
         ProgramArguments arguments;
-        arguments.buttons.emplace_back(Mouse(MouseButton::LEFT));
+        arguments.buttons.emplace_back(Mouse(MouseButton::Left));
         arguments.keys.emplace_back(Key{ .character = "a" });
         arguments.startKeys.emplace_back("f2");
         arguments.endKey = "f3";
@@ -224,7 +224,7 @@ namespace autoinput
         EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
         EXPECT_EQ(arguments.actionState, ActionState::HOLD);
         ASSERT_EQ(arguments.buttons.size(), 1);
-        EXPECT_EQ(arguments.buttons.front().button, MouseButton::LEFT);
+        EXPECT_EQ(arguments.buttons.front().button, MouseButton::Left);
         ASSERT_EQ(arguments.startKeys.size(), 1);
         EXPECT_EQ(arguments.startKeys.front(), "f2");
         EXPECT_EQ(arguments.endKey, "f3");

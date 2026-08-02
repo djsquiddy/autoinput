@@ -494,14 +494,14 @@ namespace autoinput
                 mouseInput.type = INPUT_MOUSE;
                 switch (mouse.button)
                 {
-                case MouseButton::LEFT: mouseInput.mi.dwFlags = MOUSEEVENTF_LEFTDOWN; break;
-                case MouseButton::MIDDLE: mouseInput.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN; break;
-                case MouseButton::RIGHT: mouseInput.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN; break;
-                case MouseButton::BACK:
+                case MouseButton::Left: mouseInput.mi.dwFlags = MOUSEEVENTF_LEFTDOWN; break;
+                case MouseButton::Middle: mouseInput.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN; break;
+                case MouseButton::Right: mouseInput.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN; break;
+                case MouseButton::Back:
                     mouseInput.mi.dwFlags = MOUSEEVENTF_XDOWN;
                     mouseInput.mi.mouseData = XBUTTON1;
                     break;
-                case MouseButton::FORWARD:
+                case MouseButton::Forward:
                     mouseInput.mi.dwFlags = MOUSEEVENTF_XDOWN;
                     mouseInput.mi.mouseData = XBUTTON2;
                     break;
@@ -524,14 +524,14 @@ namespace autoinput
                 mouseInput.type = INPUT_MOUSE;
                 switch (mouse.button)
                 {
-                case MouseButton::LEFT: mouseInput.mi.dwFlags = MOUSEEVENTF_LEFTUP; break;
-                case MouseButton::MIDDLE: mouseInput.mi.dwFlags = MOUSEEVENTF_MIDDLEUP; break;
-                case MouseButton::RIGHT: mouseInput.mi.dwFlags = MOUSEEVENTF_RIGHTUP; break;
-                case MouseButton::BACK:
+                case MouseButton::Left: mouseInput.mi.dwFlags = MOUSEEVENTF_LEFTUP; break;
+                case MouseButton::Middle: mouseInput.mi.dwFlags = MOUSEEVENTF_MIDDLEUP; break;
+                case MouseButton::Right: mouseInput.mi.dwFlags = MOUSEEVENTF_RIGHTUP; break;
+                case MouseButton::Back:
                     mouseInput.mi.dwFlags = MOUSEEVENTF_XUP;
                     mouseInput.mi.mouseData = XBUTTON1;
                     break;
-                case MouseButton::FORWARD:
+                case MouseButton::Forward:
                     mouseInput.mi.dwFlags = MOUSEEVENTF_XUP;
                     mouseInput.mi.mouseData = XBUTTON2;
                     break;
@@ -627,17 +627,17 @@ namespace autoinput
 
     MouseInput::ButtonState MouseInput::getButtonState() const
     {
-        if (isLeftButtonDown()) return { MouseButton::LEFT, true };
-        if (isLeftButtonUp()) return { MouseButton::LEFT, false };
-        if (isRightButtonDown()) return { MouseButton::RIGHT, true };
-        if (isRightButtonUp()) return { MouseButton::RIGHT, false };
-        if (isMiddleButtonDown()) return { MouseButton::MIDDLE, true };
-        if (isMiddleButtonUp()) return { MouseButton::MIDDLE, false };
-        if (isBackButtonDown()) return { MouseButton::BACK, true };
-        if (isBackButtonUp()) return { MouseButton::BACK, false };
-        if (isForwardButtonDown()) return { MouseButton::FORWARD, true };
-        if (isForwardButtonUp()) return { MouseButton::FORWARD, false };
-        return { MouseButton::NONE, false };
+        if (isLeftButtonDown()) return { MouseButton::Left, true };
+        if (isLeftButtonUp()) return { MouseButton::Left, false };
+        if (isRightButtonDown()) return { MouseButton::Right, true };
+        if (isRightButtonUp()) return { MouseButton::Right, false };
+        if (isMiddleButtonDown()) return { MouseButton::Middle, true };
+        if (isMiddleButtonUp()) return { MouseButton::Middle, false };
+        if (isBackButtonDown()) return { MouseButton::Back, true };
+        if (isBackButtonUp()) return { MouseButton::Back, false };
+        if (isForwardButtonDown()) return { MouseButton::Forward, true };
+        if (isForwardButtonUp()) return { MouseButton::Forward, false };
+        return { MouseButton::None, false };
     }
 
     void MouseInput::printInfo() const

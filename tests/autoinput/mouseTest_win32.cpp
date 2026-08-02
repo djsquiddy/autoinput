@@ -25,7 +25,7 @@ namespace autoinput
 
         MouseInput input(data);
         EXPECT_TRUE(input.isBackButtonDown());
-        EXPECT_EQ(input.getButtonState().button, MouseButton::BACK);
+        EXPECT_EQ(input.getButtonState().button, MouseButton::Back);
         EXPECT_TRUE(input.getButtonState().isDown);
     }
 
@@ -42,7 +42,7 @@ namespace autoinput
 
         MouseInput input(data);
         EXPECT_TRUE(input.isForwardButtonDown());
-        EXPECT_EQ(input.getButtonState().button, MouseButton::FORWARD);
+        EXPECT_EQ(input.getButtonState().button, MouseButton::Forward);
         EXPECT_TRUE(input.getButtonState().isDown);
     }
 
@@ -59,7 +59,7 @@ namespace autoinput
 
         MouseInput input(data);
         EXPECT_TRUE(input.isBackButtonUp());
-        EXPECT_EQ(input.getButtonState().button, MouseButton::BACK);
+        EXPECT_EQ(input.getButtonState().button, MouseButton::Back);
         EXPECT_FALSE(input.getButtonState().isDown);
     }
 
@@ -76,7 +76,7 @@ namespace autoinput
 
         MouseInput input(data);
         EXPECT_TRUE(input.isForwardButtonUp());
-        EXPECT_EQ(input.getButtonState().button, MouseButton::FORWARD);
+        EXPECT_EQ(input.getButtonState().button, MouseButton::Forward);
         EXPECT_FALSE(input.getButtonState().isDown);
     }
 }

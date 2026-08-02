@@ -71,7 +71,7 @@ TEST_F(HandlerTest, KeyHandlerPressAndRelease)
 
 TEST_F(HandlerTest, MouseHandlerPressAndRelease)
 {
-    Mouse mouse(MouseButton::LEFT);
+    Mouse mouse(MouseButton::Left);
     MouseHandler handler(mouse, mockPtr);
 
     EXPECT_CALL(*mockPtr, mousePress(mouse)).Times(Exactly(1));
@@ -97,7 +97,7 @@ TEST_F(HandlerTest, HandlerWithNullBackend)
     keyHandler.press();
     EXPECT_FALSE(keyHandler.isPressed()); // Should not be pressed if backend is null
 
-    MouseHandler mouseHandler(MouseButton::LEFT, nullptr);
+    MouseHandler mouseHandler(MouseButton::Left, nullptr);
     mouseHandler.press();
     EXPECT_FALSE(mouseHandler.isPressed());
 }

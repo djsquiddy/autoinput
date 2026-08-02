@@ -29,14 +29,14 @@ protected:
 
 TEST_F(StatusIndicatorTest, StateTransitionsCorrectly)
 {
-    g_program->arguments().buttons = {MouseButton::LEFT};
+    g_program->arguments().buttons = {MouseButton::Left};
     ASSERT_TRUE(g_program->init());
     
     // Initial state
     EXPECT_FALSE(g_program->getLastIsActiveIndicator());
     
     // Activate a handler
-    auto& handler = g_program->getMouseHandlers().at(MouseButton::LEFT);
+    auto& handler = g_program->getMouseHandlers().at(MouseButton::Left);
     handler.setActive(true);
     g_program->updateStatusIndicator();
     EXPECT_TRUE(g_program->getLastIsActiveIndicator());
@@ -59,7 +59,7 @@ TEST_F(StatusIndicatorTest, StateTransitionsCorrectly)
 
 TEST_F(StatusIndicatorTest, RespectsJsonOutputMode)
 {
-    g_program->arguments().buttons = {MouseButton::LEFT};
+    g_program->arguments().buttons = {MouseButton::Left};
     g_program->arguments().jsonOutput = true;
     ASSERT_TRUE(g_program->init());
     
@@ -67,7 +67,7 @@ TEST_F(StatusIndicatorTest, RespectsJsonOutputMode)
     EXPECT_FALSE(g_program->getLastIsActiveIndicator());
     
     // Activate a handler
-    auto& handler = g_program->getMouseHandlers().at(MouseButton::LEFT);
+    auto& handler = g_program->getMouseHandlers().at(MouseButton::Left);
     handler.setActive(true);
     
     // updateStatusIndicator should return early and not update the indicator state

@@ -317,7 +317,7 @@ namespace autoinput
                 if (!isNextAction)
                 {
                     bool isPotentialStartKey = isNextFunctionKey;
-                    if (const auto nextButton = mouseButtonFromArguments(nextArg); nextButton == MouseButton::BACK || nextButton == MouseButton::FORWARD)
+                    if (const auto nextButton = mouseButtonFromArguments(nextArg); nextButton == MouseButton::Back || nextButton == MouseButton::Forward)
                     {
                         isPotentialStartKey = true;
                     }
@@ -332,14 +332,14 @@ namespace autoinput
         };
 
         const auto mouse = Mouse::fromString(arg);
-        if (mouse.button != MouseButton::NONE)
+        if (mouse.button != MouseButton::None)
         {
-            if (mouse.button == MouseButton::BACK || mouse.button == MouseButton::FORWARD)
+            if (mouse.button == MouseButton::Back || mouse.button == MouseButton::Forward)
             {
                 if ((buttons.size() + keys.size()) == startKeys.size())
                 {
                     // Trigger for default target
-                    buttons.emplace_back(MouseButton::LEFT);
+                    buttons.emplace_back(MouseButton::Left);
                     targetActions.emplace_back(actionState != ActionState::INVALID ? actionState : ActionState::CLICK);
                     startKeys.emplace_back(arg);
                     return true;
@@ -358,7 +358,7 @@ namespace autoinput
                 if ((buttons.size() + keys.size()) == startKeys.size())
                 {
                     // Trigger for default target
-                    buttons.emplace_back(MouseButton::LEFT);
+                    buttons.emplace_back(MouseButton::Left);
                     targetActions.emplace_back(actionState != ActionState::INVALID ? actionState : ActionState::CLICK);
                     startKeys.emplace_back(arg);
                     return true;
@@ -413,7 +413,7 @@ namespace autoinput
         {
             if (!button.empty())
             {
-                if (const auto mouse = Mouse::fromString(button); mouse.button != MouseButton::NONE)
+                if (const auto mouse = Mouse::fromString(button); mouse.button != MouseButton::None)
                 {
                     buttons.emplace_back(mouse);
                 }
@@ -421,7 +421,7 @@ namespace autoinput
 
             if (buttons.empty())
             {
-                buttons.emplace_back(MouseButton::LEFT);
+                buttons.emplace_back(MouseButton::Left);
             }
         }
 
@@ -543,7 +543,7 @@ namespace autoinput
 
                 for (const auto& button : cmd.buttons)
                 {
-                    if (const auto mouse = Mouse::fromString(button); mouse.button != MouseButton::NONE)
+                    if (const auto mouse = Mouse::fromString(button); mouse.button != MouseButton::None)
                     {
                         buttons.push_back(mouse);
                         targetActions.push_back(action);
@@ -654,7 +654,7 @@ namespace autoinput
                 break;
             }
             const auto mouse = Mouse::fromString(button);
-            if (mouse.button != MouseButton::NONE)
+            if (mouse.button != MouseButton::None)
             {
                 buttons.emplace_back(mouse);
             }

@@ -23,8 +23,8 @@ TEST(MousePrioritizationTest, GetButtonStatePrioritization)
     // in a single MouseInput object if they are exclusive in the implementation.
     
     // HOWEVER, the implementation of getButtonState() is:
-    // if (isLeftButtonDown()) return { MouseButton::LEFT, true };
-    // if (isLeftButtonUp()) return { MouseButton::LEFT, false };
+    // if (isLeftButtonDown()) return { MouseButton::Left, true };
+    // if (isLeftButtonUp()) return { MouseButton::Left, false };
     // ...
     
     // So we just need to verify that each one returns the correct state.
@@ -34,7 +34,7 @@ TEST(MousePrioritizationTest, GetButtonStatePrioritization)
     {
         MouseInput input(data);
         auto state = input.getButtonState();
-        EXPECT_EQ(state.button, MouseButton::LEFT);
+        EXPECT_EQ(state.button, MouseButton::Left);
         EXPECT_TRUE(state.isDown);
     }
 
@@ -43,7 +43,7 @@ TEST(MousePrioritizationTest, GetButtonStatePrioritization)
     {
         MouseInput input(data);
         auto state = input.getButtonState();
-        EXPECT_EQ(state.button, MouseButton::LEFT);
+        EXPECT_EQ(state.button, MouseButton::Left);
         EXPECT_FALSE(state.isDown);
     }
 
@@ -52,7 +52,7 @@ TEST(MousePrioritizationTest, GetButtonStatePrioritization)
     {
         MouseInput input(data);
         auto state = input.getButtonState();
-        EXPECT_EQ(state.button, MouseButton::RIGHT);
+        EXPECT_EQ(state.button, MouseButton::Right);
         EXPECT_TRUE(state.isDown);
     }
     
@@ -65,7 +65,7 @@ TEST(MousePrioritizationTest, GetButtonStatePrioritization)
     {
         MouseInput input(data);
         auto state = input.getButtonState();
-        EXPECT_EQ(state.button, MouseButton::BACK);
+        EXPECT_EQ(state.button, MouseButton::Back);
         EXPECT_TRUE(state.isDown);
     }
     
@@ -77,7 +77,7 @@ TEST(MousePrioritizationTest, GetButtonStatePrioritization)
     {
         MouseInput input(data);
         auto state = input.getButtonState();
-        EXPECT_EQ(state.button, MouseButton::FORWARD);
+        EXPECT_EQ(state.button, MouseButton::Forward);
         EXPECT_TRUE(state.isDown);
     }
 #else
@@ -92,6 +92,6 @@ TEST(MousePrioritizationTest, GetButtonStateNone)
     // Empty internal data
     MouseInput input(data);
     auto state = input.getButtonState();
-    EXPECT_EQ(state.button, MouseButton::NONE);
+    EXPECT_EQ(state.button, MouseButton::None);
     EXPECT_FALSE(state.isDown);
 }
