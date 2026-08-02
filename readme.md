@@ -166,33 +166,173 @@ The application supports loading settings from TOML files.
 
 #### Locations
 
-1.  **Built-in**: The `configs/` directory next to the executable.
-2.  **User**: `~/.autoinput/` (Linux) or `%USERPROFILE%/.autoinput/` (Windows).
+1. **Built-in**: The `configs/` directory next to the executable.
+2. **User**: `${HOME}/.autoinput/` on Linux or `%USERPROFILE%/.autoinput/` on Windows.
 
 The `settings.toml` file in the user directory is automatically loaded and takes precedence over the built-in `settings.toml`.
 
 #### Format
 
-You can define one or more commands using `[[command]]` blocks. Global settings like `end`, `application` (whitelist), and `blacklist` can be defined at the top level.
+You can define one or more commands using TOML command blocks.
+
+For a single command, you may use a `[command]` table:
 
 ```toml
-# Global settings
-end = 'f3'
-application = 'MyGame.exe'
-blacklist = ['overlay.exe']
-appendBlacklist = true # Set to false to replace the existing blacklist instead of appending
+    [command]
+    action = "click"
+    button = "left"
+    start = "f2"
+    time = { press = "10ms..50ms", release = "1s..2s" }
+```
 
-[[command]]
-action = 'click'
-button = 'left'
-start = 'f2'
+For multiple commands, use one `[[command]]` block per command:
 
-[command.time]
-press = '10ms..50ms'
-release = '1s..2s'
+```toml
+    [[command]]
+    action = "click"
+    button = "left"
+    start = "f2"
+    time = { press = "10ms..50ms", release = "1s..2s" }
 
-[[command]]
-action = 'hold'
-button = 'right'
-start = 'f4'
+    [[command]]
+    action = "hold"
+    button = "right"
+    start = "f4"
+    time = { press = "25ms", release = "500ms" }
+```
+
+Each `[[command]]` block is an independent automation command. The next command starts at the next `[[command]]` block.
+
+This format is recommended for multi-command setups because it avoids the ambiguity of positional command-line arguments.
+
+#### Global Settings
+
+Global settings can be placed at the top level of the file:
+
+```toml
+    end = "f3"
+    application = "MyGame.exe"
+    blacklist = ["overlay.exe"]
+    appendBlacklist = true
+
+    [[command]]
+    action = "click"
+    button = "left"
+    start = "f2"
+    time = { press = "10ms..50ms", release = "1s..2s" }
+
+    [[command]]
+    action = "hold"
+    button = "right"
+    start = "f4"
+    time = { press = "25ms", release = "500ms" }
+```
+
+Supported global settings:
+
+- `end`: Hotkey or mouse button used to stop automation.
+- `application`: Only allow automation while this application is focused.
+- `blacklist`: Applications where automation should not run.
+- `appendBlacklist`: When `true`, append this config's blacklist to the default blacklist. When `false`, replace the default blacklist.
+
+#### Command Settings
+
+Each command can define its own action, target, start trigger, and timing.
+
+```toml
+    [[command]]
+    action = "click"
+    button = "left"
+    start = "f2"
+    time = { press = "100ms", release = "250ms" }
+```
+
+Supported command settings:
+
+- `action`: The automation action. Common values are `"click"` and `"hold"`.
+- `button`: Mouse button to automate, such as `"left"`, `"right"`, `"middle"`, `"back"`, or `"forward"`.
+- `key`: Keyboard key to automate, such as `"space"`, `"enter"`, or `"a"`.
+- `start`: Hotkey or mouse button used to toggle this command.
+- `time`: Timing configuration for the command.
+
+A command should generally use either `button` or `key`.
+
+#### Timing
+
+Command timing is configured with the `time` table:
+
+```toml
+    time = { press = "100ms", release = "250ms" }
+```
+
+Timing values:
+
+- `press`: How long the button or key is held down.
+- `release`: How long to wait between repeated actions.
+
+Ranges are supported:
+
+```toml
+    time = { press = "100ms..250ms", release = "1s..2s" }
+```
+
+You can specify only one timing value if needed:
+
+```toml
+    time = { press = "100ms" }
+```
+
+```toml
+    time = { release = "1s..2s" }
+```
+
+Expanded TOML timing tables are also accepted when loading existing configs:
+
+```toml
+    [command.time]
+    press = "100ms"
+    release = "250ms"
+```
+
+However, saved configs prefer the inline style:
+
+```toml
+    time = { press = "100ms", release = "250ms" }
+```
+
+#### Full Example
+```toml
+    end = "f3"
+    application = "Core Keeper"
+    blacklist = ["Discord.exe", "Steam Overlay"]
+    appendBlacklist = true
+
+    [[command]]
+    action = "click"
+    button = "left"
+    start = "f2"
+    time = { press = "10ms..50ms", release = "1s..2s" }
+
+    [[command]]
+    action = "hold"
+    button = "right"
+    start = "f4"
+    time = { press = "25ms", release = "500ms" }
+
+    [[command]]
+    action = "click"
+    key = "space"
+    start = "f6"
+    time = { press = "50ms", release = "750ms..1s" }
+```
+Run the config with:
+
+```bash
+    autoinput --config my-config
+```
+
+or:
+
+```bash
+    autoinput -c my-config
 ```
