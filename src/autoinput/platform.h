@@ -15,6 +15,7 @@
 namespace autoinput
 {
     struct Key;
+    class INotificationSink;
 
     namespace platform
     {
@@ -25,6 +26,7 @@ namespace autoinput
         std::vector<std::string> getRunningApplicationNames();
         std::filesystem::path getExecutablePath();
         std::filesystem::path getUserHomePath();
+        std::unique_ptr<INotificationSink> createDesktopNotificationSink();
     }
 }
 

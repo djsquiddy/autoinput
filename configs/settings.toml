@@ -8,3 +8,4 @@ blacklist = [
     "steamwebhelper.exe",
     "clion64.exe"
 ]
+statusNotificationMode = "console"

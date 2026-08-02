@@ -13,6 +13,7 @@ A versatile C++ utility for automating mouse and keyboard input on Windows and L
 - **Multi-command Support**: Run multiple independent automation commands simultaneously from a single configuration file.
 - **Mutually Exclusive Command Groups**: Declare groups of commands where only one can be active at a time. Starting one command in a group automatically stops any other active command in the same group.
 - **Safety First**: Integrated with Microsoft GSL for robust memory management.
+- **Desktop Notifications**: Optional desktop status notifications for active/paused state changes.
 - **Cross-platform Support**: Works on Windows (via `SendInput`), Linux X11 (via `XTest`), and Linux Wayland (via `uinput`).
 - **No Network Dependencies**: No external network connections or dependencies. No telemetry or analytics.
 
@@ -92,6 +93,7 @@ autoinput [options]
 - `--release-wait RANGE`: Randomized delay between actions (e.g., `1s..2s`).
 - `-c, --config FILE`: Load settings from a TOML configuration file.
 - `-l, --log LEVEL`: Set logging level (debug, info, warning, error).
+- `--status-notification MODE`: Set status notification mode (`off`, `console`, `desktop`, `both`).
 - `-S, --save-config NAME`: Save the current active configuration to the user-level configuration directory as `NAME.toml`.
 - `--validate-config NAME-OR-PATH`: Validate the specified configuration file and exit.
 - `--duplicate-config SOURCE DESTINATION`: Duplicate an existing config to a new user config.
@@ -229,6 +231,7 @@ Global settings can be placed at the top level of the file:
     application = "MyGame.exe"
     blacklist = ["overlay.exe"]
     appendBlacklist = true
+    statusNotificationMode = "both"
 
     [[command]]
     action = "click"

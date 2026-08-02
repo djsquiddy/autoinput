@@ -94,6 +94,7 @@ namespace autoinput
                 tryGetTableValue(cmdNode, "end", configData.endKey);
                 tryGetTableValue(cmdNode, "application", configData.application);
                 tryGetTableValue(cmdNode, "appendBlacklist", configData.appendBlacklist);
+                tryGetTableValue(cmdNode, "statusNotificationMode", configData.statusNotificationMode);
 
                 if (const auto blacklistCfg = cmdNode["blacklist"])
                 {
@@ -126,6 +127,7 @@ namespace autoinput
             tryGetTableValue(table, "end", configData.endKey);
             tryGetTableValue(table, "application", configData.application);
             tryGetTableValue(table, "appendBlacklist", configData.appendBlacklist);
+            tryGetTableValue(table, "statusNotificationMode", configData.statusNotificationMode);
             if (const auto blacklistCfg = table["blacklist"])
             {
                 if (blacklistCfg.is_string())
@@ -399,6 +401,11 @@ namespace autoinput
         if (!configPath.parent_path().empty() && !std::filesystem::exists(configPath.parent_path()))
         {
             std::filesystem::create_directories(configPath.parent_path());
+        }
+
+        if (!configData.statusNotificationMode.empty())
+        {
+            table.insert_or_assign("statusNotificationMode", configData.statusNotificationMode);
         }
 
         std::ofstream file(configPath);

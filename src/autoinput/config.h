@@ -44,6 +44,7 @@ namespace autoinput
         std::string action{ defaults::DefaultActionName };
         std::string button{ defaults::DefaultMouseButtonName };
         std::vector<std::string> blacklist{};
+        std::string statusNotificationMode{ defaults::DefaultStatusNotificationMode };
     };
 
     struct ConfigData
@@ -53,6 +54,7 @@ namespace autoinput
         std::string application;
         std::vector<std::string> blacklist;
         bool appendBlacklist = true;
+        std::string statusNotificationMode;
     };
 
     const std::filesystem::path& getConfigsPath();

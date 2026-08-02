@@ -47,6 +47,7 @@ namespace autoinput
         bool jsonOutput{ false };
         bool forceOverwrite{ false };
         ActionState actionState{ ActionState::INVALID };
+        StatusNotificationMode statusNotificationMode{ StatusNotificationMode::Console };
         WaitDelayData delayData{};
 
         [[nodiscard]] bool parseArguments(gsl::span<char*> args, bool loadSettings = false);

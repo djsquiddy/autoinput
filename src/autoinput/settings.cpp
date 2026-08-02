@@ -44,6 +44,7 @@ namespace autoinput
             tryGetTableValue(t, "release", m_defaults.release);
             tryGetTableValue(t, "action", m_defaults.action);
             tryGetTableValue(t, "button", m_defaults.button);
+            tryGetTableValue(t, "statusNotificationMode", m_defaults.statusNotificationMode);
 
             bool appendBlacklist = false;
             tryGetTableValue(t, "appendBlacklist", appendBlacklist);

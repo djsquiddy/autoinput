@@ -1,0 +1,67 @@
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
+#include "autoinput/notifications.h"
+#include "autoinput/types.h"
+
+namespace autoinput::testing
+{
+    class MockNotificationSink : public INotificationSink
+    {
+    public:
+        MOCK_METHOD(void, notify, (const std::string& title, const std::string& body), (override));
+    };
+
+    TEST(NotificationTest, OffSendsNothing)
+    {
+        NotificationService service(StatusNotificationMode::Off, false);
+        auto mockSink = std::make_unique<MockNotificationSink>();
+        EXPECT_CALL(*mockSink, notify(::testing::_, ::testing::_)).Times(0);
+        
+        service.addSink(std::move(mockSink));
+        service.notifyStatus(true);
+    }
+
+    TEST(NotificationTest, JsonSuppressesNotifications)
+    {
+        NotificationService service(StatusNotificationMode::Both, true);
+        auto mockSink = std::make_unique<MockNotificationSink>();
+        EXPECT_CALL(*mockSink, notify(::testing::_, ::testing::_)).Times(0);
+        
+        service.addSink(std::move(mockSink));
+        service.notifyStatus(true);
+    }
+
+    TEST(NotificationTest, NotifyActive)
+    {
+        NotificationService service(StatusNotificationMode::Desktop, false);
+        auto mockSink = std::make_unique<MockNotificationSink>();
+        EXPECT_CALL(*mockSink, notify("AutoInput", "Auto clicking: ACTIVE")).Times(1);
+        
+        service.addSink(std::move(mockSink));
+        service.notifyStatus(true);
+    }
+
+    TEST(NotificationTest, NotifyPaused)
+    {
+        NotificationService service(StatusNotificationMode::Desktop, false);
+        auto mockSink = std::make_unique<MockNotificationSink>();
+        EXPECT_CALL(*mockSink, notify("AutoInput", "Auto clicking: PAUSED")).Times(1);
+        
+        service.addSink(std::move(mockSink));
+        service.notifyStatus(false);
+    }
+
+    TEST(NotificationTest, MultipleSinks)
+    {
+        NotificationService service(StatusNotificationMode::Both, false);
+        auto mockSink1 = std::make_unique<MockNotificationSink>();
+        auto mockSink2 = std::make_unique<MockNotificationSink>();
+        
+        EXPECT_CALL(*mockSink1, notify(::testing::_, ::testing::_)).Times(1);
+        EXPECT_CALL(*mockSink2, notify(::testing::_, ::testing::_)).Times(1);
+        
+        service.addSink(std::move(mockSink1));
+        service.addSink(std::move(mockSink2));
+        service.notifyStatus(true);
+    }
+}

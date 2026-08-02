@@ -102,6 +102,28 @@ namespace autoinput
         return modifiers + '+' + buttonStr;
     }
 
+    StatusNotificationMode statusNotificationModeFromString(const std::string_view str)
+    {
+        const std::string lowerStr = toLowerCase(str);
+        if (lowerStr == "off") return StatusNotificationMode::Off;
+        if (lowerStr == "console") return StatusNotificationMode::Console;
+        if (lowerStr == "desktop") return StatusNotificationMode::Desktop;
+        if (lowerStr == "both") return StatusNotificationMode::Both;
+        return StatusNotificationMode::Console; // Default
+    }
+
+    std::string_view statusNotificationModeToString(const StatusNotificationMode mode)
+    {
+        switch (mode)
+        {
+        case StatusNotificationMode::Off: return "off";
+        case StatusNotificationMode::Console: return "console";
+        case StatusNotificationMode::Desktop: return "desktop";
+        case StatusNotificationMode::Both: return "both";
+        default: return "console";
+        }
+    }
+
     Key Key::fromString(const std::string_view& keyValue)
     {
         // 1. Split the view

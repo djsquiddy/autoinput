@@ -15,7 +15,7 @@ namespace autoinput
 {
     void CliHelpFormatter::printUsage(const std::string_view programName, const bool verbose)
     {
-        Logger::print("usage {} [-h] [{}] [{{left,right,middle,key}} ...] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME] [-S SAVE_CONFIG_NAME] [--validate-config CONFIG_NAME_OR_PATH] [--json]\n\n", programName, ConfigMetadata::validActionChoices());
+        Logger::print("usage {} [-h] [{}] [{{left,right,middle,key}} ...] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME] [-S SAVE_CONFIG_NAME] [--validate-config CONFIG_NAME_OR_PATH] [--json] [--status-notification {{off,console,desktop,both}}]\n\n", programName, ConfigMetadata::validActionChoices());
         Logger::print("options\n");
         const auto optionPrefix = std::string(4, ' ');
         const auto optionUsagePrefix = std::string(10, ' ');
@@ -57,7 +57,9 @@ namespace autoinput
         Logger::print("{} --force\n", optionPrefix);
         Logger::print("{} Allow overwriting an existing destination configuration.\n", optionUsagePrefix);
         Logger::print("{} --json\n", optionPrefix);
-        Logger::print("{} Output validation results as machine-readable JSON. Only applies to --validate-config.\n", optionUsagePrefix);
+        Logger::print("{} Output validation results as machine-readable JSON. Only applies to --validate-config. Interactive status notifications are suppressed in JSON mode.\n", optionUsagePrefix);
+        Logger::print("{} --status-notification {{off,console,desktop,both}}\n", optionPrefix);
+        Logger::print("{} Set the status notification mode. (Default: {})\n", optionUsagePrefix, defaults::DefaultStatusNotificationMode);
         Logger::print("{} -w, --wait WAIT_TIME\n", optionPrefix);
         Logger::print("{} Max duration to wait before auto clicking. {}\n", optionUsagePrefix, terminal::bold("Type must be set to click"));
         Logger::print("{} Can use a time range by using {{min}}..{{max}} with each click being random between the range. See examples for usage.\n", optionUsagePrefix);

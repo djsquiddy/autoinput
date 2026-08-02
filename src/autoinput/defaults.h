@@ -42,6 +42,11 @@ namespace autoinput::defaults
      * @brief The default delay between autoinput actions in milliseconds.
      */
     constexpr int32_t DefaultDelay = 1000 / PressFps;
+
+    /**
+     * @brief The default status notification mode.
+     */
+    constexpr std::string_view DefaultStatusNotificationMode = "console";
 }
 
 #endif // INCLUDE_AUTOINPUT_DEFAULTS_H

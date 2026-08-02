@@ -20,6 +20,7 @@
 #include "autoinput/keyInfo.h"
 #include "autoinput/handlerState.h"
 #include "autoinput/types.h"
+#include "autoinput/notifications.h"
 
 namespace autoinput
 {
@@ -67,6 +68,7 @@ namespace autoinput
         std::vector<KeyInfo> m_keyInfo{};
         std::vector<std::unique_ptr<std::thread>> m_zombieThreads{};
         bool m_lastIsActiveIndicator{ false };
+        std::unique_ptr<NotificationService> m_notificationService{ nullptr };
 
         void startAutoClicker(InputHandler& handler);
     };

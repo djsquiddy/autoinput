@@ -89,6 +89,18 @@ namespace autoinput
         HOLD = 2,
     };
 
+    enum class StatusNotificationMode
+    {
+        Off = 0,
+        Console = 1 << 0,
+        Desktop = 1 << 1,
+        Both = Console | Desktop
+    };
+    AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(StatusNotificationMode);
+
+    StatusNotificationMode statusNotificationModeFromString(std::string_view str);
+    std::string_view statusNotificationModeToString(StatusNotificationMode mode);
+
     enum class MouseButton : uint8_t
     {
         NONE = 0,

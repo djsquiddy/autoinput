@@ -84,6 +84,18 @@ namespace autoinput
                 jsonOutput = true;
                 continue;
             }
+            if (arg == "--status-notification")
+            {
+                const std::string_view modeStr = safeGetNextArgument(++i, args);
+                if (modeStr.empty())
+                {
+                    printUsage();
+                    Logger::fatal("The parameter {} needs an argument. Choices: off, console, desktop, both\n", arg);
+                    return false;
+                }
+                statusNotificationMode = statusNotificationModeFromString(modeStr);
+                continue;
+            }
             // We want to parse the configuration first so we can use cli arguments as overrides if need/wanted.
             if (arg == "-c" || arg == "--config")
             {
@@ -255,6 +267,11 @@ namespace autoinput
             {
                 // Already handled in first pass
             }
+            else if (arg == "--status-notification")
+            {
+                // Already handled in first pass, but skip its value
+                safeGetNextArgument(++i, args);
+            }
             else if (arg == "-l" || arg == "--log")
             {
                 // Already handled in first pass, but skip its value
@@ -364,11 +381,19 @@ namespace autoinput
 
     void ProgramArguments::applyDefaults()
     {
-        const auto& [start, end, press, release, action, button, settingsBlacklist] = m_settings.getDefaults();
+        const auto& [start, end, press, release, action, button, settingsBlacklist, statusNotification] = m_settings.getDefaults();
 
         if (!settingsBlacklist.empty())
         {
             blacklist.insert(blacklist.end(), settingsBlacklist.begin(), settingsBlacklist.end());
+        }
+
+        if (statusNotificationMode == StatusNotificationMode::Console)
+        {
+            if (!statusNotification.empty())
+            {
+                statusNotificationMode = statusNotificationModeFromString(statusNotification);
+            }
         }
 
         if (actionState == ActionState::INVALID)
@@ -449,6 +474,7 @@ namespace autoinput
         data.application = applicationName;
         data.blacklist = blacklist;
         data.appendBlacklist = true; // CLI arguments always append or we don't have enough info to know if they intended to replace.
+        data.statusNotificationMode = statusNotificationModeToString(statusNotificationMode);
         // Actually, we don't store appendBlacklist in ProgramArguments itself.
         // For now, let's just keep the default true.
 
@@ -578,6 +604,10 @@ namespace autoinput
                     blacklist.clear();
                 }
                 blacklist.insert(blacklist.end(), configData.blacklist.begin(), configData.blacklist.end());
+            }
+            if (!configData.statusNotificationMode.empty())
+            {
+                statusNotificationMode = statusNotificationModeFromString(configData.statusNotificationMode);
             }
         }
 

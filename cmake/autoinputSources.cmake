@@ -39,12 +39,15 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/settings.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/handler.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/terminal.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.cpp
     )
 
     if(WIN32)
         list(APPEND sources
                 ${CMAKE_SOURCE_DIR}/src/autoinput/win32/autoInput_win32.cpp
                 ${CMAKE_SOURCE_DIR}/src/autoinput/win32/internalData_win32.h
+                ${CMAKE_SOURCE_DIR}/src/autoinput/win32/notifications_win32.cpp
         )
     elseif(UNIX AND NOT APPLE)
         list(APPEND sources
@@ -52,6 +55,7 @@ function(autoinput_get_common_sources output_var)
                 ${CMAKE_SOURCE_DIR}/src/autoinput/linux/autoInput_x11.cpp
                 ${CMAKE_SOURCE_DIR}/src/autoinput/linux/autoInput_wayland.cpp
                 ${CMAKE_SOURCE_DIR}/src/autoinput/linux/internalData_linux.h
+                ${CMAKE_SOURCE_DIR}/src/autoinput/linux/notifications_linux.cpp
         )
     endif()
 
@@ -77,6 +81,7 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/settingsTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/handlerTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mousePrioritizationTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/notificationTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseTest_win32.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/signalCleanupTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseModifierTest.cpp

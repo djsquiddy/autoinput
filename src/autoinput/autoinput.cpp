@@ -391,13 +391,21 @@ namespace autoinput
 
         if (isActive != m_lastIsActiveIndicator)
         {
-            if (isActive)
+            if (m_notificationService)
             {
-                terminal::printStatus("Auto clicking: ", "ACTIVE", terminal::Color::Green);
+                m_notificationService->notifyStatus(isActive);
             }
             else
             {
-                terminal::printStatus("Auto clicking: ", "PAUSED", terminal::Color::Yellow);
+                // Fallback for cases where m_notificationService is not yet initialized (e.g. tests)
+                if (isActive)
+                {
+                    terminal::printStatus("Auto clicking: ", "ACTIVE", terminal::Color::Green);
+                }
+                else
+                {
+                    terminal::printStatus("Auto clicking: ", "PAUSED", terminal::Color::Yellow);
+                }
             }
             m_lastIsActiveIndicator = isActive;
         }
@@ -545,6 +553,9 @@ namespace autoinput
         }
 
         processKeyString(m_arguments.endKey, Mouse{}, {}, ActionState::CLICK, false);
+
+        m_notificationService = std::make_unique<NotificationService>(m_arguments.statusNotificationMode, m_arguments.jsonOutput);
+
         return true;
     }
 
