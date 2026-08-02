@@ -66,7 +66,8 @@ namespace autoinput
     }
 
     inline InputHandler::InputHandler(InputHandler&& rhs) noexcept
-        : m_backend(rhs.m_backend), m_name(std::move(rhs.m_name)), m_exclusiveGroup(std::move(rhs.m_exclusiveGroup))
+        : m_backend(rhs.m_backend), m_name(std::move(rhs.m_name)), m_exclusiveGroup(std::move(rhs.m_exclusiveGroup)),
+          m_autoclickerThread(std::move(rhs.m_autoclickerThread))
     {
         m_isPressed.store(rhs.m_isPressed.load());
         m_isActive.store(rhs.m_isActive.load());
@@ -98,6 +99,7 @@ namespace autoinput
             m_isPressed.store(rhs.m_isPressed.load());
             m_isActive.store(rhs.m_isActive.load());
             m_isPaused.store(rhs.m_isPaused.load());
+            m_autoclickerThread = std::move(rhs.m_autoclickerThread);
             rhs.m_backend = nullptr;
         }
         return *this;

@@ -21,6 +21,7 @@ namespace autoinput
     {
     }
 
+
     void Program::setBackend(std::unique_ptr<IPlatformBackend> backend)
     {
         m_backend = std::move(backend);
@@ -58,7 +59,20 @@ namespace autoinput
             return false;
         }
 
-        const std::string activeApp = toLowerCase(platform::getActiveApplicationName());
+        std::string activeApp;
+#ifdef AUTOINPUT_TESTING
+        if (!m_testActiveApp.empty())
+        {
+            activeApp = toLowerCase(m_testActiveApp);
+        }
+        else
+        {
+            activeApp = toLowerCase(platform::getActiveApplicationName());
+        }
+#else
+        activeApp = toLowerCase(platform::getActiveApplicationName());
+#endif
+
         for (const std::string& app : m_arguments.blacklist)
         {
             if (activeApp.find(toLowerCase(app)) != std::string::npos)
@@ -72,21 +86,6 @@ namespace autoinput
     bool Program::processKeyEvent(KeyboardInput&& input)
     {
         input.printInfo();
-
-        if (isApplicationBlacklisted())
-        {
-            return false;
-        }
-
-        if (!m_arguments.applicationName.empty())
-        {
-            const std::string activeApp = toLowerCase(platform::getActiveApplicationName());
-            const std::string targetApp = toLowerCase(m_arguments.applicationName);
-            if (activeApp.find(targetApp) == std::string::npos)
-            {
-                return false;
-            }
-        }
 
         if (!input.isKeyDown())
         {
@@ -105,6 +104,33 @@ namespace autoinput
             {
                 if (keyInfo.isStartKey)
                 {
+                    if (isApplicationBlacklisted())
+                    {
+                        continue;
+                    }
+
+                    if (!m_arguments.applicationName.empty())
+                    {
+                        std::string activeApp;
+#ifdef AUTOINPUT_TESTING
+                        if (!m_testActiveApp.empty())
+                        {
+                            activeApp = toLowerCase(m_testActiveApp);
+                        }
+                        else
+                        {
+                            activeApp = toLowerCase(platform::getActiveApplicationName());
+                        }
+#else
+                        activeApp = toLowerCase(platform::getActiveApplicationName());
+#endif
+                        const std::string targetApp = toLowerCase(m_arguments.applicationName);
+                        if (activeApp.find(targetApp) == std::string::npos)
+                        {
+                            continue;
+                        }
+                    }
+
                     start(keyInfo);
                     started = true;
                 }
@@ -123,21 +149,6 @@ namespace autoinput
     {
         input.printInfo();
 
-        if (isApplicationBlacklisted())
-        {
-            return false;
-        }
-
-        if (!m_arguments.applicationName.empty())
-        {
-            const std::string activeApp = toLowerCase(platform::getActiveApplicationName());
-            const std::string targetApp = toLowerCase(m_arguments.applicationName);
-            if (activeApp.find(targetApp) == std::string::npos)
-            {
-                return false;
-            }
-        }
-
         const auto [trigger, isDown] = input.getButtonState();
 
         if (trigger == MouseButton::None || !isDown)
@@ -154,6 +165,33 @@ namespace autoinput
             {
                 if (keyInfo.isStartKey)
                 {
+                    if (isApplicationBlacklisted())
+                    {
+                        continue;
+                    }
+
+                    if (!m_arguments.applicationName.empty())
+                    {
+                        std::string activeApp;
+#ifdef AUTOINPUT_TESTING
+                        if (!m_testActiveApp.empty())
+                        {
+                            activeApp = toLowerCase(m_testActiveApp);
+                        }
+                        else
+                        {
+                            activeApp = toLowerCase(platform::getActiveApplicationName());
+                        }
+#else
+                        activeApp = toLowerCase(platform::getActiveApplicationName());
+#endif
+                        const std::string targetApp = toLowerCase(m_arguments.applicationName);
+                        if (activeApp.find(targetApp) == std::string::npos)
+                        {
+                            continue;
+                        }
+                    }
+
                     start(keyInfo);
                     started = true;
                 }
@@ -552,7 +590,14 @@ namespace autoinput
             }
         }
 
-        processKeyString(m_arguments.endKey, Mouse{}, {}, ActionState::CLICK, false);
+        if (m_arguments.endKey.empty())
+        {
+            processKeyString("f3", Mouse{}, {}, ActionState::CLICK, false);
+        }
+        else
+        {
+            processKeyString(m_arguments.endKey, Mouse{}, {}, ActionState::CLICK, false);
+        }
 
         m_notificationService = std::make_unique<NotificationService>(m_arguments.statusNotificationMode, m_arguments.jsonOutput);
 

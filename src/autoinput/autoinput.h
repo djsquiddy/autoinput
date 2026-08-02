@@ -53,6 +53,7 @@ namespace autoinput
         auto& getMouseHandlers() { return m_mouseHandlers; }
         auto& getKeyHandlers() { return m_keyHandlers; }
         [[nodiscard]] bool getLastIsActiveIndicator() const { return m_lastIsActiveIndicator; }
+        void setTestActiveApp(std::string app) { m_testActiveApp = std::move(app); }
 #endif
 
         void printProgramInfo() const;
@@ -69,6 +70,9 @@ namespace autoinput
         std::vector<std::unique_ptr<std::thread>> m_zombieThreads{};
         bool m_lastIsActiveIndicator{ false };
         std::unique_ptr<NotificationService> m_notificationService{ nullptr };
+#ifdef AUTOINPUT_TESTING
+        std::string m_testActiveApp;
+#endif
 
         void startAutoClicker(InputHandler& handler);
     };

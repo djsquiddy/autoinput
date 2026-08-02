@@ -17,7 +17,7 @@ function(configure_autoinput_target target_name)
         target_compile_definitions(${target_name} PUBLIC AUTOINPUT_FAKE_HOOK=0)
     endif()
 
-    if(target_name STREQUAL "${PROJECT_NAME}_tests")
+    if(AUTOINPUT_BUILD_TESTS)
         target_compile_definitions(${target_name} PRIVATE AUTOINPUT_TESTING=1)
     endif()
 
