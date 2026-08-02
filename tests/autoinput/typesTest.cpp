@@ -6,6 +6,7 @@
 #include <gtest/gtest.h>
 
 #include "autoinput/types.h"
+#include "autoinput/terminal.h"
 
 namespace autoinput
 {
@@ -47,17 +48,18 @@ namespace autoinput
         EXPECT_EQ(parseStringToInt("abc"), 0);
     }
 
-    TEST(ConsoleColorTest, ReturnsAnsiEscapeCodes)
+    TEST(TerminalColorTest, ReturnsAnsiEscapeCodes)
     {
-        EXPECT_EQ(getConsoleColor(ConsoleColor::Bold), "\033[1m");
-        EXPECT_EQ(getConsoleColor(ConsoleColor::White), "\033[37m");
-        EXPECT_EQ(getConsoleColor(ConsoleColor::Red), "\033[31m");
-        EXPECT_EQ(getConsoleColor(ConsoleColor::Green), "\033[32m");
-        EXPECT_EQ(getConsoleColor(ConsoleColor::Yellow), "\033[33m");
-        EXPECT_EQ(getConsoleColor(ConsoleColor::Blue), "\033[34m");
-        EXPECT_EQ(getConsoleColor(ConsoleColor::Magenta), "\033[35m");
-        EXPECT_EQ(getConsoleColor(ConsoleColor::Cyan), "\033[36m");
-        EXPECT_EQ(getConsoleColor(ConsoleColor::Reset), "\033[0m");
+        EXPECT_EQ(terminal::colorToAnsi(terminal::Color::Bold), "\033[1m");
+        EXPECT_EQ(terminal::colorToAnsi(terminal::Color::White), "\033[37m");
+        EXPECT_EQ(terminal::colorToAnsi(terminal::Color::Red), "\033[31m");
+        EXPECT_EQ(terminal::colorToAnsi(terminal::Color::Green), "\033[32m");
+        EXPECT_EQ(terminal::colorToAnsi(terminal::Color::Yellow), "\033[33m");
+        EXPECT_EQ(terminal::colorToAnsi(terminal::Color::Blue), "\033[34m");
+        EXPECT_EQ(terminal::colorToAnsi(terminal::Color::Magenta), "\033[35m");
+        EXPECT_EQ(terminal::colorToAnsi(terminal::Color::Cyan), "\033[36m");
+        EXPECT_EQ(terminal::colorToAnsi(terminal::Color::Gray), "\033[90m");
+        EXPECT_EQ(terminal::colorToAnsi(terminal::Color::Reset), "\033[0m");
     }
 
     TEST(FormatterTest, FormatsMouseButton)
@@ -76,9 +78,9 @@ namespace autoinput
         EXPECT_EQ(std::format("{}", key), "ctrl+a");
     }
 
-    TEST(FormatterTest, FormatsConsoleColor)
+    TEST(FormatterTest, FormatsTerminalColor)
     {
-        EXPECT_EQ(std::format("{}", ConsoleColor::Red), "\033[31m");
+        EXPECT_EQ(std::format("{}", terminal::Color::Red), "\033[31m");
     }
 
     TEST(FormatterTest, FormatsQuotedString)
@@ -92,7 +94,7 @@ namespace autoinput
         const std::string text = "important";
         std::ostringstream stream;
 
-        stream << bold{ text };
+        stream << terminal::bold{ text };
 
         EXPECT_EQ(stream.str(), "\033[1mimportant\033[0m");
     }

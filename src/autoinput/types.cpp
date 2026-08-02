@@ -15,42 +15,7 @@
 
 namespace autoinput
 {
-    std::string getConsoleColor(const ConsoleColor color)
-    {
-        switch (color)
-        {
-        case ConsoleColor::Bold:
-            return "\033[1m";
-        case ConsoleColor::White:
-            return "\033[37m";
-        case ConsoleColor::Red:
-            return "\033[31m";
-        case ConsoleColor::Green:
-            return "\033[32m";
-        case ConsoleColor::Yellow:
-            return "\033[33m";
-        case ConsoleColor::Blue:
-            return "\033[34m";
-        case ConsoleColor::Magenta:
-            return "\033[35m";
-        case ConsoleColor::Cyan:
-            return "\033[36m";
-        case ConsoleColor::Reset:
-        default:
-            return "\033[0m";
-        }
-    }
 
-    bold::bold(const std::string_view& s)
-        : m_string(s)
-    {
-    }
-
-    std::ostream& operator<<(std::ostream& os, const bold& b)
-    {
-        os << getConsoleColor(ConsoleColor::Bold) << b.m_string << getConsoleColor(ConsoleColor::Reset);
-        return os;
-    }
 
     std::string toString(const KeyModifier modifier)
     {

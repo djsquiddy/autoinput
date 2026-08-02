@@ -72,33 +72,6 @@ namespace autoinput
     template<typename T>
     struct HashFunction {};
 
-    enum class ConsoleColor : uint8_t
-    {
-        Reset = 0,
-        Bold = 1,
-        White = 2,
-        Red = 3,
-        Green = 4,
-        Yellow = 5,
-        Blue = 6,
-        Magenta = 7,
-        Cyan = 8,
-    };
-
-    // ANSI Escape Codes for Colors
-    std::string getConsoleColor(ConsoleColor color);
-
-    // Originally from: https://stackoverflow.com/a/60344943
-    class bold
-    {
-    public:
-        explicit bold(const std::string_view& s);
-
-        friend std::ostream& operator<<(std::ostream& os, const bold& b);
-        [[nodiscard]] const std::string_view& getString() const { return m_string; }
-    private:
-        const std::string_view& m_string;
-    };
 
     struct Quoted
     {
@@ -220,29 +193,6 @@ namespace autoinput
 
 // ReSharper disable CppMemberFunctionMayBeStatic
 // NOLINTBEGIN(*-convert-member-functions-to-static)
-// Specialize std::formatter for bold
-template <>
-struct std::formatter<autoinput::bold>
-{
-    // Parse format specifications (e.g., "{:s}" for string, "{:c}" for char)
-    // Default is full name if no spec is provided.
-    constexpr auto parse(std::format_parse_context& ctx)
-    {
-        auto it = ctx.begin();
-        if (it != ctx.end() && *it != '}')
-        {
-            // Optionally handle custom flags like {:c} for char
-            ++it;
-        }
-        return it;
-    }
-
-    // Format the value
-    auto format(const autoinput::bold bold, std::format_context& ctx) const
-    {
-        return std::format_to(ctx.out(), "\x1b[1m{}\x1b[0m", bold.getString());
-    }
-};
 
 // Specialize std::formatter for MouseButton
 template <>
@@ -288,19 +238,6 @@ struct std::formatter<autoinput::Key>
     }
 };
 
-template <>
-struct std::formatter<autoinput::ConsoleColor>
-{
-    constexpr auto parse(std::format_parse_context& ctx)
-    {
-        return ctx.begin();
-    }
-
-    auto format(const autoinput::ConsoleColor color, std::format_context& ctx) const
-    {
-        return std::format_to(ctx.out(), "{}", autoinput::getConsoleColor(color));
-    }
-};
 
 // copied from https://accu.org/journals/overload/32/182/collyer/
 template<>

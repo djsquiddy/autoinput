@@ -8,6 +8,7 @@
 #include "autoinput/logger.h"
 #include "autoinput/config.h"
 #include "autoinput/types.h"
+#include "autoinput/terminal.h"
 #include "autoinput/configMetadata.h"
 
 namespace autoinput
@@ -54,7 +55,7 @@ namespace autoinput
         Logger::print("{} --json\n", optionPrefix);
         Logger::print("{} Output validation results as machine-readable JSON. Only applies to --validate-config.\n", optionUsagePrefix);
         Logger::print("{} -w, --wait WAIT_TIME\n", optionPrefix);
-        Logger::print("{} Max duration to wait before auto clicking. {}\n", optionUsagePrefix, bold("Type must be set to click"));
+        Logger::print("{} Max duration to wait before auto clicking. {}\n", optionUsagePrefix, terminal::bold("Type must be set to click"));
         Logger::print("{} Can use a time range by using {{min}}..{{max}} with each click being random between the range. See examples for usage.\n", optionUsagePrefix);
 
         Logger::print("\n\n");
@@ -83,7 +84,7 @@ namespace autoinput
             Logger::print("\n");
             Logger::print("{}{}) hold the left and right click when pressing F2 and stop on F3:\n", examplePrefix, index);
             Logger::print("{}{} hold left right f2\n", exampleCmdPrefix, programName);
-            Logger::print("{} This only works if start key only has {} value.\n", exampleNotePrefix, bold("ONE"));
+            Logger::print("{} This only works if start key only has {} value.\n", exampleNotePrefix, terminal::bold("ONE"));
             ++index;
             Logger::print("\n");
             Logger::print("{}{}) auto left click every 2 seconds:\n", examplePrefix, index);
