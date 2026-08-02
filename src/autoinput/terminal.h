@@ -39,7 +39,7 @@ namespace autoinput::terminal
         Gray
     };
 
-    inline std::string_view colorToAnsi(Color color)
+    inline std::string_view colorToAnsi(const Color color)
     {
         switch (color)
         {
@@ -51,7 +51,7 @@ namespace autoinput::terminal
         }
     }
 
-    inline void printStatus(std::string_view label, std::string_view status, Color color)
+    inline void printStatus(const std::string_view label, const std::string_view status, const Color color)
     {
         std::cout << label << colorToAnsi(color) << status << colorToAnsi(Color::Reset) << std::endl;
     }

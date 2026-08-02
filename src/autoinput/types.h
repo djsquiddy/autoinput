@@ -7,6 +7,16 @@
 #define INCLUDE_AUTOINPUT_TYPES_H
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <any>
+#include <type_traits>
+#include <functional>
+#include <iostream>
+#include <format>
+
 // NOLINTBEGIN(bugprone-macro-parentheses)
 #define AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(enum_class) \
     constexpr enum_class operator|(enum_class lhs, enum_class rhs) \
@@ -47,16 +57,6 @@
 
 
 // NOLINTEND(bugprone-macro-parentheses)
-
-#include <cstdint>
-#include <string>
-#include <string_view>
-#include <vector>
-#include <any>
-#include <type_traits>
-#include <functional>
-#include <iostream>
-#include <format>
 
 namespace autoinput
 {

@@ -26,20 +26,20 @@ namespace autoinput
          * @brief Gets the path to the current executable.
          * @return The path to the executable.
          */
-        virtual std::filesystem::path executablePath() const = 0;
+        [[nodiscard]] virtual std::filesystem::path executablePath() const = 0;
 
         /**
          * @brief Gets the path to the user's home directory.
          * @return The path to the user's home directory.
          */
-        virtual std::filesystem::path userHomePath() const = 0;
+        [[nodiscard]] virtual std::filesystem::path userHomePath() const = 0;
 
         /**
          * @brief Gets the value of an environment variable.
          * @param name The name of the environment variable.
          * @return The value of the environment variable, or std::nullopt if not found.
          */
-        virtual std::optional<std::string> environmentVariable(std::string_view name) const = 0;
+        [[nodiscard]] virtual std::optional<std::string> environmentVariable(std::string_view name) const = 0;
     };
 
     /**
@@ -48,9 +48,9 @@ namespace autoinput
     class SystemEnvironment : public IEnvironment
     {
     public:
-        std::filesystem::path executablePath() const override;
-        std::filesystem::path userHomePath() const override;
-        std::optional<std::string> environmentVariable(std::string_view name) const override;
+        [[nodiscard]] std::filesystem::path executablePath() const override;
+        [[nodiscard]] std::filesystem::path userHomePath() const override;
+        [[nodiscard]] std::optional<std::string> environmentVariable(std::string_view name) const override;
 
         /**
          * @brief Gets the singleton instance of SystemEnvironment.
