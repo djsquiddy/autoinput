@@ -742,7 +742,7 @@ namespace autoinput
             type += " (sys)";
         }
 
-        auto info = std::format("[{}] vk=0x{:x} scan=0x{:x} flags=0x{:x}\n",
+        auto info = std::format("[{}] vk=0x{:x} scan=0x{:x} flags=0x{:x}",
                                  type,
                                  winData->kbdStruct->vkCode,
                                  winData->kbdStruct->scanCode,
@@ -756,6 +756,6 @@ namespace autoinput
             info += "  F=" + std::to_string(fnKey);
         }
 
-        Logger::debug(info);
+        Logger::debug(info + "\n");
     }
 }

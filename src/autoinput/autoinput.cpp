@@ -443,7 +443,7 @@ namespace autoinput
 
                 handler.press();
                 const auto pressWaitTime = std::chrono::milliseconds(delayData.getPressDelay());
-                Logger::debug("Pressed: {}, waiting: {}", handler.getName(), pressWaitTime);
+                Logger::debug("Pressed: {}, waiting: {}\n", handler.getName(), pressWaitTime);
                 std::this_thread::sleep_for(pressWaitTime);
                 if (!handler.getActive() || handler.getPaused())
                 {
@@ -455,7 +455,7 @@ namespace autoinput
                 }
                 handler.release();
                 const auto releaseWaitTime = std::chrono::milliseconds(delayData.getReleaseDelay());
-                Logger::debug("Released: {}, waiting: {}", handler.getName(), releaseWaitTime);
+                Logger::debug("Released: {}, waiting: {}\n", handler.getName(), releaseWaitTime);
                 std::this_thread::sleep_for(std::chrono::milliseconds(releaseWaitTime));
             }
         });
