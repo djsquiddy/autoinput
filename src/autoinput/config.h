@@ -61,6 +61,7 @@ namespace autoinput
     std::filesystem::path getConfigFilePath(const std::string& filePath);
     std::optional<ConfigData> loadConfigData(const std::filesystem::path& configPath);
     bool saveConfigData(const ConfigData& configData, const std::filesystem::path& configPath, const std::optional<DefaultSettings>& defaults = std::nullopt);
+    bool duplicateConfig(const std::string& sourceNameOrPath, const std::string& destinationNameOrPath, bool overwrite = false);
     bool doesConfigDataExists(const std::filesystem::path& configPath);
 
     template <typename node_type, typename date_type>

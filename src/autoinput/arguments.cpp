@@ -102,6 +102,27 @@ namespace autoinput
                     return false;
                 }
             }
+            if (arg == "--duplicate-config" || arg == "--copy-config")
+            {
+                duplicateConfigSource = safeGetNextArgument(++i, args);
+                if (duplicateConfigSource.empty())
+                {
+                    printUsage();
+                    Logger::fatal("The parameter {} needs a source argument.\n", arg);
+                    return false;
+                }
+                duplicateConfigDestination = safeGetNextArgument(++i, args);
+                if (duplicateConfigDestination.empty())
+                {
+                    printUsage();
+                    Logger::fatal("The parameter {} needs a destination argument.\n", arg);
+                    return false;
+                }
+            }
+            if (arg == "--force")
+            {
+                forceOverwrite = true;
+            }
         }
         return true;
     }
@@ -219,6 +240,16 @@ namespace autoinput
             {
                 // Already handled in first pass, but skip its value
                 safeGetNextArgument(++i, args);
+            }
+            else if (arg == "--duplicate-config" || arg == "--copy-config")
+            {
+                // Already handled in first pass, but skip its values
+                safeGetNextArgument(++i, args);
+                safeGetNextArgument(++i, args);
+            }
+            else if (arg == "--force")
+            {
+                // Already handled in first pass
             }
             else if (arg == "--json")
             {

@@ -119,6 +119,15 @@ int main(int argc, char* argv[])
             Logger::fatal("Failed to save configuration to {}\n", dumpPath.string());
             return static_cast<int>(ErrorCode::FAILED_TO_LOAD_CONFIG);
         }
+        
+        if (!g_program->arguments().duplicateConfigSource.empty())
+        {
+            if (duplicateConfig(g_program->arguments().duplicateConfigSource, g_program->arguments().duplicateConfigDestination, g_program->arguments().forceOverwrite))
+            {
+                return static_cast<int>(ErrorCode::SUCCESS);
+            }
+            return static_cast<int>(ErrorCode::FAILED_TO_LOAD_CONFIG);
+        }
 
         if (!g_program->arguments().validateConfigName.empty())
         {

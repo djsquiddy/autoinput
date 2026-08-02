@@ -52,6 +52,10 @@ namespace autoinput
         Logger::print("{} Save the current configuration into a named configuration in the user configurations and exit.\n", optionUsagePrefix);
         Logger::print("{} --validate-config CONFIG_NAME_OR_PATH\n", optionPrefix);
         Logger::print("{} Validate the specified configuration file and exit.\n", optionUsagePrefix);
+        Logger::print("{} --duplicate-config SOURCE DESTINATION, --copy-config SOURCE DESTINATION\n", optionPrefix);
+        Logger::print("{} Duplicate an existing configuration into a new named configuration in the user configurations and exit.\n", optionUsagePrefix);
+        Logger::print("{} --force\n", optionPrefix);
+        Logger::print("{} Allow overwriting an existing destination configuration.\n", optionUsagePrefix);
         Logger::print("{} --json\n", optionPrefix);
         Logger::print("{} Output validation results as machine-readable JSON. Only applies to --validate-config.\n", optionUsagePrefix);
         Logger::print("{} -w, --wait WAIT_TIME\n", optionPrefix);

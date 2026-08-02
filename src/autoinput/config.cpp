@@ -400,4 +400,57 @@ namespace autoinput
         file << table;
         return true;
     }
+
+    bool duplicateConfig(const std::string& sourceNameOrPath, const std::string& destinationNameOrPath, const bool overwrite)
+    {
+        const std::filesystem::path sourcePath = getConfigFilePath(sourceNameOrPath);
+        if (!std::filesystem::exists(sourcePath))
+        {
+            // getConfigFilePath already logged an error.
+            return false;
+        }
+
+        std::filesystem::path destPath = getUserConfigsPath() / std::filesystem::path(destinationNameOrPath).filename();
+        if (destPath.extension() != ".toml")
+        {
+            destPath.replace_extension(".toml");
+        }
+
+        if (destPath.filename() == "settings.toml")
+        {
+            Logger::error("Cannot duplicate to settings.toml as it is protected.");
+            return false;
+        }
+
+        // Check if source and destination are the same
+        std::error_code ec;
+        if (std::filesystem::exists(destPath) && std::filesystem::equivalent(sourcePath, destPath, ec))
+        {
+            Logger::error("Source and destination resolve to the same path: {}", sourcePath.string());
+            return false;
+        }
+
+        if (std::filesystem::exists(destPath) && !overwrite)
+        {
+            Logger::error("Destination configuration already exists: {}", destPath.string());
+            return false;
+        }
+
+        if (!destPath.parent_path().empty() && !std::filesystem::exists(destPath.parent_path()))
+        {
+            std::filesystem::create_directories(destPath.parent_path());
+        }
+
+        try
+        {
+            std::filesystem::copy_file(sourcePath, destPath, overwrite ? std::filesystem::copy_options::overwrite_existing : std::filesystem::copy_options::none);
+            Logger::print("Configuration duplicated from {} to {}\n", sourcePath.string(), destPath.string());
+            return true;
+        }
+        catch (const std::filesystem::filesystem_error& e)
+        {
+            Logger::error("Failed to duplicate configuration: {}", e.what());
+            return false;
+        }
+    }
 }

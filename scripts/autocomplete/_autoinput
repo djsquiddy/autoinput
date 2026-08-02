@@ -44,6 +44,9 @@ _autoinput() {
         '(-C --list-configs)'{-C,--list-configs}'[List valid configurations]' \
         '(-S --save-config)'{-S,--save-config}'[Save current configuration]:config file:_autoinput_configs' \
         '--validate-config[Validate configuration file]:config file:_autoinput_configs' \
+        '--duplicate-config[Duplicate an existing configuration]:source config:_autoinput_configs:destination config:_autoinput_configs' \
+        '--copy-config[Duplicate an existing configuration]:source config:_autoinput_configs:destination config:_autoinput_configs' \
+        '--force[Allow overwriting an existing destination configuration]' \
         '--json[Output validation results as machine-readable JSON]' \
         '(-w --wait)'{-w,--wait}'[Max wait duration]:time:' \
         '--press-wait[Randomized press delay]:range:' \

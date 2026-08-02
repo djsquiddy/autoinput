@@ -21,53 +21,6 @@
 
 namespace autoinput::test
 {
-    struct CommandResult
-    {
-        int exitCode;
-        std::string output;
-    };
-
-    std::string quotePath(std::filesystem::path path)
-    {
-        return "\"" + path.make_preferred().string() + "\"";
-    }
-
-    CommandResult runCommand(const std::string& command)
-    {
-        // Use a temporary file to capture the output
-        TemporaryDirectory tempDir("run_command_tmp");
-        std::filesystem::path outputPath = tempDir.path() / "output.txt";
-        
-        // Redirect stdout and stderr to the temporary file
-        std::string fullCommand = command + " > " + quotePath(outputPath) + " 2>&1";
-        
-#ifdef _WIN32
-        // On Windows, if there are multiple quotes in the command, cmd /c needs the whole thing quoted.
-        std::string cmdWrapper = "cmd /c \"" + fullCommand + "\"";
-        int rawExitCode = std::system(cmdWrapper.c_str());
-#else
-        int rawExitCode = std::system(fullCommand.c_str());
-#endif
-        
-        // On Windows, std::system returns the exit code directly.
-        // On POSIX, we would need WEXITSTATUS(rawExitCode).
-        int exitCode = rawExitCode;
-#ifndef _WIN32
-        if (WIFEXITED(rawExitCode)) {
-            exitCode = WEXITSTATUS(rawExitCode);
-        }
-#endif
-        
-        std::string output;
-        if (std::filesystem::exists(outputPath))
-        {
-            std::ifstream file(outputPath);
-            output.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-        }
-        
-        return { exitCode, output };
-    }
-
     TEST(ValidateConfigCliTest, ValidConfigReturnsSuccess)
     {
         TemporaryDirectory tempDir("cli_valid");

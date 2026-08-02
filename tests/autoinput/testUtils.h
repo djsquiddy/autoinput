@@ -15,11 +15,13 @@
 #include <chrono>
 #include <thread>
 #include <random>
+#include <fstream>
 
 #ifdef _WIN32
 #include <windows.h>
 #else
 #include <stdlib.h>
+#include <sys/wait.h>
 #endif
 
 #include "autoinput/backend.h"
@@ -185,6 +187,48 @@ namespace autoinput::test
     private:
         std::filesystem::path m_path;
     };
+
+    struct CommandResult
+    {
+        int exitCode;
+        std::string output;
+    };
+
+    inline std::string quotePath(std::filesystem::path path)
+    {
+        return "\"" + path.make_preferred().string() + "\"";
+    }
+
+    inline CommandResult runCommand(const std::string& command)
+    {
+        TemporaryDirectory tempDir("run_command_tmp");
+        std::filesystem::path outputPath = tempDir.path() / "output.txt";
+        
+        std::string fullCommand = command + " > " + quotePath(outputPath) + " 2>&1";
+        
+#ifdef _WIN32
+        std::string cmdWrapper = "cmd /c \"" + fullCommand + "\"";
+        int rawExitCode = std::system(cmdWrapper.c_str());
+#else
+        int rawExitCode = std::system(fullCommand.c_str());
+#endif
+        
+        int exitCode = rawExitCode;
+#ifndef _WIN32
+        if (WIFEXITED(rawExitCode)) {
+            exitCode = WEXITSTATUS(rawExitCode);
+        }
+#endif
+        
+        std::string output;
+        if (std::filesystem::exists(outputPath))
+        {
+            std::ifstream file(outputPath);
+            output.assign((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        }
+        
+        return { exitCode, output };
+    }
 }
 
 #endif // INCLUDE_AUTOINPUT_TEST_UTILS_H

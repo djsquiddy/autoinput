@@ -37,10 +37,13 @@ namespace autoinput
         std::string applicationName{};
         std::string saveConfigName{};
         std::string validateConfigName{};
+        std::string duplicateConfigSource{};
+        std::string duplicateConfigDestination{};
         std::vector<std::string> blacklist{};
         bool listApplications{ false };
         bool listConfigs{ false };
         bool jsonOutput{ false };
+        bool forceOverwrite{ false };
         ActionState actionState{ ActionState::INVALID };
         WaitDelayData delayData{};
 

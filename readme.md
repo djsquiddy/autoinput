@@ -93,6 +93,9 @@ autoinput [options]
 - `-l, --log LEVEL`: Set logging level (debug, info, warning, error).
 - `-S, --save-config NAME`: Save the current active configuration to the user-level configuration directory as `NAME.toml`.
 - `--validate-config NAME-OR-PATH`: Validate the specified configuration file and exit.
+- `--duplicate-config SOURCE DESTINATION`: Duplicate an existing config to a new user config.
+- `--copy-config SOURCE DESTINATION`: Alias for `--duplicate-config`.
+- `--force`: Allow overwriting an existing destination configuration.
 - `--json`: Output validation results as machine-readable JSON. Only applies to `--validate-config`.
 
 #### Examples
@@ -159,6 +162,17 @@ Example JSON output for a valid configuration:
   "errors": []
 }
 ```
+
+9.  **Duplicate a configuration**:
+    ```bash
+    autoinput --duplicate-config core-keeper-fishing my-fishing-copy
+    ```
+    This copies the built-in or user config `core-keeper-fishing` to a new user config named `my-fishing-copy.toml`. Note that the destination is always written to the user config directory and will not overwrite existing configs unless `--force` is used.
+
+10. **Duplicate using alias**:
+    ```bash
+    autoinput --copy-config old-config new-config
+    ```
 
 ### Configuration
 
