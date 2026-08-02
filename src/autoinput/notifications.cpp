@@ -41,15 +41,14 @@ namespace autoinput
 
         if ((m_mode & StatusNotificationMode::Desktop) != StatusNotificationMode::Off)
         {
-            auto desktopSink = platform::createDesktopNotificationSink();
-            if (desktopSink)
+            if (auto desktopSink = platform::createDesktopNotificationSink())
             {
                 m_sinks.push_back(std::move(desktopSink));
             }
         }
     }
 
-    void NotificationService::notifyStatus(bool active)
+    void NotificationService::notifyStatus(const bool active)
     {
         if (m_jsonOutput || m_mode == StatusNotificationMode::Off)
         {

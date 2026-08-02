@@ -83,6 +83,7 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mousePrioritizationTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/notificationTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseTest_win32.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/win32/notificationWin32Test.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/signalCleanupTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseModifierTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/userSettingsTest.cpp
