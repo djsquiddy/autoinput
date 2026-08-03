@@ -60,6 +60,25 @@
 
 namespace autoinput
 {
+    using u8 = uint8_t;
+    using u16 = uint16_t;
+    using u32 = uint32_t;
+    using u64 = uint64_t;
+
+    using i8 = int8_t;
+    using i16 = int16_t;
+    using i32 = int32_t;
+    using i64 = int64_t;
+
+    using f32 = float;
+    using f64 = double;
+
+    struct Point
+    {
+        i32 x{ 0 };
+        i32 y{ 0 };
+    };
+
     struct KeyboardData
     {
         std::any internal;
@@ -75,12 +94,9 @@ namespace autoinput
 
     struct Quoted
     {
-        Quoted(std::string_view str)
-        : m_sv(str)
-        {}
+        Quoted(const std::string_view str) : m_sv(str) {}
         std::string_view m_sv;
     };
-
 
     enum class ActionState
     {
@@ -161,8 +177,8 @@ namespace autoinput
     struct Mouse
     {
         Mouse() = default;
-        Mouse(MouseButton b) : button(b) {}
-        Mouse(MouseButton b, KeyModifier m) : button(b), modifier(m) {}
+        explicit Mouse(const MouseButton b) : button(b) {}
+        Mouse(const MouseButton b, const KeyModifier m) : button(b), modifier(m) {}
 
         MouseButton button{ MouseButton::None };
         KeyModifier modifier{ KeyModifier::None };
@@ -233,7 +249,7 @@ namespace autoinput
 template <>
 struct std::formatter<autoinput::MouseButton>
 {
-    constexpr auto parse(std::format_parse_context& ctx)
+    constexpr auto parse(const std::format_parse_context& ctx)
     {
         return ctx.begin();
     }
@@ -248,7 +264,7 @@ struct std::formatter<autoinput::MouseButton>
 template<>
 struct std::formatter<autoinput::Mouse>
 {
-    constexpr auto parse(std::format_parse_context& ctx)
+    constexpr auto parse(const std::format_parse_context& ctx)
     {
         return ctx.begin();
     }
@@ -262,12 +278,12 @@ struct std::formatter<autoinput::Mouse>
 template<>
 struct std::formatter<autoinput::Key>
 {
-    constexpr auto parse(std::format_parse_context& ctx)
+    constexpr auto parse(const std::format_parse_context& ctx)
     {
         return ctx.begin();
     }
 
-    auto format(const autoinput::Key key, std::format_context& ctx) const
+    auto format(const autoinput::Key& key, std::format_context& ctx) const
     {
         return std::format_to(ctx.out(), "{}", key.toString());
     }
@@ -309,7 +325,7 @@ struct std::formatter<autoinput::Quoted>
         *out++ = m_quote;
         while (pos < end)
         {
-            auto c = p.m_sv[pos++];
+            const auto c = p.m_sv[pos++];
             if (c == m_quote || c == m_esc)
             {
                 *out++ = m_esc;
