@@ -177,7 +177,8 @@ namespace autoinput
     struct Mouse
     {
         Mouse() = default;
-        explicit Mouse(const MouseButton b) : button(b) {}
+        // ReSharper disable once CppNonExplicitConvertingConstructor
+        Mouse(const MouseButton b) : button(b) {}
         Mouse(const MouseButton b, const KeyModifier m) : button(b), modifier(m) {}
 
         MouseButton button{ MouseButton::None };
