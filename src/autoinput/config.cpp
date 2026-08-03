@@ -11,10 +11,12 @@
 #include "autoinput/platform.h"
 #include "autoinput/environment.h"
 
+
 namespace autoinput
 {
     namespace
     {
+        namespace fs = std::filesystem;
         void populateCommandData(CommandData& commandData, const toml::node& node)
         {
             const auto* table = node.as_table();
@@ -215,14 +217,14 @@ namespace autoinput
         }
     }
 
-    std::filesystem::path getConfigsPath()
+    fs::path getConfigsPath()
     {
         return getConfigsPath(SystemEnvironment::instance());
     }
 
-    std::filesystem::path getConfigsPath(const IEnvironment& environment)
+    fs::path getConfigsPath(const IEnvironment& environment)
     {
-        static std::filesystem::path configsPath;
+        static fs::path configsPath;
         if (configsPath.empty())
         {
             configsPath = environment.executablePath() / "configs";
@@ -230,14 +232,14 @@ namespace autoinput
         return configsPath;
     }
     
-    std::filesystem::path getUserConfigsPath()
+    fs::path getUserConfigsPath()
     {
         return getUserConfigsPath(SystemEnvironment::instance());
     }
 
-    std::filesystem::path getUserConfigsPath(const IEnvironment& environment)
+    fs::path getUserConfigsPath(const IEnvironment& environment)
     {
-        const std::filesystem::path home = environment.userHomePath();
+        const fs::path home = environment.userHomePath();
         if (home.empty())
         {
             return {};
@@ -245,22 +247,21 @@ namespace autoinput
         return home / ".autoinput";
     }
 
-    std::filesystem::path getConfigFilePath(const std::string& filePath)
+    fs::path getConfigFilePath(const std::string& filePath)
     {
-        std::filesystem::path configFilePath{ filePath };
+        fs::path configFilePath{ filePath };
         if (configFilePath.extension() != ".toml")
         {
             configFilePath = filePath + ".toml";
         }
 
-        const std::filesystem::path userPath = getUserConfigsPath() / configFilePath;
-        if (std::filesystem::exists(userPath))
+        if (fs::path userPath = getUserConfigsPath() / configFilePath; fs::exists(userPath))
         {
             return userPath;
         }
 
-        const std::filesystem::path globalPath = getConfigsPath() / configFilePath;
-        if (std::filesystem::exists(globalPath))
+        const fs::path globalPath = getConfigsPath() / configFilePath;
+        if (fs::exists(globalPath))
         {
             return globalPath;
         }
@@ -269,7 +270,7 @@ namespace autoinput
         return globalPath;
     }
 
-    std::optional<ConfigData> loadConfigData(const std::filesystem::path& configPath)
+    std::optional<ConfigData> loadConfigData(const fs::path& configPath)
     {
         toml::parse_result result = toml::parse_file(configPath.string());
         if (!result)
@@ -284,12 +285,12 @@ namespace autoinput
         return configData;
     }
 
-    bool doesConfigDataExists(const std::filesystem::path& configPath)
+    bool doesConfigDataExists(const fs::path& configPath)
     {
-        return std::filesystem::exists(configPath);
+        return fs::exists(configPath);
     }
 
-    bool saveConfigData(const ConfigData& configData, const std::filesystem::path& configPath, const std::optional<DefaultSettings>& defaults)
+    bool saveConfigData(const ConfigData& configData, const fs::path& configPath, const std::optional<DefaultSettings>& defaults)
     {
         toml::table table;
 
@@ -509,9 +510,9 @@ namespace autoinput
             }
         }
 
-        if (!configPath.parent_path().empty() && !std::filesystem::exists(configPath.parent_path()))
+        if (!configPath.parent_path().empty() && !fs::exists(configPath.parent_path()))
         {
-            std::filesystem::create_directories(configPath.parent_path());
+            fs::create_directories(configPath.parent_path());
         }
 
         if (!configData.statusNotificationMode.empty())
@@ -536,14 +537,14 @@ namespace autoinput
 
     bool duplicateConfig(const std::string& sourceNameOrPath, const std::string& destinationNameOrPath, const bool overwrite)
     {
-        const std::filesystem::path sourcePath = getConfigFilePath(sourceNameOrPath);
-        if (!std::filesystem::exists(sourcePath))
+        const fs::path sourcePath = getConfigFilePath(sourceNameOrPath);
+        if (!fs::exists(sourcePath))
         {
             // getConfigFilePath already logged an error.
             return false;
         }
 
-        std::filesystem::path destPath = getUserConfigsPath() / std::filesystem::path(destinationNameOrPath).filename();
+        fs::path destPath = getUserConfigsPath() / fs::path(destinationNameOrPath).filename();
         if (destPath.extension() != ".toml")
         {
             destPath.replace_extension(".toml");
@@ -557,30 +558,30 @@ namespace autoinput
 
         // Check if source and destination are the same
         std::error_code ec;
-        if (std::filesystem::exists(destPath) && std::filesystem::equivalent(sourcePath, destPath, ec))
+        if (fs::exists(destPath) && fs::equivalent(sourcePath, destPath, ec))
         {
             Logger::error("Source and destination resolve to the same path: {}", sourcePath.string());
             return false;
         }
 
-        if (std::filesystem::exists(destPath) && !overwrite)
+        if (fs::exists(destPath) && !overwrite)
         {
             Logger::error("Destination configuration already exists: {}", destPath.string());
             return false;
         }
 
-        if (!destPath.parent_path().empty() && !std::filesystem::exists(destPath.parent_path()))
+        if (!destPath.parent_path().empty() && !fs::exists(destPath.parent_path()))
         {
-            std::filesystem::create_directories(destPath.parent_path());
+            fs::create_directories(destPath.parent_path());
         }
 
         try
         {
-            std::filesystem::copy_file(sourcePath, destPath, overwrite ? std::filesystem::copy_options::overwrite_existing : std::filesystem::copy_options::none);
+            fs::copy_file(sourcePath, destPath, overwrite ? fs::copy_options::overwrite_existing : fs::copy_options::none);
             Logger::print("Configuration duplicated from {} to {}\n", sourcePath.string(), destPath.string());
             return true;
         }
-        catch (const std::filesystem::filesystem_error& e)
+        catch (const fs::filesystem_error& e)
         {
             Logger::error("Failed to duplicate configuration: {}", e.what());
             return false;

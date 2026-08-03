@@ -100,7 +100,6 @@ namespace autoinput
         }
         return false;
     }
-
 }
 
 
