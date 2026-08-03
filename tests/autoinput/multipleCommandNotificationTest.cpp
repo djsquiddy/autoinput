@@ -48,11 +48,6 @@ namespace autoinput::testing
         auto* mockSinkPtr = mockSink.get();
         g_program->getNotificationService()->addSink(std::move(mockSink));
 
-        // We expect notifications for each command
-        EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (LeftClick): ACTIVE")).Times(1);
-        EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (RightClick): ACTIVE")).Times(1);
-        EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking: PAUSED")).Times(1);
-
         // Find KeyInfo for f1 and f2
         const KeyInfo* f1Info = nullptr;
         const KeyInfo* f2Info = nullptr;
@@ -68,10 +63,23 @@ namespace autoinput::testing
         ASSERT_NE(f1Info, nullptr);
         ASSERT_NE(f2Info, nullptr);
 
+        {
+            ::testing::InSequence s;
+            EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (LeftClick): ACTIVE")).Times(1);
+            EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (RightClick): ACTIVE")).Times(1);
+            // Verify that stopping one command while another is active results in a PAUSED notification for that command
+            EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (LeftClick): PAUSED")).Times(1);
+            // Expect final PAUSED notification from Program::end() in TearDown
+            EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking: PAUSED")).Times(1);
+        }
+
         // Activate first command via start()
         g_program->start(*f1Info);
 
         // Activate second command via start()
         g_program->start(*f2Info);
+
+        // Deactivate first command via start() (toggles)
+        g_program->start(*f1Info);
     }
 }

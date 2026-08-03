@@ -51,6 +51,7 @@ namespace autoinput
         bool recordMouseMoves{ false };
         bool listApplications{ false };
         bool listConfigs{ false };
+        bool showHelpExamples{ false };
         bool jsonOutput{ false };
         bool forceOverwrite{ false };
         ActionState actionState{ ActionState::INVALID };

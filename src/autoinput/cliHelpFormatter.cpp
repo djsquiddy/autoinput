@@ -15,13 +15,15 @@ namespace autoinput
 {
     void CliHelpFormatter::printUsage(const std::string_view programName, const bool verbose)
     {
-        Logger::print("usage {} [-h] [{}] [{{left,right,middle,key}} ...] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME] [-S SAVE_CONFIG_NAME] [--validate-config CONFIG_NAME_OR_PATH] [--json] [--status-notification {{off,console,desktop,both}}]\n\n", programName, ConfigMetadata::validActionChoices());
+        Logger::print("usage {} [-h] [--examples] [{}] [{{left,right,middle,key}} ...] [-s START_KEYS [START_KEYS ...]] [-e END_KEY] [-w WAIT_TIME] [-S SAVE_CONFIG_NAME] [--validate-config CONFIG_NAME_OR_PATH] [--json] [--status-notification {{off,console,desktop,both}}]\n\n", programName, ConfigMetadata::validActionChoices());
         Logger::print("options\n");
         const auto optionPrefix = std::string(4, ' ');
         const auto optionUsagePrefix = std::string(10, ' ');
 
         Logger::print("{} -h, --help\n", optionPrefix);
-        Logger::print("{} show this help message with examples and exits.\n", optionUsagePrefix);
+        Logger::print("{} show this help message and exit.\n", optionUsagePrefix);
+        Logger::print("{} --examples\n", optionPrefix);
+        Logger::print("{} show this help message with examples and exit.\n", optionUsagePrefix);
         Logger::print("{} -l, --log [{}]\n", optionPrefix, ConfigMetadata::validLogLevelChoices());
         Logger::print("{} set the log level. (Choices: debug, info, warning, warn, error, fatal)\n", optionUsagePrefix);
         Logger::print("{} -c --config\n", optionPrefix);

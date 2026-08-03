@@ -50,12 +50,19 @@ namespace autoinput
         return postParseArguments();
     }
 
-    bool ProgramArguments::parseEarlyOptions(gsl::span<char*> args)
+    bool ProgramArguments::parseEarlyOptions(const gsl::span<char*> args)
     {
+        showHelpExamples = contains(args, "--examples");
+
         for (int i = 1; i < args.size(); ++i)
         {
             const std::string_view arg = args[i];
             if (arg == "-h" || arg == "--help")
+            {
+                printUsage(showHelpExamples);
+                return false;
+            }
+            if (arg == "--examples")
             {
                 printUsage(true);
                 return false;
@@ -378,8 +385,7 @@ namespace autoinput
     bool ProgramArguments::parsePositionalArgument(const std::string_view arg, const gsl::span<char*> args, int& i)
     {
         // Positional argument
-        const auto state = actionStateFromArguments(arg);
-        if (state != ActionState::INVALID)
+        if (const auto state = actionStateFromArguments(arg); state != ActionState::INVALID)
         {
             actionState = state;
             return true;

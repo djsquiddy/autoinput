@@ -48,20 +48,17 @@ namespace autoinput
         return oss.str();
     }
 
-    std::string join(gsl::span<const std::string> vec, const std::string& delim);
-    std::string escapeJsonString(std::string_view sv);
-    template <typename T>
-    bool contains(std::vector<T> vec, const T& element)
+    template<typename TElement>
+    bool contains(const std::vector<TElement>& vec, const TElement& element)
     {
-        for (const auto& item : vec)
-        {
-            if (item == element)
-            {
-                return true;
-            }
-        }
-        return false;
+        return std::find( std::begin(vec), std::end(vec), element) != std::end(vec);
     }
+
+    bool contains(gsl::span<const std::string> span, const std::string& element);
+    bool contains(gsl::span<char*> span, const std::string& element);
+
+    std::string join(gsl::span<const std::string> span, const std::string& delim);
+    std::string escapeJsonString(std::string_view sv);
 
     class NonCopyable
     {

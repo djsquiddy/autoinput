@@ -20,13 +20,26 @@ std::string autoinput::toLowerCase(std::string_view sv)
     return result;
 }
 
-std::string autoinput::join(gsl::span<const std::string> vec, const std::string& delim)
+bool autoinput::contains(gsl::span<const std::string> span, const std::string& element)
+{
+    return std::find(std::begin(span), std::end(span), element) != std::end(span);
+}
+
+bool autoinput::contains(gsl::span<char*> span, const std::string& element)
+{
+    return std::find_if(std::begin(span), std::end(span), [&element](const char* str)
+    {
+        return str != nullptr && element == str;
+    }) != std::end(span);
+}
+
+std::string autoinput::join(gsl::span<const std::string> span, const std::string& delim)
 {
     std::ostringstream oss;
-    for (size_t i = 0; i < vec.size(); ++i)
+    for (size_t i = 0; i < span.size(); ++i)
     {
-        oss << vec[i];
-        if (i != vec.size() - 1)
+        oss << span[i];
+        if (i != span.size() - 1)
         {
             oss << delim;
         }

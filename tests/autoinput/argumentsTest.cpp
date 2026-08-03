@@ -323,4 +323,52 @@ namespace autoinput
         EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
         EXPECT_EQ(arguments.validateConfigName, "myconfig");
     }
+
+    TEST(ProgramArgumentsTest, ParseArgumentsHandlesHelpFlag)
+    {
+        ProgramArguments arguments;
+        char program[] = "autoinput";
+        char helpOpt[] = "--help";
+        char* argv[] = { program, helpOpt };
+
+        // parseArguments returns false for help
+        EXPECT_FALSE(arguments.parseArguments(gsl::make_span(argv), false));
+        EXPECT_FALSE(arguments.showHelpExamples);
+    }
+
+    TEST(ProgramArgumentsTest, ParseArgumentsHandlesExamplesFlag)
+    {
+        ProgramArguments arguments;
+        char program[] = "autoinput";
+        char examplesOpt[] = "--examples";
+        char* argv[] = { program, examplesOpt };
+
+        // parseArguments returns false for examples
+        EXPECT_FALSE(arguments.parseArguments(gsl::make_span(argv), false));
+        EXPECT_TRUE(arguments.showHelpExamples);
+    }
+
+    TEST(ProgramArgumentsTest, ParseArgumentsHandlesHelpAndExamplesFlagOrder1)
+    {
+        ProgramArguments arguments;
+        char program[] = "autoinput";
+        char helpOpt[] = "--help";
+        char examplesOpt[] = "--examples";
+        char* argv[] = { program, helpOpt, examplesOpt };
+
+        EXPECT_FALSE(arguments.parseArguments(gsl::make_span(argv), false));
+        EXPECT_TRUE(arguments.showHelpExamples);
+    }
+
+    TEST(ProgramArgumentsTest, ParseArgumentsHandlesHelpAndExamplesFlagOrder2)
+    {
+        ProgramArguments arguments;
+        char program[] = "autoinput";
+        char helpOpt[] = "--help";
+        char examplesOpt[] = "--examples";
+        char* argv[] = { program, examplesOpt, helpOpt };
+
+        EXPECT_FALSE(arguments.parseArguments(gsl::make_span(argv), false));
+        EXPECT_TRUE(arguments.showHelpExamples);
+    }
 }

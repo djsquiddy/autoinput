@@ -11,6 +11,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <optional>
 #include "autoinput/types.h"
 
 namespace autoinput
@@ -27,7 +28,7 @@ namespace autoinput
     public:
         NotificationService(StatusNotificationMode mode, bool jsonOutput);
         
-        void notifyStatus(bool active, const std::string& commandName = "");
+        void notifyStatus(bool active, const std::string& commandName = "", std::optional<bool> commandActive = std::nullopt);
 
         // For testing
         void addSink(std::unique_ptr<INotificationSink> sink) { m_sinks.push_back(std::move(sink)); }

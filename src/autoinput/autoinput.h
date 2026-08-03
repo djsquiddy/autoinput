@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <memory>
 #include <thread>
+#include <optional>
 
 #include "autoinput/arguments.h"
 #include "autoinput/backend.h"
@@ -64,7 +65,7 @@ namespace autoinput
         void printProgramInfo() const;
         [[nodiscard]] bool isApplicationBlacklisted() const;
         void onFocusChanged(const std::string& activeApp);
-        void updateStatusIndicator(const std::string& triggeredCommandName = "");
+        void updateStatusIndicator(const std::string& triggeredCommandName = "", std::optional<bool> triggeredCommandActive = std::nullopt);
 
     private:
         std::unique_ptr<IPlatformBackend> m_backend{ nullptr };

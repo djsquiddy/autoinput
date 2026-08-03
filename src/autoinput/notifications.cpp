@@ -68,22 +68,23 @@ namespace autoinput
         }
     }
 
-    void NotificationService::notifyStatus(const bool active, const std::string& commandName)
+    void NotificationService::notifyStatus(const bool active, const std::string& commandName, std::optional<bool> commandActive)
     {
         if (m_jsonOutput || m_mode == StatusNotificationMode::Off)
         {
             return;
         }
 
+        const bool displayActive = commandActive.value_or(active);
         const std::string title = "AutoInput";
         std::string body;
         if (commandName.empty())
         {
-            body = active ? "Auto clicking: ACTIVE" : "Auto clicking: PAUSED";
+            body = displayActive ? "Auto clicking: ACTIVE" : "Auto clicking: PAUSED";
         }
         else
         {
-            body = std::format("Auto clicking ({}): {}", commandName, active ? "ACTIVE" : "PAUSED");
+            body = std::format("Auto clicking ({}): {}", commandName, displayActive ? "ACTIVE" : "PAUSED");
         }
 
         for (const auto& sink : m_sinks)

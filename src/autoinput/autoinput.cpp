@@ -318,8 +318,12 @@ namespace autoinput
             {
                 startAutoClicker(*handlerToStart);
             }
+            updateStatusIndicator(keyInfo.name, handlerToStart->getActive());
         }
-        updateStatusIndicator(keyInfo.name);
+        else
+        {
+            updateStatusIndicator(keyInfo.name);
+        }
     }
 
     void Program::end()
@@ -482,7 +486,7 @@ namespace autoinput
         updateStatusIndicator();
     }
 
-    void Program::updateStatusIndicator(const std::string& triggeredCommandName)
+    void Program::updateStatusIndicator(const std::string& triggeredCommandName, std::optional<bool> triggeredCommandActive)
     {
         if (m_arguments.jsonOutput)
         {
@@ -509,17 +513,29 @@ namespace autoinput
                 }
             }
         }
+        if (!isActive)
+        {
+            for (const auto& handler : m_sequenceHandlers | std::views::values)
+            {
+                if (handler.getActive() && !handler.getPaused())
+                {
+                    isActive = true;
+                    break;
+                }
+            }
+        }
 
         if (isActive != m_lastIsActiveIndicator || !triggeredCommandName.empty())
         {
             if (m_notificationService)
             {
-                m_notificationService->notifyStatus(isActive, triggeredCommandName);
+                m_notificationService->notifyStatus(isActive, triggeredCommandName, triggeredCommandActive);
             }
             else
             {
                 // Fallback for cases where m_notificationService is not yet initialized (e.g. tests)
-                if (isActive)
+                const bool displayActive = triggeredCommandActive.value_or(isActive);
+                if (displayActive)
                 {
                     if (triggeredCommandName.empty())
                     {
