@@ -100,6 +100,12 @@ autoinput [options]
 - `--copy-config SOURCE DESTINATION`: Alias for `--duplicate-config`.
 - `--force`: Allow overwriting an existing destination configuration.
 - `--json`: Output validation results as machine-readable JSON. Only applies to `--validate-config`.
+- `--record NAME`: Record a macro sequence and save it as `NAME.toml`.
+- `--record-start KEY`: Key to start recording (defaults to `f8`).
+- `--record-end KEY`: Key to stop and save recording (defaults to `f9`).
+- `--record-play-start KEY`: Default start key for replaying the recorded macro (defaults to `f6`).
+- `--record-mouse-moves`: Enable recording of mouse movement events.
+- `--record-mouse-sample TIME`: Frequency of mouse position sampling when movement recording is enabled (defaults to `25ms`).
 
 #### Examples
 
@@ -177,6 +183,12 @@ Example JSON output for a valid configuration:
     autoinput --copy-config old-config new-config
     ```
 
+11. **Record a macro**:
+    ```bash
+    autoinput --record my-macro --record-start f8 --record-end f9
+    ```
+    This will wait until `f8` is pressed, record all key and mouse events until `f9` is pressed, and save the sequence as `my-macro.toml` in your user config directory. Replay it later with `autoinput --config my-macro` and the default re-play key `f6`.
+
 ### Configuration
 
 The application supports loading settings from TOML files.
@@ -218,7 +230,24 @@ For multiple commands, use one `[[command]]` block per command:
     time = { press = "25ms", release = "500ms" }
 ```
 
-Each `[[command]]` block is an independent automation command. The next command starts at the next `[[command]]` block.
+    Each `[[command]]` block is an independent automation command. The next command starts at the next `[[command]]` block.
+
+For recorded macros, use `[[sequence]]` blocks:
+
+```toml
+    [[sequence]]
+    name = "my-macro"
+    start = "f6"
+    repeat = false
+
+    events = [
+      { type = "mouse_move", x = 1000, y = 500, delay = "0ms" },
+      { type = "mouse_down", button = "left", x = 1000, y = 500, delay = "120ms" },
+      { type = "mouse_up", button = "left", x = 1000, y = 500, delay = "80ms" },
+      { type = "key_down", key = "space", delay = "400ms" },
+      { type = "key_up", key = "space", delay = "40ms" }
+    ]
+```
 
 This format is recommended for multi-command setups because it avoids the ambiguity of positional command-line arguments.
 

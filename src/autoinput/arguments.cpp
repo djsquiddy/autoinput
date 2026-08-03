@@ -526,6 +526,8 @@ namespace autoinput
             data.commands.push_back(std::move(cmd));
         }
 
+        data.sequences = sequences;
+
         return data;
     }
 
@@ -621,6 +623,10 @@ namespace autoinput
             if (!configData.statusNotificationMode.empty())
             {
                 statusNotificationMode = statusNotificationModeFromString(configData.statusNotificationMode);
+            }
+            if (!configData.sequences.empty())
+            {
+                sequences.insert(sequences.end(), configData.sequences.begin(), configData.sequences.end());
             }
         }
 

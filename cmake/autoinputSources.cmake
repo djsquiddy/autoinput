@@ -38,6 +38,8 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/settings.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/settings.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/handler.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/sequence.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/sequence.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/terminal.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.cpp

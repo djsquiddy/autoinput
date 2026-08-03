@@ -21,6 +21,8 @@
 #include "autoinput/handlerState.h"
 #include "autoinput/types.h"
 #include "autoinput/notifications.h"
+#include "autoinput/sequence.h"
+#include "autoinput/waitDelay.h"
 
 namespace autoinput
 {
@@ -52,6 +54,7 @@ namespace autoinput
 #ifdef AUTOINPUT_TESTING
         auto& getMouseHandlers() { return m_mouseHandlers; }
         auto& getKeyHandlers() { return m_keyHandlers; }
+        auto& getSequenceHandlers() { return m_sequenceHandlers; }
         [[nodiscard]] bool getLastIsActiveIndicator() const { return m_lastIsActiveIndicator; }
         void setTestActiveApp(std::string app) { m_testActiveApp = std::move(app); }
 #endif
@@ -65,6 +68,7 @@ namespace autoinput
         std::unique_ptr<IPlatformBackend> m_backend{ nullptr };
         std::unordered_map<Mouse, MouseHandler, HashFunction<Mouse>> m_mouseHandlers{};
         std::unordered_map<Key, KeyHandler, HashFunction<Key>> m_keyHandlers{};
+        std::unordered_map<Key, SequenceHandler, HashFunction<Key>> m_sequenceHandlers{};
         ProgramArguments m_arguments{};
         std::vector<KeyInfo> m_keyInfo{};
         std::vector<std::unique_ptr<std::thread>> m_zombieThreads{};

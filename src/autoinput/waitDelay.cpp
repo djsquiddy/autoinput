@@ -208,4 +208,14 @@ namespace autoinput
 
         return checkPart(wait);
     }
+
+    std::chrono::milliseconds parseWaitDelay(const std::string_view delayStr)
+    {
+        WaitDelayData data;
+        if (data.parseWaitTimeDelay(delayStr, true))
+        {
+            return data.getPressDelay();
+        }
+        return std::chrono::milliseconds(0);
+    }
 }

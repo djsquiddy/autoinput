@@ -552,6 +552,90 @@ namespace autoinput
                 sendKeyboardInputs(inputs);
             }
 
+            void keyDown(const Key& key) override
+            {
+                std::vector<INPUT> inputs;
+                inputs.push_back(keyboardInput(toVirtualKey(key)));
+                sendKeyboardInputs(inputs);
+            }
+
+            void keyUp(const Key& key) override
+            {
+                std::vector<INPUT> inputs;
+                inputs.push_back(keyboardInput(toVirtualKey(key), KEYEVENTF_KEYUP));
+                sendKeyboardInputs(inputs);
+            }
+
+            void mouseDown(const Mouse& mouse) override
+            {
+                INPUT mouseInput{};
+                mouseInput.type = INPUT_MOUSE;
+                switch (mouse.button)
+                {
+                case MouseButton::Left: mouseInput.mi.dwFlags = MOUSEEVENTF_LEFTDOWN; break;
+                case MouseButton::Middle: mouseInput.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN; break;
+                case MouseButton::Right: mouseInput.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN; break;
+                case MouseButton::Back:
+                    mouseInput.mi.dwFlags = MOUSEEVENTF_XDOWN;
+                    mouseInput.mi.mouseData = XBUTTON1;
+                    break;
+                case MouseButton::Forward:
+                    mouseInput.mi.dwFlags = MOUSEEVENTF_XDOWN;
+                    mouseInput.mi.mouseData = XBUTTON2;
+                    break;
+                default: break;
+                }
+                if (mouseInput.mi.dwFlags != 0)
+                {
+                    sendKeyboardInputs({ mouseInput });
+                }
+            }
+
+            void mouseUp(const Mouse& mouse) override
+            {
+                INPUT mouseInput{};
+                mouseInput.type = INPUT_MOUSE;
+                switch (mouse.button)
+                {
+                case MouseButton::Left: mouseInput.mi.dwFlags = MOUSEEVENTF_LEFTUP; break;
+                case MouseButton::Middle: mouseInput.mi.dwFlags = MOUSEEVENTF_MIDDLEUP; break;
+                case MouseButton::Right: mouseInput.mi.dwFlags = MOUSEEVENTF_RIGHTUP; break;
+                case MouseButton::Back:
+                    mouseInput.mi.dwFlags = MOUSEEVENTF_XUP;
+                    mouseInput.mi.mouseData = XBUTTON1;
+                    break;
+                case MouseButton::Forward:
+                    mouseInput.mi.dwFlags = MOUSEEVENTF_XUP;
+                    mouseInput.mi.mouseData = XBUTTON2;
+                    break;
+                default: break;
+                }
+                if (mouseInput.mi.dwFlags != 0)
+                {
+                    sendKeyboardInputs({ mouseInput });
+                }
+            }
+
+            void moveMouseTo(int32_t x, int32_t y) override
+            {
+                INPUT mouseInput{};
+                mouseInput.type = INPUT_MOUSE;
+                mouseInput.mi.dx = (x * 65536) / GetSystemMetrics(SM_CXSCREEN);
+                mouseInput.mi.dy = (y * 65536) / GetSystemMetrics(SM_CYSCREEN);
+                mouseInput.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+                sendKeyboardInputs({ mouseInput });
+            }
+
+            std::pair<int32_t, int32_t> getCursorPosition() override
+            {
+                POINT p;
+                if (GetCursorPos(&p))
+                {
+                    return { static_cast<int32_t>(p.x), static_cast<int32_t>(p.y) };
+                }
+                return { 0, 0 };
+            }
+
             BackendCapabilities capabilities() const override
             {
                 return {
@@ -560,7 +644,9 @@ namespace autoinput
                     .focusDetection = true,
                     .listApplications = true,
                     .syntheticKeyboardInput = true,
-                    .syntheticMouseInput = true
+                    .syntheticMouseInput = true,
+                    .absoluteMouseMovement = true,
+                    .getCursorPosition = true
                 };
             }
         };

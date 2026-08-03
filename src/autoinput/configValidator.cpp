@@ -60,13 +60,65 @@ namespace autoinput
         return true;
     }
 
+    std::vector<ValidationError> validateRecordedSequence(const RecordedSequence& sequence, size_t /*index*/)
+    {
+        std::vector<ValidationError> errors;
+
+        if (sequence.start.empty())
+        {
+            errors.push_back(ValidationError{ "Sequence start key is required." });
+        }
+        else if (!isValidTrigger(sequence.start))
+        {
+            errors.push_back(ValidationError{ std::format("Invalid sequence start key: '{}'", sequence.start) });
+        }
+
+        for (size_t i = 0; i < sequence.events.size(); ++i)
+        {
+            const auto& event = sequence.events[i];
+            if (event.type == RecordedEventType::Invalid)
+            {
+                errors.push_back(ValidationError{ std::format("Event {}: Unknown event type.", i) });
+            }
+
+            if (!event.delay.empty() && !isValidWaitDelay(event.delay))
+            {
+                errors.push_back(ValidationError{ std::format("Event {}: Invalid delay '{}'.", i, event.delay) });
+            }
+
+            if (event.type == RecordedEventType::KeyDown || event.type == RecordedEventType::KeyUp)
+            {
+                if (!event.key || event.key->empty() || Key::fromString(*event.key).character.empty())
+                {
+                    errors.push_back(ValidationError{ std::format("Event {}: Key is required for key event.", i) });
+                }
+            }
+            else if (event.type == RecordedEventType::MouseDown || event.type == RecordedEventType::MouseUp)
+            {
+                if (!event.button || event.button->empty() || Mouse::fromString(*event.button).button == MouseButton::None)
+                {
+                    errors.push_back(ValidationError{ std::format("Event {}: Button is required for mouse button event.", i) });
+                }
+            }
+            else if (event.type == RecordedEventType::MouseMove)
+            {
+                if (!event.x || !event.y)
+                {
+                    errors.push_back(ValidationError{ std::format("Event {}: x and y are required for mouse move event.", i) });
+                }
+            }
+        }
+
+        return errors;
+    }
+
     std::vector<ValidationError> validateConfigData(const ConfigData& configData)
     {
         std::vector<ValidationError> errors;
 
-        if (configData.commands.empty())
+        if (configData.commands.empty() && configData.sequences.empty())
         {
-            errors.push_back(ValidationError{ "Command list is empty." });
+            errors.push_back(ValidationError{ "Config is empty (no commands or sequences)." });
         }
 
         std::vector<std::string> names;
@@ -88,6 +140,26 @@ namespace autoinput
                 err.message = std::format("Command {}: {}", i, err.message);
             }
             errors.insert(errors.end(), commandErrors.begin(), commandErrors.end());
+        }
+
+        for (size_t i = 0; i < configData.sequences.size(); ++i)
+        {
+            const auto& seq = configData.sequences[i];
+            if (!seq.name.empty())
+            {
+                if (std::find(names.begin(), names.end(), seq.name) != names.end())
+                {
+                    errors.push_back(ValidationError{ std::format("Duplicate sequence name: '{}'", seq.name) });
+                }
+                names.push_back(seq.name);
+            }
+
+            auto sequenceErrors = validateRecordedSequence(seq, i);
+            for (auto& err : sequenceErrors)
+            {
+                err.message = std::format("Sequence {}: {}", i, err.message);
+            }
+            errors.insert(errors.end(), sequenceErrors.begin(), sequenceErrors.end());
         }
 
         if (!isValidTrigger(configData.endKey))

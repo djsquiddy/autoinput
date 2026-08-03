@@ -81,6 +81,55 @@ namespace autoinput
             }
         }
 
+        void populateRecordedEventData(RecordedEvent& event, const toml::node& node)
+        {
+            const auto* table = node.as_table();
+            if (!table) return;
+
+            std::string typeStr;
+            if (tryGetTableValue(*table, "type", typeStr))
+            {
+                event.type = recordedEventTypeFromString(typeStr);
+            }
+
+            tryGetTableValue(*table, "delay", event.delay);
+            
+            std::string key;
+            if (tryGetTableValue(*table, "key", key)) event.key = key;
+
+            std::string button;
+            if (tryGetTableValue(*table, "button", button)) event.button = button;
+
+            int32_t x;
+            if (tryGetTableValue(*table, "x", x)) event.x = x;
+
+            int32_t y;
+            if (tryGetTableValue(*table, "y", y)) event.y = y;
+        }
+
+        void populateSequenceData(RecordedSequence& sequence, const toml::node& node)
+        {
+            const auto* table = node.as_table();
+            if (!table) return;
+
+            tryGetTableValue(*table, "name", sequence.name);
+            tryGetTableValue(*table, "start", sequence.start);
+            tryGetTableValue(*table, "repeat", sequence.repeat);
+
+            if (const auto eventsCfg = (*table)["events"])
+            {
+                if (const toml::array* eventsArr = eventsCfg.as_array())
+                {
+                    for (const toml::node& eventNode : *eventsArr)
+                    {
+                        RecordedEvent event;
+                        populateRecordedEventData(event, eventNode);
+                        sequence.events.emplace_back(std::move(event));
+                    }
+                }
+            }
+        }
+
         void populateConfigData(ConfigData& configData, toml::table& table)
         {
             const auto cmdNode = table["command"];
@@ -144,6 +193,23 @@ namespace autoinput
                     {
                         configData.blacklist.emplace_back(app.as_string()->value_or(""));
                     }
+                }
+            }
+
+            const auto sequenceNode = table["sequence"];
+            if (sequenceNode.is_table())
+            {
+                RecordedSequence seq;
+                populateSequenceData(seq, *sequenceNode.as_table());
+                configData.sequences.emplace_back(std::move(seq));
+            }
+            else if (sequenceNode.is_array())
+            {
+                for (toml::node& item : *sequenceNode.as_array())
+                {
+                    RecordedSequence seq;
+                    populateSequenceData(seq, item);
+                    configData.sequences.emplace_back(std::move(seq));
                 }
             }
         }
@@ -296,6 +362,32 @@ namespace autoinput
             return t;
         };
 
+        auto createSequenceTable = [&](const RecordedSequence& seq) {
+            toml::table t;
+            if (!seq.name.empty())
+            {
+                t.insert("name", seq.name);
+            }
+            t.insert("start", seq.start);
+            t.insert("repeat", seq.repeat);
+
+            toml::array eventsArr;
+            for (const auto& event : seq.events)
+            {
+                toml::table et;
+                et.is_inline(true);
+                et.insert("type", recordedEventTypeToString(event.type));
+                et.insert("delay", event.delay);
+                if (event.key.has_value()) et.insert("key", *event.key);
+                if (event.button.has_value()) et.insert("button", *event.button);
+                if (event.x.has_value()) et.insert("x", *event.x);
+                if (event.y.has_value()) et.insert("y", *event.y);
+                eventsArr.push_back(std::move(et));
+            }
+            t.insert("events", std::move(eventsArr));
+            return t;
+        };
+
         auto filterBlacklist = [&](const std::vector<std::string>& blacklist) {
             if (!defaults.has_value())
             {
@@ -398,6 +490,23 @@ namespace autoinput
                 }
             };
             insertStringOrArrayToTable(table, "blacklist", filteredBlacklist);
+        }
+
+        if (!configData.sequences.empty())
+        {
+            if (configData.sequences.size() == 1)
+            {
+                table.insert("sequence", createSequenceTable(configData.sequences[0]));
+            }
+            else
+            {
+                toml::array sequenceArray;
+                for (const auto& seq : configData.sequences)
+                {
+                    sequenceArray.push_back(createSequenceTable(seq));
+                }
+                table.insert("sequence", std::move(sequenceArray));
+            }
         }
 
         if (!configPath.parent_path().empty() && !std::filesystem::exists(configPath.parent_path()))

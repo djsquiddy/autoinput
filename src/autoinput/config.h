@@ -15,6 +15,7 @@
 #include <string_view>
 #include "autoinput/defaults.h"
 #include "autoinput/environment.h"
+#include "autoinput/types.h"
 
 #if defined(__cpp_exceptions) && __cpp_exceptions
     #define TOML_EXCEPTIONS 0 // only necessary if you've left them enabled in your compiler
@@ -35,6 +36,24 @@ namespace autoinput
         std::string releaseWait;
     };
 
+    struct RecordedEvent
+    {
+        RecordedEventType type{ RecordedEventType::Invalid };
+        std::string delay{ "0ms" };
+        std::optional<std::string> key;
+        std::optional<std::string> button;
+        std::optional<int32_t> x;
+        std::optional<int32_t> y;
+    };
+
+    struct RecordedSequence
+    {
+        std::string name;
+        std::string start;
+        bool repeat = false;
+        std::vector<RecordedEvent> events;
+    };
+
     struct DefaultSettings
     {
         std::string start{ defaults::StartKey };
@@ -51,6 +70,7 @@ namespace autoinput
     struct ConfigData
     {
         std::vector<CommandData> commands;
+        std::vector<RecordedSequence> sequences;
         std::string endKey;
         std::string application;
         std::vector<std::string> blacklist;

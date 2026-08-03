@@ -124,6 +124,30 @@ namespace autoinput
         }
     }
 
+    std::string_view recordedEventTypeToString(const RecordedEventType type)
+    {
+        switch (type)
+        {
+        case RecordedEventType::KeyDown: return "key_down";
+        case RecordedEventType::KeyUp: return "key_up";
+        case RecordedEventType::MouseDown: return "mouse_down";
+        case RecordedEventType::MouseUp: return "mouse_up";
+        case RecordedEventType::MouseMove: return "mouse_move";
+        default: return "invalid";
+        }
+    }
+
+    RecordedEventType recordedEventTypeFromString(const std::string_view str)
+    {
+        const std::string lowerStr = toLowerCase(str);
+        if (lowerStr == "key_down") return RecordedEventType::KeyDown;
+        if (lowerStr == "key_up") return RecordedEventType::KeyUp;
+        if (lowerStr == "mouse_down") return RecordedEventType::MouseDown;
+        if (lowerStr == "mouse_up") return RecordedEventType::MouseUp;
+        if (lowerStr == "mouse_move") return RecordedEventType::MouseMove;
+        return RecordedEventType::Invalid;
+    }
+
     Key Key::fromString(const std::string_view& keyValue)
     {
         // 1. Split the view
@@ -170,6 +194,22 @@ namespace autoinput
             {
                 key.character = s;
             }
+        }
+        return key;
+    }
+
+    Key Key::fromKeyState(const KeyState& state)
+    {
+        Key key;
+        key.modifier = state.modifier;
+        if (state.functionKey != INVALID_KEY)
+        {
+            key.character = std::format("f{}", state.functionKey);
+            key.modifier |= KeyModifier::Function;
+        }
+        else if (state.keyCode != INVALID_KEY)
+        {
+            key.character = static_cast<char>(state.keyCode);
         }
         return key;
     }

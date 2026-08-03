@@ -24,6 +24,8 @@ namespace autoinput
         bool listApplications = false;
         bool syntheticKeyboardInput = false;
         bool syntheticMouseInput = false;
+        bool absoluteMouseMovement = false;
+        bool getCursorPosition = false;
     };
 
     class IPlatformBackend
@@ -38,6 +40,13 @@ namespace autoinput
         virtual void keyRelease(const Key& key) = 0;
         virtual void mousePress(const Mouse& mouse) = 0;
         virtual void mouseRelease(const Mouse& mouse) = 0;
+
+        virtual void keyDown(const Key& key) = 0;
+        virtual void keyUp(const Key& key) = 0;
+        virtual void mouseDown(const Mouse& mouse) = 0;
+        virtual void mouseUp(const Mouse& mouse) = 0;
+        virtual void moveMouseTo(int32_t x, int32_t y) = 0;
+        virtual std::pair<int32_t, int32_t> getCursorPosition() = 0;
 
         virtual BackendCapabilities capabilities() const = 0;
     };
@@ -54,6 +63,13 @@ namespace autoinput
         void mousePress(const Mouse& mouse) override { Logger::info("[FAKE] Pressing mouse: {}\n", mouse.toString()); }
         void mouseRelease(const Mouse& mouse) override { Logger::info("[FAKE] Releasing mouse: {}\n", mouse.toString()); }
 
+        void keyDown(const Key& key) override { Logger::info("[FAKE] Key down: {}\n", key.toString()); }
+        void keyUp(const Key& key) override { Logger::info("[FAKE] Key up: {}\n", key.toString()); }
+        void mouseDown(const Mouse& mouse) override { Logger::info("[FAKE] Mouse down: {}\n", mouse.toString()); }
+        void mouseUp(const Mouse& mouse) override { Logger::info("[FAKE] Mouse up: {}\n", mouse.toString()); }
+        void moveMouseTo(int32_t x, int32_t y) override { Logger::info("[FAKE] Move mouse to: {}, {}\n", x, y); }
+        std::pair<int32_t, int32_t> getCursorPosition() override { return { 0, 0 }; }
+
         BackendCapabilities capabilities() const override
         {
             return {
@@ -62,7 +78,9 @@ namespace autoinput
                 .focusDetection = true,
                 .listApplications = true,
                 .syntheticKeyboardInput = true,
-                .syntheticMouseInput = true
+                .syntheticMouseInput = true,
+                .absoluteMouseMovement = true,
+                .getCursorPosition = true
             };
         }
     };

@@ -38,6 +38,13 @@ namespace autoinput
      * @return True if valid, false otherwise.
      */
     bool isValidWaitDelay(std::string_view wait);
+
+    /**
+     * @brief Parses a wait delay string into milliseconds.
+     * @param delayStr The delay string to parse.
+     * @return The duration in milliseconds.
+     */
+    std::chrono::milliseconds parseWaitDelay(std::string_view delayStr);
 }
 
 #endif // INCLUDE_AUTOINPUT_WAIT_DELAY_H

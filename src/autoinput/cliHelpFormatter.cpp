@@ -63,6 +63,18 @@ namespace autoinput
         Logger::print("{} -w, --wait WAIT_TIME\n", optionPrefix);
         Logger::print("{} Max duration to wait before auto clicking. {}\n", optionUsagePrefix, terminal::bold("Type must be set to click"));
         Logger::print("{} Can use a time range by using {{min}}..{{max}} with each click being random between the range. See examples for usage.\n", optionUsagePrefix);
+        Logger::print("{} --record NAME\n", optionPrefix);
+        Logger::print("{} Record a macro sequence and save it as NAME.toml.\n", optionUsagePrefix);
+        Logger::print("{} --record-start KEY\n", optionPrefix);
+        Logger::print("{} Key to start recording. (Default: f8)\n", optionUsagePrefix);
+        Logger::print("{} --record-end KEY\n", optionPrefix);
+        Logger::print("{} Key to stop and save recording. (Default: f9)\n", optionUsagePrefix);
+        Logger::print("{} --record-play-start KEY\n", optionPrefix);
+        Logger::print("{} Default start key for replaying the recorded macro. (Default: f6)\n", optionUsagePrefix);
+        Logger::print("{} --record-mouse-moves\n", optionPrefix);
+        Logger::print("{} Enable recording of mouse movement events. (Disabled by default)\n", optionUsagePrefix);
+        Logger::print("{} --record-mouse-sample TIME\n", optionPrefix);
+        Logger::print("{} How often to sample mouse position when --record-mouse-moves is set. (Default: 25ms)\n", optionUsagePrefix);
 
         Logger::print("\n\n");
         if (verbose)

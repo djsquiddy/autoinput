@@ -87,13 +87,90 @@ namespace autoinput
     {
         input.printInfo();
 
+        const auto [charKey, functionKey, vk, modifier] = input.getKeyState();
+        bool handled = false;
+
+        if (m_recorder)
+        {
+            const Key currentKey = { input.getChar() != 0 ? std::string(1, input.getChar()) : "", modifier };
+            const Key recordStartKey = Key::fromString(m_arguments.recordStartKey);
+            const Key recordEndKey = Key::fromString(m_arguments.recordEndKey);
+
+            // We match by virtual key or character if possible
+            auto keysMatch = [&](const Key& k1, const Key& k2) {
+                if (k1.character == k2.character && k1.modifier == k2.modifier) return true;
+                if (platform::getVirtualKey(k1) == platform::getVirtualKey(k2)) return true;
+                return false;
+            };
+
+            if (m_recorder->getState() == SequenceRecorder::State::Waiting)
+            {
+                if (input.isKeyDown() && keysMatch(recordStartKey, { "", modifier }))
+                {
+                    // Check if it's a function key match
+                    if (modifier == KeyModifier::Function && functionKey == parseStringToInt(m_arguments.recordStartKey.substr(1)))
+                    {
+                        m_recorder->start();
+                        return true;
+                    }
+                }
+                // Also check for character match if not a function key
+                if (input.isKeyDown() && !m_arguments.recordStartKey.empty() && m_arguments.recordStartKey[0] != 'f')
+                {
+                     if (std::tolower(input.getChar()) == std::tolower(m_arguments.recordStartKey[0]))
+                     {
+                         m_recorder->start();
+                         return true;
+                     }
+                }
+            }
+            else if (m_recorder->getState() == SequenceRecorder::State::Recording)
+            {
+                if (input.isKeyDown() && keysMatch(recordEndKey, { "", modifier }))
+                {
+                    if (modifier == KeyModifier::Function && functionKey == parseStringToInt(m_arguments.recordEndKey.substr(1)))
+                    {
+                        m_recorder->stop();
+                        
+                        // Save recording
+                        RecordedSequence seq = m_recorder->getSequence();
+                        seq.start = m_arguments.recordPlayStartKey;
+                        
+                        ConfigData configData = m_arguments.toConfigData();
+                        configData.sequences.push_back(std::move(seq));
+                        
+                        const auto savePath = getUserConfigsPath() / (m_arguments.recordName + ".toml");
+                        if (saveConfigData(configData, savePath))
+                        {
+                            Logger::info("Recorded sequence saved to {}\n", savePath.string());
+                        }
+                        else
+                        {
+                            Logger::error("Failed to save recorded sequence to {}\n", savePath.string());
+                        }
+
+                        platform::signalEnd();
+                        return true;
+                    }
+                }
+
+                // Record the event
+                Key k;
+                if (modifier == KeyModifier::Function) k.character = "f" + std::to_string(functionKey);
+                else if (input.getChar() != 0) k.character = std::string(1, input.getChar());
+                k.modifier = modifier;
+
+                m_recorder->recordKeyEvent(k, input.isKeyDown());
+                return true;
+            }
+            return false;
+        }
+
         if (!input.isKeyDown())
         {
             return false;
         }
 
-        const auto [charKey, functionKey, vk, modifier] = input.getKeyState();
-        bool handled = false;
         bool started = false;
 
         for (const KeyInfo& keyInfo : m_keyInfo)
@@ -148,6 +225,28 @@ namespace autoinput
     bool Program::processMouseEvent(const MouseInput& input)
     {
         input.printInfo();
+
+        if (m_recorder && m_recorder->getState() == SequenceRecorder::State::Recording)
+        {
+            const auto [button, isDown] = input.getButtonState();
+            const auto [x, y] = m_backend->getCursorPosition();
+
+            if (button != MouseButton::None)
+            {
+                m_recorder->recordMouseEvent(Mouse{ button }, isDown, x, y);
+            }
+            else if (m_arguments.recordMouseMoves)
+            {
+                auto now = std::chrono::steady_clock::now();
+                auto sampleDelay = parseWaitDelay(m_arguments.recordMouseSample);
+                if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastMouseSampleTime) >= sampleDelay)
+                {
+                    m_recorder->recordMouseMove(x, y);
+                    m_lastMouseSampleTime = now;
+                }
+            }
+            return true;
+        }
 
         const auto [trigger, isDown] = input.getButtonState();
 
@@ -211,11 +310,26 @@ namespace autoinput
         InputHandler* handlerToStart = nullptr;
         if (keyInfo.mouse.button != MouseButton::None)
         {
-            handlerToStart = &m_mouseHandlers.at(keyInfo.mouse);
+            if (m_mouseHandlers.contains(keyInfo.mouse))
+            {
+                handlerToStart = &m_mouseHandlers.at(keyInfo.mouse);
+            }
         }
         else if (!keyInfo.key.character.empty())
         {
-            handlerToStart = &m_keyHandlers.at(keyInfo.key);
+            if (m_keyHandlers.contains(keyInfo.key))
+            {
+                handlerToStart = &m_keyHandlers.at(keyInfo.key);
+            }
+            else if (m_sequenceHandlers.contains(keyInfo.key))
+            {
+                handlerToStart = &m_sequenceHandlers.at(keyInfo.key);
+            }
+        }
+        else if (keyInfo.triggerKey.character.empty() && keyInfo.triggerButton == MouseButton::None)
+        {
+            // This might be a sequence trigger matched by name or from a config key that didn't populate triggerKey correctly
+            // But usually we match by trigger.
         }
 
         if (handlerToStart)
@@ -243,6 +357,18 @@ namespace autoinput
                         if (keyHandler.m_autoclickerThread)
                         {
                             m_zombieThreads.push_back(std::move(keyHandler.m_autoclickerThread));
+                        }
+                    }
+                }
+                for (auto& seqHandler : m_sequenceHandlers | std::views::values)
+                {
+                    if (seqHandler.getActive() && seqHandler.getExclusiveGroup() == keyInfo.exclusiveGroup)
+                    {
+                        seqHandler.release();
+                        seqHandler.setActive(false);
+                        if (seqHandler.m_autoclickerThread)
+                        {
+                            m_zombieThreads.push_back(std::move(seqHandler.m_autoclickerThread));
                         }
                     }
                 }
@@ -288,6 +414,19 @@ namespace autoinput
             }
         }
 
+        for (auto& seqHandler : m_sequenceHandlers | std::views::values)
+        {
+            seqHandler.release();
+            if (seqHandler.getActive())
+            {
+                seqHandler.setActive(false);
+                if (seqHandler.m_autoclickerThread)
+                {
+                    m_zombieThreads.push_back(std::move(seqHandler.m_autoclickerThread));
+                }
+            }
+        }
+
         platform::signalEnd();
         updateStatusIndicator();
     }
@@ -307,6 +446,14 @@ namespace autoinput
             if (keyHandler.m_autoclickerThread && keyHandler.m_autoclickerThread->joinable())
             {
                 keyHandler.m_autoclickerThread->join();
+            }
+        }
+
+        for (auto& seqHandler : m_sequenceHandlers | std::views::values)
+        {
+            if (seqHandler.m_autoclickerThread && seqHandler.m_autoclickerThread->joinable())
+            {
+                seqHandler.m_autoclickerThread->join();
             }
         }
 
@@ -538,6 +685,13 @@ namespace autoinput
             }
         }
 
+        // Initialize sequences from arguments (e.g., from loaded config)
+        for (const auto& sequenceData : m_arguments.sequences)
+        {
+            Key startKey = Key::fromString(sequenceData.start);
+            m_sequenceHandlers[startKey] = SequenceHandler{ sequenceData, backendPtr };
+        }
+
         auto processKeyString = [this](const std::string& keyStr, const Mouse mouse, Key targetKey, const ActionState action, const bool isStart, const std::string& name = "", const std::string& group = "") {
             const auto mouseTrigger = mouseButtonFromArguments(keyStr);
             KeyInfo info{
@@ -569,6 +723,11 @@ namespace autoinput
             }
             m_keyInfo.emplace_back(std::move(info));
         };
+
+        for (const auto& sequence : m_arguments.sequences)
+        {
+            processKeyString(sequence.start, {}, {}, ActionState::CLICK, true, sequence.name);
+        }
 
         const size_t actionCount = m_arguments.targetActions.size();
         const size_t nameCount = m_arguments.commandNames.size();

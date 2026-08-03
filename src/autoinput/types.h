@@ -101,6 +101,19 @@ namespace autoinput
     StatusNotificationMode statusNotificationModeFromString(std::string_view str);
     std::string_view statusNotificationModeToString(StatusNotificationMode mode);
 
+    enum class RecordedEventType
+    {
+        Invalid = 0,
+        KeyDown,
+        KeyUp,
+        MouseDown,
+        MouseUp,
+        MouseMove
+    };
+
+    std::string_view recordedEventTypeToString(RecordedEventType type);
+    RecordedEventType recordedEventTypeFromString(std::string_view str);
+
     enum class MouseButton : uint8_t
     {
         None = 0,
@@ -172,12 +185,23 @@ namespace autoinput
         }
     };
 
+    constexpr int32_t INVALID_KEY = -1;
+
+    struct KeyState
+    {
+        int32_t keyCode{ INVALID_KEY };
+        int32_t functionKey{ INVALID_KEY };
+        int32_t virtualKey{ 0 };
+        KeyModifier modifier{ KeyModifier::None };
+    };
+
     struct Key
     {
         std::string character{};
         KeyModifier modifier{ KeyModifier::None };
 
         [[nodiscard]] static Key fromString(const std::string_view& keyValue);
+        [[nodiscard]] static Key fromKeyState(const KeyState& state);
         [[nodiscard]] std::string toString() const;
         bool operator==(const Key& rhs) const
         {
@@ -194,9 +218,8 @@ namespace autoinput
         }
     };
 
-    constexpr int32_t INVALID_KEY = -1;
-
     ActionState actionStateFromArguments(std::string_view actionType);
+
     MouseButton mouseButtonFromArguments(std::string_view button);
     std::string mouseButtonToString(const MouseButton& mouseButton);
     int32_t parseStringToInt(std::string_view value);

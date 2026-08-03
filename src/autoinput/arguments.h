@@ -42,6 +42,7 @@ namespace autoinput
         std::string duplicateConfigSource{};
         std::string duplicateConfigDestination{};
         std::vector<std::string> blacklist{};
+        std::vector<RecordedSequence> sequences{};
         bool listApplications{ false };
         bool listConfigs{ false };
         bool jsonOutput{ false };
