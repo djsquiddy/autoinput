@@ -64,17 +64,17 @@ namespace autoinput
         Logger::print("{} Max duration to wait before auto clicking. {}\n", optionUsagePrefix, terminal::bold("Type must be set to click"));
         Logger::print("{} Can use a time range by using {{min}}..{{max}} with each click being random between the range. See examples for usage.\n", optionUsagePrefix);
         Logger::print("{} --record NAME\n", optionPrefix);
-        Logger::print("{} Record a macro sequence and save it as NAME.toml.\n", optionUsagePrefix);
+        Logger::print("{} Record a new input sequence and save it as NAME.toml.\n", optionUsagePrefix);
         Logger::print("{} --record-start KEY\n", optionPrefix);
-        Logger::print("{} Key to start recording. (Default: f8)\n", optionUsagePrefix);
+        Logger::print("{} Key that starts the recording. (Default: {})\n", optionUsagePrefix, defaults::RecordStartKey);
         Logger::print("{} --record-end KEY\n", optionPrefix);
-        Logger::print("{} Key to stop and save recording. (Default: f9)\n", optionUsagePrefix);
+        Logger::print("{} Key that stops the recording. (Default: {})\n", optionUsagePrefix, defaults::RecordEndKey);
         Logger::print("{} --record-play-start KEY\n", optionPrefix);
-        Logger::print("{} Default start key for replaying the recorded macro. (Default: f6)\n", optionUsagePrefix);
+        Logger::print("{} Key that will be used to play back the recorded sequence. (Default: {})\n", optionUsagePrefix, defaults::RecordPlayStartKey);
         Logger::print("{} --record-mouse-moves\n", optionPrefix);
-        Logger::print("{} Enable recording of mouse movement events. (Disabled by default)\n", optionUsagePrefix);
+        Logger::print("{} Enable recording of mouse movement events.\n", optionUsagePrefix);
         Logger::print("{} --record-mouse-sample TIME\n", optionPrefix);
-        Logger::print("{} How often to sample mouse position when --record-mouse-moves is set. (Default: 25ms)\n", optionUsagePrefix);
+        Logger::print("{} Sampling rate for mouse movement recording. (Default: {})\n", optionUsagePrefix, defaults::DefaultRecordMouseSample);
 
         Logger::print("\n\n");
         if (verbose)
@@ -143,6 +143,10 @@ namespace autoinput
             Logger::print("\n");
             Logger::print("{}{}) hold the left click but stop running if notepad is in focus:\n", examplePrefix, index);
             Logger::print("{}{} hold left --blacklist notepad.exe\n", exampleCmdPrefix, programName);
+            ++index;
+            Logger::print("\n");
+            Logger::print("{}{}) record a macro named 'my-macro' starting with F8 and stopping with F9:\n", examplePrefix, index);
+            Logger::print("{}{} --record my-macro --record-start f8 --record-end f9\n", exampleCmdPrefix, programName);
         }
 
         Logger::flush();

@@ -40,6 +40,8 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/handler.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/sequence.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/sequence.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/sequenceRecorder.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/sequenceRecorder.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/terminal.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.cpp
@@ -72,6 +74,8 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/utilsTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/argumentsTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/recorderArgumentsTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/recorderTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configValidatorTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configValidationIntegrationTest.cpp
@@ -89,12 +93,14 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/signalCleanupTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseModifierTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/userSettingsTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/sequenceTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/saveConfigTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/exclusivityTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/focusTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/stopTriggerTest_win32.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configLookupTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/statusIndicatorTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/multipleCommandNotificationTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/testEnvironment.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/backendTest_linux.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/backendCapabilitiesTest.cpp

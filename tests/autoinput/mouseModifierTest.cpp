@@ -23,6 +23,12 @@ public:
     MOCK_METHOD(void, keyRelease, (const Key& key), (override));
     MOCK_METHOD(void, mousePress, (const Mouse& mouse), (override));
     MOCK_METHOD(void, mouseRelease, (const Mouse& mouse), (override));
+    MOCK_METHOD(void, keyDown, (const Key& key), (override));
+    MOCK_METHOD(void, keyUp, (const Key& key), (override));
+    MOCK_METHOD(void, mouseDown, (const Mouse& mouse), (override));
+    MOCK_METHOD(void, mouseUp, (const Mouse& mouse), (override));
+    MOCK_METHOD(void, moveMouseTo, (int32_t x, int32_t y), (override));
+    MOCK_METHOD((std::pair<int32_t, int32_t>), getCursorPosition, (), (override));
     BackendCapabilities capabilities() const override { return {}; }
 };
 

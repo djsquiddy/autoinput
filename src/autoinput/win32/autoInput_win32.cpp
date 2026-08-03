@@ -587,7 +587,8 @@ namespace autoinput
                 }
                 if (mouseInput.mi.dwFlags != 0)
                 {
-                    sendKeyboardInputs({ mouseInput });
+                    INPUT inputs[] = { mouseInput };
+                    sendKeyboardInputs(inputs);
                 }
             }
 
@@ -612,7 +613,8 @@ namespace autoinput
                 }
                 if (mouseInput.mi.dwFlags != 0)
                 {
-                    sendKeyboardInputs({ mouseInput });
+                    INPUT inputs[] = { mouseInput };
+                    sendKeyboardInputs(inputs);
                 }
             }
 
@@ -623,7 +625,9 @@ namespace autoinput
                 mouseInput.mi.dx = (x * 65536) / GetSystemMetrics(SM_CXSCREEN);
                 mouseInput.mi.dy = (y * 65536) / GetSystemMetrics(SM_CYSCREEN);
                 mouseInput.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-                sendKeyboardInputs({ mouseInput });
+                
+                INPUT inputs[] = { mouseInput };
+                sendKeyboardInputs(inputs);
             }
 
             std::pair<int32_t, int32_t> getCursorPosition() override
@@ -710,6 +714,16 @@ namespace autoinput
         const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
         return winData && winData->wParam == WM_MBUTTONDOWN; 
     }
+    bool MouseInput::isSynthetic() const
+    {
+        const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
+        return winData && (winData->mouseStruct->flags & LLMHF_INJECTED);
+    }
+    bool MouseInput::isMouseMove() const
+    {
+        const auto* winData = std::any_cast<WindowsMouseData>(&data.internal);
+        return winData && winData->wParam == WM_MOUSEMOVE;
+    }
 
     MouseInput::ButtonState MouseInput::getButtonState() const
     {
@@ -771,13 +785,14 @@ namespace autoinput
         const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
         return winData && (winData->wParam == WM_SYSKEYDOWN || winData->wParam == WM_SYSKEYUP); 
     }
+    bool KeyboardInput::isSynthetic() const
+    {
+        const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
+        return winData && (winData->kbdStruct->flags & LLKHF_INJECTED);
+    }
 
     int8_t KeyboardInput::getChar() const
     {
-        if (!isKeyDown())
-        {
-            return INVALID_KEY;
-        }
         const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
         if (winData && winData->kbdStruct->vkCode >= 0x30 && winData->kbdStruct->vkCode <= 0x5A)
         {
@@ -793,10 +808,6 @@ namespace autoinput
 
     int64_t KeyboardInput::functionKey() const
     {
-        if (!isKeyDown())
-        {
-            return INVALID_KEY;
-        }
         const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
         if (winData && winData->kbdStruct->vkCode >= VK_F1 && winData->kbdStruct->vkCode <= VK_F24)
         {
@@ -805,7 +816,7 @@ namespace autoinput
         return INVALID_KEY;
     }
 
-    KeyboardInput::KeyState KeyboardInput::getKeyState() const
+    KeyState KeyboardInput::getKeyState() const
     {
         const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
         int32_t vk = winData ? static_cast<int32_t>(winData->kbdStruct->vkCode) : 0;

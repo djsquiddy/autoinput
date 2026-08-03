@@ -52,6 +52,26 @@ namespace autoinput::defaults
      * @brief The default log level.
      */
     constexpr std::string_view DefaultLogLevel = "info";
+
+    /**
+     * @brief The default key to start recording.
+     */
+    constexpr std::string_view RecordStartKey = "f8";
+
+    /**
+     * @brief The default key to end recording.
+     */
+    constexpr std::string_view RecordEndKey = "f9";
+
+    /**
+     * @brief The default key to start playing back a recorded sequence.
+     */
+    constexpr std::string_view RecordPlayStartKey = "f6";
+
+    /**
+     * @brief The default mouse movement sampling rate for recording.
+     */
+    constexpr std::string_view DefaultRecordMouseSample = "25ms";
 }
 
 #endif // INCLUDE_AUTOINPUT_DEFAULTS_H

@@ -34,7 +34,7 @@ namespace autoinput
 
         auto errors = validateConfigData(config);
         ASSERT_FALSE(errors.empty());
-        EXPECT_EQ(errors[0].message, "Command list is empty.");
+        EXPECT_EQ(errors[0].message, "Config is empty (no commands or sequences).");
     }
 
     TEST(ConfigValidatorTest, ValidateConfigData_InvalidAction)

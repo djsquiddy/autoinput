@@ -34,6 +34,8 @@ namespace autoinput
         [[nodiscard]] bool isForwardButtonDown() const;
         [[nodiscard]] bool isMiddleButtonUp() const;
         [[nodiscard]] bool isMiddleButtonDown() const;
+        [[nodiscard]] bool isSynthetic() const;
+        [[nodiscard]] bool isMouseMove() const;
 
         struct ButtonState
         {

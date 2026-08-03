@@ -29,6 +29,16 @@ namespace autoinput
             return false;
         }
 
+        bool Keyboard_isSysKey(const KeyboardData& data)
+        {
+            return false;
+        }
+
+        bool Keyboard_isSynthetic(const KeyboardData& data)
+        {
+            return false;
+        }
+
         int8_t Keyboard_getChar(const KeyboardData& data)
         {
             if (const auto* x11 = std::any_cast<X11KeyboardData>(&data.internal)) return getX11Char(*x11);
@@ -88,6 +98,16 @@ namespace autoinput
         {
             if (const auto* x11 = std::any_cast<X11MouseData>(&data.internal)) return isX11MiddleButtonDown(*x11);
             if (const auto* way = std::any_cast<WaylandMouseData>(&data.internal)) return isWaylandMiddleButtonDown(*way);
+            return false;
+        }
+
+        bool Mouse_isSynthetic(const MouseData& data)
+        {
+            return false;
+        }
+
+        bool Mouse_isMouseMove(const MouseData& data)
+        {
             return false;
         }
 
@@ -172,7 +192,8 @@ namespace autoinput
         return linux_dispatch::Keyboard_isKeyUp(data);
     }
 
-    bool KeyboardInput::isSysKey() const { return false; }
+    bool KeyboardInput::isSysKey() const { return linux_dispatch::Keyboard_isSysKey(data); }
+    bool KeyboardInput::isSynthetic() const { return linux_dispatch::Keyboard_isSynthetic(data); }
 
     int8_t KeyboardInput::getChar() const
     {
@@ -184,7 +205,7 @@ namespace autoinput
         return linux_dispatch::Keyboard_functionKey(data);
     }
 
-    KeyboardInput::KeyState KeyboardInput::getKeyState() const
+    KeyState KeyboardInput::getKeyState() const
     {
         return { 
             static_cast<int32_t>(getChar()), 
@@ -229,6 +250,16 @@ namespace autoinput
     bool MouseInput::isMiddleButtonUp() const
     {
         return linux_dispatch::Mouse_isMiddleButtonUp(data);
+    }
+
+    bool MouseInput::isSynthetic() const
+    {
+        return linux_dispatch::Mouse_isSynthetic(data);
+    }
+
+    bool MouseInput::isMouseMove() const
+    {
+        return linux_dispatch::Mouse_isMouseMove(data);
     }
 
     bool MouseInput::isBackButtonDown() const

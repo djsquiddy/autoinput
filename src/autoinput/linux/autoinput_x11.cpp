@@ -232,6 +232,62 @@ namespace autoinput
                 XFlush(g_display);
             }
 
+            void keyDown(const Key& key) override
+            {
+                if (!g_display) return;
+                const KeySym ks = toKeySym(key);
+                if (ks == NoSymbol) return;
+                XTestFakeKeyEvent(g_display, XKeysymToKeycode(g_display, ks), True, 0);
+                XFlush(g_display);
+            }
+
+            void keyUp(const Key& key) override
+            {
+                if (!g_display) return;
+                const KeySym ks = toKeySym(key);
+                if (ks == NoSymbol) return;
+                XTestFakeKeyEvent(g_display, XKeysymToKeycode(g_display, ks), False, 0);
+                XFlush(g_display);
+            }
+
+            void mouseDown(const Mouse& mouse) override
+            {
+                if (!g_display) return;
+                const unsigned int xButton = toX11Button(mouse.button);
+                if (xButton == 0) return;
+                XTestFakeButtonEvent(g_display, xButton, True, 0);
+                XFlush(g_display);
+            }
+
+            void mouseUp(const Mouse& mouse) override
+            {
+                if (!g_display) return;
+                const unsigned int xButton = toX11Button(mouse.button);
+                if (xButton == 0) return;
+                XTestFakeButtonEvent(g_display, xButton, False, 0);
+                XFlush(g_display);
+            }
+
+            void moveMouseTo(int32_t x, int32_t y) override
+            {
+                if (!g_display) return;
+                XTestFakeMotionEvent(g_display, -1, x, y, 0);
+                XFlush(g_display);
+            }
+
+            std::pair<int32_t, int32_t> getCursorPosition() override
+            {
+                if (!g_display) return { 0, 0 };
+                Window root, child;
+                int rootX, rootY, winX, winY;
+                unsigned int mask;
+                if (XQueryPointer(g_display, g_rootWindow, &root, &child, &rootX, &rootY, &winX, &winY, &mask))
+                {
+                    return { rootX, rootY };
+                }
+                return { 0, 0 };
+            }
+
             BackendCapabilities capabilities() const override
             {
                 return {
@@ -240,7 +296,9 @@ namespace autoinput
                     .focusDetection = true,
                     .listApplications = true,
                     .syntheticKeyboardInput = true,
-                    .syntheticMouseInput = true
+                    .syntheticMouseInput = true,
+                    .absoluteMouseMovement = true,
+                    .getCursorPosition = true
                 };
             }
         };

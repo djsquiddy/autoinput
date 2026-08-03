@@ -100,12 +100,12 @@ autoinput [options]
 - `--copy-config SOURCE DESTINATION`: Alias for `--duplicate-config`.
 - `--force`: Allow overwriting an existing destination configuration.
 - `--json`: Output validation results as machine-readable JSON. Only applies to `--validate-config`.
-- `--record NAME`: Record a macro sequence and save it as `NAME.toml`.
-- `--record-start KEY`: Key to start recording (defaults to `f8`).
-- `--record-end KEY`: Key to stop and save recording (defaults to `f9`).
-- `--record-play-start KEY`: Default start key for replaying the recorded macro (defaults to `f6`).
+- `--record NAME`: Record a new input sequence and save it as `NAME.toml`.
+- `--record-start KEY`: Key that starts the recording (defaults to `f8`).
+- `--record-end KEY`: Key that stops the recording (defaults to `f9`).
+- `--record-play-start KEY`: Key that will be used to play back the recorded sequence (defaults to `f6`).
 - `--record-mouse-moves`: Enable recording of mouse movement events.
-- `--record-mouse-sample TIME`: Frequency of mouse position sampling when movement recording is enabled (defaults to `25ms`).
+- `--record-mouse-sample TIME`: Sampling rate for mouse movement recording (defaults to `25ms`).
 
 #### Examples
 
@@ -139,12 +139,23 @@ autoinput [options]
     autoinput hold left --blacklist notepad.exe
     ```
 
-7.  **Use a configuration file**:
+7.  **Record a macro** named 'my-macro' starting with `F8` and stopping with `F9`:
+    ```bash
+    autoinput --record my-macro --record-start f8 --record-end f9
+    ```
+
+    Once saved, you can play it back using the same executable:
+    ```bash
+    autoinput --config my-macro
+    ```
+    (By default, the sequence will play when you press `F6`, and can be stopped by the global end key `F3`).
+
+8.  **Use a configuration file**:
     ```bash
     autoinput -c core-keeper-fishing
     ```
 
-8.  **Save current setup to a user configuration**:
+9.  **Save current setup to a user configuration**:
     ```bash
     autoinput hold left f2 --press-wait 100ms..200ms --save-config my-setup
     ```
@@ -182,12 +193,6 @@ Example JSON output for a valid configuration:
     ```bash
     autoinput --copy-config old-config new-config
     ```
-
-11. **Record a macro**:
-    ```bash
-    autoinput --record my-macro --record-start f8 --record-end f9
-    ```
-    This will wait until `f8` is pressed, record all key and mouse events until `f9` is pressed, and save the sequence as `my-macro.toml` in your user config directory. Replay it later with `autoinput --config my-macro` and the default re-play key `f6`.
 
 ### Configuration
 

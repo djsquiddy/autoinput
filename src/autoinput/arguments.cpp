@@ -135,6 +135,60 @@ namespace autoinput
             {
                 forceOverwrite = true;
             }
+            if (arg == "--record")
+            {
+                recordName = safeGetNextArgument(++i, args);
+                if (recordName.empty())
+                {
+                    printUsage();
+                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    return false;
+                }
+            }
+            if (arg == "--record-start")
+            {
+                recordStartKey = safeGetNextArgument(++i, args);
+                if (recordStartKey.empty())
+                {
+                    printUsage();
+                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    return false;
+                }
+            }
+            if (arg == "--record-end")
+            {
+                recordEndKey = safeGetNextArgument(++i, args);
+                if (recordEndKey.empty())
+                {
+                    printUsage();
+                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    return false;
+                }
+            }
+            if (arg == "--record-play-start")
+            {
+                recordPlayStartKey = safeGetNextArgument(++i, args);
+                if (recordPlayStartKey.empty())
+                {
+                    printUsage();
+                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    return false;
+                }
+            }
+            if (arg == "--record-mouse-moves")
+            {
+                recordMouseMoves = true;
+            }
+            if (arg == "--record-mouse-sample")
+            {
+                recordMouseSample = safeGetNextArgument(++i, args);
+                if (recordMouseSample.empty())
+                {
+                    printUsage();
+                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    return false;
+                }
+            }
         }
         return true;
     }
@@ -263,6 +317,35 @@ namespace autoinput
             {
                 // Already handled in first pass
             }
+            else if (arg == "--record")
+            {
+                // Already handled in first pass, but skip its value
+                safeGetNextArgument(++i, args);
+            }
+            else if (arg == "--record-start")
+            {
+                // Already handled in first pass, but skip its value
+                safeGetNextArgument(++i, args);
+            }
+            else if (arg == "--record-end")
+            {
+                // Already handled in first pass, but skip its value
+                safeGetNextArgument(++i, args);
+            }
+            else if (arg == "--record-play-start")
+            {
+                // Already handled in first pass, but skip its value
+                safeGetNextArgument(++i, args);
+            }
+            else if (arg == "--record-mouse-moves")
+            {
+                // Already handled in first pass
+            }
+            else if (arg == "--record-mouse-sample")
+            {
+                // Already handled in first pass, but skip its value
+                safeGetNextArgument(++i, args);
+            }
             else if (arg == "--json")
             {
                 // Already handled in first pass
@@ -376,6 +459,13 @@ namespace autoinput
     bool ProgramArguments::postParseArguments()
     {
         applyDefaults();
+
+        if (!recordName.empty() && saveConfigName.empty())
+        {
+            std::filesystem::path destPath = getUserConfigsPath() / (recordName + ".toml");
+            saveConfigName = destPath.string();
+        }
+        
         return true;
     }
 
@@ -471,6 +561,23 @@ namespace autoinput
             {
                 startKeys.resize(targetCount, startKeys.back());
             }
+        }
+
+        if (recordStartKey.empty())
+        {
+            recordStartKey = defaults::RecordStartKey;
+        }
+        if (recordEndKey.empty())
+        {
+            recordEndKey = defaults::RecordEndKey;
+        }
+        if (recordPlayStartKey.empty())
+        {
+            recordPlayStartKey = defaults::RecordPlayStartKey;
+        }
+        if (recordMouseSample.empty())
+        {
+            recordMouseSample = defaults::DefaultRecordMouseSample;
         }
     }
 

@@ -22,6 +22,7 @@
 #include "autoinput/types.h"
 #include "autoinput/notifications.h"
 #include "autoinput/sequence.h"
+#include "autoinput/sequenceRecorder.h"
 #include "autoinput/waitDelay.h"
 
 namespace autoinput
@@ -57,18 +58,20 @@ namespace autoinput
         auto& getSequenceHandlers() { return m_sequenceHandlers; }
         [[nodiscard]] bool getLastIsActiveIndicator() const { return m_lastIsActiveIndicator; }
         void setTestActiveApp(std::string app) { m_testActiveApp = std::move(app); }
+        NotificationService* getNotificationService() const { return m_notificationService.get(); }
 #endif
 
         void printProgramInfo() const;
         [[nodiscard]] bool isApplicationBlacklisted() const;
         void onFocusChanged(const std::string& activeApp);
-        void updateStatusIndicator();
+        void updateStatusIndicator(const std::string& triggeredCommandName = "");
 
     private:
         std::unique_ptr<IPlatformBackend> m_backend{ nullptr };
         std::unordered_map<Mouse, MouseHandler, HashFunction<Mouse>> m_mouseHandlers{};
         std::unordered_map<Key, KeyHandler, HashFunction<Key>> m_keyHandlers{};
         std::unordered_map<Key, SequenceHandler, HashFunction<Key>> m_sequenceHandlers{};
+        std::unique_ptr<SequenceRecorder> m_recorder{ nullptr };
         ProgramArguments m_arguments{};
         std::vector<KeyInfo> m_keyInfo{};
         std::vector<std::unique_ptr<std::thread>> m_zombieThreads{};

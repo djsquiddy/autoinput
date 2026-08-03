@@ -17,11 +17,31 @@ namespace autoinput
         {
             if (body.find("ACTIVE") != std::string::npos)
             {
-                terminal::printStatus("Auto clicking: ", "ACTIVE", terminal::Color::Green);
+                const auto pos = body.find(" (");
+                const auto endPos = body.find("):");
+                if (pos != std::string::npos && endPos != std::string::npos)
+                {
+                    const std::string name = body.substr(pos + 2, endPos - pos - 2);
+                    terminal::printStatus(std::format("Auto clicking ({}): ", name), "ACTIVE", terminal::Color::Green);
+                }
+                else
+                {
+                    terminal::printStatus("Auto clicking: ", "ACTIVE", terminal::Color::Green);
+                }
             }
             else if (body.find("PAUSED") != std::string::npos)
             {
-                terminal::printStatus("Auto clicking: ", "PAUSED", terminal::Color::Yellow);
+                const auto pos = body.find(" (");
+                const auto endPos = body.find("):");
+                if (pos != std::string::npos && endPos != std::string::npos)
+                {
+                    const std::string name = body.substr(pos + 2, endPos - pos - 2);
+                    terminal::printStatus(std::format("Auto clicking ({}): ", name), "PAUSED", terminal::Color::Yellow);
+                }
+                else
+                {
+                    terminal::printStatus("Auto clicking: ", "PAUSED", terminal::Color::Yellow);
+                }
             }
         }
     };
@@ -48,7 +68,7 @@ namespace autoinput
         }
     }
 
-    void NotificationService::notifyStatus(const bool active)
+    void NotificationService::notifyStatus(const bool active, const std::string& commandName)
     {
         if (m_jsonOutput || m_mode == StatusNotificationMode::Off)
         {
@@ -56,7 +76,15 @@ namespace autoinput
         }
 
         const std::string title = "AutoInput";
-        const std::string body = active ? "Auto clicking: ACTIVE" : "Auto clicking: PAUSED";
+        std::string body;
+        if (commandName.empty())
+        {
+            body = active ? "Auto clicking: ACTIVE" : "Auto clicking: PAUSED";
+        }
+        else
+        {
+            body = std::format("Auto clicking ({}): {}", commandName, active ? "ACTIVE" : "PAUSED");
+        }
 
         for (const auto& sink : m_sinks)
         {

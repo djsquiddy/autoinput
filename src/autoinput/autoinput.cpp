@@ -87,83 +87,17 @@ namespace autoinput
     {
         input.printInfo();
 
-        const auto [charKey, functionKey, vk, modifier] = input.getKeyState();
-        bool handled = false;
-
         if (m_recorder)
         {
-            const Key currentKey = { input.getChar() != 0 ? std::string(1, input.getChar()) : "", modifier };
-            const Key recordStartKey = Key::fromString(m_arguments.recordStartKey);
-            const Key recordEndKey = Key::fromString(m_arguments.recordEndKey);
-
-            // We match by virtual key or character if possible
-            auto keysMatch = [&](const Key& k1, const Key& k2) {
-                if (k1.character == k2.character && k1.modifier == k2.modifier) return true;
-                if (platform::getVirtualKey(k1) == platform::getVirtualKey(k2)) return true;
-                return false;
-            };
-
-            if (m_recorder->getState() == SequenceRecorder::State::Waiting)
+            const auto keyState = input.getKeyState();
+            const Key key = Key::fromKeyState(keyState);
+            m_recorder->onKeyEvent(key, input.isKeyDown(), input.isSynthetic());
+            if (m_recorder->getState() == RecorderState::Finished)
             {
-                if (input.isKeyDown() && keysMatch(recordStartKey, { "", modifier }))
-                {
-                    // Check if it's a function key match
-                    if (modifier == KeyModifier::Function && functionKey == parseStringToInt(m_arguments.recordStartKey.substr(1)))
-                    {
-                        m_recorder->start();
-                        return true;
-                    }
-                }
-                // Also check for character match if not a function key
-                if (input.isKeyDown() && !m_arguments.recordStartKey.empty() && m_arguments.recordStartKey[0] != 'f')
-                {
-                     if (std::tolower(input.getChar()) == std::tolower(m_arguments.recordStartKey[0]))
-                     {
-                         m_recorder->start();
-                         return true;
-                     }
-                }
+                m_recorder->save(m_arguments.saveConfigName, m_arguments.forceOverwrite);
+                platform::signalEnd();
             }
-            else if (m_recorder->getState() == SequenceRecorder::State::Recording)
-            {
-                if (input.isKeyDown() && keysMatch(recordEndKey, { "", modifier }))
-                {
-                    if (modifier == KeyModifier::Function && functionKey == parseStringToInt(m_arguments.recordEndKey.substr(1)))
-                    {
-                        m_recorder->stop();
-                        
-                        // Save recording
-                        RecordedSequence seq = m_recorder->getSequence();
-                        seq.start = m_arguments.recordPlayStartKey;
-                        
-                        ConfigData configData = m_arguments.toConfigData();
-                        configData.sequences.push_back(std::move(seq));
-                        
-                        const auto savePath = getUserConfigsPath() / (m_arguments.recordName + ".toml");
-                        if (saveConfigData(configData, savePath))
-                        {
-                            Logger::info("Recorded sequence saved to {}\n", savePath.string());
-                        }
-                        else
-                        {
-                            Logger::error("Failed to save recorded sequence to {}\n", savePath.string());
-                        }
-
-                        platform::signalEnd();
-                        return true;
-                    }
-                }
-
-                // Record the event
-                Key k;
-                if (modifier == KeyModifier::Function) k.character = "f" + std::to_string(functionKey);
-                else if (input.getChar() != 0) k.character = std::string(1, input.getChar());
-                k.modifier = modifier;
-
-                m_recorder->recordKeyEvent(k, input.isKeyDown());
-                return true;
-            }
-            return false;
+            return true; // During recording we handle everything.
         }
 
         if (!input.isKeyDown())
@@ -171,6 +105,8 @@ namespace autoinput
             return false;
         }
 
+        const auto [charKey, functionKey, vk, modifier] = input.getKeyState();
+        bool handled = false;
         bool started = false;
 
         for (const KeyInfo& keyInfo : m_keyInfo)
@@ -226,26 +162,26 @@ namespace autoinput
     {
         input.printInfo();
 
-        if (m_recorder && m_recorder->getState() == SequenceRecorder::State::Recording)
+        if (m_recorder)
         {
-            const auto [button, isDown] = input.getButtonState();
-            const auto [x, y] = m_backend->getCursorPosition();
-
-            if (button != MouseButton::None)
+            if (input.isMouseMove())
             {
-                m_recorder->recordMouseEvent(Mouse{ button }, isDown, x, y);
+                const auto [x, y] = m_backend->getCursorPosition();
+                m_recorder->onMouseMove(x, y, input.isSynthetic());
             }
-            else if (m_arguments.recordMouseMoves)
+            else
             {
-                auto now = std::chrono::steady_clock::now();
-                auto sampleDelay = parseWaitDelay(m_arguments.recordMouseSample);
-                if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastMouseSampleTime) >= sampleDelay)
-                {
-                    m_recorder->recordMouseMove(x, y);
-                    m_lastMouseSampleTime = now;
-                }
+                const auto [trigger, isDown] = input.getButtonState();
+                const auto [x, y] = m_backend->getCursorPosition();
+                m_recorder->onMouseEvent(Mouse(trigger), isDown, x, y, input.isSynthetic());
             }
-            return true;
+            
+            if (m_recorder->getState() == RecorderState::Finished)
+            {
+                m_recorder->save(m_arguments.saveConfigName, m_arguments.forceOverwrite);
+                platform::signalEnd();
+            }
+            return true; // During recording we handle everything.
         }
 
         const auto [trigger, isDown] = input.getButtonState();
@@ -383,7 +319,7 @@ namespace autoinput
                 startAutoClicker(*handlerToStart);
             }
         }
-        updateStatusIndicator();
+        updateStatusIndicator(keyInfo.name);
     }
 
     void Program::end()
@@ -546,7 +482,7 @@ namespace autoinput
         updateStatusIndicator();
     }
 
-    void Program::updateStatusIndicator()
+    void Program::updateStatusIndicator(const std::string& triggeredCommandName)
     {
         if (m_arguments.jsonOutput)
         {
@@ -574,22 +510,36 @@ namespace autoinput
             }
         }
 
-        if (isActive != m_lastIsActiveIndicator)
+        if (isActive != m_lastIsActiveIndicator || !triggeredCommandName.empty())
         {
             if (m_notificationService)
             {
-                m_notificationService->notifyStatus(isActive);
+                m_notificationService->notifyStatus(isActive, triggeredCommandName);
             }
             else
             {
                 // Fallback for cases where m_notificationService is not yet initialized (e.g. tests)
                 if (isActive)
                 {
-                    terminal::printStatus("Auto clicking: ", "ACTIVE", terminal::Color::Green);
+                    if (triggeredCommandName.empty())
+                    {
+                        terminal::printStatus("Auto clicking: ", "ACTIVE", terminal::Color::Green);
+                    }
+                    else
+                    {
+                        terminal::printStatus(std::format("Auto clicking ({}): ", triggeredCommandName), "ACTIVE", terminal::Color::Green);
+                    }
                 }
                 else
                 {
-                    terminal::printStatus("Auto clicking: ", "PAUSED", terminal::Color::Yellow);
+                    if (triggeredCommandName.empty())
+                    {
+                        terminal::printStatus("Auto clicking: ", "PAUSED", terminal::Color::Yellow);
+                    }
+                    else
+                    {
+                        terminal::printStatus(std::format("Auto clicking ({}): ", triggeredCommandName), "PAUSED", terminal::Color::Yellow);
+                    }
                 }
             }
             m_lastIsActiveIndicator = isActive;
@@ -756,6 +706,19 @@ namespace autoinput
         else
         {
             processKeyString(m_arguments.endKey, Mouse{}, {}, ActionState::CLICK, false);
+        }
+
+        if (!m_arguments.recordName.empty())
+        {
+            m_recorder = std::make_unique<SequenceRecorder>(
+                m_arguments.recordName,
+                m_arguments.recordStartKey,
+                m_arguments.recordEndKey,
+                m_arguments.recordPlayStartKey,
+                m_arguments.recordMouseMoves,
+                m_arguments.recordMouseSample
+            );
+            Logger::info("Recording mode active. Press {} to start recording, {} to stop.\n", m_arguments.recordStartKey, m_arguments.recordEndKey);
         }
 
         m_notificationService = std::make_unique<NotificationService>(m_arguments.statusNotificationMode, m_arguments.jsonOutput);

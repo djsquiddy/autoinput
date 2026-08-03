@@ -27,7 +27,7 @@ namespace autoinput
     public:
         NotificationService(StatusNotificationMode mode, bool jsonOutput);
         
-        void notifyStatus(bool active);
+        void notifyStatus(bool active, const std::string& commandName = "");
 
         // For testing
         void addSink(std::unique_ptr<INotificationSink> sink) { m_sinks.push_back(std::move(sink)); }

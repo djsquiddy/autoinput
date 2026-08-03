@@ -29,16 +29,10 @@ namespace autoinput
         [[nodiscard]] bool isKeyDown() const;
         [[nodiscard]] bool isKeyUp() const;
         [[nodiscard]] bool isSysKey() const;
+        [[nodiscard]] bool isSynthetic() const;
         [[nodiscard]] int8_t getChar() const;
         [[nodiscard]] int64_t functionKey() const;
 
-        struct KeyState
-        {
-            int32_t keyCode{ INVALID_KEY };
-            int32_t functionKey{ INVALID_KEY };
-            int32_t virtualKey{ 0 };
-            KeyModifier modifier{ KeyModifier::None };
-        };
         [[nodiscard]] KeyState getKeyState() const;
 
         void printInfo() const;

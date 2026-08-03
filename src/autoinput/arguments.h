@@ -43,6 +43,12 @@ namespace autoinput
         std::string duplicateConfigDestination{};
         std::vector<std::string> blacklist{};
         std::vector<RecordedSequence> sequences{};
+        std::string recordName{};
+        std::string recordStartKey{};
+        std::string recordEndKey{};
+        std::string recordPlayStartKey{};
+        std::string recordMouseSample{};
+        bool recordMouseMoves{ false };
         bool listApplications{ false };
         bool listConfigs{ false };
         bool jsonOutput{ false };

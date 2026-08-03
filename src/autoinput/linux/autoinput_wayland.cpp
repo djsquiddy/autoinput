@@ -238,6 +238,54 @@ namespace autoinput
                 emit(g_uinputFd, EV_SYN, SYN_REPORT, 0);
             }
 
+            void keyDown(const Key& key) override
+            {
+                if (g_uinputFd < 0) return;
+                uint16_t code = toEvdevKey(key);
+                if (code == 0) return;
+                emit(g_uinputFd, EV_KEY, code, 1);
+                emit(g_uinputFd, EV_SYN, SYN_REPORT, 0);
+            }
+
+            void keyUp(const Key& key) override
+            {
+                if (g_uinputFd < 0) return;
+                uint16_t code = toEvdevKey(key);
+                if (code == 0) return;
+                emit(g_uinputFd, EV_KEY, code, 0);
+                emit(g_uinputFd, EV_SYN, SYN_REPORT, 0);
+            }
+
+            void mouseDown(const Mouse& mouse) override
+            {
+                if (g_uinputFd < 0) return;
+                uint16_t btn = toEvdevButton(mouse.button);
+                if (btn == 0) return;
+                emit(g_uinputFd, EV_KEY, btn, 1);
+                emit(g_uinputFd, EV_SYN, SYN_REPORT, 0);
+            }
+
+            void mouseUp(const Mouse& mouse) override
+            {
+                if (g_uinputFd < 0) return;
+                uint16_t btn = toEvdevButton(mouse.button);
+                if (btn == 0) return;
+                emit(g_uinputFd, EV_KEY, btn, 0);
+                emit(g_uinputFd, EV_SYN, SYN_REPORT, 0);
+            }
+
+            void moveMouseTo(int32_t /*x*/, int32_t /*y*/) override
+            {
+                // Absolute mouse move is not yet supported in this MVP for Wayland
+                Logger::warn("Absolute mouse movement is not supported on Wayland backend yet.\n");
+            }
+
+            std::pair<int32_t, int32_t> getCursorPosition() override
+            {
+                // Getting cursor position on Wayland is generally restricted for security
+                return { 0, 0 };
+            }
+
             BackendCapabilities capabilities() const override
             {
                 return {
@@ -246,7 +294,9 @@ namespace autoinput
                     .focusDetection = false,
                     .listApplications = false,
                     .syntheticKeyboardInput = true,
-                    .syntheticMouseInput = true
+                    .syntheticMouseInput = true,
+                    .absoluteMouseMovement = false,
+                    .getCursorPosition = false
                 };
             }
         };
