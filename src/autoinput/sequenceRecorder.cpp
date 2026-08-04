@@ -11,24 +11,26 @@
 
 namespace autoinput
 {
-    SequenceRecorder::SequenceRecorder(std::string name, std::string startKey, std::string endKey, std::string playStartKey, bool recordMouseMoves, std::string mouseSampleDelay)
-        : m_name(std::move(name)), m_startKey(std::move(startKey)), m_endKey(std::move(endKey)), m_playStartKey(std::move(playStartKey)), 
-          m_recordMouseMoves(recordMouseMoves), m_mouseSampleDelay(std::move(mouseSampleDelay))
+    SequenceRecorder::SequenceRecorder(SequenceConfig config)
+        : m_config{ std::move(config) }
+        , m_mouseSampleRateMs{ parseWaitDelay(m_config.mouseSampleDelay) }
     {
-        m_mouseSampleRateMs = parseWaitDelay(m_mouseSampleDelay);
-        m_sequence.name = m_name;
-        m_sequence.start = m_playStartKey;
+        m_sequence.name = m_config.name;
+        m_sequence.start = m_config.startKey;
         m_sequence.repeat = false;
     }
 
     void SequenceRecorder::onKeyEvent(const Key& key, const bool isDown, const bool isSynthetic)
     {
-        if (isSynthetic) return;
+        if (isSynthetic)
+        {
+            return;
+        }
 
         const std::string keyStr = key.toString();
         if (m_state == RecorderState::Waiting)
         {
-            if (keyStr == m_startKey && isDown)
+            if (keyStr == m_config.startKey && isDown)
             {
                 m_state = RecorderState::Recording;
                 m_startTime = std::chrono::steady_clock::now();
@@ -40,7 +42,7 @@ namespace autoinput
 
         if (m_state == RecorderState::Recording)
         {
-            if (keyStr == m_endKey && isDown)
+            if (keyStr == m_config.endKey && isDown)
             {
                 m_state = RecorderState::Finished;
                 Logger::info("Recording finished.\n");
@@ -57,7 +59,10 @@ namespace autoinput
 
     void SequenceRecorder::onMouseEvent(const Mouse& mouse, const bool isDown, const int32_t x, const int32_t y, const bool isSynthetic)
     {
-        if (isSynthetic || m_state != RecorderState::Recording) return;
+        if (isSynthetic || m_state != RecorderState::Recording)
+        {
+            return;
+        }
 
         RecordedEvent event;
         event.type = isDown ? RecordedEventType::MouseDown : RecordedEventType::MouseUp;
@@ -70,7 +75,10 @@ namespace autoinput
 
     void SequenceRecorder::onMouseMove(const int32_t x, const int32_t y, const bool isSynthetic)
     {
-        if (isSynthetic || !m_recordMouseMoves || m_state != RecorderState::Recording) return;
+        if (isSynthetic || !m_config.recordMouseMoves || m_state != RecorderState::Recording)
+        {
+            return;
+        }
 
         const auto now = std::chrono::steady_clock::now();
         if (m_lastMouseMoveTime != std::chrono::steady_clock::time_point{} && (now - m_lastMouseMoveTime) < m_mouseSampleRateMs)
@@ -93,7 +101,7 @@ namespace autoinput
         m_lastEventTime = std::chrono::steady_clock::now();
     }
 
-    std::string SequenceRecorder::getElapsedDelay()
+    std::string SequenceRecorder::getElapsedDelay() const
     {
         const auto now = std::chrono::steady_clock::now();
         const auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastEventTime);
@@ -110,7 +118,7 @@ namespace autoinput
 
         ConfigData data;
         data.sequences.push_back(m_sequence);
-        data.endKey = "f3"; // Default global end key for replaying
+        data.endKey = defaults::EndKey; // Default global end key for replaying
 
         if (saveConfigData(data, path, std::nullopt))
         {

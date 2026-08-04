@@ -18,12 +18,17 @@ namespace autoinput::cli
         {
             switch (action)
             {
-            case ConfigAction::List: return "list";
-            case ConfigAction::Validate: return "validate";
-            case ConfigAction::Duplicate: return "duplicate";
-            case ConfigAction::Copy: return "copy";
+            case ConfigAction::List:
+                return "list";
+            case ConfigAction::Validate:
+                return "validate";
+            case ConfigAction::Duplicate:
+                return "duplicate";
+            case ConfigAction::Copy:
+                return "copy";
             case ConfigAction::None:
-            default: return "";
+            default:
+                return "";
             }
         }
 
@@ -165,11 +170,11 @@ namespace autoinput::cli
 
         if (const std::string_view subcommand = args[index++]; subcommand == "list")
         {
-            action = ConfigAction::List;
+            data.action = ConfigAction::List;
         }
         else if (subcommand == "validate")
         {
-            action = ConfigAction::Validate;
+            data.action = ConfigAction::Validate;
 
             const std::string_view value = safeGetNextArgument(index, args);
             if (value.empty())
@@ -178,12 +183,12 @@ namespace autoinput::cli
                 return false;
             }
 
-            source = value;
+            data.source = value;
             ++index;
         }
         else if (subcommand == "duplicate" || subcommand == "copy")
         {
-            action = subcommand == "duplicate" ? ConfigAction::Duplicate : ConfigAction::Copy;
+            data.action = subcommand == "duplicate" ? ConfigAction::Duplicate : ConfigAction::Copy;
 
             const std::string_view sourceValue = safeGetNextArgument(index, args);
             if (sourceValue.empty())
@@ -192,7 +197,7 @@ namespace autoinput::cli
                 return false;
             }
 
-            source = sourceValue;
+            data.source = sourceValue;
             ++index;
 
             const std::string_view destinationValue = safeGetNextArgument(index, args);
@@ -202,7 +207,7 @@ namespace autoinput::cli
                 return false;
             }
 
-            destination = destinationValue;
+            data.destination = destinationValue;
             ++index;
         }
         else
@@ -217,13 +222,13 @@ namespace autoinput::cli
 
             if (arg == "--force")
             {
-                if (action != ConfigAction::Duplicate && action != ConfigAction::Copy)
+                if (data.action != ConfigAction::Duplicate && data.action != ConfigAction::Copy)
                 {
                     Logger::fatal("The --force option only applies to config duplicate/copy.\n");
                     return false;
                 }
 
-                force = true;
+                data.force = true;
                 ++index;
                 continue;
             }
@@ -243,13 +248,13 @@ namespace autoinput::cli
 
     bool ConfigCommand::validate() const
     {
-        switch (action)
+        switch (data.action)
         {
         case ConfigAction::List:
             return true;
 
         case ConfigAction::Validate:
-            if (source.empty())
+            if (data.source.empty())
             {
                 Logger::fatal("The config validate command needs a NAME_OR_PATH argument.\n");
                 return false;
@@ -258,15 +263,15 @@ namespace autoinput::cli
 
         case ConfigAction::Duplicate:
         case ConfigAction::Copy:
-            if (source.empty())
+            if (data.source.empty())
             {
-                Logger::fatal("The config {} command needs a SOURCE argument.\n", configActionToString(action));
+                Logger::fatal("The config {} command needs a SOURCE argument.\n", configActionToString(data.action));
                 return false;
             }
 
-            if (destination.empty())
+            if (data.destination.empty())
             {
-                Logger::fatal("The config {} command needs a DESTINATION argument.\n", configActionToString(action));
+                Logger::fatal("The config {} command needs a DESTINATION argument.\n", configActionToString(data.action));
                 return false;
             }
 
@@ -281,17 +286,17 @@ namespace autoinput::cli
 
     i32 ConfigCommand::execute()
     {
-        switch (action)
+        switch (data.action)
         {
         case ConfigAction::List:
             return executeListConfigs();
 
         case ConfigAction::Validate:
-            return executeValidateConfig(source, m_context.global.jsonOutput);
+            return executeValidateConfig(data.source, m_context.global.jsonOutput);
 
         case ConfigAction::Duplicate:
         case ConfigAction::Copy:
-            return executeDuplicateConfig(source, destination, force);
+            return executeDuplicateConfig(data.source, data.destination, data.force);
 
         case ConfigAction::None:
         default:

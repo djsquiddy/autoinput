@@ -25,10 +25,20 @@ namespace autoinput
         Cancelled
     };
 
+    struct SequenceConfig
+    {
+        bool recordMouseMoves{};
+        std::string name{};
+        std::string startKey{};
+        std::string endKey{};
+        std::string playStartKey{};
+        std::string mouseSampleDelay{};
+    };
+
     class SequenceRecorder
     {
     public:
-        SequenceRecorder(std::string name, std::string startKey, std::string endKey, std::string playStartKey, bool recordMouseMoves, std::string mouseSampleDelay);
+        explicit SequenceRecorder(SequenceConfig config);
 
         void onKeyEvent(const Key& key, bool isDown, bool isSynthetic = false);
         void onMouseEvent(const Mouse& mouse, bool isDown, int32_t x, int32_t y, bool isSynthetic = false);
@@ -40,12 +50,7 @@ namespace autoinput
         bool save(const std::filesystem::path& path, bool force);
 
     private:
-        std::string m_name;
-        std::string m_startKey;
-        std::string m_endKey;
-        std::string m_playStartKey;
-        bool m_recordMouseMoves;
-        std::string m_mouseSampleDelay;
+        SequenceConfig m_config;
         std::chrono::milliseconds m_mouseSampleRateMs;
         
         RecorderState m_state{ RecorderState::Waiting };
@@ -56,7 +61,7 @@ namespace autoinput
         std::chrono::steady_clock::time_point m_lastMouseMoveTime;
 
         void addEvent(RecordedEvent event);
-        std::string getElapsedDelay();
+        [[nodiscard]] std::string getElapsedDelay() const;
     };
 }
 

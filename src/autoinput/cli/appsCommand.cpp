@@ -20,7 +20,7 @@ namespace autoinput::cli
 
         if (const std::string_view subcommand = args[index++]; subcommand == "list")
         {
-            action = AppsAction::List;
+            data.action = AppsAction::List;
         }
         else
         {
@@ -39,7 +39,7 @@ namespace autoinput::cli
 
     bool AppsCommand::validate() const
     {
-        if (action == AppsAction::None)
+        if (data.action == AppsAction::None)
         {
             Logger::fatal("The apps command needs a subcommand.\n");
             return false;
@@ -50,7 +50,7 @@ namespace autoinput::cli
 
     i32 AppsCommand::execute()
     {
-        switch (action)
+        switch (data.action)
         {
         case AppsAction::List:
         {

@@ -21,12 +21,17 @@ namespace autoinput::cli
         List
     };
 
+    struct AppsData
+    {
+        AppsAction action{ AppsAction::None };
+    };
+
     class AppsCommand final : public CommandBase
     {
     public:
         using CommandBase::CommandBase;
 
-        AppsAction action{ AppsAction::None };
+        AppsData data{};
 
         [[nodiscard]] std::string_view getName() const override { return "apps"; }
         [[nodiscard]] HelpEntry getHelpEntry() const override;

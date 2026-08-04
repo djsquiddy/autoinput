@@ -60,7 +60,7 @@ namespace autoinput::cli
         /**
          * Individual command printHelp() prints only:
          * subcommands
-        *  local options
+         * local options
          * examples
          * notes
          */

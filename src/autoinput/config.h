@@ -50,7 +50,7 @@ namespace autoinput
     {
         std::string name;
         std::string start;
-        bool repeat = false;
+        bool repeat{ false };
         std::vector<RecordedEvent> events;
     };
 
