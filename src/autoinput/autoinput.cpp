@@ -17,7 +17,7 @@
 namespace autoinput
 {
     Program::Program(std::unique_ptr<IPlatformBackend> backend)
-        : m_backend(std::move(backend))
+        : m_backend{ std::move(backend) }
     {
     }
 
@@ -27,6 +27,139 @@ namespace autoinput
         m_backend = std::move(backend);
     }
 
+    bool Program::init()
+    {
+        if (!m_backend)
+        {
+            Logger::error("Program::init() called without a backend!\n");
+            return false;
+        }
+
+        IPlatformBackend* backendPtr = m_backend.get();
+        const size_t buttonCount = m_arguments.buttons.size();
+        for (size_t i = 0; i < buttonCount; ++i)
+        {
+            auto& mouse = m_arguments.buttons[i];
+            m_mouseHandlers[mouse] = MouseHandler{mouse, backendPtr};
+            if (i < m_arguments.commandNames.size())
+            {
+                m_mouseHandlers[mouse].setName(m_arguments.commandNames[i]);
+            }
+            if (i < m_arguments.exclusiveGroups.size())
+            {
+                m_mouseHandlers[mouse].setExclusiveGroup(m_arguments.exclusiveGroups[i]);
+            }
+        }
+
+        const size_t keyCount = m_arguments.keys.size();
+        for (size_t i = 0; i < keyCount; ++i)
+        {
+            auto& key = m_arguments.keys[i];
+            m_keyHandlers[key] = KeyHandler{key, backendPtr};
+            if (i + buttonCount < m_arguments.commandNames.size())
+            {
+                m_keyHandlers[key].setName(m_arguments.commandNames[i + buttonCount]);
+            }
+            if (i + buttonCount < m_arguments.exclusiveGroups.size())
+            {
+                m_keyHandlers[key].setExclusiveGroup(m_arguments.exclusiveGroups[i + buttonCount]);
+            }
+        }
+
+        // Initialize sequences from arguments (e.g., from loaded config)
+        for (const auto& sequenceData : m_arguments.sequences)
+        {
+            Key startKey = Key::fromString(sequenceData.start);
+            m_sequenceHandlers[startKey] = SequenceHandler{ sequenceData, backendPtr };
+        }
+
+        auto processKeyString = [this](const std::string& keyStr, const Mouse mouse, Key targetKey, const ActionState action, const bool isStart, const std::string& name = "", const std::string& group = "") {
+            const auto mouseTrigger = mouseButtonFromArguments(keyStr);
+            KeyInfo info{
+                .mouse = mouse,
+                .key = std::move(targetKey),
+                .action = action,
+                .isStartKey = isStart,
+                .name = name,
+                .exclusiveGroup = group,
+            };
+
+            if (mouseTrigger != MouseButton::None)
+            {
+                info.triggerButton = mouseTrigger;
+            }
+            else
+            {
+                info.triggerKey = Key::fromString(keyStr);
+                info.virtualKey = platform::getVirtualKey(info.triggerKey);
+
+                if (keyStr.length() == 1)
+                {
+                    info.keyCode = std::tolower(keyStr[0]);
+                }
+                else if (std::tolower(keyStr[0]) == 'f' && keyStr.length() > 1 && std::isdigit(keyStr[1]))
+                {
+                    info.functionKey = parseStringToInt(keyStr.substr(1));
+                }
+            }
+            m_keyInfo.emplace_back(std::move(info));
+        };
+
+        for (const auto& sequence : m_arguments.sequences)
+        {
+            processKeyString(sequence.start, {}, {}, ActionState::CLICK, true, sequence.name);
+        }
+
+        const size_t actionCount = m_arguments.targetActions.size();
+        const size_t nameCount = m_arguments.commandNames.size();
+        const size_t groupCount = m_arguments.exclusiveGroups.size();
+
+        for (size_t i = 0; i < m_arguments.startKeys.size(); ++i)
+        {
+            const auto action = i < actionCount ? m_arguments.targetActions[i] : ActionState::CLICK;
+            const std::string& name = i < nameCount ? m_arguments.commandNames[i] : "";
+            const std::string& group = i < groupCount ? m_arguments.exclusiveGroups[i] : "";
+
+            if (i < buttonCount)
+            {
+                processKeyString(m_arguments.startKeys[i], m_arguments.buttons[i], {}, action, true, name, group);
+            }
+            else if (i < buttonCount + keyCount)
+            {
+                processKeyString(m_arguments.startKeys[i], Mouse{}, m_arguments.keys[i - buttonCount], action, true, name, group);
+            }
+        }
+
+        if (m_arguments.endKey.empty())
+        {
+            processKeyString("f3", Mouse{}, {}, ActionState::CLICK, false);
+        }
+        else
+        {
+            processKeyString(m_arguments.endKey, Mouse{}, {}, ActionState::CLICK, false);
+        }
+
+        if (!m_arguments.recordName.empty())
+        {
+            m_recorder = std::make_unique<SequenceRecorder>(
+                SequenceConfig{
+                    .recordMouseMoves = m_arguments.recordMouseMoves,
+                    .name = m_arguments.recordName,
+                    .startKey = m_arguments.recordStartKey,
+                    .endKey = m_arguments.recordEndKey,
+                    .playStartKey = m_arguments.recordPlayStartKey,
+                    .mouseSampleDelay = m_arguments.recordMouseSample
+                }
+            );
+            Logger::info("Recording mode active. Press {} to start recording, {} to stop.\n", m_arguments.recordStartKey, m_arguments.recordEndKey);
+        }
+
+        m_notificationService = std::make_unique<NotificationService>(m_arguments.statusNotificationMode, m_arguments.jsonOutput);
+
+        return true;
+    }
+
+    // ReSharper disable once CppMemberFunctionMayBeConst
     bool Program::installHooks()
     {
         if (m_backend)
@@ -36,6 +169,7 @@ namespace autoinput
         return false;
     }
 
+    // ReSharper disable once CppMemberFunctionMayBeConst
     void Program::runListener()
     {
         if (m_backend)
@@ -44,43 +178,13 @@ namespace autoinput
         }
     }
 
+    // ReSharper disable once CppMemberFunctionMayBeConst
     void Program::cleanup()
     {
         if (m_backend)
         {
             m_backend->cleanup();
         }
-    }
-
-    bool Program::isApplicationBlacklisted() const
-    {
-        if (m_arguments.blacklist.empty())
-        {
-            return false;
-        }
-
-        std::string activeApp;
-#ifdef AUTOINPUT_TESTING
-        if (!m_testActiveApp.empty())
-        {
-            activeApp = toLowerCase(m_testActiveApp);
-        }
-        else
-        {
-            activeApp = toLowerCase(platform::getActiveApplicationName());
-        }
-#else
-        activeApp = toLowerCase(platform::getActiveApplicationName());
-#endif
-
-        for (const std::string& app : m_arguments.blacklist)
-        {
-            if (activeApp.find(toLowerCase(app)) != std::string::npos)
-            {
-                return true;
-            }
-        }
-        return false;
     }
 
     bool Program::processKeyEvent(KeyboardInput&& input)
@@ -440,6 +544,37 @@ namespace autoinput
         Logger::flush();
     }
 
+    bool Program::isApplicationBlacklisted() const
+    {
+        if (m_arguments.blacklist.empty())
+        {
+            return false;
+        }
+
+        std::string activeApp;
+#ifdef AUTOINPUT_TESTING
+        if (!m_testActiveApp.empty())
+        {
+            activeApp = toLowerCase(m_testActiveApp);
+        }
+        else
+        {
+            activeApp = toLowerCase(platform::getActiveApplicationName());
+        }
+#else
+        activeApp = toLowerCase(platform::getActiveApplicationName());
+#endif
+
+        for (const std::string& app : m_arguments.blacklist)
+        {
+            if (activeApp.find(toLowerCase(app)) != std::string::npos)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     void Program::onFocusChanged(const std::string& activeApp)
     {
         const std::string lowerActiveApp = toLowerCase(activeApp);
@@ -610,136 +745,6 @@ namespace autoinput
                 std::this_thread::sleep_for(std::chrono::milliseconds(releaseWaitTime));
             }
         });
-    }
-
-    bool Program::init()
-    {
-        if (!m_backend)
-        {
-            Logger::error("Program::init() called without a backend!\n");
-            return false;
-        }
-
-        IPlatformBackend* backendPtr = m_backend.get();
-        const size_t buttonCount = m_arguments.buttons.size();
-        for (size_t i = 0; i < buttonCount; ++i)
-        {
-            auto& mouse = m_arguments.buttons[i];
-            m_mouseHandlers[mouse] = MouseHandler{mouse, backendPtr};
-            if (i < m_arguments.commandNames.size())
-            {
-                m_mouseHandlers[mouse].setName(m_arguments.commandNames[i]);
-            }
-            if (i < m_arguments.exclusiveGroups.size())
-            {
-                m_mouseHandlers[mouse].setExclusiveGroup(m_arguments.exclusiveGroups[i]);
-            }
-        }
-
-        const size_t keyCount = m_arguments.keys.size();
-        for (size_t i = 0; i < keyCount; ++i)
-        {
-            auto& key = m_arguments.keys[i];
-            m_keyHandlers[key] = KeyHandler{key, backendPtr};
-            if (i + buttonCount < m_arguments.commandNames.size())
-            {
-                m_keyHandlers[key].setName(m_arguments.commandNames[i + buttonCount]);
-            }
-            if (i + buttonCount < m_arguments.exclusiveGroups.size())
-            {
-                m_keyHandlers[key].setExclusiveGroup(m_arguments.exclusiveGroups[i + buttonCount]);
-            }
-        }
-
-        // Initialize sequences from arguments (e.g., from loaded config)
-        for (const auto& sequenceData : m_arguments.sequences)
-        {
-            Key startKey = Key::fromString(sequenceData.start);
-            m_sequenceHandlers[startKey] = SequenceHandler{ sequenceData, backendPtr };
-        }
-
-        auto processKeyString = [this](const std::string& keyStr, const Mouse mouse, Key targetKey, const ActionState action, const bool isStart, const std::string& name = "", const std::string& group = "") {
-            const auto mouseTrigger = mouseButtonFromArguments(keyStr);
-            KeyInfo info{
-                .mouse = mouse,
-                .key = std::move(targetKey),
-                .action = action,
-                .isStartKey = isStart,
-                .name = name,
-                .exclusiveGroup = group,
-            };
-
-            if (mouseTrigger != MouseButton::None)
-            {
-                info.triggerButton = mouseTrigger;
-            }
-            else
-            {
-                info.triggerKey = Key::fromString(keyStr);
-                info.virtualKey = platform::getVirtualKey(info.triggerKey);
-
-                if (keyStr.length() == 1)
-                {
-                    info.keyCode = static_cast<int32_t>(std::tolower(keyStr[0]));
-                }
-                else if (std::tolower(keyStr[0]) == 'f' && keyStr.length() > 1 && std::isdigit(keyStr[1]))
-                {
-                    info.functionKey = parseStringToInt(keyStr.substr(1));
-                }
-            }
-            m_keyInfo.emplace_back(std::move(info));
-        };
-
-        for (const auto& sequence : m_arguments.sequences)
-        {
-            processKeyString(sequence.start, {}, {}, ActionState::CLICK, true, sequence.name);
-        }
-
-        const size_t actionCount = m_arguments.targetActions.size();
-        const size_t nameCount = m_arguments.commandNames.size();
-        const size_t groupCount = m_arguments.exclusiveGroups.size();
-
-        for (size_t i = 0; i < m_arguments.startKeys.size(); ++i)
-        {
-            const auto action = i < actionCount ? m_arguments.targetActions[i] : ActionState::CLICK;
-            const std::string& name = i < nameCount ? m_arguments.commandNames[i] : "";
-            const std::string& group = i < groupCount ? m_arguments.exclusiveGroups[i] : "";
-
-            if (i < buttonCount)
-            {
-                processKeyString(m_arguments.startKeys[i], m_arguments.buttons[i], {}, action, true, name, group);
-            }
-            else if (i < buttonCount + keyCount)
-            {
-                processKeyString(m_arguments.startKeys[i], Mouse{}, m_arguments.keys[i - buttonCount], action, true, name, group);
-            }
-        }
-
-        if (m_arguments.endKey.empty())
-        {
-            processKeyString("f3", Mouse{}, {}, ActionState::CLICK, false);
-        }
-        else
-        {
-            processKeyString(m_arguments.endKey, Mouse{}, {}, ActionState::CLICK, false);
-        }
-
-        if (!m_arguments.recordName.empty())
-        {
-            m_recorder = std::make_unique<SequenceRecorder>(
-                m_arguments.recordName,
-                m_arguments.recordStartKey,
-                m_arguments.recordEndKey,
-                m_arguments.recordPlayStartKey,
-                m_arguments.recordMouseMoves,
-                m_arguments.recordMouseSample
-            );
-            Logger::info("Recording mode active. Press {} to start recording, {} to stop.\n", m_arguments.recordStartKey, m_arguments.recordEndKey);
-        }
-
-        m_notificationService = std::make_unique<NotificationService>(m_arguments.statusNotificationMode, m_arguments.jsonOutput);
-
-        return true;
     }
 
     bool installHooks()
