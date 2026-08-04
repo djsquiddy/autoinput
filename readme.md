@@ -75,124 +75,158 @@ Alternatively, you can copy the `scripts/_autoinput` file to a directory already
 ### Usage
 
 ```bash
-autoinput [options]
+autoinput [global options] <command> [options]
 ```
 
-#### Command Line Options
+#### Global Options
 
-- `[type] {click|hold}`: Set the action type (optional, defaults to `click`).
-- `[button] {left|right|middle|back|forward}`: Select mouse buttons to automate. Modifiers like `shift+left` or `ctrl+alt+right` are supported.
-- `[key] {key}`: Select keyboard keys to automate.
-- `-s, --start, --start-key START_KEYS`: Hotkey(s) or mouse buttons (e.g., `back`, `forward`) to start the automation (defaults to `f2`).
-- `-e, --end, --end-key END_KEY`: Hotkey or mouse button (e.g., `back`, `forward`) to stop the automation (defaults to `f3`).
-- `-a, --app, --application APPLICATION_NAME`: Only listen for inputs when this application is in focus.
-- `-B, --blacklist APPLICATION_NAME`: Do not run when this application is in focus.
-- `-L, --list-apps`: List all currently running application names and exit.
-- `-w, --wait TIME`: Max duration to wait before auto clicking (e.g., `2s`).
-- `--press-wait RANGE`: Randomized delay while button/key is pressed (e.g., `100ms..200ms`).
+- `-h, --help`: Show help. Can be used after a command for command-specific help (e.g., `autoinput help run` or `autoinput run --help`).
+- `--examples`: Show more detailed examples for the specified command.
+- `-l, --log LEVEL`: Set logging level (`debug`, `info`, `warning`, `error`).
+- `--json`: Output results as machine-readable JSON. Only applies to specific commands like `config validate`.
+
+#### Commands
+
+- **run**: Run input automation from command options or a TOML configuration.
+- **record**: Record input events and save them as a replayable configuration.
+- **config**: Manage and validate autoinput configuration files.
+- **apps**: List all currently running application names.
+- **help**: Show help for autoinput commands.
+
+### The `run` Command
+
+Used to start automation. You can specify actions via command-line flags or by loading a configuration file.
+
+#### Options
+
+- `-c, --config NAME_OR_PATH`: Load a TOML configuration.
+- `-t, --type {click|hold}`: Set the action type (defaults to `click`).
+- `-b, --button {left|right|middle|back|forward}`: Select mouse buttons to automate. Modifiers like `shift+left` are supported.
+- `-k, --key {key}`: Select keyboard keys to automate.
+- `-s, --start KEY`: Hotkey or mouse button (e.g., `back`, `forward`) to start/toggle the automation (defaults to `f2`).
+- `-e, --end KEY`: Hotkey or mouse button to stop all automation (defaults to `f3`).
+- `-a, --app APPLICATION`: Only run while this application is in focus.
+- `-B, --blacklist APPLICATION`: Do not run while this application is in focus.
+- `-w, --wait, --press-wait RANGE`: Randomized delay while button/key is pressed (e.g., `10ms..50ms`).
 - `--release-wait RANGE`: Randomized delay between actions (e.g., `1s..2s`).
-- `-c, --config FILE`: Load settings from a TOML configuration file.
-- `-l, --log LEVEL`: Set logging level (debug, info, warning, error).
 - `--status-notification MODE`: Set status notification mode (`off`, `console`, `desktop`, `both`).
 - `-S, --save-config NAME`: Save the current active configuration to the user-level configuration directory as `NAME.toml`.
-- `--validate-config NAME-OR-PATH`: Validate the specified configuration file and exit.
-- `--duplicate-config SOURCE DESTINATION`: Duplicate an existing config to a new user config.
-- `--copy-config SOURCE DESTINATION`: Alias for `--duplicate-config`.
-- `--force`: Allow overwriting an existing destination configuration.
-- `--json`: Output validation results as machine-readable JSON. Only applies to `--validate-config`.
-- `--record NAME`: Record a new input sequence and save it as `NAME.toml`.
-- `--record-start KEY`: Key that starts the recording (defaults to `f8`).
-- `--record-end KEY`: Key that stops the recording (defaults to `f9`).
-- `--record-play-start KEY`: Key that will be used to play back the recorded sequence (defaults to `f6`).
-- `--record-mouse-moves`: Enable recording of mouse movement events.
-- `--record-mouse-sample TIME`: Sampling rate for mouse movement recording (defaults to `25ms`).
 
 #### Examples
 
 1.  **Hold left click** when pressing `F2` and stop on `F3`:
     ```bash
-    autoinput hold left
+    autoinput run --type hold --button left
     ```
 
 2.  **Hold left click** on `F2` and **hold right click** on `F3`:
     ```bash
-    autoinput hold left f2 right f3
+    autoinput run --type hold --button left --start f2 --button right --start f3
     ```
 
 3.  **Click** on `F2` and **hold** on `F4` (both left mouse button):
     ```bash
-    autoinput click f2 hold f4
+    autoinput run --type click --button left --start f2 --type hold --button left --start f4
     ```
 
 4.  **Auto left click** every 1 to 2 seconds:
     ```bash
-    autoinput left --press-wait 1s..2s
+    autoinput run --button left --release-wait 1s..2s
     ```
 
 5.  **Use a combination with modifiers**:
     ```bash
-    autoinput click shift+left f2
+    autoinput run --button shift+left --start f2
     ```
 
 6.  **Hold left click but stop if notepad is in focus**:
     ```bash
-    autoinput hold left --blacklist notepad.exe
+    autoinput run --type hold --button left --blacklist notepad.exe
     ```
 
-7.  **Record a macro** named 'my-macro' starting with `F8` and stopping with `F9`:
+7.  **Use a configuration file**:
     ```bash
-    autoinput --record my-macro --record-start f8 --record-end f9
+    autoinput run --config core-keeper-fishing
     ```
 
-    Once saved, you can play it back using the same executable:
+8.  **Save current setup to a user configuration**:
     ```bash
-    autoinput --config my-macro
+    autoinput run --type hold --button left --start f2 --press-wait 100ms..200ms --save-config my-setup
     ```
-    (By default, the sequence will play when you press `F6`, and can be stopped by the global end key `F3`).
 
-8.  **Use a configuration file**:
+### The `record` Command
+
+Used to record a new input sequence and save it as a TOML configuration.
+
+#### Options
+
+- `NAME`: The name of the recording (saved as `NAME.toml`).
+- `--start KEY`: Key that starts the recording (defaults to `f8`).
+- `--end KEY`: Key that stops the recording (defaults to `f9`).
+- `--play-start KEY`: Key that will be used to play back the recorded sequence (defaults to `f6`).
+- `--mouse-moves`: Enable recording of mouse movement events.
+- `--mouse-sample TIME`: Sampling rate for mouse movement recording (defaults to `25ms`).
+- `--force`: Allow overwriting an existing configuration.
+
+#### Examples
+
+1.  **Record a macro** named 'my-macro' starting with `F8` and stopping with `F9`:
     ```bash
-    autoinput -c core-keeper-fishing
+    autoinput record my-macro --start f8 --end f9
     ```
 
-9.  **Save current setup to a user configuration**:
+2.  **Record mouse moves** with a specific sampling rate:
     ```bash
-    autoinput hold left f2 --press-wait 100ms..200ms --save-config my-setup
+    autoinput record my-macro --mouse-moves --mouse-sample 50ms
     ```
 
-### Configuration Validation
-
-You can validate a configuration file without running the autoclicker. This is useful for verifying complex TOML files or for use in automated scripts.
-
-- **Human-readable output**:
-  ```bash
-  autoinput --validate-config my-config
-  ```
-
-- **Machine-readable JSON output**:
-  ```bash
-  autoinput --validate-config my-config --json
-  ```
-
-Example JSON output for a valid configuration:
-```json
-{
-  "valid": true,
-  "configPath": "C:\\path\\to\\configs\\my-config.toml",
-  "errors": []
-}
+Once saved, you can play it back using the `run` command:
+```bash
+autoinput run --config my-macro
 ```
+(By default, the sequence will play when you press `F6`, and can be stopped by the global end key `F3`).
 
-9.  **Duplicate a configuration**:
-    ```bash
-    autoinput --duplicate-config core-keeper-fishing my-fishing-copy
-    ```
-    This copies the built-in or user config `core-keeper-fishing` to a new user config named `my-fishing-copy.toml`. Note that the destination is always written to the user config directory and will not overwrite existing configs unless `--force` is used.
+### The `config` Command
 
-10. **Duplicate using alias**:
+Used to manage, list, and validate configurations.
+
+#### Subcommands
+
+- **list**: List all available built-in and user configurations.
+- **validate NAME_OR_PATH**: Validate a configuration file.
+- **duplicate SOURCE DESTINATION**: Duplicate an existing config to a new user config.
+- **copy**: Alias for `duplicate`.
+
+#### Examples
+
+1.  **List available configurations**:
     ```bash
-    autoinput --copy-config old-config new-config
+    autoinput config list
     ```
+
+2.  **Validate a configuration file**:
+    ```bash
+    autoinput config validate my-config
+    ```
+
+3.  **Validate with JSON output**:
+    ```bash
+    autoinput config validate my-config --json
+    ```
+
+4.  **Duplicate a configuration**:
+    ```bash
+    autoinput config duplicate core-keeper-fishing my-fishing-copy
+    ```
+    Note that the destination is always written to the user config directory and will not overwrite existing configs unless `--force` is used.
+
+### The `apps` Command
+
+Used to list all currently running application names. This is helpful for finding the correct names to use with `--app` or `--blacklist`.
+
+```bash
+autoinput apps list
+```
 
 ### Configuration
 
@@ -429,11 +463,11 @@ However, saved configs prefer the inline style:
 Run the config with:
 
 ```bash
-    autoinput --config my-config
+autoinput run --config my-config
 ```
 
 or:
 
 ```bash
-    autoinput -c my-config
+autoinput run -c my-config
 ```
