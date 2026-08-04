@@ -540,7 +540,7 @@ namespace autoinput
         const fs::path sourcePath = getConfigFilePath(sourceNameOrPath);
         if (!fs::exists(sourcePath))
         {
-            // getConfigFilePath already logged an error.
+            Logger::error("Source configuration not found: {}", sourceNameOrPath);
             return false;
         }
 
@@ -555,6 +555,8 @@ namespace autoinput
             Logger::error("Cannot duplicate to settings.toml as it is protected.");
             return false;
         }
+
+        Logger::debug("Duplicating from {} to {}", sourcePath.string(), destPath.string());
 
         // Check if source and destination are the same
         std::error_code ec;
@@ -572,7 +574,11 @@ namespace autoinput
 
         if (!destPath.parent_path().empty() && !fs::exists(destPath.parent_path()))
         {
-            fs::create_directories(destPath.parent_path());
+            if (!fs::create_directories(destPath.parent_path(), ec))
+            {
+                Logger::error("Failed to create directory {}: {}", destPath.parent_path().string(), ec.message());
+                return false;
+            }
         }
 
         try

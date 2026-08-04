@@ -7,6 +7,7 @@
 #define INCLUDE_AUTOINPUT_LOGGER_H
 #pragma once
 
+#include <cstdlib> // For std::abort
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -251,5 +252,22 @@ struct std::formatter<autoinput::LogLevel>
     bool isShorthand{ false };
 };
 // ReSharper restore CppMemberFunctionMayBeStatic
+
+#ifndef NDEBUG
+/**
+ * @brief Custom assertion that logs a fatal error and aborts.
+ * Supports optional format strings and arguments.
+ * Example: AUTOINPUT_ASSERT(x > 0, "Value must be positive, but is {}", x);
+ */
+#define AUTOINPUT_ASSERT(condition, ...) \
+        do { \
+            if (!(condition)) { \
+                autoinput::Logger::fatal("Assertion failed: (" #condition ") " __VA_ARGS__); \
+                std::abort(); \
+            } \
+        } while (false)
+#else
+#define AUTOINPUT_ASSERT(condition, ...) ((void)0)
+#endif
 
 #endif // INCLUDE_AUTOINPUT_LOGGER_H

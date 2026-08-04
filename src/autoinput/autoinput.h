@@ -35,6 +35,7 @@ namespace autoinput
         explicit Program(std::unique_ptr<IPlatformBackend> backend);
 
         ProgramArguments& arguments() { return m_arguments; }
+
         void setBackend(std::unique_ptr<IPlatformBackend> backend);
         [[nodiscard]] IPlatformBackend* getBackend() const { return m_backend.get(); }
         std::unique_ptr<IPlatformBackend> releaseBackend() { return std::move(m_backend); }

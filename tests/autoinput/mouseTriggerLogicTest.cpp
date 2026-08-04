@@ -5,17 +5,34 @@
  */
 #include <gtest/gtest.h>
 #include "autoinput/autoInput.h"
-#include "autoinput/arguments.h"
+#include "autoinput/cli/runCommand.h"
+#include "autoinput/cli/commandBase.h"
 
 namespace autoinput
 {
+    TEST(ProgramInitTest, RunCommandParsesTriggers)
+    {
+        cli::CommandContext context;
+        cli::RunCommand command(context);
+        std::vector<std::string> argvStr = { "run", "--button", "left", "--start", "back", "--end", "forward" };
+        std::vector<char*> argv;
+        for (const auto& s : argvStr) argv.push_back(const_cast<char*>(s.data()));
+
+        i32 index = 1;
+        ASSERT_TRUE(command.parse(gsl::make_span(argv.data(), argv.size()), index));
+        ASSERT_TRUE(command.validate());
+    }
+
     TEST(ProgramInitTest, MapsMouseButtonsAsTriggers)
     {
         Program program;
-        char* argv[] = {(char*)"autoinput", (char*)"left", (char*)"-s", (char*)"back", (char*)"-e", (char*)"forward"};
-        int argc = sizeof(argv) / sizeof(char*);
+        ProgramArguments& arguments = program.arguments();
+        arguments.buttons.push_back(Mouse(MouseButton::Left));
+        arguments.targetActions.push_back(ActionState::CLICK);
+        arguments.startKeys.push_back("back");
+        arguments.endKey = "forward";
+        ASSERT_TRUE(arguments.postParseArguments());
 
-        ASSERT_TRUE(program.arguments().parseArguments(gsl::make_span(argv, argc)));
         program.setBackend(std::make_unique<FakeBackend>());
         ASSERT_TRUE(program.init());
 

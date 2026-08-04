@@ -6,6 +6,7 @@
 #include <gtest/gtest.h>
 
 #include "autoinput/arguments.h"
+#include "autoinput/cli/commandBase.h"
 
 namespace autoinput
 {
@@ -116,32 +117,33 @@ namespace autoinput
         EXPECT_LE(delay, std::chrono::seconds{ 2 });
     }
 
-    TEST(ProgramArgumentsTest, SafeGetNextArgumentReturnsNextValue)
+    TEST(CliSafeGetNextArgumentTest, ReturnsNextValue)
     {
         char program[] = "autoinput";
-        char option[] = "-s";
-        char value[] = "f2";
-        char* argv[] = { program, option, value };
+        char command[] = "run";
+        char option[] = "--button";
+        char value[] = "left";
+        char* argv[] = { program, command, option, value };
 
-        EXPECT_EQ(ProgramArguments::safeGetNextArgument(2, gsl::make_span(argv)), "f2");
+        EXPECT_EQ(cli::safeGetNextArgument(3, gsl::make_span(argv)), "left");
     }
 
-    TEST(ProgramArgumentsTest, SafeGetNextArgumentReturnsEmptyWhenOutOfBounds)
+    TEST(CliSafeGetNextArgumentTest, ReturnsEmptyWhenOutOfBounds)
     {
         char program[] = "autoinput";
         char* argv[] = { program };
 
-        EXPECT_TRUE(ProgramArguments::safeGetNextArgument(1, gsl::make_span(argv)).empty());
+        EXPECT_TRUE(cli::safeGetNextArgument(1, gsl::make_span(argv)).empty());
     }
 
-    TEST(ProgramArgumentsTest, SafeGetNextArgumentReturnsEmptyForOption)
+    TEST(CliSafeGetNextArgumentTest, ReturnsEmptyForOption)
     {
         char program[] = "autoinput";
-        char option[] = "-s";
-        char nextOption[] = "-e";
+        char option[] = "--button";
+        char nextOption[] = "--type";
         char* argv[] = { program, option, nextOption };
 
-        EXPECT_TRUE(ProgramArguments::safeGetNextArgument(2, gsl::make_span(argv)).empty());
+        EXPECT_TRUE(cli::safeGetNextArgument(2, gsl::make_span(argv)).empty());
     }
 
     TEST(ProgramArgumentsTest, PostParseArgumentsDefaultsToLeftButton)
@@ -206,169 +208,5 @@ namespace autoinput
         EXPECT_EQ(arguments.startKeys.size(), 2);
         EXPECT_EQ(arguments.startKeys[0], "f2");
         EXPECT_EQ(arguments.startKeys[1], "f2");
-    }
-    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesHoldAction)
-    {
-        ProgramArguments arguments;
-        char program[] = "autoinput";
-        char typeOpt[] = "-t";
-        char typeVal[] = "hold";
-        char buttonOpt[] = "-b";
-        char buttonVal[] = "left";
-        char startOpt[] = "-s";
-        char startVal[] = "f2";
-        char endOpt[] = "-e";
-        char endVal[] = "f3";
-        char* argv[] = { program, typeOpt, typeVal, buttonOpt, buttonVal, startOpt, startVal, endOpt, endVal };
-
-        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
-        EXPECT_EQ(arguments.actionState, ActionState::HOLD);
-        ASSERT_EQ(arguments.buttons.size(), 1);
-        EXPECT_EQ(arguments.buttons.front().button, MouseButton::Left);
-        ASSERT_EQ(arguments.startKeys.size(), 1);
-        EXPECT_EQ(arguments.startKeys.front(), "f2");
-        EXPECT_EQ(arguments.endKey, "f3");
-    }
-
-    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesApplicationName)
-    {
-        ProgramArguments arguments;
-        char program[] = "autoinput";
-        char appOpt[] = "--app";
-        char appVal[] = "notepad.exe";
-        char* argv[] = { program, appOpt, appVal };
-
-        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
-        EXPECT_EQ(arguments.applicationName, "notepad.exe");
-    }
-
-    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesListApplications)
-    {
-        ProgramArguments arguments;
-        char program[] = "autoinput";
-        char listOpt[] = "--list-apps";
-        char* argv[] = { program, listOpt };
-
-        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
-        EXPECT_TRUE(arguments.listApplications);
-    }
-
-    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesShortListApplications)
-    {
-        ProgramArguments arguments;
-        char program[] = "autoinput";
-        char listOpt[] = "-L";
-        char* argv[] = { program, listOpt };
-
-        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
-        EXPECT_TRUE(arguments.listApplications);
-    }
-
-    TEST(ProgramArgumentsTest, ParseArgumentsHandlesMissingLogArgument)
-    {
-        ProgramArguments arguments;
-        char program[] = "autoinput";
-        char logOpt[] = "-l";
-        char* argv[] = { program, logOpt };
-
-        EXPECT_FALSE(arguments.parseArguments(gsl::make_span(argv)));
-    }
-    TEST(ProgramArgumentsTest, ParsesBlacklistArguments)
-    {
-        char program[] = "autoinput";
-        char blacklistOption[] = "--blacklist";
-        char blacklistValue[] = "game.exe";
-        char shortBlacklistOption[] = "-B";
-        char shortBlacklistValue[] = "other.exe";
-        std::vector<char*> args = { program, blacklistOption, blacklistValue, shortBlacklistOption, shortBlacklistValue };
-
-        ProgramArguments programArguments;
-        EXPECT_TRUE(programArguments.parseArguments(args, false));
-
-        EXPECT_EQ(programArguments.blacklist.size(), 2);
-        EXPECT_EQ(programArguments.blacklist[0], "game.exe");
-        EXPECT_EQ(programArguments.blacklist[1], "other.exe");
-    }
-    
-    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesListConfigs)
-    {
-        ProgramArguments arguments;
-        char program[] = "autoinput";
-        char listOpt[] = "--list-configs";
-        char* argv[] = { program, listOpt };
-
-        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
-        EXPECT_TRUE(arguments.listConfigs);
-    }
-
-    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesShortListConfigs)
-    {
-        ProgramArguments arguments;
-        char program[] = "autoinput";
-        char listOpt[] = "-C";
-        char* argv[] = { program, listOpt };
-
-        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
-        EXPECT_TRUE(arguments.listConfigs);
-    }
-
-    TEST(ProgramArgumentsTest, ParseArgumentsCorrectlyParsesValidateConfig)
-    {
-        ProgramArguments arguments;
-        char program[] = "autoinput";
-        char validateOpt[] = "--validate-config";
-        char validateVal[] = "myconfig";
-        char* argv[] = { program, validateOpt, validateVal };
-
-        EXPECT_TRUE(arguments.parseArguments(gsl::make_span(argv), false));
-        EXPECT_EQ(arguments.validateConfigName, "myconfig");
-    }
-
-    TEST(ProgramArgumentsTest, ParseArgumentsHandlesHelpFlag)
-    {
-        ProgramArguments arguments;
-        char program[] = "autoinput";
-        char helpOpt[] = "--help";
-        char* argv[] = { program, helpOpt };
-
-        // parseArguments returns false for help
-        EXPECT_FALSE(arguments.parseArguments(gsl::make_span(argv), false));
-        EXPECT_FALSE(arguments.showHelpExamples);
-    }
-
-    TEST(ProgramArgumentsTest, ParseArgumentsHandlesExamplesFlag)
-    {
-        ProgramArguments arguments;
-        char program[] = "autoinput";
-        char examplesOpt[] = "--examples";
-        char* argv[] = { program, examplesOpt };
-
-        // parseArguments returns false for examples
-        EXPECT_FALSE(arguments.parseArguments(gsl::make_span(argv), false));
-        EXPECT_TRUE(arguments.showHelpExamples);
-    }
-
-    TEST(ProgramArgumentsTest, ParseArgumentsHandlesHelpAndExamplesFlagOrder1)
-    {
-        ProgramArguments arguments;
-        char program[] = "autoinput";
-        char helpOpt[] = "--help";
-        char examplesOpt[] = "--examples";
-        char* argv[] = { program, helpOpt, examplesOpt };
-
-        EXPECT_FALSE(arguments.parseArguments(gsl::make_span(argv), false));
-        EXPECT_TRUE(arguments.showHelpExamples);
-    }
-
-    TEST(ProgramArgumentsTest, ParseArgumentsHandlesHelpAndExamplesFlagOrder2)
-    {
-        ProgramArguments arguments;
-        char program[] = "autoinput";
-        char helpOpt[] = "--help";
-        char examplesOpt[] = "--examples";
-        char* argv[] = { program, examplesOpt, helpOpt };
-
-        EXPECT_FALSE(arguments.parseArguments(gsl::make_span(argv), false));
-        EXPECT_TRUE(arguments.showHelpExamples);
     }
 }

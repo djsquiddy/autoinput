@@ -1,0 +1,103 @@
+/**
+ * @file appsCommand.cpp
+ * @author djsquiddy
+ * @date August 2026
+ */
+#include "autoinput/cli/appsCommand.h"
+
+#include "autoinput/errorCode.h"
+#include "autoinput/platform.h"
+
+namespace autoinput::cli
+{
+    bool AppsCommand::parse(const gsl::span<char*> args, i32& index)
+    {
+        if (index >= args.size())
+        {
+            Logger::fatal("The apps command needs a subcommand.\n");
+            return false;
+        }
+
+        if (const std::string_view subcommand = args[index++]; subcommand == "list")
+        {
+            action = AppsAction::List;
+        }
+        else
+        {
+            Logger::fatal("Unknown apps subcommand: {}\n", subcommand);
+            return false;
+        }
+
+        if (index < args.size())
+        {
+            Logger::fatal("Unexpected apps argument: {}\n", args[index]);
+            return false;
+        }
+
+        return true;
+    }
+
+    bool AppsCommand::validate() const
+    {
+        if (action == AppsAction::None)
+        {
+            Logger::fatal("The apps command needs a subcommand.\n");
+            return false;
+        }
+
+        return true;
+    }
+
+    i32 AppsCommand::execute()
+    {
+        switch (action)
+        {
+        case AppsAction::List:
+        {
+            const auto apps = platform::getRunningApplicationNames();
+            if (apps.empty())
+            {
+                Logger::print("No running applications found or listing not supported on this platform.\n");
+                return static_cast<i32>(ErrorCode::Success);
+            }
+
+            Logger::print("Currently running applications:\n");
+            for (const std::string& app : apps)
+            {
+                Logger::print("  - {}\n", app);
+            }
+
+            return static_cast<i32>(ErrorCode::Success);
+        }
+
+        case AppsAction::None:
+        default:
+            Logger::fatal("The apps command needs a subcommand.\n");
+            return static_cast<i32>(ErrorCode::InvalidParam);
+        }
+    }
+
+    void AppsCommand::printHelp() const
+    {
+        logHelpMessage({
+            .context = m_context,
+            .commands = {
+                { .usage = "list", .description = "List currently running application names" },
+            },
+            .examples = {
+                "apps list",
+            },
+            .notes = {
+                "Application listing depends on platform support.",
+            },
+        });
+    }
+
+    HelpEntry AppsCommand::getHelpEntry() const
+    {
+        return {
+            .usage = "apps <command>",
+            .description = "Inspect running applications.",
+        };
+    }
+}

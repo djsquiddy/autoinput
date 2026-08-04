@@ -14,8 +14,7 @@ namespace autoinput
 {
     std::variant<RuntimeCommand, ValidationError> convertCommandToRuntime(const CommandData& command)
     {
-        const auto errors = validateCommandData(command);
-        if (!errors.empty())
+        if (const auto errors = validateCommandData(command); !errors.empty())
         {
             return errors[0];
         }

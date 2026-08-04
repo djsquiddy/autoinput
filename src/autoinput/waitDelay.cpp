@@ -64,7 +64,7 @@ namespace autoinput
 
     bool WaitDelayData::parseWaitTimeDelay(std::string_view waitTimeDelayArg, const bool isPressWait)
     {
-        if (waitTimeDelayArg.empty())
+        if (!isValidWaitDelay(waitTimeDelayArg))
         {
             return false;
         }

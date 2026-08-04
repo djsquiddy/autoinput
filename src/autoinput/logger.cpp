@@ -222,15 +222,20 @@ namespace autoinput
                 timeStr = "UNKNOWN TIME";
             }
 
-            formatted = std::format("[{}] {} | {}:{}:{} | {}\n",
-                level,
-                timeStr,
-                std::filesystem::path(loc.file_name()).filename().string(),
-                loc.function_name(),
-                loc.line(),
-                msg
-            );
-            consoleMsg = std::format("[{}] | {}", level, msg);
+            try {
+                formatted = std::format("[{}] {} | {}:{}:{} | {}\n",
+                    level,
+                    timeStr,
+                    std::filesystem::path(loc.file_name()).filename().string(),
+                    loc.function_name(),
+                    loc.line(),
+                    msg
+                );
+                consoleMsg = std::format("[{}] | {}", level, msg);
+            } catch (...) {
+                formatted = "[FORMAT ERROR] " + std::string(msg) + "\n";
+                consoleMsg = formatted;
+            }
         }
 
         if (isTesting_impl())

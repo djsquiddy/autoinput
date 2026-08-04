@@ -9,6 +9,7 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/backendFactory.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/environment.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/environment.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/errorCode.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/waitDelay.cpp
@@ -45,6 +46,21 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/terminal.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.cpp
+            # Cli source
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/commandBase.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/commandBase.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/cliApplication.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/cliApplication.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/runCommand.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/runCommand.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/recordCommand.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/recordCommand.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/configCommand.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/configCommand.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/appsCommand.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/appsCommand.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/helpCommand.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/helpCommand.cpp
     )
 
     if(WIN32)
@@ -74,6 +90,7 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/utilsTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/argumentsTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/cliCommandTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/recorderArgumentsTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/recorderTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configTest.cpp

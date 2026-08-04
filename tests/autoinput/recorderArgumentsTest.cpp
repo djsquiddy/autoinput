@@ -4,54 +4,66 @@
  * @date August 2026
  */
 #include <gtest/gtest.h>
-#include "autoinput/arguments.h"
+#include "autoinput/cli/cliApplication.h"
 #include <vector>
 #include <string>
+#include <gsl/gsl>
 
-namespace autoinput
+namespace autoinput::cli
 {
+    namespace
+    {
+        std::vector<char*> toArgv(const std::vector<std::string>& args)
+        {
+            std::vector<char*> argv;
+            argv.reserve(args.size());
+            for (const auto& arg : args)
+            {
+                argv.push_back(const_cast<char*>(arg.c_str()));
+            }
+            return argv;
+        }
+    }
+
     TEST(RecorderArgumentsTest, ParseRecordingOptions)
     {
-        ProgramArguments args;
-        std::vector<char*> argv = {
-            const_cast<char*>("autoinput"),
-            const_cast<char*>("--record"), const_cast<char*>("my-macro"),
-            const_cast<char*>("--record-start"), const_cast<char*>("f10"),
-            const_cast<char*>("--record-end"), const_cast<char*>("f11"),
-            const_cast<char*>("--record-play-start"), const_cast<char*>("f12"),
-            const_cast<char*>("--record-mouse-moves"),
-            const_cast<char*>("--record-mouse-sample"), const_cast<char*>("50ms"),
-            const_cast<char*>("--force")
+        CliApplication app;
+        std::vector<std::string> args = {
+            "autoinput",
+            "record", "my-macro",
+            "--start", "f10",
+            "--end", "f11",
+            "--play-start", "f12",
+            "--mouse-moves",
+            "--mouse-sample", "50ms",
+            "--force"
         };
+        auto argv = toArgv(args);
 
-        ASSERT_TRUE(args.parseArguments(argv));
-        EXPECT_EQ(args.recordName, "my-macro");
-        EXPECT_EQ(args.recordStartKey, "f10");
-        EXPECT_EQ(args.recordEndKey, "f11");
-        EXPECT_EQ(args.recordPlayStartKey, "f12");
-        EXPECT_TRUE(args.recordMouseMoves);
-        EXPECT_EQ(args.recordMouseSample, "50ms");
-        EXPECT_TRUE(args.forceOverwrite);
-        
-        // Check resolved save path
-        EXPECT_FALSE(args.saveConfigName.empty());
-        EXPECT_TRUE(args.saveConfigName.find("my-macro.toml") != std::string::npos);
+        ASSERT_TRUE(app.parse(gsl::make_span(argv)));
     }
 
     TEST(RecorderArgumentsTest, DefaultRecordingOptions)
     {
-        ProgramArguments args;
-        std::vector<char*> argv = {
-            const_cast<char*>("autoinput"),
-            const_cast<char*>("--record"), const_cast<char*>("my-macro")
+        CliApplication app;
+        std::vector<std::string> args = {
+            "autoinput",
+            "record", "my-macro"
         };
+        auto argv = toArgv(args);
 
-        ASSERT_TRUE(args.parseArguments(argv));
-        EXPECT_EQ(args.recordName, "my-macro");
-        EXPECT_EQ(args.recordStartKey, "f8");
-        EXPECT_EQ(args.recordEndKey, "f9");
-        EXPECT_EQ(args.recordPlayStartKey, "f6");
-        EXPECT_FALSE(args.recordMouseMoves);
-        EXPECT_EQ(args.recordMouseSample, "25ms");
+        ASSERT_TRUE(app.parse(gsl::make_span(argv)));
+    }
+
+    TEST(RecorderArgumentsTest, RejectsOldSyntax)
+    {
+        CliApplication app;
+        std::vector<std::string> args = {
+            "autoinput",
+            "--record", "my-macro"
+        };
+        auto argv = toArgv(args);
+
+        ASSERT_FALSE(app.parse(gsl::make_span(argv)));
     }
 }

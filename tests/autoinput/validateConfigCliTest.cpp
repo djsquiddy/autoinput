@@ -29,7 +29,7 @@ namespace autoinput::test
         file << "end = \"f3\"\n[[command]]\naction = \"click\"\nbutton = \"left\"\nstart = \"f2\"\n";
         file.close();
 
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --validate-config " + quotePath(configPath);
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config validate " + quotePath(configPath);
         auto result = runCommand(command);
 
         EXPECT_EQ(result.exitCode, 0);
@@ -44,7 +44,7 @@ namespace autoinput::test
         file << "end = \"f3\"\n[[command]]\naction = \"invalid\"\nbutton = \"left\"\nstart = \"f2\"\n";
         file.close();
 
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --validate-config " + quotePath(configPath);
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config validate " + quotePath(configPath);
         auto result = runCommand(command);
 
         EXPECT_NE(result.exitCode, 0);
@@ -57,7 +57,7 @@ namespace autoinput::test
         TemporaryDirectory tempDir("cli_missing");
         std::filesystem::path configPath = tempDir.path() / "non_existent.toml";
 
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --validate-config " + quotePath(configPath);
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config validate " + quotePath(configPath);
         auto result = runCommand(command);
 
         EXPECT_NE(result.exitCode, 0);
@@ -74,7 +74,7 @@ namespace autoinput::test
 
         auto start = std::chrono::steady_clock::now();
         
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --validate-config " + quotePath(configPath);
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config validate " + quotePath(configPath);
         auto result = runCommand(command);
         
         auto end = std::chrono::steady_clock::now();
@@ -93,7 +93,7 @@ namespace autoinput::test
         file << "end = \"f3\"\n[[command]]\naction = \"click\"\nbutton = \"left\"\nstart = \"f2\"\n";
         file.close();
 
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --validate-config " + quotePath(configPath) + " --json";
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config validate " + quotePath(configPath) + " --json";
         auto result = runCommand(command);
 
         EXPECT_EQ(result.exitCode, 0);
@@ -110,7 +110,7 @@ namespace autoinput::test
         file << "end = \"f3\"\n[[command]]\naction = \"invalid\"\nbutton = \"left\"\nstart = \"f2\"\n";
         file.close();
 
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --validate-config " + quotePath(configPath) + " --json";
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config validate " + quotePath(configPath) + " --json";
         auto result = runCommand(command);
 
         EXPECT_NE(result.exitCode, 0);
@@ -123,7 +123,7 @@ namespace autoinput::test
         TemporaryDirectory tempDir("cli_missing_json");
         std::filesystem::path configPath = tempDir.path() / "non_existent.toml";
 
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --json --validate-config " + quotePath(configPath);
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --json config validate " + quotePath(configPath);
         auto result = runCommand(command);
 
         EXPECT_NE(result.exitCode, 0);
@@ -141,8 +141,8 @@ namespace autoinput::test
 
         // Try both orderings
         const std::vector<std::string> commands = {
-            quotePath(AUTOINPUT_EXE_PATH) + " --validate-config " + quotePath(configPath) + " --json",
-            quotePath(AUTOINPUT_EXE_PATH) + " --json --validate-config " + quotePath(configPath)
+            quotePath(AUTOINPUT_EXE_PATH) + " config validate " + quotePath(configPath) + " --json",
+            quotePath(AUTOINPUT_EXE_PATH) + " --json config validate " + quotePath(configPath)
         };
 
         for (const auto& command : commands)

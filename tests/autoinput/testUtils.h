@@ -207,7 +207,10 @@ namespace autoinput::test
         std::string fullCommand = command + " > " + quotePath(outputPath) + " 2>&1";
         
 #ifdef _WIN32
-        std::string cmdWrapper = "cmd /c \"" + fullCommand + "\"";
+        // On Windows, std::system calls cmd.exe /c.
+        // cmd.exe /c has a special rule: if the command starts and ends with quotes, they are removed.
+        // To ensure our nested quotes are preserved, we MUST wrap the entire command in another set of quotes.
+        std::string cmdWrapper = "\"" + fullCommand + "\"";
         int rawExitCode = std::system(cmdWrapper.c_str());
 #else
         int rawExitCode = std::system(fullCommand.c_str());

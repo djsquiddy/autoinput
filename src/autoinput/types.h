@@ -91,7 +91,6 @@ namespace autoinput
     template<typename T>
     struct HashFunction {};
 
-
     struct Quoted
     {
         Quoted(const std::string_view str) : m_sv(str) {}

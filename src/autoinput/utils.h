@@ -8,8 +8,6 @@
 #define INCLUDE_AUTOINPUT_UTILS_H
 #pragma once
 
-#include <cstdint>
-#include <cstdlib>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -18,15 +16,6 @@
 
 namespace autoinput
 {
-    enum class ErrorCode : int32_t
-    {
-        SUCCESS = EXIT_SUCCESS,
-        INVALID_PARAM = 101,
-        FAILED_TO_INSTALL_HOOKS = 102,
-        UNHANDLED_EXCEPTION = 103,
-        FAILED_TO_LOAD_CONFIG = 104
-    };
-
     std::string toLowerCase(std::string_view sv);
 
     template <typename Range>

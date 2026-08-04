@@ -7,7 +7,6 @@
 #include <gmock/gmock.h>
 #include "autoinput/autoInput.h"
 #include "autoinput/backend.h"
-#include "autoinput/arguments.h"
 #include "testUtils.h"
 
 using namespace autoinput;
@@ -34,36 +33,28 @@ public:
 
 TEST(MouseModifierTest, ParsesShiftLeftClick)
 {
-    ProgramArguments arguments;
-    char* argv[] = {(char*)"autoinput", (char*)"shift+left"};
-    int argc = sizeof(argv) / sizeof(char*);
-
-    ASSERT_TRUE(arguments.parseArguments(gsl::make_span(argv, argc)));
-    ASSERT_EQ(arguments.buttons.size(), 1);
-    EXPECT_EQ(arguments.buttons[0].button, MouseButton::Left);
-    EXPECT_EQ(arguments.buttons[0].modifier, KeyModifier::Shift);
+    auto mouse = Mouse::fromString("shift+left");
+    EXPECT_EQ(mouse.button, MouseButton::Left);
+    EXPECT_EQ(mouse.modifier, KeyModifier::Shift);
 }
 
 TEST(MouseModifierTest, ParsesMultipleModifiersWithClick)
 {
-    ProgramArguments arguments;
-    char* argv[] = {(char*)"autoinput", (char*)"ctrl+alt+right"};
-    int argc = sizeof(argv) / sizeof(char*);
-
-    ASSERT_TRUE(arguments.parseArguments(gsl::make_span(argv, argc)));
-    ASSERT_EQ(arguments.buttons.size(), 1);
-    EXPECT_EQ(arguments.buttons[0].button, MouseButton::Right);
-    EXPECT_TRUE(static_cast<bool>(arguments.buttons[0].modifier & KeyModifier::Ctrl));
-    EXPECT_TRUE(static_cast<bool>(arguments.buttons[0].modifier & KeyModifier::Alt));
+    auto mouse = Mouse::fromString("ctrl+alt+right");
+    EXPECT_EQ(mouse.button, MouseButton::Right);
+    EXPECT_TRUE(static_cast<bool>(mouse.modifier & KeyModifier::Ctrl));
+    EXPECT_TRUE(static_cast<bool>(mouse.modifier & KeyModifier::Alt));
 }
 
 TEST(MouseModifierTest, ProgramTriggersShiftLeftClick)
 {
     Program program;
-    char* argv[] = {(char*)"autoinput", (char*)"hold", (char*)"shift+left", (char*)"-s", (char*)"f2"};
-    int argc = sizeof(argv) / sizeof(char*);
+    ProgramArguments& arguments = program.arguments();
+    arguments.buttons.push_back(Mouse(MouseButton::Left, KeyModifier::Shift));
+    arguments.targetActions.push_back(ActionState::HOLD);
+    arguments.startKeys.push_back("f2");
+    ASSERT_TRUE(arguments.postParseArguments());
 
-    ASSERT_TRUE(program.arguments().parseArguments(gsl::make_span(argv, argc)));
     auto mock = std::make_unique<MockMouseModifierBackend>();
     MockMouseModifierBackend* mockPtr = mock.get();
     program.setBackend(std::move(mock));

@@ -4,138 +4,52 @@
  * @date July 2026
  */
 #include <gtest/gtest.h>
-#include "autoinput/arguments.h"
+#include "autoinput/cli/cliApplication.h"
+#include <vector>
+#include <string>
+#include <gsl/gsl>
 
-namespace autoinput
+namespace autoinput::cli
 {
-    class PositionalArgumentsTest : public ::testing::Test
+    namespace
     {
-    protected:
-        ProgramArguments args;
-    };
-
-    TEST_F(PositionalArgumentsTest, ParsesPositionalActionAndButton)
-    {
-        char* argv[] = {(char*)"autoinput", (char*)"click", (char*)"left"};
-        int argc = sizeof(argv) / sizeof(char*);
-
-        EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
-        EXPECT_EQ(args.actionState, ActionState::CLICK);
-        ASSERT_EQ(args.buttons.size(), 1);
-        EXPECT_EQ(args.buttons[0], MouseButton::Left);
-        ASSERT_EQ(args.startKeys.size(), 1);
-        EXPECT_EQ(args.startKeys[0], "f2");
-        EXPECT_EQ(args.endKey, "f3");
+        std::vector<char*> toArgv(const std::vector<std::string>& args)
+        {
+            std::vector<char*> argv;
+            argv.reserve(args.size());
+            for (const auto& arg : args)
+            {
+                argv.push_back(const_cast<char*>(arg.c_str()));
+            }
+            return argv;
+        }
     }
 
-    TEST_F(PositionalArgumentsTest, ParsesPositionalButtonOnlyDefaultsToClick)
+    TEST(PositionalArgumentsTest, RejectsLegacyPositionalSyntax)
     {
-        char* argv[] = {(char*)"autoinput", (char*)"left"};
-        int argc = sizeof(argv) / sizeof(char*);
+        const std::vector<std::vector<std::string>> cases = {
+            {"autoinput", "click", "left"},
+            {"autoinput", "left"},
+            {"autoinput", "left", "right"},
+            {"autoinput", "hold", "left", "right"},
+            {"autoinput", "a"},
+            {"autoinput", "left", "-s", "back", "-e", "forward"},
+            {"autoinput", "left", "f4", "right", "f5"}
+        };
 
-        EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
-        EXPECT_EQ(args.actionState, ActionState::CLICK);
-        ASSERT_EQ(args.buttons.size(), 1);
-        EXPECT_EQ(args.buttons[0], MouseButton::Left);
-        ASSERT_EQ(args.startKeys.size(), 1);
-        EXPECT_EQ(args.startKeys[0], "f2");
-        EXPECT_EQ(args.endKey, "f3");
+        for (const auto& args : cases)
+        {
+            CliApplication app;
+            auto argv = toArgv(args);
+            EXPECT_FALSE(app.parse(gsl::make_span(argv))) << "Should have rejected legacy syntax: " << args[1];
+        }
     }
 
-    TEST_F(PositionalArgumentsTest, ParsesMultiplePositionalButtons)
+    TEST(PositionalArgumentsTest, ParsesNewEquivalentSyntax)
     {
-        char* argv[] = {(char*)"autoinput", (char*)"left", (char*)"right"};
-        int argc = sizeof(argv) / sizeof(char*);
-
-        EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
-        ASSERT_EQ(args.buttons.size(), 2);
-        EXPECT_EQ(args.buttons[0], MouseButton::Left);
-        EXPECT_EQ(args.buttons[1], MouseButton::Right);
-        ASSERT_EQ(args.startKeys.size(), 2);
-        EXPECT_EQ(args.startKeys[0], "f2");
-        EXPECT_EQ(args.startKeys[1], "f2"); // Resized to match target count
-        EXPECT_EQ(args.endKey, "f3");
-    }
-
-    TEST_F(PositionalArgumentsTest, ParsesPositionalActionWithMultipleButtons)
-    {
-        char* argv[] = {(char*)"autoinput", (char*)"hold", (char*)"left", (char*)"right"};
-        int argc = sizeof(argv) / sizeof(char*);
-
-        EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
-        EXPECT_EQ(args.actionState, ActionState::HOLD);
-        ASSERT_EQ(args.buttons.size(), 2);
-        EXPECT_EQ(args.buttons[0], MouseButton::Left);
-        EXPECT_EQ(args.buttons[1], MouseButton::Right);
-    }
-
-    TEST_F(PositionalArgumentsTest, ParsesPositionalKey)
-    {
-        char* argv[] = {(char*)"autoinput", (char*)"a"};
-        int argc = sizeof(argv) / sizeof(char*);
-
-        EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
-        EXPECT_EQ(args.actionState, ActionState::CLICK);
-        ASSERT_EQ(args.keys.size(), 1);
-        EXPECT_EQ(args.keys[0].character, "a");
-    }
-
-    TEST_F(PositionalArgumentsTest, ParsesMouseButtonsInStartAndEndKeys)
-    {
-        char* argv[] = {(char*)"autoinput", (char*)"left", (char*)"-s", (char*)"back", (char*)"-e", (char*)"forward"};
-        int argc = sizeof(argv) / sizeof(char*);
-
-        EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
-        ASSERT_EQ(args.startKeys.size(), 1);
-        EXPECT_EQ(args.startKeys[0], "back");
-        EXPECT_EQ(args.endKey, "forward");
-    }
-
-    TEST_F(PositionalArgumentsTest, ParsesPairedTargetAndStartKey)
-    {
-        char* argv[] = {(char*)"autoinput", (char*)"left", (char*)"f4", (char*)"right", (char*)"f5"};
-        int argc = sizeof(argv) / sizeof(char*);
-
-        EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
-        ASSERT_EQ(args.buttons.size(), 2);
-        EXPECT_EQ(args.buttons[0], MouseButton::Left);
-        EXPECT_EQ(args.buttons[1], MouseButton::Right);
-        ASSERT_EQ(args.startKeys.size(), 2);
-        EXPECT_EQ(args.startKeys[0], "f4");
-        EXPECT_EQ(args.startKeys[1], "f5");
-    }
-
-    TEST_F(PositionalArgumentsTest, ParsesPairedActionAndStartKeyDefaultTarget)
-    {
-        char* argv[] = {(char*)"autoinput", (char*)"click", (char*)"f4", (char*)"hold", (char*)"f5"};
-        int argc = sizeof(argv) / sizeof(char*);
-
-        EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
-        ASSERT_EQ(args.buttons.size(), 2);
-        EXPECT_EQ(args.buttons[0], MouseButton::Left);
-        EXPECT_EQ(args.buttons[1], MouseButton::Left);
-        ASSERT_EQ(args.targetActions.size(), 2);
-        EXPECT_EQ(args.targetActions[0], ActionState::CLICK);
-        EXPECT_EQ(args.targetActions[1], ActionState::HOLD);
-        ASSERT_EQ(args.startKeys.size(), 2);
-        EXPECT_EQ(args.startKeys[0], "f4");
-        EXPECT_EQ(args.startKeys[1], "f5");
-    }
-
-    TEST_F(PositionalArgumentsTest, ParsesMixedPairedSyntax)
-    {
-        char* argv[] = {(char*)"autoinput", (char*)"click", (char*)"left", (char*)"f4", (char*)"hold", (char*)"right", (char*)"f5"};
-        int argc = sizeof(argv) / sizeof(char*);
-
-        EXPECT_TRUE(args.parseArguments(gsl::make_span(argv, argc)));
-        ASSERT_EQ(args.buttons.size(), 2);
-        EXPECT_EQ(args.buttons[0], MouseButton::Left);
-        EXPECT_EQ(args.buttons[1], MouseButton::Right);
-        ASSERT_EQ(args.targetActions.size(), 2);
-        EXPECT_EQ(args.targetActions[0], ActionState::CLICK);
-        EXPECT_EQ(args.targetActions[1], ActionState::HOLD);
-        ASSERT_EQ(args.startKeys.size(), 2);
-        EXPECT_EQ(args.startKeys[0], "f4");
-        EXPECT_EQ(args.startKeys[1], "f5");
+        CliApplication app;
+        std::vector<std::string> args = {"autoinput", "run", "--type", "hold", "--button", "left"};
+        auto argv = toArgv(args);
+        EXPECT_TRUE(app.parse(gsl::make_span(argv)));
     }
 }

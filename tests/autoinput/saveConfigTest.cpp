@@ -13,10 +13,13 @@
 #include <stdlib.h>
 #endif
 
-#include "autoinput/arguments.h"
 #include "autoinput/config.h"
 #include "autoinput/platform.h"
 #include "autoinput/types.h"
+#include "autoinput/cli/cliApplication.h"
+#include "autoinput/cli/runCommand.h"
+#include "autoinput/cli/commandBase.h"
+#include "autoinput/errorCode.h"
 #include "testUtils.h"
 
 namespace autoinput
@@ -39,18 +42,15 @@ namespace autoinput
 
     TEST_F(DumpTest, SaveConfigCreatesCorrectFile)
     {
-        ProgramArguments args;
-        // Use a vector of strings to keep pointers valid
-        std::vector<std::string> argvStr = { "autoinput", "hold", "left", "-s", "f2", "-e", "f3", "-S", "test_config" };
+        cli::CliApplication app;
+        std::vector<std::string> argvStr = { "autoinput", "run", "--type", "hold", "--button", "right", "-s", "f5", "-e", "f6", "-S", "test_config" };
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
-        ASSERT_TRUE(args.parseArguments(gsl::make_span(argv.data(), argv.size())));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())));
+        ASSERT_EQ(app.execute(), static_cast<i32>(ErrorCode::Success));
 
-        ConfigData configData = args.toConfigData();
         std::filesystem::path dumpPath = getUserConfigsPath() / "test_config.toml";
-        
-        ASSERT_TRUE(saveConfigData(configData, dumpPath));
         ASSERT_TRUE(std::filesystem::exists(dumpPath));
 
         auto loaded = loadConfigData(dumpPath);
@@ -58,25 +58,23 @@ namespace autoinput
         ASSERT_EQ(loaded->commands.size(), 1);
         EXPECT_EQ(loaded->commands[0].action, "hold");
         ASSERT_EQ(loaded->commands[0].buttons.size(), 1);
-        EXPECT_EQ(loaded->commands[0].buttons[0], "left");
+        EXPECT_EQ(loaded->commands[0].buttons[0], "right");
         ASSERT_EQ(loaded->commands[0].startKeys.size(), 1);
-        EXPECT_EQ(loaded->commands[0].startKeys[0], "f2");
-        EXPECT_EQ(loaded->endKey, "f3");
+        EXPECT_EQ(loaded->commands[0].startKeys[0], "f5");
+        EXPECT_EQ(loaded->endKey, "f6");
     }
 
     TEST_F(DumpTest, SaveConfigHandlesWaitTimes)
     {
-        ProgramArguments args;
-        std::vector<std::string> argvStr = { "autoinput", "click", "left", "-w", "500ms..1s", "--release-wait", "2s", "--save-config", "wait_config" };
+        cli::CliApplication app;
+        std::vector<std::string> argvStr = { "autoinput", "run", "--type", "click", "--button", "left", "-w", "500ms..1s", "--release-wait", "2s", "--save-config", "wait_config" };
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
-        ASSERT_TRUE(args.parseArguments(gsl::make_span(argv.data(), argv.size())));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())));
+        ASSERT_EQ(app.execute(), static_cast<i32>(ErrorCode::Success));
 
-        ConfigData configData = args.toConfigData();
         std::filesystem::path dumpPath = getUserConfigsPath() / "wait_config.toml";
-        
-        ASSERT_TRUE(saveConfigData(configData, dumpPath));
         
         auto loaded = loadConfigData(dumpPath);
         ASSERT_TRUE(loaded.has_value());
@@ -87,17 +85,15 @@ namespace autoinput
 
     TEST_F(DumpTest, SaveConfigHandlesBlacklist)
     {
-        ProgramArguments args;
-        std::vector<std::string> argvStr = { "autoinput", "left", "-B", "app1.exe", "--blacklist", "app2.exe", "--save-config", "blacklist_config" };
+        cli::CliApplication app;
+        std::vector<std::string> argvStr = { "autoinput", "run", "--button", "left", "-B", "app1.exe", "--blacklist", "app2.exe", "--save-config", "blacklist_config" };
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
-        ASSERT_TRUE(args.parseArguments(gsl::make_span(argv.data(), argv.size())));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())));
+        ASSERT_EQ(app.execute(), static_cast<i32>(ErrorCode::Success));
 
-        ConfigData configData = args.toConfigData();
         std::filesystem::path dumpPath = getUserConfigsPath() / "blacklist_config.toml";
-        
-        ASSERT_TRUE(saveConfigData(configData, dumpPath));
         
         auto loaded = loadConfigData(dumpPath);
         ASSERT_TRUE(loaded.has_value());
@@ -109,26 +105,24 @@ namespace autoinput
 
     TEST_F(DumpTest, SaveConfigHandlesMultipleCommands)
     {
-        ProgramArguments args;
-        // click left start f8, hold right start f9
-        std::vector<std::string> argvStr = { "autoinput", "click", "left", "hold", "right", "-s", "f8", "f9", "--save-config", "multi_config" };
+        cli::CliApplication app;
+        // hold middle start f8, hold right start f9
+        std::vector<std::string> argvStr = { "autoinput", "run", "--type", "hold", "--button", "middle", "--start", "f8", "--type", "hold", "--button", "right", "--start", "f9", "--save-config", "multi_config" };
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
-        ASSERT_TRUE(args.parseArguments(gsl::make_span(argv.data(), argv.size())));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())));
+        ASSERT_EQ(app.execute(), static_cast<i32>(ErrorCode::Success));
 
-        ConfigData configData = args.toConfigData();
         std::filesystem::path dumpPath = getUserConfigsPath() / "multi_config.toml";
-        
-        ASSERT_TRUE(saveConfigData(configData, dumpPath));
         
         auto loaded = loadConfigData(dumpPath);
         ASSERT_TRUE(loaded.has_value());
         ASSERT_EQ(loaded->commands.size(), 2);
         
-        EXPECT_EQ(loaded->commands[0].action, "click");
+        EXPECT_EQ(loaded->commands[0].action, "hold");
         ASSERT_EQ(loaded->commands[0].buttons.size(), 1);
-        EXPECT_EQ(loaded->commands[0].buttons[0], "left");
+        EXPECT_EQ(loaded->commands[0].buttons[0], "middle");
         ASSERT_EQ(loaded->commands[0].startKeys.size(), 1);
         EXPECT_EQ(loaded->commands[0].startKeys[0], "f8");
 

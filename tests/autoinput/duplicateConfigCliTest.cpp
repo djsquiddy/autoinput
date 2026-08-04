@@ -37,7 +37,7 @@ namespace autoinput::test
             file << "# Source config\nend = \"f3\"\n[[command]]\naction = \"click\"\nbutton = \"left\"\nstart = \"f2\"\n";
         }
 
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --duplicate-config source destination";
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config duplicate source destination";
         auto result = runCommand(command);
 
         EXPECT_EQ(result.exitCode, 0);
@@ -68,7 +68,7 @@ namespace autoinput::test
             file << "end = \"f3\"\n";
         }
 
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --copy-config source dest_alias";
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config copy source dest_alias";
         auto result = runCommand(command);
 
         EXPECT_EQ(result.exitCode, 0);
@@ -89,7 +89,7 @@ namespace autoinput::test
         std::filesystem::path destPath = userConfigDir / "dest.toml";
         { std::ofstream file(destPath); file << "already here\n"; }
 
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --duplicate-config source dest";
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config duplicate source dest";
         auto result = runCommand(command);
 
         EXPECT_NE(result.exitCode, 0);
@@ -102,7 +102,7 @@ namespace autoinput::test
         ScopedEnvironmentVariable homeEnv("USERPROFILE", tempDir.path().string());
         ScopedEnvironmentVariable homeEnv2("HOME", tempDir.path().string());
 
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --duplicate-config non_existent dest";
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config duplicate non_existent dest";
         auto result = runCommand(command);
 
         EXPECT_NE(result.exitCode, 0);
@@ -121,7 +121,7 @@ namespace autoinput::test
         std::filesystem::path sourcePath = userConfigDir / "source.toml";
         { std::ofstream file(sourcePath); file << "end = \"f3\"\n"; }
 
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --duplicate-config source source";
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config duplicate source source";
         auto result = runCommand(command);
 
         EXPECT_NE(result.exitCode, 0);
@@ -138,7 +138,7 @@ namespace autoinput::test
         // But since we are in a test environment, let's check what's actually there or use one we know.
         // Actually, the build copies the project 'configs' dir to the output dir.
         
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --duplicate-config core-keeper-fishing my-copy";
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config duplicate core-keeper-fishing my-copy";
         auto result = runCommand(command);
 
         // If 'core-keeper-fishing' doesn't exist in the test environment, this might fail.
@@ -151,7 +151,7 @@ namespace autoinput::test
             std::filesystem::create_directories(builtinDir);
             { std::ofstream file(builtinDir / "test-builtin.toml"); file << "builtin = true\n"; }
             
-            command = quotePath(AUTOINPUT_EXE_PATH) + " --duplicate-config test-builtin my-copy-2";
+            command = quotePath(AUTOINPUT_EXE_PATH) + " config duplicate test-builtin my-copy-2";
             result = runCommand(command);
             EXPECT_EQ(result.exitCode, 0);
             EXPECT_TRUE(std::filesystem::exists(tempDir.path() / ".autoinput" / "my-copy-2.toml"));
@@ -177,7 +177,7 @@ namespace autoinput::test
         std::filesystem::create_directories(someOtherDir);
         std::filesystem::path destInOtherDir = someOtherDir / "dest.toml";
 
-        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --duplicate-config source " + quotePath(destInOtherDir);
+        std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config duplicate source " + quotePath(destInOtherDir);
         auto result = runCommand(command);
 
         EXPECT_EQ(result.exitCode, 0);
