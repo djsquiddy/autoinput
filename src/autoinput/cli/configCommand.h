@@ -22,15 +22,20 @@ namespace autoinput::cli
         Copy
     };
 
+    struct ConfigData
+    {
+        ConfigAction action{ ConfigAction::None };
+        std::string source;
+        std::string destination;
+        bool force{ false };
+    };
+
     class ConfigCommand final : public MultiCommand
     {
     public:
         using MultiCommand::MultiCommand;
 
-        ConfigAction action{ ConfigAction::None };
-        std::string source;
-        std::string destination;
-        bool force{ false };
+        ConfigData data{};
 
         [[nodiscard]] std::string_view getName() const override { return "config"; }
         [[nodiscard]] HelpEntry getHelpEntry() const override;
