@@ -6,6 +6,7 @@
 #include "autoinput/autoInput.h"
 #include "autoinput/logger.h"
 #include "autoinput/terminal.h"
+#include "autoinput/platform.h"
 #include "autoinput/errorCode.h"
 #include "autoinput/cli/cliApplication.h"
 
@@ -16,7 +17,8 @@ int main(int argc, char* argv[])
     try
     {
         terminal::setup();
-        Logger::setFile("app.log");
+        const auto logPath = platform::getExecutablePath() / "app.log";
+        Logger::setFile(logPath.string());
 
         cli::CliApplication app;
         if (!app.parse(gsl::make_span(argv, argc)))
