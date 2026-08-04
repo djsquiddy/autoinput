@@ -79,7 +79,7 @@ namespace autoinput
 
     private:
         RecordedSequence m_sequence;
-        void playback();
+        void playback(const std::stop_token& stoken);
     };
 }
 

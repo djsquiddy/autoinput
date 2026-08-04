@@ -93,7 +93,6 @@ namespace autoinput
         EXPECT_TRUE(keyHandlers[spaceKey].getActive());
         
         m_program->end();
-        m_program->joinThreads();
     }
 
     TEST_F(ExclusivityTest, DifferentGroupsAreIndependent)
@@ -134,6 +133,5 @@ namespace autoinput
         EXPECT_TRUE(mouseHandlers[rightMouse].getActive());
         
         m_program->end();
-        m_program->joinThreads();
     }
 }

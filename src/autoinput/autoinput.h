@@ -110,11 +110,6 @@ namespace autoinput
         void end();
 
         /**
-         * @brief Joins any active worker threads.
-         */
-        void joinThreads();
-
-        /**
          * @brief Gets the list of key information configured.
          * @return A const reference to the vector of KeyInfo.
          */
@@ -190,7 +185,6 @@ namespace autoinput
         std::unique_ptr<SequenceRecorder> m_recorder{ nullptr };
         ProgramArguments m_arguments{};
         std::vector<KeyInfo> m_keyInfo{};
-        std::vector<std::unique_ptr<std::thread>> m_zombieThreads{};
         bool m_lastIsActiveIndicator{ false };
         std::unique_ptr<NotificationService> m_notificationService{ nullptr };
 #ifdef AUTOINPUT_TESTING

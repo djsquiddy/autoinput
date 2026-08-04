@@ -228,11 +228,6 @@ namespace autoinput::cli
 
         runListener();
 
-        if (g_program)
-        {
-            g_program->joinThreads();
-        }
-
         cleanup();
 
         return static_cast<i32>(ErrorCode::Success);

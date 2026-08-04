@@ -30,7 +30,6 @@ namespace autoinput::testing
             if (g_program)
             {
                 g_program->end();
-                g_program->joinThreads();
             }
             g_program.reset();
         }

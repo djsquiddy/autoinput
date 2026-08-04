@@ -382,10 +382,7 @@ namespace autoinput
                     {
                         mouseHandler.release();
                         mouseHandler.setActive(false);
-                        if (mouseHandler.m_autoclickerThread)
-                        {
-                            m_zombieThreads.push_back(std::move(mouseHandler.m_autoclickerThread));
-                        }
+                        mouseHandler.m_autoclickerThread.request_stop();
                     }
                 }
                 for (auto& keyHandler : m_keyHandlers | std::views::values)
@@ -394,10 +391,7 @@ namespace autoinput
                     {
                         keyHandler.release();
                         keyHandler.setActive(false);
-                        if (keyHandler.m_autoclickerThread)
-                        {
-                            m_zombieThreads.push_back(std::move(keyHandler.m_autoclickerThread));
-                        }
+                        keyHandler.m_autoclickerThread.request_stop();
                     }
                 }
                 for (auto& seqHandler : m_sequenceHandlers | std::views::values)
@@ -406,10 +400,7 @@ namespace autoinput
                     {
                         seqHandler.release();
                         seqHandler.setActive(false);
-                        if (seqHandler.m_autoclickerThread)
-                        {
-                            m_zombieThreads.push_back(std::move(seqHandler.m_autoclickerThread));
-                        }
+                        seqHandler.m_autoclickerThread.request_stop();
                     }
                 }
             }
@@ -438,10 +429,7 @@ namespace autoinput
             if (mouseHandler.getActive())
             {
                 mouseHandler.setActive(false);
-                if (mouseHandler.m_autoclickerThread)
-                {
-                    m_zombieThreads.push_back(std::move(mouseHandler.m_autoclickerThread));
-                }
+                mouseHandler.m_autoclickerThread.request_stop();
             }
         }
 
@@ -451,10 +439,7 @@ namespace autoinput
             if (keyHandler.getActive())
             {
                 keyHandler.setActive(false);
-                if (keyHandler.m_autoclickerThread)
-                {
-                    m_zombieThreads.push_back(std::move(keyHandler.m_autoclickerThread));
-                }
+                keyHandler.m_autoclickerThread.request_stop();
             }
         }
 
@@ -464,51 +449,12 @@ namespace autoinput
             if (seqHandler.getActive())
             {
                 seqHandler.setActive(false);
-                if (seqHandler.m_autoclickerThread)
-                {
-                    m_zombieThreads.push_back(std::move(seqHandler.m_autoclickerThread));
-                }
+                seqHandler.m_autoclickerThread.request_stop();
             }
         }
 
         platform::signalEnd();
         updateStatusIndicator();
-    }
-
-    void Program::joinThreads()
-    {
-        for (auto& mouseHandler : m_mouseHandlers | std::views::values)
-        {
-            if (mouseHandler.m_autoclickerThread && mouseHandler.m_autoclickerThread->joinable())
-            {
-                mouseHandler.m_autoclickerThread->join();
-            }
-        }
-
-        for (auto& keyHandler : m_keyHandlers | std::views::values)
-        {
-            if (keyHandler.m_autoclickerThread && keyHandler.m_autoclickerThread->joinable())
-            {
-                keyHandler.m_autoclickerThread->join();
-            }
-        }
-
-        for (auto& seqHandler : m_sequenceHandlers | std::views::values)
-        {
-            if (seqHandler.m_autoclickerThread && seqHandler.m_autoclickerThread->joinable())
-            {
-                seqHandler.m_autoclickerThread->join();
-            }
-        }
-
-        for (auto& thread : m_zombieThreads)
-        {
-            if (thread && thread->joinable())
-            {
-                thread->join();
-            }
-        }
-        m_zombieThreads.clear();
     }
 
     void Program::printProgramInfo() const
@@ -704,18 +650,15 @@ namespace autoinput
         {
             handler.release();
             handler.setActive(false);
-            if (handler.m_autoclickerThread)
-            {
-                m_zombieThreads.push_back(std::move(handler.m_autoclickerThread));
-            }
+            handler.m_autoclickerThread.request_stop();
             return;
         }
 
         auto delayData = m_arguments.delayData;
         handler.setActive(true);
-        handler.m_autoclickerThread = std::make_unique<std::thread>([&handler, delayData]()
+        handler.m_autoclickerThread = std::jthread([&handler, delayData](const std::stop_token& stoken)
         {
-            while (handler.getActive())
+            while (!stoken.stop_requested())
             {
                 if (handler.getPaused())
                 {
@@ -723,14 +666,25 @@ namespace autoinput
                     {
                         handler.release();
                     }
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    std::unique_lock lock(handler.m_mutex);
+                    handler.m_cv.wait_for(lock, stoken, std::chrono::milliseconds(100), [&]{ return stoken.stop_requested(); });
                     continue;
                 }
 
                 handler.press();
                 const auto pressWaitTime = std::chrono::milliseconds(delayData.getPressDelay());
                 Logger::debug("Pressed: {}, waiting: {}\n", handler.getName(), pressWaitTime);
-                std::this_thread::sleep_for(pressWaitTime);
+                
+                {
+                    std::unique_lock lock(handler.m_mutex);
+                    if (handler.m_cv.wait_for(lock, stoken, pressWaitTime, [&]{ return stoken.stop_requested(); }))
+                    {
+                        // Stop requested
+                        if (handler.isPressed()) handler.release();
+                        break;
+                    }
+                }
+
                 if (!handler.getActive() || handler.getPaused())
                 {
                     if (handler.isPressed())
@@ -739,10 +693,15 @@ namespace autoinput
                     }
                     continue;
                 }
+
                 handler.release();
                 const auto releaseWaitTime = std::chrono::milliseconds(delayData.getReleaseDelay());
                 Logger::debug("Released: {}, waiting: {}\n", handler.getName(), releaseWaitTime);
-                std::this_thread::sleep_for(std::chrono::milliseconds(releaseWaitTime));
+                
+                {
+                    std::unique_lock lock(handler.m_mutex);
+                    handler.m_cv.wait_for(lock, stoken, releaseWaitTime, [&]{ return stoken.stop_requested(); });
+                }
             }
         });
     }

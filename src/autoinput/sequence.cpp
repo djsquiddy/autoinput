@@ -64,21 +64,19 @@ namespace autoinput
         if (!m_backend) return;
         if (bool expected = false; m_isActive.compare_exchange_strong(expected, true))
         {
-            m_autoclickerThread = std::make_unique<std::thread>(&SequenceHandler::playback, this);
+            m_autoclickerThread = std::jthread([this](std::stop_token stoken) { playback(stoken); });
         }
     }
 
     void SequenceHandler::release()
     {
         m_isActive = false;
-        if (m_autoclickerThread && m_autoclickerThread->joinable())
-        {
-            m_autoclickerThread->detach(); // We don't want to block the hook thread
-            m_autoclickerThread.reset();
-        }
+        m_autoclickerThread.request_stop();
+        std::unique_lock lock(m_mutex);
+        m_cv.notify_all();
     }
 
-    void SequenceHandler::playback()
+    void SequenceHandler::playback(const std::stop_token& stoken)
     {
         Logger::info("Starting playback of sequence: {}\n", m_sequence.name);
         
@@ -86,15 +84,19 @@ namespace autoinput
         {
             for (const auto& event : m_sequence.events)
             {
-                if (!m_isActive) break;
+                if (!m_isActive || stoken.stop_requested()) break;
 
                 auto delay = parseWaitDelay(event.delay);
                 if (delay.count() > 0)
                 {
-                    std::this_thread::sleep_for(delay);
+                    std::unique_lock lock(m_mutex);
+                    if (m_cv.wait_for(lock, stoken, delay, [&]{ return !m_isActive || stoken.stop_requested(); }))
+                    {
+                        break; // Stop requested or deactivated
+                    }
                 }
 
-                if (!m_isActive) break;
+                if (!m_isActive || stoken.stop_requested()) break;
 
                 switch (event.type)
                 {
@@ -117,7 +119,7 @@ namespace autoinput
                     break;
                 }
             }
-        } while (m_isActive && m_sequence.repeat);
+        } while (m_isActive && m_sequence.repeat && !stoken.stop_requested());
 
         m_isActive = false;
         Logger::info("Finished playback of sequence: {}\n", m_sequence.name);

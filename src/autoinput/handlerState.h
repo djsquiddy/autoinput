@@ -12,6 +12,8 @@
 #include <atomic>
 #include <memory>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 
 namespace autoinput
 {
@@ -133,7 +135,9 @@ namespace autoinput
         std::atomic<bool> m_isPressed{ false };
         std::string m_name;
         std::string m_exclusiveGroup;
-        std::unique_ptr<std::thread> m_autoclickerThread{ nullptr };
+        std::jthread m_autoclickerThread;
+        std::condition_variable_any m_cv;
+        std::mutex m_mutex;
 
         friend class Program;
     };
@@ -144,6 +148,7 @@ namespace autoinput
         m_isPressed.store(rhs.m_isPressed.load());
         m_isActive.store(rhs.m_isActive.load());
         m_isPaused.store(rhs.m_isPaused.load());
+        // jthread, cv, and mutex are not copyable
     }
 
     inline InputHandler::InputHandler(InputHandler&& rhs) noexcept
@@ -166,6 +171,7 @@ namespace autoinput
             m_isPressed.store(rhs.m_isPressed.load());
             m_isActive.store(rhs.m_isActive.load());
             m_isPaused.store(rhs.m_isPaused.load());
+            // jthread, cv, and mutex are not copyable
         }
         return *this;
     }
