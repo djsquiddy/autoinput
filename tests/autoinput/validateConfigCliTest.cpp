@@ -94,12 +94,12 @@ namespace autoinput::test
         file.close();
 
         std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config validate " + quotePath(configPath) + " --json";
-        auto result = runCommand(command);
-
-        EXPECT_EQ(result.exitCode, 0);
-        EXPECT_NE(result.output.find("\"valid\": true"), std::string::npos);
-        EXPECT_NE(result.output.find("\"errors\": []"), std::string::npos);
-        EXPECT_NE(result.output.find(configPath.filename().string()), std::string::npos);
+        auto [exitCode, output] = runCommand(command);
+        
+        EXPECT_EQ(exitCode, 0);
+        EXPECT_NE(output.find("\"valid\": true"), std::string::npos);
+        EXPECT_NE(output.find("\"errors\": []"), std::string::npos);
+        EXPECT_NE(output.find(configPath.filename().string()), std::string::npos);
     }
 
     TEST(ValidateConfigCliTest, InvalidConfigWithJsonReturnsJson)
@@ -111,11 +111,11 @@ namespace autoinput::test
         file.close();
 
         std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config validate " + quotePath(configPath) + " --json";
-        auto result = runCommand(command);
+        auto [exitCode, output] = runCommand(command);
 
-        EXPECT_NE(result.exitCode, 0);
-        EXPECT_NE(result.output.find("\"valid\": false"), std::string::npos);
-        EXPECT_NE(result.output.find("Invalid action: 'invalid'"), std::string::npos);
+        EXPECT_NE(exitCode, 0);
+        EXPECT_NE(output.find("\"valid\": false"), std::string::npos);
+        EXPECT_NE(output.find("Invalid action: 'invalid'"), std::string::npos);
     }
 
     TEST(ValidateConfigCliTest, MissingConfigWithJsonReturnsJson)
@@ -124,11 +124,11 @@ namespace autoinput::test
         std::filesystem::path configPath = tempDir.path() / "non_existent.toml";
 
         std::string command = quotePath(AUTOINPUT_EXE_PATH) + " --json config validate " + quotePath(configPath);
-        auto result = runCommand(command);
+        auto [exitCode, output] = runCommand(command);
 
-        EXPECT_NE(result.exitCode, 0);
-        EXPECT_NE(result.output.find("\"valid\": false"), std::string::npos);
-        EXPECT_NE(result.output.find("Configuration file not found"), std::string::npos);
+        EXPECT_NE(exitCode, 0);
+        EXPECT_NE(output.find("\"valid\": false"), std::string::npos);
+        EXPECT_NE(output.find("Configuration file not found"), std::string::npos);
     }
 
     TEST(ValidateConfigCliTest, JsonOutputIsClean)

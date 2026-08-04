@@ -5,6 +5,7 @@
  */
 #include "autoinput/logger.h"
 #include "autoinput/utils.h"
+#include "autoinput/errorCode.h"
 #include <chrono>
 #include <filesystem>
 #include <stdexcept>
@@ -119,6 +120,31 @@ namespace autoinput
         {
             m_fileStream.close();
         }
+    }
+
+    void Logger::fatalError(const ErrorMessage& error)
+    {
+        if (isConsoleOutputEnabled())
+        {
+            auto [errorValue, errorString] = errorCodeToStringAndValue(error.code);
+            fatal("Error: {} ({}) {}", errorString, errorValue, error.message);
+            return;
+        }
+        printErrorJson(error);
+    }
+
+    void Logger::fatalError(const std::vector<ErrorMessage>& errors)
+    {
+        if (isConsoleOutputEnabled())
+        {
+            for (const auto& [code, message] : errors)
+            {
+                auto [errorValue, errorString] = errorCodeToStringAndValue(code);
+                fatal("Error: {} ({}) {}", errorString, errorValue, message);
+            }
+            fatal("Error: e");
+        }
+        printErrorJson(errors);
     }
 
     LogStream Logger::debugStream(std::source_location loc)
@@ -244,7 +270,7 @@ namespace autoinput
         }
 
         std::scoped_lock lock(m_mutex);
-        if (isConsoleOutputEnabled_impl())
+        if (level == LogLevel::Print || isConsoleOutputEnabled_impl())
         {
             getConsoleStream(level) << consoleMsg;
         }

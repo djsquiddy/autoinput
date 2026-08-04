@@ -47,7 +47,10 @@ namespace autoinput
         void signalEnd()
         {
             IPlatformBackend* backend = g_program ? g_program->getBackend() : nullptr;
-            if (backend) backend->cleanup();
+            if (backend)
+            {
+                backend->cleanup();
+            }
             
             if (g_mainThreadId != 0 && GetCurrentThreadId() != g_mainThreadId)
             {
@@ -72,7 +75,7 @@ namespace autoinput
         {
             try
             {
-                return static_cast<int32_t>(toVirtualKey(key));
+                return toVirtualKey(key);
             }
             catch (...)
             {
@@ -147,18 +150,18 @@ namespace autoinput
         std::filesystem::path getExecutablePath()
         {
             char buffer[MAX_PATH];
+            // ReSharper disable once CppZeroConstantCanBeReplacedWithNullptr
             GetModuleFileNameA(NULL, buffer, MAX_PATH);
             return std::filesystem::path(buffer).parent_path();
         }
 
         std::filesystem::path getUserHomePath()
         {
-            const char* userProfile = std::getenv("USERPROFILE");
-            if (userProfile)
+            if (const char* userProfile = std::getenv("USERPROFILE"))
             {
-                return std::filesystem::path(userProfile);
+                return { userProfile };
             }
-            return std::filesystem::path();
+            return {};
         }
     }
 
@@ -218,8 +221,7 @@ namespace autoinput
                 {"pause", VK_PAUSE}
             };
 
-            auto it = specialKeys.find(keyStr);
-            if (it != specialKeys.end())
+            if (const auto it = specialKeys.find(keyStr); it != specialKeys.end())
             {
                 return it->second;
             }

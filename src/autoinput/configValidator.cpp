@@ -17,6 +17,8 @@
 #include <string_view>
 #include <iostream>
 
+#include "logger.h"
+
 namespace autoinput
 {
     /**
@@ -279,25 +281,25 @@ namespace autoinput
 
     void printValidationJson(const bool valid, const std::string& configPath, const std::vector<ValidationError>& errors)
     {
-        std::cout << "{\n";
-        std::cout << "  \"valid\": " << (valid ? "true" : "false") << ",\n";
-        std::cout << "  \"configPath\": \"" << escapeJsonString(configPath) << "\",\n";
-        std::cout << "  \"errors\": [";
+        Logger::print("{\n");
+        Logger::print("  \"valid\": {},\n", valid ? "true" : "false");
+        Logger::print("  \"configPath\": \"{}\",\n", escapeJsonString(configPath));
+        Logger::print("  \"errors\": [");
         for (size_t i = 0; i < errors.size(); ++i)
         {
-            std::cout << "\n    {\n";
-            std::cout << "      \"message\": \"" << escapeJsonString(errors[i].message) << "\"\n";
-            std::cout << "    }";
+            Logger::print("\n    {\n");
+            Logger::print("      \"message\": \"{}\"\n", escapeJsonString(errors[i].message));
+            Logger::print("    }");
             if (i < errors.size() - 1)
             {
-                std::cout << ",";
+                Logger::print(",");
             }
         }
         if (!errors.empty())
         {
-            std::cout << "\n  ";
+            Logger::print("\n  ");
         }
-        std::cout << "]\n";
-        std::cout << "}\n";
+        Logger::print("]\n");
+        Logger::print("}\n");
     }
 }

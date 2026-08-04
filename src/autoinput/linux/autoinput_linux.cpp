@@ -10,6 +10,9 @@
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
 #include "autoinput/linux/internalData_linux.h"
+#include <any>
+#include <string>
+#include <vector>
 
 namespace autoinput
 {

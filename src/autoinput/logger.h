@@ -22,6 +22,8 @@
 
 namespace autoinput
 {
+    struct ErrorMessage;
+    enum class ErrorCode;
     class Logger;
 
     enum class LogLevel : uint8_t
@@ -190,6 +192,9 @@ namespace autoinput
         static void fatal(std::string_view msg, std::source_location loc = std::source_location::current());
         template <typename... Args>
         static void fatal(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
+
+        static void fatalError(const ErrorMessage& error);
+        static void fatalError(const std::vector<ErrorMessage>& errors);
 
         static LogStream debugStream(std::source_location loc = std::source_location::current());
         static LogStream printStream(std::source_location loc = std::source_location::current());

@@ -9,6 +9,9 @@
 #include "autoinput/logger.h"
 #include "autoinput/types.h"
 #include "autoinput/linux/internalData_linux.h"
+#include <vector>
+#include <filesystem>
+
 
 namespace autoinput
 {

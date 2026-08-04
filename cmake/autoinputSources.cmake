@@ -10,6 +10,7 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/environment.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/environment.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/errorCode.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/errorCode.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/waitDelay.cpp

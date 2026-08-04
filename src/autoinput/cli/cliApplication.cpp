@@ -47,7 +47,12 @@ namespace autoinput::cli
         {
             if (m_context.global.jsonOutput)
             {
-                printValidationJson(false, "", { ValidationError{ "Failed to parse global options" } });
+                printErrorJson({
+                    {
+                        .code = ErrorCode::FailedToParseGlobalOptions,
+                        .message = "Failed to parse global options"
+                    }
+                });
             }
             return false;
         }
@@ -67,51 +72,39 @@ namespace autoinput::cli
         m_command = createCommand(commandName, m_context);
         if (!m_command)
         {
-            if (m_context.global.jsonOutput)
-            {
-                printValidationJson(false, "", { ValidationError{ std::format("Unknown command: {}", commandName) } });
-            }
-            else
-            {
-                Logger::fatal("Unknown command: {}\n\n", commandName);
-                printUsage();
-            }
+            Logger::fatalError({
+                .code = ErrorCode::UnknownCommand,
+                .message = std::format("Unknown command: {}", commandName)
+            });
+            printUsage();
             return false;
         }
 
         if (!m_command->parse(args, index))
         {
-            if (m_context.global.jsonOutput)
-            {
-                printValidationJson(false, "", { ValidationError{ std::format("Failed to parse {} command options", commandName) } });
-            }
+            Logger::fatalError({
+                .code = ErrorCode::FailedToParseCommandOptions,
+                .message = std::format("Failed to parse {} command options", commandName)
+            });
             return false;
         }
 
         if (index < args.size())
         {
-            if (m_context.global.jsonOutput)
-            {
-                printValidationJson(false, "", { ValidationError{ std::format("Unexpected argument: {}", args[index]) } });
-            }
-            else
-            {
-                Logger::fatal("Unexpected argument: {}\n\n", args[index]);
-                m_command->printHelp();
-            }
+            Logger::fatalError({
+            .code = ErrorCode::UnexpectedArgument,
+            .message = std::format("Unexpected argument: {}", args[index])
+            });
             return false;
         }
 
         if (!m_command->validate())
         {
-            if (m_context.global.jsonOutput)
-            {
-                printValidationJson(false, "", { ValidationError{ std::format("Validation failed for {} command", commandName) } });
-            }
-            else
-            {
-                m_command->printHelp();
-            }
+            Logger::fatalError({
+                .code = ErrorCode::CliValidationError,
+                .message = std::format("Validation failed for {} command", commandName)
+            });
+            m_command->printHelp();
             return false;
         }
 
