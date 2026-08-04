@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <string>
+#include <unordered_set>
 #include <unordered_map>
 #include <memory>
 #include <thread>
@@ -139,6 +140,8 @@ namespace autoinput
          * @return The last indicator state.
          */
         [[nodiscard]] bool getLastIsActiveIndicator() const { return m_lastIsActiveIndicator; }
+        [[nodiscard]] std::string getLastTriggeredCommandName() const { return m_lastTriggeredCommandName; }
+        [[nodiscard]] std::optional<bool> getLastTriggeredCommandActive() const { return m_lastTriggeredCommandActive; }
 
         /**
          * @brief Sets the active application name for testing purposes.
@@ -186,6 +189,9 @@ namespace autoinput
         ProgramArguments m_arguments{};
         std::vector<KeyInfo> m_keyInfo{};
         bool m_lastIsActiveIndicator{ false };
+        std::string m_lastTriggeredCommandName;
+        std::optional<bool> m_lastTriggeredCommandActive;
+        std::unordered_set<int32_t> m_keysPressed{};
         std::unique_ptr<NotificationService> m_notificationService{ nullptr };
 #ifdef AUTOINPUT_TESTING
         std::string m_testActiveApp;

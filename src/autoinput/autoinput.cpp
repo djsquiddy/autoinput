@@ -204,12 +204,30 @@ namespace autoinput
             return true; // During recording we handle everything.
         }
 
-        if (!input.isKeyDown())
+        if (input.isSynthetic())
         {
             return false;
         }
 
         const auto [charKey, functionKey, vk, modifier] = input.getKeyState();
+        if (input.isKeyUp())
+        {
+            m_keysPressed.erase(vk);
+            return false;
+        }
+
+        if (input.isKeyDown())
+        {
+            if (m_keysPressed.contains(vk))
+            {
+                return false;
+            }
+            m_keysPressed.insert(vk);
+        }
+        else
+        {
+            return false;
+        }
         bool handled = false;
         bool started = false;
 
@@ -290,7 +308,7 @@ namespace autoinput
 
         const auto [trigger, isDown] = input.getButtonState();
 
-        if (trigger == MouseButton::None || !isDown)
+        if (trigger == MouseButton::None || !isDown || input.isSynthetic())
         {
             return false;
         }
@@ -408,6 +426,7 @@ namespace autoinput
             if (keyInfo.action == ActionState::HOLD)
             {
                 handlerToStart->togglePressState();
+                handlerToStart->setActive(handlerToStart->isPressed());
             }
             else
             {
@@ -454,6 +473,7 @@ namespace autoinput
         }
 
         platform::signalEnd();
+        m_keysPressed.clear();
         updateStatusIndicator();
     }
 
@@ -606,7 +626,8 @@ namespace autoinput
             }
         }
 
-        if (isActive != m_lastIsActiveIndicator || !triggeredCommandName.empty())
+        if (isActive != m_lastIsActiveIndicator || 
+            (!triggeredCommandName.empty() && (triggeredCommandName != m_lastTriggeredCommandName || triggeredCommandActive != m_lastTriggeredCommandActive)))
         {
             if (m_notificationService)
             {
@@ -640,6 +661,8 @@ namespace autoinput
                 }
             }
             m_lastIsActiveIndicator = isActive;
+            m_lastTriggeredCommandName = triggeredCommandName;
+            m_lastTriggeredCommandActive = triggeredCommandActive;
         }
     }
 

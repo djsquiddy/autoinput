@@ -118,6 +118,7 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/stopTriggerTest_win32.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/configLookupTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/statusIndicatorTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/fixVerificationTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/multipleCommandNotificationTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/runCommandRefactorTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/testEnvironment.cpp
