@@ -26,7 +26,14 @@ namespace autoinput
     class ProgramArguments : public NonCopyable
     {
     public:
+        /**
+         * @brief Default constructor for ProgramArguments.
+         */
         ProgramArguments();
+
+        /**
+         * @brief Default destructor.
+         */
         ~ProgramArguments() override = default;
 
         std::string programName{};
@@ -59,10 +66,28 @@ namespace autoinput
         StatusNotificationMode statusNotificationMode{ StatusNotificationMode::Console };
         WaitDelayData delayData{};
 
+        /**
+         * @brief Performs post-parsing validation and processing of arguments.
+         * @return True if arguments are valid, false otherwise.
+         */
         [[nodiscard]] bool postParseArguments();
+
+        /**
+         * @brief Converts the current arguments to ConfigData.
+         * @return A ConfigData object containing the current argument values.
+         */
         [[nodiscard]] ConfigData toConfigData() const;
 
+        /**
+         * @brief Gets the current settings (const).
+         * @return Const reference to Settings.
+         */
         [[nodiscard]] const Settings& getSettings() const { return m_settings; }
+
+        /**
+         * @brief Gets the current settings.
+         * @return Reference to Settings.
+         */
         [[nodiscard]] Settings& getSettings() { return m_settings; }
 
     private:

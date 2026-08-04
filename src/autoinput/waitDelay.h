@@ -26,9 +26,31 @@ namespace autoinput
         bool useReleaseRange{ false };
         bool hasRelease{ false };
 
+        /**
+         * @brief Gets the current press delay, potentially randomized within a range.
+         * @return The press delay duration.
+         */
         [[nodiscard]] std::chrono::milliseconds getPressDelay() const;
+
+        /**
+         * @brief Gets the current release delay, potentially randomized within a range.
+         * @return The release delay duration.
+         */
         [[nodiscard]] std::chrono::milliseconds getReleaseDelay() const;
+
+        /**
+         * @brief Converts the wait delay data to a string representation.
+         * @param isPressWait Whether to stringify the press or release delay.
+         * @return The string representation.
+         */
         [[nodiscard]] std::string toString(bool isPressWait) const;
+
+        /**
+         * @brief Parses a wait delay argument string into the struct.
+         * @param waitTimeDelayArg The argument string (e.g. "100ms" or "100-200ms").
+         * @param isPressWait Whether this is for the press or release delay.
+         * @return True if parsing was successful.
+         */
         bool parseWaitTimeDelay(std::string_view waitTimeDelayArg, bool isPressWait);
     };
 

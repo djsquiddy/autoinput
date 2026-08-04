@@ -32,40 +32,154 @@ namespace autoinput
     {
     public:
         Program() = default;
+        /**
+         * @brief Constructs a Program with a specified platform backend.
+         * @param backend A unique pointer to the platform backend to use.
+         */
         explicit Program(std::unique_ptr<IPlatformBackend> backend);
 
+        /**
+         * @brief Gets the program arguments.
+         * @return Reference to the ProgramArguments.
+         */
         ProgramArguments& arguments() { return m_arguments; }
 
+        /**
+         * @brief Sets the platform backend for the program.
+         * @param backend A unique pointer to the platform backend to set.
+         */
         void setBackend(std::unique_ptr<IPlatformBackend> backend);
+
+        /**
+         * @brief Gets the current platform backend.
+         * @return Pointer to the IPlatformBackend, or nullptr if none set.
+         */
         [[nodiscard]] IPlatformBackend* getBackend() const { return m_backend.get(); }
+
+        /**
+         * @brief Releases ownership of the platform backend.
+         * @return A unique pointer to the released IPlatformBackend.
+         */
         std::unique_ptr<IPlatformBackend> releaseBackend() { return std::move(m_backend); }
 
+        /**
+         * @brief Initializes the program, setting up handlers from arguments.
+         * @return True if initialization was successful, false otherwise.
+         */
         bool init();
         
+        /**
+         * @brief Installs system-level input hooks.
+         * @return True if hooks were successfully installed, false otherwise.
+         */
         bool installHooks();
+
+        /**
+         * @brief Runs the main event listener loop.
+         */
         void runListener();
+
+        /**
+         * @brief Cleans up resources, including uninstalling hooks.
+         */
         void cleanup();
 
+        /**
+         * @brief Processes a keyboard input event.
+         * @param input The keyboard input data.
+         * @return True if the event was handled, false otherwise.
+         */
         bool processKeyEvent(KeyboardInput&& input);
+
+        /**
+         * @brief Processes a mouse input event.
+         * @param input The mouse input data.
+         * @return True if the event was handled, false otherwise.
+         */
         bool processMouseEvent(const MouseInput& input);
+
+        /**
+         * @brief Starts the program's main execution based on the provided key information.
+         * @param keyInfo The key information to start with.
+         */
         void start(const KeyInfo& keyInfo);
+
+        /**
+         * @brief Ends the program's main execution.
+         */
         void end();
+
+        /**
+         * @brief Joins any active worker threads.
+         */
         void joinThreads();
 
+        /**
+         * @brief Gets the list of key information configured.
+         * @return A const reference to the vector of KeyInfo.
+         */
         [[nodiscard]] const std::vector<KeyInfo>& getKeyInfo() const { return m_keyInfo; }
 
 #ifdef AUTOINPUT_TESTING
+        /**
+         * @brief Gets the mouse handlers (for testing).
+         * @return Reference to the mouse handlers map.
+         */
         auto& getMouseHandlers() { return m_mouseHandlers; }
+
+        /**
+         * @brief Gets the key handlers (for testing).
+         * @return Reference to the key handlers map.
+         */
         auto& getKeyHandlers() { return m_keyHandlers; }
+
+        /**
+         * @brief Gets the sequence handlers (for testing).
+         * @return Reference to the sequence handlers map.
+         */
         auto& getSequenceHandlers() { return m_sequenceHandlers; }
+
+        /**
+         * @brief Gets the last recorded active indicator state (for testing).
+         * @return The last indicator state.
+         */
         [[nodiscard]] bool getLastIsActiveIndicator() const { return m_lastIsActiveIndicator; }
+
+        /**
+         * @brief Sets the active application name for testing purposes.
+         * @param app The application name.
+         */
         void setTestActiveApp(std::string app) { m_testActiveApp = std::move(app); }
+
+        /**
+         * @brief Gets the notification service (for testing).
+         * @return Pointer to the NotificationService.
+         */
         NotificationService* getNotificationService() const { return m_notificationService.get(); }
 #endif
 
+        /**
+         * @brief Prints information about the program to the console.
+         */
         void printProgramInfo() const;
+
+        /**
+         * @brief Checks if the currently active application is blacklisted.
+         * @return True if blacklisted, false otherwise.
+         */
         [[nodiscard]] bool isApplicationBlacklisted() const;
+
+        /**
+         * @brief Handles a change in the focused application.
+         * @param activeApp The name of the newly focused application.
+         */
         void onFocusChanged(const std::string& activeApp);
+
+        /**
+         * @brief Updates the status indicator in the system tray or terminal.
+         * @param triggeredCommandName The name of the command that was triggered (optional).
+         * @param triggeredCommandActive Whether the triggered command is now active (optional).
+         */
         void updateStatusIndicator(const std::string& triggeredCommandName = "", std::optional<bool> triggeredCommandActive = std::nullopt);
 
     private:
@@ -86,8 +200,20 @@ namespace autoinput
         void startAutoClicker(InputHandler& handler);
     };
 
+    /**
+     * @brief Installs global input hooks.
+     * @return True if successful.
+     */
     bool installHooks();
+
+    /**
+     * @brief Runs the global event listener.
+     */
     void runListener();
+
+    /**
+     * @brief Performs global cleanup.
+     */
     void cleanup();
 
     inline std::unique_ptr<Program> g_program{ nullptr };

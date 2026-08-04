@@ -31,23 +31,92 @@ namespace autoinput
     class IPlatformBackend
     {
     public:
+        /**
+         * @brief Virtual destructor for IPlatformBackend.
+         */
         virtual ~IPlatformBackend() = default;
+
+        /**
+         * @brief Installs platform-specific input hooks.
+         * @return True if successful.
+         */
         virtual bool installHooks() = 0;
+
+        /**
+         * @brief Runs the backend's event listener loop.
+         */
         virtual void runListener() = 0;
+
+        /**
+         * @brief Cleans up backend resources.
+         */
         virtual void cleanup() = 0;
 
+        /**
+         * @brief Simulates a full key press (down and up).
+         * @param key The key to press.
+         */
         virtual void keyPress(const Key& key) = 0;
+
+        /**
+         * @brief Simulates a full key release (not usually needed if keyPress exists, but here for completeness).
+         * @param key The key to release.
+         */
         virtual void keyRelease(const Key& key) = 0;
+
+        /**
+         * @brief Simulates a full mouse button press (down and up).
+         * @param mouse The mouse button to press.
+         */
         virtual void mousePress(const Mouse& mouse) = 0;
+
+        /**
+         * @brief Simulates a full mouse button release.
+         * @param mouse The mouse button to release.
+         */
         virtual void mouseRelease(const Mouse& mouse) = 0;
 
+        /**
+         * @brief Simulates a key down event.
+         * @param key The key to press down.
+         */
         virtual void keyDown(const Key& key) = 0;
+
+        /**
+         * @brief Simulates a key up event.
+         * @param key The key to release.
+         */
         virtual void keyUp(const Key& key) = 0;
+
+        /**
+         * @brief Simulates a mouse button down event.
+         * @param mouse The mouse button to press down.
+         */
         virtual void mouseDown(const Mouse& mouse) = 0;
+
+        /**
+         * @brief Simulates a mouse button up event.
+         * @param mouse The mouse button to release.
+         */
         virtual void mouseUp(const Mouse& mouse) = 0;
+
+        /**
+         * @brief Moves the mouse cursor to absolute coordinates.
+         * @param x The x-coordinate.
+         * @param y The y-coordinate.
+         */
         virtual void moveMouseTo(int32_t x, int32_t y) = 0;
+
+        /**
+         * @brief Gets the current cursor position.
+         * @return A pair of (x, y) coordinates.
+         */
         virtual std::pair<int32_t, int32_t> getCursorPosition() = 0;
 
+        /**
+         * @brief Gets the capabilities of this backend.
+         * @return A BackendCapabilities struct.
+         */
         virtual BackendCapabilities capabilities() const = 0;
     };
 

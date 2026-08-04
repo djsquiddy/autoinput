@@ -1,5 +1,5 @@
 /**
- * @file config.cpp
+ * @file logger.h
  * @author djsquiddy
  * @date July 2026
  */
@@ -35,24 +35,61 @@ namespace autoinput
         Unknown = 6
     };
 
+    /**
+     * @brief Converts a string to a LogLevel.
+     * @param str The string representation of the log level.
+     * @return The corresponding LogLevel.
+     */
     LogLevel logLevelFromString(std::string_view str);
+
+    /**
+     * @brief Converts a LogLevel to a string.
+     * @param level The log level.
+     * @return The string representation of the log level.
+     */
     std::string logLevelToString(LogLevel level);
+
+    /**
+     * @brief Gets the prefix string for a log level.
+     * @param level The log level.
+     * @param isShorthand Whether to use a shorthand prefix (e.g. [I] instead of [INFO]).
+     * @return The prefix string.
+     */
     std::string getLogLevelPrefix(LogLevel level, bool isShorthand = false);
 
     // Overload the insertion operator
     inline std::ostream& operator<<(std::ostream& os, const LogLevel level) { return os << getLogLevelPrefix(level); }
+
+    /**
+     * @brief Gets the appropriate console stream for a log level (cout or cerr).
+     * @param level The log level.
+     * @return Reference to the ostream.
+     */
     std::ostream& getConsoleStream(LogLevel level);
 
     // Helper class to enable: Logger::info << "msg";
     class LogStream
     {
     public:
+        /**
+         * @brief Constructs a LogStream.
+         * @param logger Reference to the Logger.
+         * @param level The log level for this stream.
+         * @param loc The source location where the stream was created.
+         */
         LogStream(Logger& logger, LogLevel level, std::source_location loc);
 
-        // Capture the destructor to flush the log (optional, or flush on every <<)
+        /**
+         * @brief Destructor that flushes the buffered log message to the logger.
+         */
         ~LogStream();
 
-        // Template operator<< to accept any streamable type
+        /**
+         * @brief Template operator<< to accept any streamable type.
+         * @tparam T The type of the value to stream.
+         * @param value The value to add to the buffer.
+         * @return Reference to this LogStream.
+         */
         template <typename T>
         LogStream& operator<<(const T& value)
         {
@@ -92,20 +129,49 @@ namespace autoinput
         Logger(Logger&&) = delete;
         Logger& operator=(Logger&&) = delete;
 
+        /**
+         * @brief Gets the singleton instance of the Logger.
+         * @return Reference to the Logger instance.
+         */
         static Logger& instance();
 
-        // Generic log method with format arguments
+        /**
+         * @brief Logs a message with a specific log level and source location.
+         * @param level The log level.
+         * @param msg The message to log.
+         * @param loc The source location.
+         */
         static void log(LogLevel level, std::string_view msg, std::source_location loc = std::source_location::current());
 
+        /**
+         * @brief Logs a formatted message.
+         * @tparam Args The types of the format arguments.
+         * @param level The log level.
+         * @param fmt The format string and captured source location.
+         * @param args The format arguments.
+         */
         template <typename... Args>
         static void log(LogLevel level, Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
 
-        // Convenience wrappers for specific levels
+        /**
+         * @brief Logs a message at Print level.
+         * @param msg The message.
+         * @param loc The source location.
+         */
         static void print(std::string_view msg, std::source_location loc = std::source_location::current());
+        /**
+         * @brief Logs a formatted message at Print level.
+         */
         template <typename... Args>
         static void print(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
 
+        /**
+         * @brief Logs a message at Info level.
+         */
         static void info(std::string_view msg, std::source_location loc = std::source_location::current());
+        /**
+         * @brief Logs a formatted message at Info level.
+         */
         template <typename... Args>
         static void info(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
 

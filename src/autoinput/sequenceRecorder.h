@@ -38,15 +38,56 @@ namespace autoinput
     class SequenceRecorder
     {
     public:
+        /**
+         * @brief Constructs a SequenceRecorder with the given configuration.
+         * @param config The recorder configuration.
+         */
         explicit SequenceRecorder(SequenceConfig config);
 
+        /**
+         * @brief Handles a keyboard event during recording.
+         * @param key The key involved.
+         * @param isDown True if the key was pressed down.
+         * @param isSynthetic True if the event was synthetically generated.
+         */
         void onKeyEvent(const Key& key, bool isDown, bool isSynthetic = false);
+
+        /**
+         * @brief Handles a mouse button event during recording.
+         * @param mouse The mouse button and modifiers.
+         * @param isDown True if the button was pressed down.
+         * @param x The x-coordinate of the mouse.
+         * @param y The y-coordinate of the mouse.
+         * @param isSynthetic True if the event was synthetically generated.
+         */
         void onMouseEvent(const Mouse& mouse, bool isDown, int32_t x, int32_t y, bool isSynthetic = false);
+
+        /**
+         * @brief Handles a mouse movement event during recording.
+         * @param x The x-coordinate.
+         * @param y The y-coordinate.
+         * @param isSynthetic True if the event was synthetically generated.
+         */
         void onMouseMove(int32_t x, int32_t y, bool isSynthetic = false);
 
+        /**
+         * @brief Gets the current state of the recorder.
+         * @return The RecorderState.
+         */
         [[nodiscard]] RecorderState getState() const { return m_state; }
+
+        /**
+         * @brief Gets the recorded sequence.
+         * @return Const reference to the RecordedSequence.
+         */
         [[nodiscard]] const RecordedSequence& getSequence() const { return m_sequence; }
 
+        /**
+         * @brief Saves the recorded sequence to a file.
+         * @param path The file path to save to.
+         * @param force Whether to overwrite an existing file.
+         * @return True if successful.
+         */
         bool save(const std::filesystem::path& path, bool force);
 
     private:

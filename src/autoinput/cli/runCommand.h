@@ -43,11 +43,41 @@ namespace autoinput::cli
     public:
         using CommandBase::CommandBase;
 
+        /**
+         * @brief Gets the command name.
+         * @return "run".
+         */
         [[nodiscard]] std::string_view getName() const override { return "run"; }
+
+        /**
+         * @brief Gets the help entry for the run command.
+         * @return The HelpEntry.
+         */
         [[nodiscard]] HelpEntry getHelpEntry() const override;
+
+        /**
+         * @brief Parses the run command arguments.
+         * @param args Arguments span.
+         * @param index Current index.
+         * @return True if successful.
+         */
         [[nodiscard]] bool parse(gsl::span<char*> args, i32& index) override;
+
+        /**
+         * @brief Validates the run command arguments.
+         * @return True if valid.
+         */
         [[nodiscard]] bool validate() const override;
+
+        /**
+         * @brief Executes the run command (starting the autoinput listener).
+         * @return Exit code.
+         */
         [[nodiscard]] i32 execute() override;
+
+        /**
+         * @brief Prints help for the run command.
+         */
         void printHelp() const override;
 
     private:

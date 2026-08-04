@@ -160,7 +160,18 @@ namespace autoinput
         Function = 1 << 5,
     };
 
+    /**
+     * @brief Converts a KeyModifier to its string representation.
+     * @param modifier The key modifier.
+     * @return The string representation.
+     */
     std::string toString(KeyModifier modifier);
+
+    /**
+     * @brief Parses a vector of strings into a KeyModifier bitmask.
+     * @param keyValue A vector of modifier names (e.g. ["ctrl", "shift"]).
+     * @return The combined KeyModifier mask.
+     */
     KeyModifier keyModifierFromStringVector(const std::vector<std::string>& keyValue);
     template<>
     struct HashFunction<KeyModifier>
@@ -175,15 +186,39 @@ namespace autoinput
 
     struct Mouse
     {
+        /**
+         * @brief Default constructor.
+         */
         Mouse() = default;
+
+        /**
+         * @brief Constructs a Mouse object from a button.
+         * @param b The mouse button.
+         */
         // ReSharper disable once CppNonExplicitConvertingConstructor
         Mouse(const MouseButton b) : button(b) {}
+
+        /**
+         * @brief Constructs a Mouse object from a button and modifier.
+         * @param b The mouse button.
+         * @param m The key modifier.
+         */
         Mouse(const MouseButton b, const KeyModifier m) : button(b), modifier(m) {}
 
         MouseButton button{ MouseButton::None };
         KeyModifier modifier{ KeyModifier::None };
 
+        /**
+         * @brief Parses a string to a Mouse object.
+         * @param keyValue The string representation (e.g. "ctrl+left").
+         * @return The parsed Mouse object.
+         */
         [[nodiscard]] static Mouse fromString(const std::string_view& keyValue);
+
+        /**
+         * @brief Converts the Mouse object to its string representation.
+         * @return The string representation.
+         */
         [[nodiscard]] std::string toString() const;
         bool operator==(const Mouse& rhs) const
         {
@@ -216,8 +251,24 @@ namespace autoinput
         std::string character{};
         KeyModifier modifier{ KeyModifier::None };
 
+        /**
+         * @brief Parses a string to a Key object.
+         * @param keyValue The string representation (e.g. "ctrl+a").
+         * @return The parsed Key object.
+         */
         [[nodiscard]] static Key fromString(const std::string_view& keyValue);
+
+        /**
+         * @brief Creates a Key object from a platform-specific KeyState.
+         * @param state The key state.
+         * @return The created Key object.
+         */
         [[nodiscard]] static Key fromKeyState(const KeyState& state);
+
+        /**
+         * @brief Converts the Key object to its string representation.
+         * @return The string representation.
+         */
         [[nodiscard]] std::string toString() const;
         bool operator==(const Key& rhs) const
         {
@@ -234,11 +285,39 @@ namespace autoinput
         }
     };
 
+    /**
+     * @brief Parses an action state string.
+     * @param actionType The action type string (e.g. "click", "hold").
+     * @return The corresponding ActionState.
+     */
     ActionState actionStateFromArguments(std::string_view actionType);
 
+    /**
+     * @brief Parses a mouse button string.
+     * @param button The button name (e.g. "left").
+     * @return The corresponding MouseButton.
+     */
     MouseButton mouseButtonFromArguments(std::string_view button);
+
+    /**
+     * @brief Converts a MouseButton to its string representation.
+     * @param mouseButton The mouse button.
+     * @return The string representation.
+     */
     std::string mouseButtonToString(const MouseButton& mouseButton);
+
+    /**
+     * @brief Parses a string representing an integer.
+     * @param value The string to parse.
+     * @return The parsed integer, or -1 on failure.
+     */
     int32_t parseStringToInt(std::string_view value);
+
+    /**
+     * @brief Converts an ActionState to its string representation.
+     * @param actionState The action state.
+     * @return The string representation.
+     */
     std::string actionStateToString(ActionState actionState);
 }
 

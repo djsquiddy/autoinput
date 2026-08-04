@@ -19,18 +19,41 @@ namespace autoinput
     class INotificationSink
     {
     public:
+        /**
+         * @brief Virtual destructor for INotificationSink.
+         */
         virtual ~INotificationSink() = default;
+
+        /**
+         * @brief Sends a notification.
+         * @param title The title of the notification.
+         * @param body The body text of the notification.
+         */
         virtual void notify(const std::string& title, const std::string& body) = 0;
     };
 
     class NotificationService
     {
     public:
+        /**
+         * @brief Constructs a NotificationService.
+         * @param mode The notification mode (e.g. Console, SystemTray).
+         * @param jsonOutput Whether to output notifications as JSON.
+         */
         NotificationService(StatusNotificationMode mode, bool jsonOutput);
         
+        /**
+         * @brief Notifies the status of the program or a command.
+         * @param active Whether the program is active.
+         * @param commandName The name of the triggered command (optional).
+         * @param commandActive Whether the triggered command is active (optional).
+         */
         void notifyStatus(bool active, const std::string& commandName = "", std::optional<bool> commandActive = std::nullopt);
 
-        // For testing
+        /**
+         * @brief Adds a notification sink (primarily for testing).
+         * @param sink A unique pointer to the notification sink.
+         */
         void addSink(std::unique_ptr<INotificationSink> sink) { m_sinks.push_back(std::move(sink)); }
 
     private:

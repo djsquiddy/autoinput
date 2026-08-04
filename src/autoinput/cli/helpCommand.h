@@ -24,11 +24,41 @@ namespace autoinput::cli
     public:
         using CommandBase::CommandBase;
 
+        /**
+         * @brief Gets the command name.
+         * @return "help".
+         */
         [[nodiscard]] std::string_view getName() const override { return "help"; }
+
+        /**
+         * @brief Gets the help entry for the help command.
+         * @return The HelpEntry.
+         */
         [[nodiscard]] HelpEntry getHelpEntry() const override;
+
+        /**
+         * @brief Parses the help command arguments (topics).
+         * @param args Arguments span.
+         * @param index Current index.
+         * @return True if successful.
+         */
         [[nodiscard]] bool parse(gsl::span<char*> args, i32& index) override;
+
+        /**
+         * @brief Validates the help command arguments.
+         * @return True if valid.
+         */
         [[nodiscard]] bool validate() const override;
+
+        /**
+         * @brief Executes the help command (printing help for topics or main help).
+         * @return Exit code.
+         */
         [[nodiscard]] i32 execute() override;
+
+        /**
+         * @brief Prints help for the help command itself.
+         */
         void printHelp() const override;
 
     private:

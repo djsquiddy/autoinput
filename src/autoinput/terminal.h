@@ -18,6 +18,9 @@
 
 namespace autoinput::terminal
 {
+    /**
+     * @brief Performs terminal setup (e.g. enabling ANSI processing on Windows).
+     */
     inline void setup()
     {
 #ifdef _WIN32
@@ -46,6 +49,11 @@ namespace autoinput::terminal
         Gray
     };
 
+    /**
+     * @brief Converts a Color enum value to an ANSI escape sequence string.
+     * @param color The color.
+     * @return The ANSI escape sequence.
+     */
     inline std::string_view colorToAnsi(const Color color)
     {
         switch (color)
@@ -64,6 +72,12 @@ namespace autoinput::terminal
         }
     }
 
+    /**
+     * @brief Prints a labeled status message to the console with color.
+     * @param label The label text.
+     * @param status The status text.
+     * @param color The color for the status text.
+     */
     inline void printStatus(const std::string_view label, const std::string_view status, const Color color)
     {
         std::cout << label << colorToAnsi(color) << status << colorToAnsi(Color::Reset) << std::endl;

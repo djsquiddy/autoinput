@@ -72,7 +72,16 @@ namespace autoinput
         int value;
     };
 
+    /**
+     * @brief Creates a Wayland-specific platform backend.
+     * @return A unique pointer to the backend.
+     */
     std::unique_ptr<IPlatformBackend> createWaylandBackend();
+
+    /**
+     * @brief Creates an X11-specific platform backend.
+     * @return A unique pointer to the backend.
+     */
     std::unique_ptr<IPlatformBackend> createX11Backend();
 
     // Platform-specific input helper functions
@@ -114,26 +123,133 @@ namespace autoinput
 
     namespace linux_dispatch
     {
+        /**
+         * @brief Checks if a key is down (Linux dispatcher).
+         * @param data Platform-neutral keyboard data.
+         * @return True if key down.
+         */
         bool Keyboard_isKeyDown(const KeyboardData& data);
+
+        /**
+         * @brief Checks if a key is up (Linux dispatcher).
+         * @param data Platform-neutral keyboard data.
+         * @return True if key up.
+         */
         bool Keyboard_isKeyUp(const KeyboardData& data);
+
+        /**
+         * @brief Gets the character for a key event (Linux dispatcher).
+         * @param data Platform-neutral keyboard data.
+         * @return The character.
+         */
         int8_t Keyboard_getChar(const KeyboardData& data);
+
+        /**
+         * @brief Gets the function key number (Linux dispatcher).
+         * @param data Platform-neutral keyboard data.
+         * @return The function key number.
+         */
         int64_t Keyboard_functionKey(const KeyboardData& data);
+
+        /**
+         * @brief Gets the virtual key code (Linux dispatcher).
+         * @param data Platform-neutral keyboard data.
+         * @return The virtual key code.
+         */
         int32_t Keyboard_getVirtualKey(const KeyboardData& data);
+
+        /**
+         * @brief Prints keyboard info (Linux dispatcher).
+         * @param data Platform-neutral keyboard data.
+         */
         void Keyboard_printInfo(const KeyboardData& data);
 
+        /**
+         * @brief Checks if the left mouse button is down (Linux dispatcher).
+         * @param data Platform-neutral mouse data.
+         * @return True if left button down.
+         */
         bool Mouse_isLeftButtonDown(const MouseData& data);
+
+        /**
+         * @brief Checks if the left mouse button is up (Linux dispatcher).
+         * @param data Platform-neutral mouse data.
+         * @return True if left button up.
+         */
         bool Mouse_isLeftButtonUp(const MouseData& data);
+
+        /**
+         * @brief Checks if the right mouse button is down (Linux dispatcher).
+         * @param data Platform-neutral mouse data.
+         * @return True if right button down.
+         */
         bool Mouse_isRightButtonDown(const MouseData& data);
+
+        /**
+         * @brief Checks if the right mouse button is up (Linux dispatcher).
+         * @param data Platform-neutral mouse data.
+         * @return True if right button up.
+         */
         bool Mouse_isRightButtonUp(const MouseData& data);
+
+        /**
+         * @brief Checks if the middle mouse button is down (Linux dispatcher).
+         * @param data Platform-neutral mouse data.
+         * @return True if middle button down.
+         */
         bool Mouse_isMiddleButtonDown(const MouseData& data);
+
+        /**
+         * @brief Checks if the middle mouse button is up (Linux dispatcher).
+         * @param data Platform-neutral mouse data.
+         * @return True if middle button up.
+         */
         bool Mouse_isMiddleButtonUp(const MouseData& data);
+
+        /**
+         * @brief Checks if the back mouse button is down (Linux dispatcher).
+         * @param data Platform-neutral mouse data.
+         * @return True if back button down.
+         */
         bool Mouse_isBackButtonDown(const MouseData& data);
+
+        /**
+         * @brief Checks if the back mouse button is up (Linux dispatcher).
+         * @param data Platform-neutral mouse data.
+         * @return True if back button up.
+         */
         bool Mouse_isBackButtonUp(const MouseData& data);
+
+        /**
+         * @brief Checks if the forward mouse button is down (Linux dispatcher).
+         * @param data Platform-neutral mouse data.
+         * @return True if forward button down.
+         */
         bool Mouse_isForwardButtonDown(const MouseData& data);
+
+        /**
+         * @brief Checks if the forward mouse button is up (Linux dispatcher).
+         * @param data Platform-neutral mouse data.
+         * @return True if forward button up.
+         */
         bool Mouse_isForwardButtonUp(const MouseData& data);
+
+        /**
+         * @brief Prints mouse info (Linux dispatcher).
+         * @param data Platform-neutral mouse data.
+         */
         void Mouse_printInfo(const MouseData& data);
 
+        /**
+         * @brief Gets the active application name (Linux implementation).
+         * @return The application name.
+         */
         std::string getActiveApplicationName();
+
+        /**
+         * @brief Gets the list of running applications (Linux implementation).
+         * @return Vector of application names.
+         */
         std::vector<std::string> getRunningApplicationNames();
     }
 }

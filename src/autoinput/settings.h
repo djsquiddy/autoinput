@@ -23,8 +23,17 @@ namespace autoinput
     class Settings
     {
     public:
+        /**
+         * @brief Loads settings from a configuration file.
+         * @param path Optional path to the settings file. If not provided, default paths are searched.
+         * @return True if loading was successful.
+         */
         bool load(const std::optional<std::filesystem::path>& path = std::nullopt);
 
+        /**
+         * @brief Gets the default settings.
+         * @return Const reference to DefaultSettings.
+         */
         [[nodiscard]] const DefaultSettings& getDefaults() const { return m_defaults; }
 
     private:

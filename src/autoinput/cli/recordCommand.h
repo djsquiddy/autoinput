@@ -29,11 +29,41 @@ namespace autoinput::cli
     public:
         using CommandBase::CommandBase;
 
+        /**
+         * @brief Gets the command name.
+         * @return "record".
+         */
         [[nodiscard]] std::string_view getName() const override { return "record"; }
+
+        /**
+         * @brief Gets the help entry for the record command.
+         * @return The HelpEntry.
+         */
         [[nodiscard]] HelpEntry getHelpEntry() const override;
+
+        /**
+         * @brief Parses the record command arguments.
+         * @param args Arguments span.
+         * @param index Current index.
+         * @return True if successful.
+         */
         [[nodiscard]] bool parse(gsl::span<char*> args, i32& index) override;
+
+        /**
+         * @brief Validates the record command arguments.
+         * @return True if valid.
+         */
         [[nodiscard]] bool validate() const override;
+
+        /**
+         * @brief Executes the record command (starting recording session).
+         * @return Exit code.
+         */
         [[nodiscard]] i32 execute() override;
+
+        /**
+         * @brief Prints help for the record command.
+         */
         void printHelp() const override;
 
     private:

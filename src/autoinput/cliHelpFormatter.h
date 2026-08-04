@@ -14,6 +14,11 @@ namespace autoinput
     class CliHelpFormatter
     {
     public:
+        /**
+         * @brief Prints the command-line usage information.
+         * @param programName The name of the program to display in the usage.
+         * @param verbose Whether to show detailed information.
+         */
         static void printUsage(std::string_view programName, bool verbose = false);
     };
 }

@@ -79,17 +79,80 @@ namespace autoinput
         std::string logLevel;
     };
 
+    /**
+     * @brief Gets the path to the system configs directory.
+     * @return The path to the configs directory.
+     */
     [[nodiscard]] std::filesystem::path getConfigsPath();
+
+    /**
+     * @brief Gets the path to the user-specific configs directory.
+     * @return The path to the user configs directory.
+     */
     [[nodiscard]] std::filesystem::path getUserConfigsPath();
 
+    /**
+     * @brief Gets the path to the system configs directory using a specific environment.
+     * @param environment The environment to use for path detection.
+     * @return The path to the configs directory.
+     */
     [[nodiscard]] std::filesystem::path getConfigsPath(const IEnvironment& environment);
+
+    /**
+     * @brief Gets the path to the user-specific configs directory using a specific environment.
+     * @param environment The environment to use for path detection.
+     * @return The path to the user configs directory.
+     */
     [[nodiscard]] std::filesystem::path getUserConfigsPath(const IEnvironment& environment);
+
+    /**
+     * @brief Resolves a full configuration file path from a relative path or name.
+     * @param filePath The relative path or config name.
+     * @return The resolved absolute path.
+     */
     [[nodiscard]] std::filesystem::path getConfigFilePath(const std::string& filePath);
+
+    /**
+     * @brief Loads configuration data from a file.
+     * @param configPath The path to the configuration file.
+     * @return An optional ConfigData object if successful.
+     */
     std::optional<ConfigData> loadConfigData(const std::filesystem::path& configPath);
+
+    /**
+     * @brief Saves configuration data to a file.
+     * @param configData The data to save.
+     * @param configPath The destination path.
+     * @param defaults Optional default settings to omit from saving if they match.
+     * @return True if successful.
+     */
     bool saveConfigData(const ConfigData& configData, const std::filesystem::path& configPath, const std::optional<DefaultSettings>& defaults = std::nullopt);
+
+    /**
+     * @brief Duplicates a configuration file.
+     * @param sourceNameOrPath Source config name or path.
+     * @param destinationNameOrPath Destination config name or path.
+     * @param overwrite Whether to overwrite the destination if it exists.
+     * @return True if successful.
+     */
     bool duplicateConfig(const std::string& sourceNameOrPath, const std::string& destinationNameOrPath, bool overwrite = false);
+
+    /**
+     * @brief Checks if a configuration file exists at the given path.
+     * @param configPath The path to check.
+     * @return True if it exists.
+     */
     bool doesConfigDataExists(const std::filesystem::path& configPath);
 
+    /**
+     * @brief Tries to get a value from a TOML node.
+     * @tparam node_type The type of the TOML node.
+     * @tparam date_type The type of the value to retrieve.
+     * @param node The TOML node to read from.
+     * @param propertyName The name of the property to retrieve.
+     * @param output Reference to the variable where the value will be stored.
+     * @return True if the property was found and retrieved.
+     */
     template <typename node_type, typename date_type>
     bool tryGetTableValue(const node_type& node, const std::string_view& propertyName, date_type& output)
     {

@@ -16,8 +16,20 @@
 
 namespace autoinput
 {
+    /**
+     * @brief Converts a string to lower case.
+     * @param sv The string view to convert.
+     * @return The lower-case string.
+     */
     std::string toLowerCase(std::string_view sv);
 
+    /**
+     * @brief Joins elements of a range into a single string with a delimiter.
+     * @tparam Range The type of the range.
+     * @param range The range of elements.
+     * @param delim The delimiter string.
+     * @return The joined string.
+     */
     template <typename Range>
     std::string join(const Range& range, const std::string& delim)
     {
@@ -37,16 +49,48 @@ namespace autoinput
         return oss.str();
     }
 
+    /**
+     * @brief Checks if a vector contains an element.
+     * @tparam TElement The type of the element.
+     * @param vec The vector to search.
+     * @param element The element to look for.
+     * @return True if found.
+     */
     template<typename TElement>
     bool contains(const std::vector<TElement>& vec, const TElement& element)
     {
         return std::find( std::begin(vec), std::end(vec), element) != std::end(vec);
     }
 
+    /**
+     * @brief Checks if a span of strings contains an element.
+     * @param span The span of strings.
+     * @param element The string to look for.
+     * @return True if found.
+     */
     bool contains(gsl::span<const std::string> span, const std::string& element);
+
+    /**
+     * @brief Checks if a span of char* contains an element.
+     * @param span The span of char pointers.
+     * @param element The string to look for.
+     * @return True if found.
+     */
     bool contains(gsl::span<char*> span, const std::string& element);
 
+    /**
+     * @brief Joins elements of a string span into a single string with a delimiter.
+     * @param span The span of strings.
+     * @param delim The delimiter string.
+     * @return The joined string.
+     */
     std::string join(gsl::span<const std::string> span, const std::string& delim);
+
+    /**
+     * @brief Escapes a string for use in a JSON value.
+     * @param sv The string to escape.
+     * @return The escaped string.
+     */
     std::string escapeJsonString(std::string_view sv);
 
     class NonCopyable
