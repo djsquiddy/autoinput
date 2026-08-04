@@ -12,16 +12,24 @@
 #include "autoinput/types.h"
 #include "autoinput/keyboard.h"
 #include "autoinput/waitDelay.h"
+#include <optional>
+#include <vector>
 
 namespace autoinput::cli
 {
+    struct RunTarget
+    {
+        ActionState action{ ActionState::INVALID };
+        std::optional<Mouse> mouse;
+        std::optional<Key> key;
+        std::string startKey;
+    };
+
     struct RunConfig
     {
         std::string configName;
-        std::vector<Mouse> buttons;
-        std::vector<Key> keys;
-        std::vector<std::string> startKeys;
-        std::vector<ActionState> targetActions;
+        std::vector<RunTarget> targets;
+        ActionState pendingAction{ ActionState::INVALID };
         std::string endKey;
         std::string applicationName;
         std::vector<std::string> blacklist;

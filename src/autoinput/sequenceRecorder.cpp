@@ -16,7 +16,7 @@ namespace autoinput
         , m_mouseSampleRateMs{ parseWaitDelay(m_config.mouseSampleDelay) }
     {
         m_sequence.name = m_config.name;
-        m_sequence.start = m_config.startKey;
+        m_sequence.start = m_config.playStartKey;
         m_sequence.repeat = false;
     }
 

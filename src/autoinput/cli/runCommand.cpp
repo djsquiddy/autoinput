@@ -147,10 +147,33 @@ namespace autoinput::cli
                 return false;
             }
 
-            arguments.buttons.insert(arguments.buttons.end(), config.buttons.begin(), config.buttons.end());
-            arguments.keys.insert(arguments.keys.end(), config.keys.begin(), config.keys.end());
-            arguments.startKeys.insert(arguments.startKeys.end(), config.startKeys.begin(), config.startKeys.end());
-            arguments.targetActions.insert(arguments.targetActions.end(), config.targetActions.begin(), config.targetActions.end());
+            for (const auto& target : config.targets)
+            {
+                ActionState action = target.action != ActionState::INVALID ? target.action : ActionState::CLICK;
+
+                if (target.mouse.has_value())
+                {
+                    arguments.buttons.push_back(*target.mouse);
+                    arguments.targetActions.push_back(action);
+                }
+                else if (target.key.has_value())
+                {
+                    arguments.keys.push_back(*target.key);
+                    arguments.targetActions.push_back(action);
+                }
+                else
+                {
+                    // Default behavior for start-only target
+                    arguments.buttons.push_back(Mouse{ MouseButton::Left });
+                    arguments.targetActions.push_back(action);
+                }
+
+                if (!target.startKey.empty())
+                {
+                    arguments.startKeys.push_back(target.startKey);
+                }
+            }
+
             arguments.blacklist.insert(arguments.blacklist.end(), config.blacklist.begin(), config.blacklist.end());
 
             if (!config.endKey.empty())
@@ -224,7 +247,7 @@ namespace autoinput::cli
                     return false;
                 }
 
-                m_config.targetActions.push_back(action);
+                m_config.pendingAction = action;
                 ++index;
                 continue;
             }
@@ -246,7 +269,11 @@ namespace autoinput::cli
                     return false;
                 }
 
-                m_config.buttons.push_back(mouse);
+                RunTarget target;
+                target.action = m_config.pendingAction != ActionState::INVALID ? m_config.pendingAction : ActionState::CLICK;
+                target.mouse = mouse;
+                m_config.targets.push_back(target);
+
                 ++index;
                 continue;
             }
@@ -262,7 +289,11 @@ namespace autoinput::cli
                     return false;
                 }
 
-                m_config.keys.push_back(Key::fromString(value));
+                RunTarget target;
+                target.action = m_config.pendingAction != ActionState::INVALID ? m_config.pendingAction : ActionState::CLICK;
+                target.key = Key::fromString(value);
+                m_config.targets.push_back(target);
+
                 ++index;
                 continue;
             }
@@ -277,7 +308,18 @@ namespace autoinput::cli
                     return false;
                 }
 
-                m_config.startKeys.emplace_back(value);
+                if (!m_config.targets.empty() && m_config.targets.back().startKey.empty())
+                {
+                    m_config.targets.back().startKey = std::string(value);
+                }
+                else
+                {
+                    RunTarget target;
+                    target.action = m_config.pendingAction != ActionState::INVALID ? m_config.pendingAction : ActionState::CLICK;
+                    target.startKey = std::string(value);
+                    m_config.targets.push_back(target);
+                }
+
                 ++index;
                 continue;
             }

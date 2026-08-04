@@ -37,7 +37,7 @@ namespace autoinput
 
     TEST_F(RecorderTest, StateMachine)
     {
-        SequenceRecorder recorder("test-macro", "f8", "f9", "f6", false, "25ms");
+        SequenceRecorder recorder(SequenceConfig{ .recordMouseMoves = false, .name = "test-macro", .startKey = "f8", .endKey = "f9", .playStartKey = "f6", .mouseSampleDelay = "25ms" });
         
         EXPECT_EQ(recorder.getState(), RecorderState::Waiting);
 
@@ -71,7 +71,7 @@ namespace autoinput
 
     TEST_F(RecorderTest, ExcludeControlKeys)
     {
-        SequenceRecorder recorder("test-macro", "f8", "f9", "f6", false, "25ms");
+        SequenceRecorder recorder(SequenceConfig{ .recordMouseMoves = false, .name = "test-macro", .startKey = "f8", .endKey = "f9", .playStartKey = "f6", .mouseSampleDelay = "25ms" });
         
         recorder.onKeyEvent(Key::fromString("f8"), true); // Start
         recorder.onKeyEvent(Key::fromString("a"), true);
@@ -90,7 +90,7 @@ namespace autoinput
 
     TEST_F(RecorderTest, RecordMouseEvents)
     {
-        SequenceRecorder recorder("test-macro", "f8", "f9", "f6", true, "25ms");
+        SequenceRecorder recorder(SequenceConfig{ .recordMouseMoves = true, .name = "test-macro", .startKey = "f8", .endKey = "f9", .playStartKey = "f6", .mouseSampleDelay = "25ms" });
         
         recorder.onKeyEvent(Key::fromString("f8"), true); // Start
         
@@ -127,7 +127,7 @@ namespace autoinput
 
     TEST_F(RecorderTest, SaveConfig)
     {
-        SequenceRecorder recorder("test-macro", "f8", "f9", "f6", false, "25ms");
+        SequenceRecorder recorder(SequenceConfig{ .recordMouseMoves = false, .name = "test-macro", .startKey = "f8", .endKey = "f9", .playStartKey = "f6", .mouseSampleDelay = "25ms" });
         
         recorder.onKeyEvent(Key::fromString("f8"), true);
         recorder.onKeyEvent(Key::fromString("space"), true);
@@ -150,7 +150,7 @@ namespace autoinput
 
     TEST_F(RecorderTest, OverwriteBehavior)
     {
-        SequenceRecorder recorder("test-macro", "f8", "f9", "f6", false, "25ms");
+        SequenceRecorder recorder(SequenceConfig{ .recordMouseMoves = false, .name = "test-macro", .startKey = "f8", .endKey = "f9", .playStartKey = "f6", .mouseSampleDelay = "25ms" });
         
         // Create file
         {
@@ -167,7 +167,7 @@ namespace autoinput
     
     TEST_F(RecorderTest, SyntheticEventsIgnored)
     {
-        SequenceRecorder recorder("test-macro", "f8", "f9", "f6", true, "25ms");
+        SequenceRecorder recorder(SequenceConfig{ .recordMouseMoves = true, .name = "test-macro", .startKey = "f8", .endKey = "f9", .playStartKey = "f6", .mouseSampleDelay = "25ms" });
         
         recorder.onKeyEvent(Key::fromString("f8"), true); // Start
         
