@@ -7,11 +7,8 @@
 #define INCLUDE_AUTOINPUT_APPS_COMMAND_H
 #pragma once
 
-#include "commandBase.h"
-#include "autoinput/mouse.h"
+#include "autoinput/cli/commandBase.h"
 #include "autoinput/types.h"
-#include "autoinput/keyboard.h"
-#include "autoinput/waitDelay.h"
 
 namespace autoinput::cli
 {

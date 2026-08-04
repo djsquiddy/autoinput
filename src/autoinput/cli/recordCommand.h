@@ -7,7 +7,7 @@
 #define INCLUDE_AUTOINPUT_RECORD_COMMAND_H
 #pragma once
 
-#include "commandBase.h"
+#include "autoinput/cli/commandBase.h"
 #include "autoinput/mouse.h"
 #include "autoinput/types.h"
 
