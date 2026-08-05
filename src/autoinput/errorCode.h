@@ -18,9 +18,10 @@
 
 namespace autoinput
 {
-    enum class ErrorCode : int32_t
+    enum class ErrorCode : i32
     {
         Success = EXIT_SUCCESS,
+        HelpRequested = 100,
         InvalidParam = 101,
         FailedToInstallHooks = 102,
         UnhandledException = 103,
@@ -28,10 +29,13 @@ namespace autoinput
         InvalidConfigPath = 105,
         // Cli Errors.
         FailedToParseGlobalOptions = 106,
-        UnknownCommand = 107,
-        FailedToParseCommandOptions = 108,
-        UnexpectedArgument = 109,
-        CliValidationError = 110,
+        UnknownGlobalOption = 107,
+        UnknownCommandOption = 108,
+        UnknownCommand = 109,
+        FailedToParseCommandOptions = 110,
+        UnexpectedArgument = 111,
+        CliValidationError = 112,
+        MissingCommandLineArgument = 113,
     };
 
     std::pair<std::underlying_type_t<ErrorCode>, std::string> errorCodeToStringAndValue(ErrorCode errorCode);

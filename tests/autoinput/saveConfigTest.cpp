@@ -47,8 +47,8 @@ namespace autoinput
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
-        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())));
-        ASSERT_EQ(app.execute(), static_cast<i32>(ErrorCode::Success));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())) == ErrorCode::Success);
+        ASSERT_EQ(app.execute(), ErrorCode::Success);
 
         std::filesystem::path dumpPath = getUserConfigsPath() / "test_config.toml";
         ASSERT_TRUE(std::filesystem::exists(dumpPath));
@@ -71,8 +71,8 @@ namespace autoinput
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
-        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())));
-        ASSERT_EQ(app.execute(), static_cast<i32>(ErrorCode::Success));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())) == ErrorCode::Success);
+        ASSERT_EQ(app.execute(), ErrorCode::Success);
 
         std::filesystem::path dumpPath = getUserConfigsPath() / "wait_config.toml";
         
@@ -90,8 +90,8 @@ namespace autoinput
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
-        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())));
-        ASSERT_EQ(app.execute(), static_cast<i32>(ErrorCode::Success));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())) == ErrorCode::Success);
+        ASSERT_EQ(app.execute(), ErrorCode::Success);
 
         std::filesystem::path dumpPath = getUserConfigsPath() / "blacklist_config.toml";
         
@@ -111,8 +111,8 @@ namespace autoinput
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
-        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())));
-        ASSERT_EQ(app.execute(), static_cast<i32>(ErrorCode::Success));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())) == ErrorCode::Success);
+        ASSERT_EQ(app.execute(), ErrorCode::Success);
 
         std::filesystem::path dumpPath = getUserConfigsPath() / "multi_config.toml";
         

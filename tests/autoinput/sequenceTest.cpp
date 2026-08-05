@@ -125,12 +125,28 @@ events = [
             int32_t y = 0;
         };
         std::vector<EventCall> calls;
+        std::mutex mutex;
 
-        void keyDown(const Key& key) override { calls.push_back({RecordedEventType::KeyDown, key.toString()}); }
-        void keyUp(const Key& key) override { calls.push_back({RecordedEventType::KeyUp, key.toString()}); }
-        void mouseDown(const Mouse& mouse) override { calls.push_back({RecordedEventType::MouseDown, mouse.toString()}); }
-        void mouseUp(const Mouse& mouse) override { calls.push_back({RecordedEventType::MouseUp, mouse.toString()}); }
-        void moveMouseTo(int32_t x, int32_t y) override { calls.push_back({RecordedEventType::MouseMove, "", x, y}); }
+        void keyDown(const Key& key) override { 
+            std::lock_guard lock(mutex);
+            calls.push_back({RecordedEventType::KeyDown, key.toString()}); 
+        }
+        void keyUp(const Key& key) override { 
+            std::lock_guard lock(mutex);
+            calls.push_back({RecordedEventType::KeyUp, key.toString()}); 
+        }
+        void mouseDown(const Mouse& mouse) override { 
+            std::lock_guard lock(mutex);
+            calls.push_back({RecordedEventType::MouseDown, mouse.toString()}); 
+        }
+        void mouseUp(const Mouse& mouse) override { 
+            std::lock_guard lock(mutex);
+            calls.push_back({RecordedEventType::MouseUp, mouse.toString()}); 
+        }
+        void moveMouseTo(int32_t x, int32_t y) override { 
+            std::lock_guard lock(mutex);
+            calls.push_back({RecordedEventType::MouseMove, "", x, y}); 
+        }
     };
 
     TEST_F(SequenceTest, PlaybackDispatch)
@@ -157,20 +173,33 @@ events = [
         
         handler.press();
         
-        // Wait for thread to finish playback
+        // Wait for thread to finish playback - more robustly
         int retries = 0;
-        while (handler.getActive() && retries < 100)
+        bool finished = false;
+        while (retries < 200)
         {
+            {
+                std::lock_guard lock(backend.mutex);
+                if (backend.calls.size() >= 2) {
+                    finished = true;
+                    break;
+                }
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             retries++;
         }
         
-        ASSERT_EQ(backend.calls.size(), 2);
-        EXPECT_EQ(backend.calls[0].type, RecordedEventType::KeyDown);
-        EXPECT_EQ(backend.calls[0].value, "a");
-        EXPECT_EQ(backend.calls[1].type, RecordedEventType::MouseMove);
-        EXPECT_EQ(backend.calls[1].x, 100);
-        EXPECT_EQ(backend.calls[1].y, 200);
+        EXPECT_TRUE(finished) << "Playback timed out";
+        
+        {
+            std::lock_guard lock(backend.mutex);
+            ASSERT_EQ(backend.calls.size(), 2);
+            EXPECT_EQ(backend.calls[0].type, RecordedEventType::KeyDown);
+            EXPECT_EQ(backend.calls[0].value, "a");
+            EXPECT_EQ(backend.calls[1].type, RecordedEventType::MouseMove);
+            EXPECT_EQ(backend.calls[1].x, 100);
+            EXPECT_EQ(backend.calls[1].y, 200);
+        }
 
         handler.release();
     }

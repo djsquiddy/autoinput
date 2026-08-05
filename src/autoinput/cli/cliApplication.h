@@ -24,23 +24,26 @@ namespace autoinput::cli
     public:
         /**
          * @brief Parses the command-line arguments and determines the command to run.
-         * @param args The command-line arguments.
+         * @param cliArgs The command-line arguments.
          * @return True if parsing was successful.
          */
-        [[nodiscard]] bool parse(gsl::span<char*> args);
+        [[nodiscard]] ErrorCode parse(gsl::span<char*> cliArgs);
 
         /**
          * @brief Executes the parsed command.
          * @return The exit code.
          */
-        [[nodiscard]] i32 execute();
+        [[nodiscard]] ErrorCode execute();
 
     private:
         CommandContext m_context;
         std::unique_ptr<CommandBase> m_command;
 
-        [[nodiscard]] bool parseGlobalOptions(gsl::span<char*> args, i32& index);
+        [[nodiscard]] ErrorCode parseGlobalOptions(gsl::span<char*> args, i32& index);
         void printUsage();
+
+        [[nodiscard]] ErrorCode parseLogLevel(gsl::span<char*> args, i32& index);
+        static void printCliArguments(gsl::span<char*> args);
     };
 
     /**
@@ -48,7 +51,7 @@ namespace autoinput::cli
      * @param configureArguments Callback to configure the program arguments.
      * @return The exit code.
      */
-    [[nodiscard]] i32 runProgramWithArguments(const std::function<bool(ProgramArguments&)>& configureArguments);
+    [[nodiscard]] ErrorCode runProgramWithArguments(const std::function<bool(ProgramArguments&)>& configureArguments);
 
     /**
      * @brief Factory function to create a command instance by name.
@@ -60,4 +63,3 @@ namespace autoinput::cli
 }
 
 #endif // INCLUDE_AUTOINPUT_CLI_APPLICATION_H
-

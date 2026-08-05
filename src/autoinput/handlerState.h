@@ -31,7 +31,11 @@ namespace autoinput
         /**
          * @brief Virtual destructor.
          */
-        virtual ~InputHandler() = default;
+        virtual ~InputHandler() {
+            m_autoclickerThread.request_stop();
+            m_cv.notify_all();
+            if (m_autoclickerThread.joinable()) m_autoclickerThread.join();
+        }
 
         /**
          * @brief Copy constructor.
@@ -152,9 +156,11 @@ namespace autoinput
     }
 
     inline InputHandler::InputHandler(InputHandler&& rhs) noexcept
-        : m_backend(rhs.m_backend), m_name(std::move(rhs.m_name)), m_exclusiveGroup(std::move(rhs.m_exclusiveGroup)),
-          m_autoclickerThread(std::move(rhs.m_autoclickerThread))
+        : m_backend(rhs.m_backend), m_name(std::move(rhs.m_name)), m_exclusiveGroup(std::move(rhs.m_exclusiveGroup))
     {
+        rhs.m_autoclickerThread.request_stop();
+        if (rhs.m_autoclickerThread.joinable()) rhs.m_autoclickerThread.join();
+
         m_isPressed.store(rhs.m_isPressed.load());
         m_isActive.store(rhs.m_isActive.load());
         m_isPaused.store(rhs.m_isPaused.load());
@@ -165,13 +171,15 @@ namespace autoinput
     {
         if (this != &rhs)
         {
+            m_autoclickerThread.request_stop();
+            if (m_autoclickerThread.joinable()) m_autoclickerThread.join();
+
             m_backend = rhs.m_backend;
             m_name = rhs.m_name;
             m_exclusiveGroup = rhs.m_exclusiveGroup;
             m_isPressed.store(rhs.m_isPressed.load());
             m_isActive.store(rhs.m_isActive.load());
             m_isPaused.store(rhs.m_isPaused.load());
-            // jthread, cv, and mutex are not copyable
         }
         return *this;
     }
@@ -180,13 +188,18 @@ namespace autoinput
     {
         if (this != &rhs)
         {
+            m_autoclickerThread.request_stop();
+            if (m_autoclickerThread.joinable()) m_autoclickerThread.join();
+
+            rhs.m_autoclickerThread.request_stop();
+            if (rhs.m_autoclickerThread.joinable()) rhs.m_autoclickerThread.join();
+
             m_backend = rhs.m_backend;
             m_name = std::move(rhs.m_name);
             m_exclusiveGroup = std::move(rhs.m_exclusiveGroup);
             m_isPressed.store(rhs.m_isPressed.load());
             m_isActive.store(rhs.m_isActive.load());
             m_isPaused.store(rhs.m_isPaused.load());
-            m_autoclickerThread = std::move(rhs.m_autoclickerThread);
             rhs.m_backend = nullptr;
         }
         return *this;

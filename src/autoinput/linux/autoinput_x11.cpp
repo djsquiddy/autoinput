@@ -3,7 +3,7 @@
  * @author djsquiddy
  * @date July 2026
  */
-#include "autoinput/autoInput.h"
+#include "autoinput/autoinput.h"
 #include "autoinput/mouse.h"
 #include "autoinput/keyboard.h"
 #include "autoinput/logger.h"

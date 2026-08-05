@@ -2,13 +2,13 @@
  * @file startKeyToggleTest.cpp
  * @author djsquiddy
  * @date July 2026
- */
-#include <gtest/gtest.h>
+*/
+#include "testUtils.h"
+#include "autoinput/autoinput.h"
+#include "autoinput/backend.h"
 #include <set>
 #include <thread>
-#include "autoinput/autoInput.h"
-#include "autoinput/backend.h"
-#include "testUtils.h"
+#include <gtest/gtest.h>
 
 namespace autoinput
 {

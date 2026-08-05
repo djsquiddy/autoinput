@@ -83,22 +83,42 @@ namespace autoinput::terminal
         std::cout << label << colorToAnsi(color) << status << colorToAnsi(Color::Reset) << std::endl;
     }
 
+    class colorized
+    {
+    public:
+        explicit colorized(const Color color, const std::string_view& s) : m_color{ color }, m_str{ s } {}
+        friend std::ostream& operator<<(std::ostream& os, const colorized& b)
+        {
+            os << colorToAnsi(b.m_color) << b.m_str << colorToAnsi(Color::Reset);
+            return os;
+        }
+
+        [[nodiscard]] const Color& getColor() const { return m_color; }
+        [[nodiscard]] const std::string_view& getString() const { return m_str; }
+
+    private:
+        Color m_color;
+        const std::string_view& m_str;
+    };
+
     class bold
     {
     public:
-        explicit bold(const std::string_view& s) : m_string(s) {}
+        explicit bold(const std::string_view& s) : m_str(s) {}
 
         friend std::ostream& operator<<(std::ostream& os, const bold& b)
         {
-            os << colorToAnsi(Color::Bold) << b.m_string << colorToAnsi(Color::Reset);
+            os << colorToAnsi(Color::Bold) << b.m_str << colorToAnsi(Color::Reset);
             return os;
         }
-        [[nodiscard]] const std::string_view& getString() const { return m_string; }
+        [[nodiscard]] const std::string_view& getString() const { return m_str; }
     private:
-        const std::string_view& m_string;
+        const std::string_view& m_str;
     };
 }
 
+// ReSharper disable CppMemberFunctionMayBeStatic
+// NOLINTBEGIN(*-convert-member-functions-to-static)
 // Specialize std::formatter for autoinput::terminal::bold
 template <>
 struct std::formatter<autoinput::terminal::bold>
@@ -117,6 +137,24 @@ struct std::formatter<autoinput::terminal::bold>
     }
 };
 
+// Specialize std::formatter for autoinput::terminal::colorized
+template <>
+struct std::formatter<autoinput::terminal::colorized>
+{
+    constexpr auto parse(std::format_parse_context& ctx)
+    {
+        return ctx.begin();
+    }
+
+    auto format(const autoinput::terminal::colorized b, std::format_context& ctx) const
+    {
+        return std::format_to(ctx.out(), "{}{}{}",
+            autoinput::terminal::colorToAnsi(b.getColor()),
+            b.getString(),
+            autoinput::terminal::colorToAnsi(autoinput::terminal::Color::Reset));
+    }
+};
+
 // Specialize std::formatter for autoinput::terminal::Color
 template <>
 struct std::formatter<autoinput::terminal::Color>
@@ -131,5 +169,8 @@ struct std::formatter<autoinput::terminal::Color>
         return std::format_to(ctx.out(), "{}", autoinput::terminal::colorToAnsi(color));
     }
 };
+
+// NOLINTEND(*-convert-member-functions-to-static)
+// ReSharper restore CppMemberFunctionMayBeStatic
 
 #endif // INCLUDE_AUTOINPUT_TERMINAL_H

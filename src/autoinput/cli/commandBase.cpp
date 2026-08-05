@@ -3,8 +3,7 @@
  * @author djsquiddy
  * @date August 2026
  */
-#include "commandBase.h"
-
+#include "autoinput/cli/commandBase.h"
 #include "autoinput/utils.h"
 
 namespace autoinput::cli
@@ -44,7 +43,18 @@ namespace autoinput::cli
         }
 
         Logger::debug("processing argument[{}]: {}\n", i, args[i]);
-        return std::string_view{args[i]};
+        return args[i] != nullptr ? std::string_view{args[i]} : std::string_view{};
+    }
+
+    std::string_view safeGetNextArgument(const size_t i, const gsl::span<char*> args)
+    {
+        if (i >= args.size() || args[i][0] == '-')
+        {
+            return std::string_view{};
+        }
+
+        Logger::debug("processing argument[{}]: {}\n", i, args[i]);
+        return args[i] != nullptr ? std::string_view{args[i]} : std::string_view{};
     }
 
     void logHelpEntries(std::string_view heading, const std::vector<HelpEntry>& entries)

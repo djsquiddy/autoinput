@@ -3,10 +3,11 @@
  * @author djsquiddy
  * @date August 2026
  */
-#include <gtest/gtest.h>
 #include "autoinput/cli/cliApplication.h"
+#include "autoinput/errorCode.h"
 #include <vector>
 #include <string>
+#include <gtest/gtest.h>
 #include <gsl/gsl>
 
 namespace autoinput::cli
@@ -40,7 +41,7 @@ namespace autoinput::cli
         };
         auto argv = toArgv(args);
 
-        ASSERT_TRUE(app.parse(gsl::make_span(argv)));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv)) == ErrorCode::Success);
     }
 
     TEST(RecorderArgumentsTest, DefaultRecordingOptions)
@@ -52,7 +53,7 @@ namespace autoinput::cli
         };
         auto argv = toArgv(args);
 
-        ASSERT_TRUE(app.parse(gsl::make_span(argv)));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv)) == ErrorCode::Success);
     }
 
     TEST(RecorderArgumentsTest, RejectsOldSyntax)
@@ -64,6 +65,6 @@ namespace autoinput::cli
         };
         auto argv = toArgv(args);
 
-        ASSERT_FALSE(app.parse(gsl::make_span(argv)));
+        ASSERT_FALSE(app.parse(gsl::make_span(argv)) == ErrorCode::Success);
     }
 }

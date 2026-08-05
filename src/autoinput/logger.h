@@ -20,10 +20,12 @@
 #include <mutex>
 #include <type_traits>
 
+#include "types.h"
+
 namespace autoinput
 {
     struct ErrorMessage;
-    enum class ErrorCode;
+    enum class ErrorCode : i32;
     class Logger;
 
     enum class LogLevel : uint8_t
@@ -55,9 +57,10 @@ namespace autoinput
      * @brief Gets the prefix string for a log level.
      * @param level The log level.
      * @param isShorthand Whether to use a shorthand prefix (e.g. [I] instead of [INFO]).
+     * @param isColored Whether to use colored output.
      * @return The prefix string.
      */
-    std::string getLogLevelPrefix(LogLevel level, bool isShorthand = false);
+    std::string getLogLevelPrefix(LogLevel level, bool isShorthand = false, bool isColored = false);
 
     // Overload the insertion operator
     inline std::ostream& operator<<(std::ostream& os, const LogLevel level) { return os << getLogLevelPrefix(level); }
@@ -193,7 +196,7 @@ namespace autoinput
         template <typename... Args>
         static void fatal(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
 
-        static void fatalError(const ErrorMessage& error);
+        static ErrorCode fatalError(const ErrorMessage& error);
         static void fatalError(const std::vector<ErrorMessage>& errors);
 
         static LogStream debugStream(std::source_location loc = std::source_location::current());
@@ -304,11 +307,15 @@ struct std::formatter<autoinput::LogLevel>
     constexpr auto parse(const std::format_parse_context& ctx)  // NOLINT(*-convert-member-functions-to-static)
     {
         auto it = ctx.begin();
-        if (it != ctx.end() && *it != '}')
+        while (it != ctx.end() && *it != '}')
         {
             if (*it == 'c')
             {
                 isShorthand = true;
+            }
+            if (*it == 'C')
+            {
+                isColored = true;
             }
             ++it;
         }
@@ -317,10 +324,11 @@ struct std::formatter<autoinput::LogLevel>
 
     auto format(const autoinput::LogLevel level, std::format_context& ctx) const // NOLINT(*-convert-member-functions-to-static)
     {
-        return std::format_to(ctx.out(), "{}", getLogLevelPrefix(level, isShorthand));
+        return std::format_to(ctx.out(), "{}", getLogLevelPrefix(level, isShorthand, isColored));
     }
 
     bool isShorthand{ false };
+    bool isColored { false };
 };
 // ReSharper restore CppMemberFunctionMayBeStatic
 

@@ -126,6 +126,15 @@ namespace autoinput
         MouseHandler() = default;
 
         /**
+         * @brief Virtual destructor.
+         */
+        ~MouseHandler() override {
+            m_autoclickerThread.request_stop();
+            m_cv.notify_all();
+            if (m_autoclickerThread.joinable()) m_autoclickerThread.join();
+        }
+
+        /**
          * @brief Constructs a MouseHandler for a specific Mouse object.
          * @param mouse The mouse button and modifiers.
          * @param backend Pointer to the platform backend.

@@ -8,6 +8,7 @@
 #include <string>
 #include <gsl/gsl>
 
+#include "autoinput/errorCode.h"
 #include "autoinput/cli/cliApplication.h"
 #include "autoinput/cli/runCommand.h"
 #include "autoinput/cli/recordCommand.h"
@@ -48,7 +49,7 @@ namespace autoinput::cli
         {
             CliApplication app;
             auto argv = toArgv(args);
-            EXPECT_TRUE(app.parse(gsl::make_span(argv))) << "Failed to parse: " << args[1];
+            EXPECT_TRUE(app.parse(gsl::make_span(argv)) == ErrorCode::Success) << "Failed to parse: " << args[1];
         }
     }
 
@@ -57,11 +58,11 @@ namespace autoinput::cli
         CliApplication app;
         std::vector<std::string> args = {"autoinput", "--bad"};
         auto argv = toArgv(args);
-        EXPECT_FALSE(app.parse(gsl::make_span(argv)));
+        EXPECT_FALSE(app.parse(gsl::make_span(argv)) == ErrorCode::Success);
 
         args = {"autoinput", "unknown-command"};
         argv = toArgv(args);
-        EXPECT_FALSE(app.parse(gsl::make_span(argv)));
+        EXPECT_FALSE(app.parse(gsl::make_span(argv)) == ErrorCode::Success);
     }
 
     TEST(RunCommandTest, PositiveParseValidate)

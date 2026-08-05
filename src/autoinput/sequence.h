@@ -24,6 +24,15 @@ namespace autoinput
         SequenceHandler() = default;
 
         /**
+         * @brief Virtual destructor.
+         */
+        ~SequenceHandler() override {
+            m_autoclickerThread.request_stop();
+            m_cv.notify_all();
+            if (m_autoclickerThread.joinable()) m_autoclickerThread.join();
+        }
+
+        /**
          * @brief Constructs a SequenceHandler from a recorded sequence.
          * @param sequence The recorded sequence data.
          * @param backend Pointer to the platform backend.

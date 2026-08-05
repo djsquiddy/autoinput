@@ -6,6 +6,7 @@
 #include "autoinput/logger.h"
 #include "autoinput/utils.h"
 #include "autoinput/errorCode.h"
+#include "autoinput/terminal.h"
 #include <chrono>
 #include <filesystem>
 #include <stdexcept>
@@ -45,8 +46,6 @@ namespace autoinput
         {
         case LogLevel::Debug:
             return "debug";
-        case LogLevel::Print:
-            return "info"; // Or maybe "print"? But info is safer for settings.
         case LogLevel::Info:
             return "info";
         case LogLevel::Warning:
@@ -55,30 +54,48 @@ namespace autoinput
             return "error";
         case LogLevel::Fatal:
             return "fatal";
+        case LogLevel::Print:
         default:
             return "info";
         }
     }
 
-    std::string getLogLevelPrefix(const LogLevel level, const bool isShorthand)
+    std::string getLogLevelPrefix(const LogLevel level, const bool isShorthand, const bool isColored)
     {
+        using namespace terminal;
+        Color color{ Color::Reset };
         std::string name;
         switch (level)
         {
         case LogLevel::Debug:
-            return isShorthand ? "D" : "DEBUG";
+            color = Color::Blue;
+            name = isShorthand ? "D" : "DEBUG";
+            break;
         case LogLevel::Print:
             return "";
         case LogLevel::Info:
-            return isShorthand ? "I" : "INFO";
+            color = Color::Green;
+            name = isShorthand ? "I" : "INFO";
+            break;
         case LogLevel::Warning:
-            return isShorthand ? "W" : "WARNING";
+            color = Color::Yellow;
+            name = isShorthand ? "W" : "WARNING";
+            break;
         case LogLevel::Error:
-            return isShorthand ? "E" : "ERROR";
+            color = Color::Red;
+            name = isShorthand ? "E" : "ERROR";
+            break;
         case LogLevel::Fatal:
-            return isShorthand ? "F" : "Fatal";
+            color = Color::Red;
+            name = isShorthand ? "F" : "Fatal";
+            break;
         default:
             return isShorthand ? "?" : "UNKNOWN";
+        }
+
+        if (isColored)
+        {
+            return std::format("{}", colorized(color, name));
         }
         return name;
     }
@@ -122,15 +139,16 @@ namespace autoinput
         }
     }
 
-    void Logger::fatalError(const ErrorMessage& error)
+    ErrorCode Logger::fatalError(const ErrorMessage& error)
     {
         if (isConsoleOutputEnabled())
         {
             auto [errorValue, errorString] = errorCodeToStringAndValue(error.code);
-            fatal("Error: {} ({}) {}", errorString, errorValue, error.message);
-            return;
+            fatal("Error: {} ({}) {}\n", errorString, errorValue, error.message);
+            return error.code;
         }
         printErrorJson(error);
+        return error.code;
     }
 
     void Logger::fatalError(const std::vector<ErrorMessage>& errors)
@@ -140,9 +158,9 @@ namespace autoinput
             for (const auto& [code, message] : errors)
             {
                 auto [errorValue, errorString] = errorCodeToStringAndValue(code);
-                fatal("Error: {} ({}) {}", errorString, errorValue, message);
+                fatal("Error: {} ({}) {}\n", errorString, errorValue, message);
             }
-            fatal("Error: e");
+            return;
         }
         printErrorJson(errors);
     }
@@ -226,6 +244,8 @@ namespace autoinput
 
     void Logger::log_impl(const LogLevel level, const std::string_view msg, const std::source_location loc)
     {
+        using logLevel_t = std::underlying_type_t<LogLevel>;
+
         std::string formatted;
         std::string consoleMsg;
         // Internal implementation logic
@@ -235,7 +255,6 @@ namespace autoinput
         }
         else
         {
-            using logLevel_t = std::underlying_type_t<LogLevel>;
             if (static_cast<logLevel_t>(getLogLevel_impl()) > static_cast<logLevel_t>(level))
             {
                 return;
@@ -245,14 +264,14 @@ namespace autoinput
             char timeBuffer[32];
             try {
                 const auto now = std::chrono::system_clock::now();
-                const auto time_t_now = std::chrono::system_clock::to_time_t(now);
+                const auto timeNow = std::chrono::system_clock::to_time_t(now);
                 const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
                 
                 std::tm tm_now;
 #ifdef _WIN32
-                localtime_s(&tm_now, &time_t_now);
+                localtime_s(&tm_now, &timeNow);
 #else
-                localtime_r(&time_t_now, &tm_now);
+                localtime_r(&timeNow, &tm_now);
 #endif
                 std::strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", &tm_now);
                 timeStr = std::format("{}.{:03}", timeBuffer, ms.count());
@@ -269,7 +288,7 @@ namespace autoinput
                     loc.line(),
                     msg
                 );
-                consoleMsg = std::format("[{}] | {}", level, msg);
+                consoleMsg = std::format("[{:C}] | {}", level, msg);
             } catch (...) {
                 formatted = "[FORMAT ERROR] " + std::string(msg) + "\n";
                 consoleMsg = formatted;

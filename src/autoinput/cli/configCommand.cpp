@@ -26,6 +26,8 @@ namespace autoinput::cli
                 return "duplicate";
             case ConfigAction::Copy:
                 return "copy";
+            case ConfigAction::Path:
+                return "path";
             case ConfigAction::None:
             default:
                 return "";
@@ -75,14 +77,14 @@ namespace autoinput::cli
             Logger::print("\n");
         }
 
-        [[nodiscard]] i32 executeListConfigs()
+        [[nodiscard]] ErrorCode executeListConfigs()
         {
             listConfigsFromDirectory(getConfigsPath(), "Global");
             listConfigsFromDirectory(getUserConfigsPath(), "User");
-            return static_cast<i32>(ErrorCode::Success);
+            return ErrorCode::Success;
         }
 
-        [[nodiscard]] i32 executeValidateConfig(const std::string& source, const bool jsonOutput)
+        [[nodiscard]] ErrorCode executeValidateConfig(const std::string& source, const bool jsonOutput)
         {
             const auto configPath = getConfigFilePath(source);
 
@@ -97,7 +99,7 @@ namespace autoinput::cli
                     Logger::error("Configuration file not found: {}\n", source);
                 }
 
-                return static_cast<i32>(ErrorCode::FailedToLoadConfig);
+                return ErrorCode::FailedToLoadConfig;
             }
 
             const auto configData = loadConfigData(configPath);
@@ -112,7 +114,7 @@ namespace autoinput::cli
                     Logger::error("Failed to load configuration file: {}\n", source);
                 }
 
-                return static_cast<i32>(ErrorCode::FailedToLoadConfig);
+                return ErrorCode::FailedToLoadConfig;
             }
 
             const auto errors = validateConfigData(*configData);
@@ -127,7 +129,7 @@ namespace autoinput::cli
                     Logger::print("Configuration is valid: {}\n", source);
                 }
 
-                return static_cast<i32>(ErrorCode::Success);
+                return ErrorCode::Success;
             }
 
             if (jsonOutput)
@@ -143,20 +145,28 @@ namespace autoinput::cli
                 }
             }
 
-            return static_cast<i32>(ErrorCode::FailedToLoadConfig);
+            return ErrorCode::FailedToLoadConfig;
         }
 
-        [[nodiscard]] i32 executeDuplicateConfig(
+        [[nodiscard]] ErrorCode executeDuplicateConfig(
             const std::string& source,
             const std::string& destination,
             const bool force)
         {
             if (duplicateConfig(source, destination, force))
             {
-                return static_cast<i32>(ErrorCode::Success);
+                return ErrorCode::Success;
             }
 
-            return static_cast<i32>(ErrorCode::FailedToLoadConfig);
+            return ErrorCode::FailedToLoadConfig;
+        }
+
+
+        [[nodiscard]] ErrorCode executePrintConfigPath(const std::string& nameOrPath)
+        {
+            const auto configPath = getConfigFilePath(nameOrPath);
+            Logger::print("{}\n", configPath.string());
+            return ErrorCode::Success;
         }
     }
 
@@ -193,7 +203,10 @@ namespace autoinput::cli
             const std::string_view sourceValue = safeGetNextArgument(index, args);
             if (sourceValue.empty())
             {
-                Logger::fatal("The config {} command needs a SOURCE argument.\n", subcommand);
+                Logger::fatalError({
+                    .code = ErrorCode::MissingCommandLineArgument,
+                    .message = std::format("The config {} command needs a SOURCE argument.", subcommand)
+                });
                 return false;
             }
 
@@ -203,16 +216,38 @@ namespace autoinput::cli
             const std::string_view destinationValue = safeGetNextArgument(index, args);
             if (destinationValue.empty())
             {
-                Logger::fatal("The config {} command needs a DESTINATION argument.\n", subcommand);
+                Logger::fatalError({
+                    .code = ErrorCode::MissingCommandLineArgument,
+                    .message = std::format("The config {} command needs a DESTINATION argument.", subcommand)
+                });
                 return false;
             }
 
             data.destination = destinationValue;
             ++index;
         }
+        else if (subcommand == "path")
+        {
+            data.action = ConfigAction::Path;
+            const std::string_view nameOrPath = safeGetNextArgument(index, args);
+            if (nameOrPath.empty())
+            {
+                Logger::fatalError({
+                    .code = ErrorCode::MissingCommandLineArgument,
+                    .message = std::format("The config path command needs a NAME_OR_PATH argument.")
+                });
+                return false;
+            }
+
+            data.source = nameOrPath;
+            ++index;
+        }
         else
         {
-            Logger::fatal("Unknown config subcommand: {}\n", subcommand);
+            Logger::fatalError({
+                .code = ErrorCode::UnknownCommand,
+                .message = std::format("Unknown config subcommand: {}", subcommand)
+            });
             return false;
         }
 
@@ -229,12 +264,6 @@ namespace autoinput::cli
                 }
 
                 data.force = true;
-                ++index;
-                continue;
-            }
-
-            if (arg == "--json" || arg == "--examples")
-            {
                 ++index;
                 continue;
             }
@@ -265,18 +294,33 @@ namespace autoinput::cli
         case ConfigAction::Copy:
             if (data.source.empty())
             {
-                Logger::fatal("The config {} command needs a SOURCE argument.\n", configActionToString(data.action));
+                Logger::fatalError({
+                    .code = ErrorCode::MissingCommandLineArgument,
+                    .message = std::format("The config {} command needs a SOURCE argument.", configActionToString(data.action))
+                });
                 return false;
             }
 
             if (data.destination.empty())
             {
-                Logger::fatal("The config {} command needs a DESTINATION argument.\n", configActionToString(data.action));
+                Logger::fatalError({
+                    .code = ErrorCode::MissingCommandLineArgument,
+                    .message = std::format("The config {} command needs a DESTINATION argument.", configActionToString(data.action))
+                });
                 return false;
             }
-
             return true;
 
+        case ConfigAction::Path:
+            if (data.source.empty())
+            {
+                Logger::fatalError({
+                    .code = ErrorCode::MissingCommandLineArgument,
+                    .message = std::format("The config {} command needs a NAME_OR_PATH argument.", configActionToString(data.action))
+                });
+                return false;
+            }
+            return true;
         case ConfigAction::None:
         default:
             Logger::fatal("The config command needs a subcommand.\n");
@@ -284,24 +328,23 @@ namespace autoinput::cli
         }
     }
 
-    i32 ConfigCommand::execute()
+    ErrorCode ConfigCommand::execute()
     {
         switch (data.action)
         {
         case ConfigAction::List:
             return executeListConfigs();
-
         case ConfigAction::Validate:
             return executeValidateConfig(data.source, m_context.global.jsonOutput);
-
         case ConfigAction::Duplicate:
         case ConfigAction::Copy:
             return executeDuplicateConfig(data.source, data.destination, data.force);
-
+        case ConfigAction::Path:
+            return executePrintConfigPath(data.source);
         case ConfigAction::None:
         default:
             Logger::fatal("The config command needs a subcommand.\n");
-            return static_cast<i32>(ErrorCode::InvalidParam);
+            return ErrorCode::InvalidParam;
         }
     }
 
@@ -345,9 +388,20 @@ namespace autoinput::cli
                         { .usage = "--force", .description = "Overwrite destination if it already exists" },
                     },
                     .examples = {
-                        "config duplicate core-keeper-fishing my-copy",
-                        "config duplicate core-keeper-fishing my-copy --force",
+                        "config duplicate old-config my-copy",
+                        "config duplicate old-config my-copy --force",
                         "config copy old-config new-config",
+                    },
+                });
+                return;
+            }
+
+            if (topic == "path")
+            {
+                logHelpMessage({
+                    .context = m_context,
+                    .examples = {
+                        "config path my-config"
                     },
                 });
                 return;
@@ -361,12 +415,14 @@ namespace autoinput::cli
                 { .usage = "validate NAME_OR_PATH", .description = "Validate a configuration file" },
                 { .usage = "duplicate SOURCE DESTINATION", .description = "Duplicate a configuration into the user config directory" },
                 { .usage = "copy SOURCE DESTINATION", .description = "Alias for duplicate" },
+                { .usage = "path NAME_OR_PATH", .description = "Print the path to the configuration." },
             },
             .examples = {
                 "config list",
                 "config validate my-config",
                 "config duplicate old-config new-config",
                 "config copy old-config new-config",
+                "config path my-config",
                 "help config validate",
                 "help config duplicate",
             },
@@ -408,6 +464,14 @@ namespace autoinput::cli
                 return {
                     .usage = "config copy SOURCE DESTINATION [options]",
                     .description = "Alias for config duplicate.",
+                };
+            }
+
+            if (topic == "path")
+            {
+                return {
+                    .usage = "print NAME_OR_PATH",
+                    .description = "Print the path to the configuration.",
                 };
             }
         }

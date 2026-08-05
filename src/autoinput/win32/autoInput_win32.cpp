@@ -3,7 +3,7 @@
  * @author djsquiddy
  * @date March 2026
  */
-#include "autoinput/autoInput.h"
+#include "autoinput/autoinput.h"
 #include "autoinput/mouse.h"
 #include "autoinput/keyboard.h"
 #include "autoinput/logger.h"
@@ -35,7 +35,7 @@ namespace autoinput
 
             BOOL WINAPI ConsoleHandler(const DWORD dwType)
             {
-                if (dwType == CTRL_C_EVENT)
+                if (dwType == CTRL_C_EVENT || dwType == CTRL_BREAK_EVENT || dwType == CTRL_CLOSE_EVENT)
                 {
                     signalEnd();
                     return TRUE;

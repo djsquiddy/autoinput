@@ -3,11 +3,10 @@
  * @author djsquiddy
  * @date March 2026
  */
-#include "autoinput/autoInput.h"
+#include "autoinput/autoinput.h"
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
 #include "autoinput/backend.h"
-#include "autoinput/backendFactory.h"
 #include "autoinput/terminal.h"
 #include <ranges>
 #include <format>

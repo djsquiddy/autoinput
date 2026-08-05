@@ -3,15 +3,16 @@
  * @author djsquiddy
  * @date August 2026
  */
-#include <gtest/gtest.h>
-#include <filesystem>
-#include <vector>
-#include <string>
-
 #include "autoinput/cli/cliApplication.h"
 #include "autoinput/config.h"
 #include "autoinput/errorCode.h"
 #include "testUtils.h"
+
+#include <filesystem>
+#include <vector>
+#include <string>
+#include <gtest/gtest.h>
+
 
 namespace autoinput
 {
@@ -39,8 +40,8 @@ namespace autoinput
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
-        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())));
-        ASSERT_EQ(app.execute(), static_cast<i32>(ErrorCode::Success));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())) == ErrorCode::Success);
+        ASSERT_EQ(app.execute(), ErrorCode::Success);
 
         std::filesystem::path dumpPath = getUserConfigsPath() / "refactor_type.toml";
         auto loaded = loadConfigData(dumpPath);
@@ -64,8 +65,8 @@ namespace autoinput
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
-        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())));
-        ASSERT_EQ(app.execute(), static_cast<i32>(ErrorCode::Success));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())) == ErrorCode::Success);
+        ASSERT_EQ(app.execute(), ErrorCode::Success);
 
         std::filesystem::path dumpPath = getUserConfigsPath() / "refactor_start.toml";
         auto loaded = loadConfigData(dumpPath);
@@ -91,8 +92,8 @@ namespace autoinput
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
-        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())));
-        ASSERT_EQ(app.execute(), static_cast<i32>(ErrorCode::Success));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())) == ErrorCode::Success);
+        ASSERT_EQ(app.execute(), ErrorCode::Success);
 
         std::filesystem::path dumpPath = getUserConfigsPath() / "refactor_mod.toml";
         auto loaded = loadConfigData(dumpPath);
@@ -114,8 +115,8 @@ namespace autoinput
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
-        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())));
-        ASSERT_EQ(app.execute(), static_cast<i32>(ErrorCode::Success));
+        ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())) == ErrorCode::Success);
+        ASSERT_EQ(app.execute(), ErrorCode::Success);
 
         std::filesystem::path dumpPath = getUserConfigsPath() / "refactor_key.toml";
         auto loaded = loadConfigData(dumpPath);

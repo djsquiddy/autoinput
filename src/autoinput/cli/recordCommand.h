@@ -59,7 +59,7 @@ namespace autoinput::cli
          * @brief Executes the record command (starting recording session).
          * @return Exit code.
          */
-        [[nodiscard]] i32 execute() override;
+        [[nodiscard]] ErrorCode execute() override;
 
         /**
          * @brief Prints help for the record command.

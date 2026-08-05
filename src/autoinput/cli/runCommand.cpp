@@ -49,7 +49,10 @@ namespace autoinput::cli
                     const auto mouse = Mouse::fromString(button);
                     if (mouse.button == MouseButton::None)
                     {
-                        Logger::fatal("Invalid parameter {} for button type. Choices: {}\n", button, ConfigMetadata::validMouseButtonChoices());
+                        Logger::fatalError({
+                            .code = ErrorCode::InvalidParam,
+                            .message = std::format("Invalid parameter {} for button type. Choices: {}", button, ConfigMetadata::validMouseButtonChoices())
+                        });
                         return false;
                     }
 
@@ -222,7 +225,10 @@ namespace autoinput::cli
                 const std::string_view value = safeGetNextArgument(++index, args);
                 if (value.empty())
                 {
-                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
                     return false;
                 }
 
@@ -236,14 +242,20 @@ namespace autoinput::cli
                 const std::string_view value = safeGetNextArgument(++index, args);
                 if (value.empty())
                 {
-                    Logger::fatal("The parameter {} needs an argument. Choices: {}\n", arg, ConfigMetadata::validActionChoices());
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
                     return false;
                 }
 
                 const ActionState action = actionStateFromArguments(value);
                 if (action == ActionState::INVALID)
                 {
-                    Logger::fatal("Invalid parameter {} for action type. Choices: {}\n", value, ConfigMetadata::validActionChoices());
+                    Logger::fatalError({
+                        .code = ErrorCode::InvalidParam,
+                        .message = std::format("Invalid parameter {} for action type. Choices: {}", value, ConfigMetadata::validActionChoices())
+                    });
                     return false;
                 }
 
@@ -258,14 +270,20 @@ namespace autoinput::cli
                 const std::string_view value = safeGetNextArgument(++index, args);
                 if (value.empty())
                 {
-                    Logger::fatal("The parameter {} needs an argument. Choices: {}\n", arg, ConfigMetadata::validMouseButtonChoices());
+                    Logger::fatalError({
+                    .code = ErrorCode::MissingCommandLineArgument,
+                    .message = std::format("The parameter {} needs an argument. Choices: {}", arg, ConfigMetadata::validMouseButtonChoices())
+                    });
                     return false;
                 }
 
                 const Mouse mouse = Mouse::fromString(value);
                 if (mouse.button == MouseButton::None)
                 {
-                    Logger::fatal("Invalid parameter {} for button type. Choices: {}\n", value, ConfigMetadata::validMouseButtonChoices());
+                    Logger::fatalError({
+                        .code = ErrorCode::InvalidParam,
+                        .message = std::format("Invalid parameter {} for button type. Choices: {}", value, ConfigMetadata::validMouseButtonChoices())
+                    });
                     return false;
                 }
 
@@ -285,7 +303,10 @@ namespace autoinput::cli
                 const std::string_view value = safeGetNextArgument(++index, args);
                 if (value.empty())
                 {
-                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
                     return false;
                 }
 
@@ -304,7 +325,10 @@ namespace autoinput::cli
                 const std::string_view value = safeGetNextArgument(++index, args);
                 if (value.empty())
                 {
-                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
                     return false;
                 }
 
@@ -329,7 +353,10 @@ namespace autoinput::cli
                 const std::string_view value = safeGetNextArgument(++index, args);
                 if (value.empty())
                 {
-                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
                     return false;
                 }
 
@@ -343,7 +370,10 @@ namespace autoinput::cli
                 const std::string_view value = safeGetNextArgument(++index, args);
                 if (value.empty())
                 {
-                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
                     return false;
                 }
 
@@ -357,7 +387,10 @@ namespace autoinput::cli
                 const std::string_view value = safeGetNextArgument(++index, args);
                 if (value.empty())
                 {
-                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
                     return false;
                 }
 
@@ -371,7 +404,10 @@ namespace autoinput::cli
                 const std::string_view value = safeGetNextArgument(++index, args);
                 if (value.empty())
                 {
-                    Logger::fatal("The parameter {} needs an argument.\n", arg);
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
                     return false;
                 }
 
@@ -383,9 +419,21 @@ namespace autoinput::cli
             if (arg == "-w" || arg == "--wait" || arg == "--press-wait")
             {
                 const std::string_view value = safeGetNextArgument(++index, args);
-                if (value.empty() || !m_config.delayData.parseWaitTimeDelay(value, true))
+                if (value.empty())
                 {
-                    Logger::fatal("The parameter {} needs a valid time range.\n", arg);
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
+                    return false;
+                }
+
+                if (!m_config.delayData.parseWaitTimeDelay(value, true))
+                {
+                    Logger::fatalError({
+                        .code = ErrorCode::InvalidParam,
+                        .message = std::format("The parameter {} needs a valid time range.", arg)
+                    });
                     return false;
                 }
 
@@ -396,9 +444,21 @@ namespace autoinput::cli
             if (arg == "--release-wait")
             {
                 const std::string_view value = safeGetNextArgument(++index, args);
-                if (value.empty() || !m_config.delayData.parseWaitTimeDelay(value, false))
+                if (value.empty())
                 {
-                    Logger::fatal("The parameter {} needs a valid time range.\n", arg);
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
+                    return false;
+                }
+
+                if (!m_config.delayData.parseWaitTimeDelay(value, false))
+                {
+                    Logger::fatalError({
+                        .code = ErrorCode::InvalidParam,
+                        .message = std::format("The parameter {} needs a valid time range.", arg)
+                    });
                     return false;
                 }
 
@@ -411,7 +471,10 @@ namespace autoinput::cli
                 const std::string_view value = safeGetNextArgument(++index, args);
                 if (value.empty())
                 {
-                    Logger::fatal("The parameter {} needs an argument. Choices: off, console, desktop, both\n", arg);
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument. Choices: off, console, desktop, both", arg)
+                    });
                     return false;
                 }
 
@@ -420,13 +483,10 @@ namespace autoinput::cli
                 continue;
             }
 
-            if (arg == "--json" || arg == "--examples")
-            {
-                ++index;
-                continue;
-            }
-
-            Logger::fatal("Unknown run option: {}\n", arg);
+            Logger::fatalError({
+                .code = ErrorCode::UnknownCommandOption,
+                .message = std::format("Unknown run option: {}", arg)
+            });
             return false;
         }
 
@@ -444,14 +504,14 @@ namespace autoinput::cli
         return true; // Defaults allow `autoinput run`
     }
 
-    i32 RunCommand::execute()
+    ErrorCode RunCommand::execute()
     {
         if (!m_config.saveConfigName.empty())
         {
             ProgramArguments arguments;
             if (!applyRunConfigToArguments(m_config, m_context, arguments))
             {
-                return static_cast<i32>(ErrorCode::InvalidParam);
+                return ErrorCode::InvalidParam;
             }
 
             std::filesystem::path dumpPath = m_config.saveConfigName;
@@ -473,11 +533,11 @@ namespace autoinput::cli
             if (saveConfigData(arguments.toConfigData(), dumpPath, m_context.settings.getDefaults()))
             {
                 Logger::print("Configuration saved to: {}\n", dumpPath.string());
-                return static_cast<i32>(ErrorCode::Success);
+                return ErrorCode::Success;
             }
 
             Logger::error("Failed to save configuration to: {}\n", dumpPath.string());
-            return static_cast<i32>(ErrorCode::FailedToLoadConfig);
+            return ErrorCode::FailedToLoadConfig;
         }
 
         return runProgramWithArguments([this](ProgramArguments& arguments)

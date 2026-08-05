@@ -54,6 +54,12 @@ namespace autoinput
         case ErrorCode::CliValidationError:
             name = "CliValidationError";
             break;
+        case ErrorCode::MissingCommandLineArgument:
+            name = "MissingCommandLineArgument";
+            break;
+        case ErrorCode::UnknownCommandOption:
+            name = "UnknownCommandOption";
+            break;
         default:
             AUTOINPUT_ASSERT(false, "Unknown error code: {}", static_cast<errorCode_t>(errorCode));
         }

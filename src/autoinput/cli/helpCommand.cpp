@@ -58,7 +58,7 @@ namespace autoinput::cli
         return false;
     }
 
-    i32 HelpCommand::execute()
+    ErrorCode HelpCommand::execute()
     {
         if (!validate())
         {
@@ -66,11 +66,11 @@ namespace autoinput::cli
             printUsage(getHelpEntry());
             printGlobalOptions();
             printMainHelp();
-            return static_cast<i32>(ErrorCode::InvalidParam);
+            return ErrorCode::InvalidParam;
         }
 
         printHelp();
-        return static_cast<i32>(ErrorCode::Success);
+        return ErrorCode::Success;
     }
 
     void HelpCommand::printHelp() const

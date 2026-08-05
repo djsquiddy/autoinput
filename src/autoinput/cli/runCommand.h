@@ -73,7 +73,7 @@ namespace autoinput::cli
          * @brief Executes the run command (starting the autoinput listener).
          * @return Exit code.
          */
-        [[nodiscard]] i32 execute() override;
+        [[nodiscard]] ErrorCode execute() override;
 
         /**
          * @brief Prints help for the run command.

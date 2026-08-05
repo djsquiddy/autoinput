@@ -87,6 +87,15 @@ namespace autoinput
         KeyHandler() = default;
 
         /**
+         * @brief Virtual destructor.
+         */
+        ~KeyHandler() override {
+            m_autoclickerThread.request_stop();
+            m_cv.notify_all();
+            if (m_autoclickerThread.joinable()) m_autoclickerThread.join();
+        }
+
+        /**
          * @brief Constructs a KeyHandler for a specific key.
          * @param key The key to handle.
          * @param backend Pointer to the platform backend.

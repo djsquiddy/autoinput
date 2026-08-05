@@ -4,7 +4,6 @@
  * @date August 2026
  */
 #include "autoinput/cli/appsCommand.h"
-
 #include "autoinput/errorCode.h"
 #include "autoinput/platform.h"
 
@@ -48,7 +47,7 @@ namespace autoinput::cli
         return true;
     }
 
-    i32 AppsCommand::execute()
+    ErrorCode AppsCommand::execute()
     {
         switch (data.action)
         {
@@ -58,7 +57,7 @@ namespace autoinput::cli
             if (apps.empty())
             {
                 Logger::print("No running applications found or listing not supported on this platform.\n");
-                return static_cast<i32>(ErrorCode::Success);
+                return ErrorCode::Success;
             }
 
             Logger::print("Currently running applications:\n");
@@ -67,13 +66,13 @@ namespace autoinput::cli
                 Logger::print("  - {}\n", app);
             }
 
-            return static_cast<i32>(ErrorCode::Success);
+            return ErrorCode::Success;
         }
 
         case AppsAction::None:
         default:
             Logger::fatal("The apps command needs a subcommand.\n");
-            return static_cast<i32>(ErrorCode::InvalidParam);
+            return ErrorCode::InvalidParam;
         }
     }
 

@@ -128,12 +128,6 @@ namespace autoinput::cli
                 continue;
             }
 
-            if (arg == "--json" || arg == "--examples")
-            {
-                ++index;
-                continue;
-            }
-
             Logger::fatal("Unknown record option: {}\n", arg);
             return false;
         }
@@ -158,7 +152,7 @@ namespace autoinput::cli
         return true;
     }
 
-    i32 RecordCommand::execute()
+    ErrorCode RecordCommand::execute()
     {
         return runProgramWithArguments([this](ProgramArguments& arguments)
         {
@@ -195,4 +189,3 @@ namespace autoinput::cli
         };
     }
 }
-

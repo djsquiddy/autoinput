@@ -54,12 +54,18 @@ namespace autoinput::cli
          * @brief Executes the help command (printing help for topics or main help).
          * @return Exit code.
          */
-        [[nodiscard]] i32 execute() override;
+        [[nodiscard]] ErrorCode execute() override;
 
         /**
          * @brief Prints help for the help command itself.
          */
         void printHelp() const override;
+
+        /**
+         * @brief Sets the help topics for which this command should provide help.
+         * @param topics The list of topics (subcommand names).
+         */
+        void setHelpTopic(const std::vector<std::string>& topics) { m_topics = topics; }
 
     private:
         std::vector<std::string> m_topics;

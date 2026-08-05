@@ -64,6 +64,10 @@ namespace autoinput
         if (!m_backend) return;
         if (bool expected = false; m_isActive.compare_exchange_strong(expected, true))
         {
+            if (m_autoclickerThread.joinable()) {
+                m_autoclickerThread.request_stop();
+                m_autoclickerThread.join();
+            }
             m_autoclickerThread = std::jthread([this](std::stop_token stoken) { playback(stoken); });
         }
     }

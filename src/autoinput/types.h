@@ -17,6 +17,9 @@
 #include <iostream>
 #include <format>
 
+
+#define AUTOINPUT_UNUSED(...) static_cast<void>(__VA_ARGS__)
+
 // NOLINTBEGIN(bugprone-macro-parentheses)
 #define AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(enum_class) \
     constexpr enum_class operator|(enum_class lhs, enum_class rhs) \

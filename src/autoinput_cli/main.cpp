@@ -3,7 +3,7 @@
  * @author djsquiddy
  * @date July 2026
  */
-#include "autoinput/autoInput.h"
+#include "autoinput/autoinput.h"
 #include "autoinput/logger.h"
 #include "autoinput/terminal.h"
 #include "autoinput/platform.h"
@@ -21,12 +21,12 @@ int main(int argc, char* argv[])
         Logger::setFile(logPath.string());
 
         cli::CliApplication app;
-        if (!app.parse(gsl::make_span(argv, argc)))
+        if (auto result = app.parse(gsl::make_span(argv, argc)); result != ErrorCode::Success)
         {
-            return static_cast<int>(ErrorCode::InvalidParam);
+            return static_cast<int>(result);
         }
 
-        return app.execute();
+        return static_cast<int>(app.execute());
     }
     catch (const std::exception& e)
     {

@@ -13,11 +13,17 @@
 #include "autoinput/settings.h"
 #include <string_view>
 
+namespace autoinput
+{
+    enum class ErrorCode : i32;
+}
+
 namespace autoinput::cli
 {
     struct GlobalCliOptions
     {
-        std::string programName;
+        std::string programName{};
+        std::string programPath{};
         bool jsonOutput{ false };
         bool showExamples{ false };
         LogLevel logLevel{ LogLevel::Info };
@@ -100,11 +106,11 @@ namespace autoinput::cli
          * @brief Executes the command's logic.
          * @return The exit code (0 for success).
          */
-        [[nodiscard]] virtual i32 execute() = 0;
+        [[nodiscard]] virtual ErrorCode execute() = 0;
 
         /**
          * @brief Prints help information for this specific command.
-         * 
+         *
          * Individual command printHelp() prints only:
          * subcommands
          * local options
@@ -137,7 +143,7 @@ namespace autoinput::cli
          * @brief Sets the help topics for which this command should provide help.
          * @param topics The list of topics (subcommand names).
          */
-        void setHelpTopic(const std::vector<std::string>& topics)  { m_helpTopics = topics; }
+        void setHelpTopic(const std::vector<std::string>& topics) { m_helpTopics = topics; }
 
     protected:
         std::vector<std::string> m_helpTopics;
@@ -149,6 +155,12 @@ namespace autoinput::cli
     /// @param args arguments span
     /// @return If the string is not an option (starts with '-') and is within the bounds of the argument.
     std::string_view safeGetNextArgument(i32 i, gsl::span<char*> args);
+    /// A safe wrapper around testing the next string argument.
+    ///
+    /// @param i argument index
+    /// @param args arguments span
+    /// @return If the string is not an option (starts with '-') and is within the bounds of the argument.
+    std::string_view safeGetNextArgument(size_t i, gsl::span<char*> args);
 }
 
 #endif // INCLUDE_AUTOINPUT_COMMAND_BASE_H

@@ -19,7 +19,8 @@ namespace autoinput::cli
         List,
         Validate,
         Duplicate,
-        Copy
+        Copy,
+        Path
     };
 
     struct ConfigData
@@ -67,7 +68,7 @@ namespace autoinput::cli
          * @brief Executes the config command (listing, validating, or duplicating configs).
          * @return Exit code.
          */
-        [[nodiscard]] i32 execute() override;
+        [[nodiscard]] ErrorCode execute() override;
 
         /**
          * @brief Prints help for the config command.
@@ -77,4 +78,3 @@ namespace autoinput::cli
 }
 
 #endif // INCLUDE_AUTOINPUT_CONFIG_COMMAND_H
-

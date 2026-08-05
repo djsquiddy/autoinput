@@ -10,6 +10,11 @@
 #include "autoinput/cli/commandBase.h"
 #include "autoinput/types.h"
 
+namespace autoinput
+{
+    enum class ErrorCode : i32;
+}
+
 namespace autoinput::cli
 {
     enum class AppsAction : u8
@@ -60,7 +65,7 @@ namespace autoinput::cli
          * @brief Executes the apps command (listing applications).
          * @return Exit code.
          */
-        [[nodiscard]] i32 execute() override;
+        [[nodiscard]] ErrorCode execute() override;
 
         /**
          * @brief Prints help for the apps command.
