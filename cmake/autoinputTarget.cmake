@@ -35,6 +35,9 @@ function(configure_autoinput_target target_name)
                 NOMINMAX
                 _CRT_SECURE_NO_WARNINGS
         )
+        if(MINGW)
+            target_link_options(${target_name} PRIVATE -static-libgcc -static-libstdc++ -Wl,-Bstatic -lwinpthread -Wl,-Bdynamic)
+        endif()
     endif()
 
     target_precompile_headers(${target_name}
