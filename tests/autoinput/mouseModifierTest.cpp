@@ -3,11 +3,11 @@
  * @author djsquiddy
  * @date July 2026
  */
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include "autoinput/autoInput.h"
+#include "autoinput/autoinput.h"
 #include "autoinput/backend.h"
 #include "testUtils.h"
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 using namespace autoinput;
 using ::testing::Exactly;

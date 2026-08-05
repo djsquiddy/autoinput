@@ -2,7 +2,7 @@
  * @file fixVerificationTest.cpp
  */
 #include <gtest/gtest.h>
-#include "autoinput/autoInput.h"
+#include "autoinput/autoinput.h"
 #include "autoinput/win32/internalData_win32.h"
 
 using namespace autoinput;

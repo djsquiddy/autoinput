@@ -3,15 +3,15 @@
  * @author djsquiddy
  * @date August 2026
  */
-#include <gtest/gtest.h>
-#include <filesystem>
-#include <fstream>
 #include "autoinput/config.h"
 #include "autoinput/configValidator.h"
 #include "autoinput/sequence.h"
 #include "autoinput/backend.h"
-#include "autoinput/autoInput.h"
+#include "autoinput/autoinput.h"
 #include "testUtils.h"
+#include <gtest/gtest.h>
+#include <filesystem>
+#include <fstream>
 
 namespace autoinput
 {

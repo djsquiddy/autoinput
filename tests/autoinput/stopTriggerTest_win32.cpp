@@ -1,10 +1,10 @@
 /**
- * @file stopTriggerReproTest.cpp
+ * @file stopTriggerTest_win32.cpp
  */
+#include "autoinput/autoinput.h"
+#include "autoinput/win32/internalData_win32.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "autoinput/autoInput.h"
-#include "autoinput/win32/internalData_win32.h"
 
 #ifdef _WIN32
 #include <windows.h>

@@ -1,7 +1,7 @@
 function(autoinput_get_common_sources output_var)
     set(sources
             ${CMAKE_SOURCE_DIR}/src/pch.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/autoInput.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/autoinput.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/defaults.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/defaults.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/backend.h

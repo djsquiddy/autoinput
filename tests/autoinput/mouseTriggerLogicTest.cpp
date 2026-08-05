@@ -3,10 +3,10 @@
  * @author djsquiddy
  * @date July 2026
  */
-#include <gtest/gtest.h>
-#include "autoinput/autoInput.h"
+#include "autoinput/autoinput.h"
 #include "autoinput/cli/runCommand.h"
 #include "autoinput/cli/commandBase.h"
+#include <gtest/gtest.h>
 
 namespace autoinput
 {
