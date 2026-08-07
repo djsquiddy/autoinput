@@ -14,26 +14,6 @@ namespace autoinput::cli
 {
     namespace
     {
-        [[nodiscard]] std::string_view configActionToString(const ConfigAction action)
-        {
-            switch (action)
-            {
-            case ConfigAction::List:
-                return "list";
-            case ConfigAction::Validate:
-                return "validate";
-            case ConfigAction::Duplicate:
-                return "duplicate";
-            case ConfigAction::Copy:
-                return "copy";
-            case ConfigAction::Path:
-                return "path";
-            case ConfigAction::None:
-            default:
-                return "";
-            }
-        }
-
         void listConfigsFromDirectory(const std::filesystem::path& path, const std::string_view label)
         {
             Logger::print("{} configurations", label);
@@ -84,68 +64,11 @@ namespace autoinput::cli
             return ErrorCode::Success;
         }
 
-        [[nodiscard]] ErrorCode executeValidateConfig(const std::string& source, const bool jsonOutput)
+        [[nodiscard]] ErrorCode executeValidateConfig(const ConfigService& configService, const std::string& source)
         {
-            const auto configPath = getConfigFilePath(source);
-
-            if (!doesConfigDataExists(configPath))
-            {
-                if (jsonOutput)
-                {
-                    printValidationJson(false, configPath.string(), { ValidationError{ "Configuration file not found" } });
-                }
-                else
-                {
-                    Logger::error("Configuration file not found: {}\n", source);
-                }
-
-                return ErrorCode::FailedToLoadConfig;
-            }
-
-            const auto configData = loadConfigData(configPath);
-            if (!configData.has_value())
-            {
-                if (jsonOutput)
-                {
-                    printValidationJson(false, configPath.string(), { ValidationError{ "Failed to load configuration file" } });
-                }
-                else
-                {
-                    Logger::error("Failed to load configuration file: {}\n", source);
-                }
-
-                return ErrorCode::FailedToLoadConfig;
-            }
-
-            const auto errors = validateConfigData(*configData);
-            if (errors.empty())
-            {
-                if (jsonOutput)
-                {
-                    printValidationJson(true, configPath.string(), {});
-                }
-                else
-                {
-                    Logger::print("Configuration is valid: {}\n", source);
-                }
-
-                return ErrorCode::Success;
-            }
-
-            if (jsonOutput)
-            {
-                printValidationJson(false, configPath.string(), errors);
-            }
-            else
-            {
-                Logger::error("Configuration validation failed for {}:\n", source);
-                for (const ValidationError& error : errors)
-                {
-                    Logger::error("  - {}\n", error.message);
-                }
-            }
-
-            return ErrorCode::FailedToLoadConfig;
+            const auto result = configService.validateConfig(source);
+            printValidationJson(result);
+            return result.isValid ? ErrorCode::Success : ErrorCode::FailedToLoadConfig;
         }
 
         [[nodiscard]] ErrorCode executeDuplicateConfig(
@@ -161,12 +84,199 @@ namespace autoinput::cli
             return ErrorCode::FailedToLoadConfig;
         }
 
-
         [[nodiscard]] ErrorCode executePrintConfigPath(const std::string& nameOrPath)
         {
             const auto configPath = getConfigFilePath(nameOrPath);
             Logger::print("{}\n", configPath.string());
             return ErrorCode::Success;
+        }
+    }
+
+    ConfigAction configActionFromString(const std::string_view& action)
+    {
+        if (action == "list")
+        {
+            return ConfigAction::List;
+        }
+        if (action == "validate")
+        {
+            return ConfigAction::Validate;
+        }
+        if (action == "duplicate")
+        {
+            return ConfigAction::Duplicate;
+        }
+        if (action == "copy")
+        {
+            return ConfigAction::Copy;
+        }
+        if (action == "path")
+        {
+            return ConfigAction::Path;
+        }
+
+        return ConfigAction::None;
+    }
+
+    std::string_view actionToString(const ConfigAction action)
+    {
+        switch (action)
+        {
+        case ConfigAction::List:
+            return "list";
+        case ConfigAction::Validate:
+            return "validate";
+        case ConfigAction::Duplicate:
+            return "duplicate";
+        case ConfigAction::Copy:
+            return "copy";
+        case ConfigAction::Path:
+            return "path";
+        case ConfigAction::None:
+        default:
+            return "";
+        }
+    }
+
+    HelpEntry getActionHelpEntry(const ConfigAction action)
+    {
+        switch (action)
+        {
+        case ConfigAction::List:
+            return {
+            .usage = "config list",
+            .description = "List available configurations.",
+        };
+        case ConfigAction::Validate:
+            return {
+            .usage = "config validate NAME_OR_PATH",
+            .description = "Validate a configuration file.",
+        };
+        case ConfigAction::Duplicate:
+            return {
+            .usage = "config duplicate SOURCE DESTINATION [options]",
+            .description = "Duplicate a configuration into the user config directory.",
+        };
+        case ConfigAction::Copy:
+            return {
+            .usage = "config copy SOURCE DESTINATION [options]",
+            .description = "Alias for config duplicate.",
+        };
+        case ConfigAction::Path:
+            return {
+            .usage = "print NAME_OR_PATH",
+            .description = "Print the path to the configuration.",
+        };
+        case ConfigAction::None:
+        default:
+            return {};
+        }
+    }
+
+    void printActionHelp(const ConfigAction action, const CommandContext& context)
+    {
+        switch (action)
+        {
+        case ConfigAction::List:
+            logHelpMessage({
+                .context = context,
+                .examples = {
+                    "config list",
+                },
+            });
+            break;
+        case ConfigAction::Validate:
+            logHelpMessage({
+                .context = context,
+                .examples = {
+                    "config validate my-config",
+                    "--json config validate my-config",
+                },
+                .notes = {
+                    "Use the global --json option before the command for machine-readable output.",
+                },
+            });
+            break;
+        case ConfigAction::Duplicate:
+        case ConfigAction::Copy:
+            logHelpMessage({
+                .context = context,
+                .options = {
+                    { .usage = "--force", .description = "Overwrite destination if it already exists" },
+                },
+                .examples = {
+                    "config duplicate old-config my-copy",
+                    "config duplicate old-config my-copy --force",
+                    "config copy old-config new-config",
+                },
+            });
+            break;
+        case ConfigAction::Path:
+            logHelpMessage({
+                .context = context,
+                .examples = {
+                    "config path my-config"
+                },
+            });
+            break;
+        case ConfigAction::None:
+        default:
+            break;
+        }
+    }
+
+    bool ConfigData::validate() const
+    {
+        switch (action)
+        {
+        case ConfigAction::List:
+            return true;
+        case ConfigAction::Validate:
+            if (source.empty())
+            {
+                Logger::fatalError({
+                    .code = ErrorCode::MissingCommandLineArgument,
+                    .message = std::format("The config {} command needs a NAME_OR_PATH argument.", actionToString(action))
+                });
+                return false;
+            }
+            return true;
+        case ConfigAction::Duplicate:
+        case ConfigAction::Copy:
+            if (source.empty())
+            {
+                Logger::fatalError({
+                    .code = ErrorCode::MissingCommandLineArgument,
+                    .message = std::format("The config {} command needs a SOURCE argument.", actionToString(action))
+                });
+                return false;
+            }
+            if (destination.empty())
+            {
+                Logger::fatalError({
+                    .code = ErrorCode::MissingCommandLineArgument,
+                    .message = std::format("The config {} command needs a DESTINATION argument.", actionToString(action))
+                });
+                return false;
+            }
+            return true;
+        case ConfigAction::Path:
+            if (source.empty())
+            {
+                Logger::fatalError({
+                    .code = ErrorCode::MissingCommandLineArgument,
+                    .message = std::format("The config {} command needs a NAME_OR_PATH argument.", actionToString(action))
+                });
+                return false;
+            }
+            return true;
+        case ConfigAction::None:
+        default:
+            Logger::fatalError({
+                .code = ErrorCode::MissingCommandLineArgument,
+                .message = "The config command needs a subcommand."}
+            );
+            return false;
         }
     }
 
@@ -277,55 +387,7 @@ namespace autoinput::cli
 
     bool ConfigCommand::validate() const
     {
-        switch (data.action)
-        {
-        case ConfigAction::List:
-            return true;
-
-        case ConfigAction::Validate:
-            if (data.source.empty())
-            {
-                Logger::fatal("The config validate command needs a NAME_OR_PATH argument.\n");
-                return false;
-            }
-            return true;
-
-        case ConfigAction::Duplicate:
-        case ConfigAction::Copy:
-            if (data.source.empty())
-            {
-                Logger::fatalError({
-                    .code = ErrorCode::MissingCommandLineArgument,
-                    .message = std::format("The config {} command needs a SOURCE argument.", configActionToString(data.action))
-                });
-                return false;
-            }
-
-            if (data.destination.empty())
-            {
-                Logger::fatalError({
-                    .code = ErrorCode::MissingCommandLineArgument,
-                    .message = std::format("The config {} command needs a DESTINATION argument.", configActionToString(data.action))
-                });
-                return false;
-            }
-            return true;
-
-        case ConfigAction::Path:
-            if (data.source.empty())
-            {
-                Logger::fatalError({
-                    .code = ErrorCode::MissingCommandLineArgument,
-                    .message = std::format("The config {} command needs a NAME_OR_PATH argument.", configActionToString(data.action))
-                });
-                return false;
-            }
-            return true;
-        case ConfigAction::None:
-        default:
-            Logger::fatal("The config command needs a subcommand.\n");
-            return false;
-        }
+        return data.validate();
     }
 
     ErrorCode ConfigCommand::execute()
@@ -335,7 +397,10 @@ namespace autoinput::cli
         case ConfigAction::List:
             return executeListConfigs();
         case ConfigAction::Validate:
-            return executeValidateConfig(data.source, m_context.global.jsonOutput);
+            AUTOINPUT_ASSERT(m_context.configService != nullptr,
+                "Config Service is not initialized when it was expected to be."
+            );
+            return executeValidateConfig(*m_context.configService, data.source);
         case ConfigAction::Duplicate:
         case ConfigAction::Copy:
             return executeDuplicateConfig(data.source, data.destination, data.force);
@@ -353,58 +418,9 @@ namespace autoinput::cli
         if (m_helpTopics.size() >= 2)
         {
             const std::string& topic = m_helpTopics[1];
-
-            if (topic == "list")
+            if (const ConfigAction action = configActionFromString(topic); action != ConfigAction::None)
             {
-                logHelpMessage({
-                    .context = m_context,
-                    .examples = {
-                        "config list",
-                    },
-                });
-                return;
-            }
-
-            if (topic == "validate")
-            {
-                logHelpMessage({
-                    .context = m_context,
-                    .examples = {
-                        "config validate my-config",
-                        "--json config validate my-config",
-                    },
-                    .notes = {
-                        "Use the global --json option before the command for machine-readable output.",
-                    },
-                });
-                return;
-            }
-
-            if (topic == "duplicate" || topic == "copy")
-            {
-                logHelpMessage({
-                    .context = m_context,
-                    .options = {
-                        { .usage = "--force", .description = "Overwrite destination if it already exists" },
-                    },
-                    .examples = {
-                        "config duplicate old-config my-copy",
-                        "config duplicate old-config my-copy --force",
-                        "config copy old-config new-config",
-                    },
-                });
-                return;
-            }
-
-            if (topic == "path")
-            {
-                logHelpMessage({
-                    .context = m_context,
-                    .examples = {
-                        "config path my-config"
-                    },
-                });
-                return;
+                printActionHelp(action, m_context);
             }
         }
 
@@ -434,45 +450,9 @@ namespace autoinput::cli
         if (m_helpTopics.size() >= 2)
         {
             const std::string& topic = m_helpTopics[1];
-
-            if (topic == "list")
+            if (const ConfigAction action = configActionFromString(topic); action != ConfigAction::None)
             {
-                return {
-                    .usage = "config list",
-                    .description = "List available configurations.",
-                };
-            }
-
-            if (topic == "validate")
-            {
-                return {
-                    .usage = "config validate NAME_OR_PATH",
-                    .description = "Validate a configuration file.",
-                };
-            }
-
-            if (topic == "duplicate")
-            {
-                return {
-                    .usage = "config duplicate SOURCE DESTINATION [options]",
-                    .description = "Duplicate a configuration into the user config directory.",
-                };
-            }
-
-            if (topic == "copy")
-            {
-                return {
-                    .usage = "config copy SOURCE DESTINATION [options]",
-                    .description = "Alias for config duplicate.",
-                };
-            }
-
-            if (topic == "path")
-            {
-                return {
-                    .usage = "print NAME_OR_PATH",
-                    .description = "Print the path to the configuration.",
-                };
+                return getActionHelpEntry(action);
             }
         }
 

@@ -93,13 +93,23 @@ namespace autoinput
     std::string Mouse::toString() const
     {
         const std::string modifiers = autoinput::toString(modifier);
-        const std::string buttonStr = mouseButtonToString(button);
+        std::string buttonStr = mouseButtonToString(button);
         if (modifiers.empty())
         {
             return buttonStr;
         }
 
         return modifiers + '+' + buttonStr;
+    }
+
+    std::vector<std::string_view> getAllStatusNotificationModes()
+    {
+        return {
+            statusNotificationModeToString(StatusNotificationMode::Off),
+            statusNotificationModeToString(StatusNotificationMode::Console),
+            statusNotificationModeToString(StatusNotificationMode::Desktop),
+            statusNotificationModeToString(StatusNotificationMode::Both)
+        };
     }
 
     StatusNotificationMode statusNotificationModeFromString(const std::string_view str)
@@ -236,7 +246,7 @@ namespace autoinput
 
     ActionState actionStateFromArguments(const std::string_view actionType)
     {
-        if (actionType == "c" || actionType == defaults::DefaultActionName)
+        if (actionType == "c" || actionType == "click")
         {
             return ActionState::CLICK;
         }
@@ -252,7 +262,7 @@ namespace autoinput
         switch (actionState)
         {
         case ActionState::CLICK:
-            return std::string{ defaults::DefaultActionName };
+            return std::string{ "click" };
         case ActionState::HOLD:
             return "hold";
         case ActionState::INVALID:
@@ -263,7 +273,7 @@ namespace autoinput
 
     MouseButton mouseButtonFromArguments(const std::string_view button)
     {
-        if (button == "l" || button == defaults::DefaultMouseButtonName)
+        if (button == "l" || button == "left")
         {
             return MouseButton::Left;
         }
@@ -291,7 +301,7 @@ namespace autoinput
         switch (mouseButton)
         {
         case MouseButton::Left:
-            return std::string{ defaults::DefaultMouseButtonName };
+            return std::string{ "left" };
         case MouseButton::Middle:
             return std::string{ "middle" };
         case MouseButton::Right:

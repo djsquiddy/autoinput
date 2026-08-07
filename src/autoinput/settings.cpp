@@ -8,6 +8,13 @@
 
 namespace autoinput
 {
+    const std::vector<SettingKey> Settings::s_keys = {
+        {"blacklist","What applications should the autoinput ignore."},
+        {"statusNotificationMode","Mode the status notification should be "},
+        {"editor","Editor application to use when editing settings."},
+        {"logLevel","Log level to use."}
+    };
+
     bool Settings::load(const std::optional<std::filesystem::path>& path)
     {
         if (path.has_value())

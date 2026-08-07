@@ -48,7 +48,7 @@ namespace autoinput::test
         auto result = runCommand(command);
 
         EXPECT_NE(result.exitCode, 0);
-        EXPECT_NE(result.output.find("Configuration validation failed"), std::string::npos);
+        EXPECT_NE(result.output.find("Configuration validation failed"), std::string::npos) << "Output: " << result.output;
         EXPECT_NE(result.output.find("Invalid action: 'invalid'"), std::string::npos);
     }
 
@@ -98,7 +98,7 @@ namespace autoinput::test
         
         EXPECT_EQ(exitCode, 0);
         EXPECT_NE(output.find("\"valid\": true"), std::string::npos);
-        EXPECT_NE(output.find("\"errors\": []"), std::string::npos);
+        EXPECT_NE(output.find("\"errors\": []"), std::string::npos) << "Output: " << output;
         EXPECT_NE(output.find(configPath.filename().string()), std::string::npos);
     }
 

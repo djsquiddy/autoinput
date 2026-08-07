@@ -167,7 +167,7 @@ namespace autoinput::cli
                 else
                 {
                     // Default behavior for start-only target
-                    arguments.buttons.push_back(Mouse{ MouseButton::Left });
+                    arguments.buttons.emplace_back( MouseButton::Left );
                     arguments.targetActions.push_back(action);
                 }
 

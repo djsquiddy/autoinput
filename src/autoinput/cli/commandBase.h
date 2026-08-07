@@ -12,6 +12,7 @@
 #include "autoinput/logger.h"
 #include "autoinput/settings.h"
 #include <string_view>
+#include <gsl/gsl>
 
 namespace autoinput
 {
@@ -33,6 +34,7 @@ namespace autoinput::cli
     {
         GlobalCliOptions global;
         Settings settings;
+        std::shared_ptr<ConfigService> configService{ nullptr };
     };
 
     struct HelpEntry

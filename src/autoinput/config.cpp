@@ -6,6 +6,7 @@
 #define TOML_IMPLEMENTATION
 #include "autoinput/config.h"
 
+#include "errorCode.h"
 #include "autoinput/utils.h"
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
@@ -17,6 +18,7 @@ namespace autoinput
     namespace
     {
         namespace fs = std::filesystem;
+
         void populateCommandData(CommandData& commandData, const toml::node& node)
         {
             const auto* table = node.as_table();
@@ -593,4 +595,151 @@ namespace autoinput
             return false;
         }
     }
+
+    std::string_view configTypeToString(const ConfigType configType)
+    {
+        switch (configType)
+        {
+        case ConfigType::Global:
+            return "Global";
+        case ConfigType::User:
+            return "User";
+        case ConfigType::Unknown:
+        default:
+            return "";
+        }
+    }
+
+    fs::path configTypeToPath(const ConfigType configType)
+    {
+        switch (configType)
+        {
+        case ConfigType::Global:
+            return getConfigsPath();
+        case ConfigType::User:
+            return getUserConfigsPath();
+        case ConfigType::Unknown:
+        default:
+            return {};
+        }
+    }
+
+    fs::path configTypeToPath(const ConfigType configType, const IEnvironment& environment)
+    {
+        switch (configType)
+        {
+        case ConfigType::Global:
+            return getConfigsPath(environment);
+        case ConfigType::User:
+            return getUserConfigsPath(environment);
+        case ConfigType::Unknown:
+        default:
+            return {};
+        }
+    }
+
+    std::string ConfigInfo::fileName() const
+    {
+        return filepath.filename().string();
+    }
+
+    std::string ConfigInfo::fileStem() const
+    {
+        return filepath.stem().string();
+    }
+
+    ConfigService::ConfigService(const IEnvironment& environment)
+        : m_environment{ environment }
+    {
+    }
+
+    std::vector<ConfigInfo> ConfigService::listAvailableConfigs(ConfigType configType) const
+    {
+        const auto path = configTypeToPath(configType, m_environment);
+        const auto label = configTypeToString(configType);
+        Logger::debug("{} configurations", label);
+
+        std::vector<ConfigInfo> configs{};
+
+        if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path))
+        {
+            return configs;
+        }
+
+        for (const auto& entry : std::filesystem::directory_iterator(path))
+        {
+            if (!entry.is_regular_file() || entry.path().extension() != ".toml")
+            {
+                continue;
+            }
+
+            const std::string name = entry.path().stem().string();
+            if (name == "settings")
+            {
+                continue;
+            }
+
+            Logger::debug("Found config: {}\n", name);
+            configs.emplace_back(ConfigInfo{
+                    .type = configType,
+                    .filepath = fs::path(entry.path())
+            });
+        }
+
+        return configs;
+    }
+
+    ValidationResult ConfigService::validateConfig(const std::string& source) const
+    {
+        const auto configPath = getConfigFilePath(source);
+
+        if (!doesConfigDataExists(configPath))
+        {
+            return ValidationResult{
+                .isValid = false,
+                .configPath = configPath.string(),
+                .errors = {{ .message = "Configuration file not found" } }
+            };
+        }
+
+        const auto configData = loadConfigData(configPath);
+        if (!configData.has_value())
+        {
+            return ValidationResult{
+                .isValid = false,
+                .configPath = configPath.string(),
+                .errors = {{ .message = "Failed to load configuration file" } }
+            };
+        }
+
+        auto errors = validateConfigData(*configData);
+        if (errors.empty())
+        {
+            Logger::info("Configuration is valid: {}", source);
+            return ValidationResult{
+                .isValid = true,
+                .configPath = configPath.string()
+            };
+        }
+
+        errors.emplace_back(ValidationError{.message = "Configuration validation failed"});
+        return ValidationResult{
+            .isValid = false,
+            .configPath = configPath.string(),
+            .errors = std::move(errors)
+        };
+    }
+
+    ProgramArguments* ConfigService::loadConfigAsArguments(std::string_view source)
+    {
+        return nullptr;
+    }
+
+    std::vector<ConfigInfo> ConfigService::listAvailableConfigs() const
+    {
+        std::vector<ConfigInfo> configs = listAvailableConfigs(ConfigType::Global);
+        configs.append_range(listAvailableConfigs(ConfigType::User));
+        return configs;
+    }
+
 }

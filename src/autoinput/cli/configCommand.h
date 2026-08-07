@@ -8,8 +8,10 @@
 #pragma once
 
 #include "autoinput/cli/commandBase.h"
+#include "autoinput/command.h"
 #include "autoinput/mouse.h"
 #include "autoinput/types.h"
+#include <gsl/gsl>
 
 namespace autoinput::cli
 {
@@ -22,13 +24,20 @@ namespace autoinput::cli
         Copy,
         Path
     };
+    [[nodiscard]] ConfigAction configActionFromString(const std::string_view& action);
+    [[nodiscard]] std::string_view actionToString(ConfigAction action);
+    [[nodiscard]] HelpEntry getActionHelpEntry(ConfigAction action);
+    void printActionHelp(ConfigAction action, const CommandContext& context);
 
-    struct ConfigData
+    struct ConfigData : ICommandData
     {
+        ~ConfigData() override = default;
         ConfigAction action{ ConfigAction::None };
         std::string source;
         std::string destination;
         bool force{ false };
+
+        [[nodiscard]] bool validate() const override;
     };
 
     class ConfigCommand final : public MultiCommand
@@ -43,12 +52,6 @@ namespace autoinput::cli
          * @return "config".
          */
         [[nodiscard]] std::string_view getName() const override { return "config"; }
-
-        /**
-         * @brief Gets the help entry for the config command.
-         * @return The HelpEntry.
-         */
-        [[nodiscard]] HelpEntry getHelpEntry() const override;
 
         /**
          * @brief Parses the config command arguments.
@@ -69,6 +72,12 @@ namespace autoinput::cli
          * @return Exit code.
          */
         [[nodiscard]] ErrorCode execute() override;
+
+        /**
+         * @brief Gets the help entry for the config command.
+         * @return The HelpEntry.
+         */
+        [[nodiscard]] HelpEntry getHelpEntry() const override;
 
         /**
          * @brief Prints help for the config command.

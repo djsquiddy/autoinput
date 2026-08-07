@@ -37,20 +37,16 @@ namespace autoinput
             blacklist.insert(blacklist.end(), settingsBlacklist.begin(), settingsBlacklist.end());
         }
 
-        if (statusNotificationMode == StatusNotificationMode::Console)
+        if (statusNotificationMode == StatusNotificationMode::Console && !statusNotification.empty())
         {
-            if (!statusNotification.empty())
-            {
-                statusNotificationMode = statusNotificationModeFromString(statusNotification);
-            }
+            statusNotificationMode = statusNotificationModeFromString(statusNotification);
         }
 
         if (Logger::getLogLevel() == LogLevel::Info) // Default
         {
             if (!settingsLogLevel.empty())
             {
-                const LogLevel level = logLevelFromString(settingsLogLevel);
-                if (level != LogLevel::Unknown)
+                if (const LogLevel level = logLevelFromString(settingsLogLevel); level != LogLevel::Unknown)
                 {
                     Logger::setLogLevel(level);
                 }

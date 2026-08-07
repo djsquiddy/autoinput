@@ -116,8 +116,9 @@ namespace autoinput
     };
     AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(StatusNotificationMode);
 
-    StatusNotificationMode statusNotificationModeFromString(std::string_view str);
-    std::string_view statusNotificationModeToString(StatusNotificationMode mode);
+    [[nodiscard]] std::vector<std::string_view> getAllStatusNotificationModes();
+    [[nodiscard]] StatusNotificationMode statusNotificationModeFromString(std::string_view str);
+    [[nodiscard]] std::string_view statusNotificationModeToString(StatusNotificationMode mode);
 
     enum class RecordedEventType
     {

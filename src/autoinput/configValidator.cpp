@@ -279,23 +279,34 @@ namespace autoinput
         return errors;
     }
 
-    void printValidationJson(const bool valid, const std::string& configPath, const std::vector<ValidationError>& errors)
+    void printValidationJson(const bool valid, const std::string& configPath, std::vector<ValidationError>&& errors)
+    {
+        printValidationJson({
+            .isValid = valid,
+            .configPath = configPath,
+            .errors = std::move(errors)
+        });
+    }
+
+    void printValidationJson(const ValidationResult& validationResult)
     {
         Logger::print("{\n");
-        Logger::print("  \"valid\": {},\n", valid ? "true" : "false");
-        Logger::print("  \"configPath\": \"{}\",\n", escapeJsonString(configPath));
+        Logger::print("  \"valid\": {},\n", validationResult.isValid ? "true" : "false");
+        Logger::print("  \"configPath\": \"{}\",\n", escapeJsonString(validationResult.configPath));
         Logger::print("  \"errors\": [");
-        for (size_t i = 0; i < errors.size(); ++i)
+        const auto errorCount = validationResult.errors.size();
+        for (size_t i = 0; i < errorCount; ++i)
         {
+            const auto [message] = validationResult.errors[i];
             Logger::print("\n    {\n");
-            Logger::print("      \"message\": \"{}\"\n", escapeJsonString(errors[i].message));
+            Logger::print("      \"message\": \"{}\"\n", escapeJsonString(message));
             Logger::print("    }");
-            if (i < errors.size() - 1)
+            if (i < errorCount - 1)
             {
                 Logger::print(",");
             }
         }
-        if (!errors.empty())
+        if (errorCount > 0)
         {
             Logger::print("\n  ");
         }

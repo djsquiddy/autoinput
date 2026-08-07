@@ -728,6 +728,11 @@ namespace autoinput
         });
     }
 
+    void Program::setStatusCallback(StatusCallback callback)
+    {
+        m_statusCallback = std::move(callback);
+    }
+
     bool installHooks()
     {
         if (g_program)

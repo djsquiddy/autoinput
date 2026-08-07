@@ -7,6 +7,7 @@
 #define INCLUDE_AUTOINPUT_AUTOINPUT_H
 #pragma once
 
+#include <utility>
 #include <vector>
 #include <string>
 #include <unordered_set>
@@ -29,6 +30,15 @@
 
 namespace autoinput
 {
+    struct ProgramStatus
+    {
+        bool active = false;
+        std::string triggeredCommandName;
+        std::optional<bool> triggeredCommandActive;
+    };
+
+    using StatusCallback = std::function<void(const ProgramStatus&)>;
+
     class Program
     {
     public:
@@ -180,7 +190,10 @@ namespace autoinput
          */
         void updateStatusIndicator(const std::string& triggeredCommandName = "", std::optional<bool> triggeredCommandActive = std::nullopt);
 
+        void setStatusCallback(StatusCallback callback);;
+
     private:
+        StatusCallback m_statusCallback{ nullptr };
         std::unique_ptr<IPlatformBackend> m_backend{ nullptr };
         std::unordered_map<Mouse, MouseHandler, HashFunction<Mouse>> m_mouseHandlers{};
         std::unordered_map<Key, KeyHandler, HashFunction<Key>> m_keyHandlers{};

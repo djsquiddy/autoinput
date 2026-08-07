@@ -20,6 +20,12 @@
 
 namespace autoinput
 {
+    struct SettingKey
+    {
+        std::string key{};
+        std::string description{};
+    };
+
     class Settings
     {
     public:
@@ -36,8 +42,10 @@ namespace autoinput
          */
         [[nodiscard]] const DefaultSettings& getDefaults() const { return m_defaults; }
 
+
     private:
         bool loadFromFile(const std::filesystem::path& path);
+        static const std::vector<SettingKey> s_keys;
         DefaultSettings m_defaults;
     };
 }

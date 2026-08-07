@@ -18,7 +18,13 @@
 
 namespace autoinput::cli
 {
-    ErrorCode CliApplication::parse(gsl::span<char*> cliArgs)
+    CliApplication::CliApplication()
+        : m_command{}
+    {
+        m_context.configService = std::make_shared<ConfigService>(SystemEnvironment::instance());
+    }
+
+    ErrorCode CliApplication::parse(const gsl::span<char*> cliArgs)
     {
         if (cliArgs.empty())
         {

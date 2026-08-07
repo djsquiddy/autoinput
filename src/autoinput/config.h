@@ -8,19 +8,22 @@
 #define INCLUDE_AUTOINPUT_CONFIG_H
 #pragma once
 
+#include "autoinput/defaults.h"
+#include "autoinput/environment.h"
+#include "autoinput/types.h"
+#include "autoinput/configValidator.h"
+
 #include <string>
 #include <vector>
 #include <filesystem>
 #include <optional>
 #include <string_view>
-#include "autoinput/defaults.h"
-#include "autoinput/environment.h"
-#include "autoinput/types.h"
 
 #if defined(__cpp_exceptions) && __cpp_exceptions
     #define TOML_EXCEPTIONS 0 // only necessary if you've left them enabled in your compiler
 #endif // defined(__cpp_exceptions) && __cpp_exceptions
 #include <toml++/toml.hpp>
+
 
 namespace autoinput
 {
@@ -163,6 +166,41 @@ namespace autoinput
         }
         return false;
     }
+
+    enum class ConfigType : u8
+    {
+        Unknown = 0,
+        Global,
+        User
+    };
+    [[nodiscard]] std::string_view configTypeToString(ConfigType configType);
+    [[nodiscard]] std::filesystem::path configTypeToPath(ConfigType configType);
+    [[nodiscard]] std::filesystem::path configTypeToPath(ConfigType configType, const IEnvironment& environment);
+
+    struct ConfigInfo
+    {
+        ConfigType type{ ConfigType::Unknown };
+        std::filesystem::path filepath;
+
+        [[nodiscard]] bool isValid() const { return type != ConfigType::Unknown; }
+        [[nodiscard]] std::string fileName() const;
+        [[nodiscard]] std::string fileStem() const;
+    };
+    class ProgramArguments;
+
+    class ConfigService
+    {
+    public:
+        explicit ConfigService(const IEnvironment& environment);
+
+        [[nodiscard]] std::vector<ConfigInfo> listAvailableConfigs() const;
+        [[nodiscard]] std::vector<ConfigInfo> listAvailableConfigs(ConfigType configType) const;
+        [[nodiscard]] ValidationResult validateConfig(const std::string& source) const;
+        ProgramArguments* loadConfigAsArguments(std::string_view source);
+
+    private:
+        const IEnvironment& m_environment;
+    };
 }
 
 

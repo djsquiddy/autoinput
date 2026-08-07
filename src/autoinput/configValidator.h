@@ -22,6 +22,13 @@ namespace autoinput
         std::string message;
     };
 
+    struct ValidationResult
+    {
+        bool isValid{ false };
+        std::string configPath;
+        std::vector<ValidationError> errors{};
+    };
+
     /**
      * @brief Validates ConfigData (raw TOML data).
      * @param configData The raw config data.
@@ -50,7 +57,8 @@ namespace autoinput
      * @param configPath The resolved path to the configuration file.
      * @param errors The validation errors.
      */
-    void printValidationJson(bool valid, const std::string& configPath, const std::vector<ValidationError>& errors);
+    void printValidationJson(bool valid, const std::string& configPath, std::vector<ValidationError>&& errors);
+    void printValidationJson(const ValidationResult& validationResult);
 }
 
 #endif // INCLUDE_AUTOINPUT_CONFIG_VALIDATOR_H

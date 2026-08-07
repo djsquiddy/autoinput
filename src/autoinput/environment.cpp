@@ -21,8 +21,7 @@ namespace autoinput
 
     std::optional<std::string> SystemEnvironment::environmentVariable(std::string_view name) const
     {
-        const char* val = std::getenv(name.data());
-        if (val)
+        if (const char* val = std::getenv(name.data()))
         {
             return std::string(val);
         }

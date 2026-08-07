@@ -2,11 +2,15 @@ function(autoinput_get_common_sources output_var)
     set(sources
             ${CMAKE_SOURCE_DIR}/src/pch.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/autoinput.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/automationController.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/automationController.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/defaults.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/defaults.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/backend.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/backendFactory.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/backendFactory.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/command.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/command.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/environment.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/environment.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/errorCode.h
@@ -62,6 +66,8 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/cli/appsCommand.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/cli/helpCommand.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/cli/helpCommand.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/settingsCommand.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/settingsCommand.cpp
     )
 
     if(WIN32)

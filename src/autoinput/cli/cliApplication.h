@@ -22,6 +22,7 @@ namespace autoinput::cli
     class CliApplication
     {
     public:
+        CliApplication();
         /**
          * @brief Parses the command-line arguments and determines the command to run.
          * @param cliArgs The command-line arguments.
@@ -37,7 +38,7 @@ namespace autoinput::cli
 
     private:
         CommandContext m_context;
-        std::unique_ptr<CommandBase> m_command;
+        std::unique_ptr<CommandBase> m_command{ nullptr };
 
         [[nodiscard]] ErrorCode parseGlobalOptions(gsl::span<char*> args, i32& index);
         void printUsage();
