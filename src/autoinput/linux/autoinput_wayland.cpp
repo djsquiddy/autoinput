@@ -92,6 +92,11 @@ namespace autoinput
         class WaylandBackend : public IPlatformBackend
         {
         public:
+            void requestStop() override
+            {
+                // TODO: Implement
+            }
+
             bool installHooks() override
             {
                 setupUinput();
@@ -177,6 +182,11 @@ namespace autoinput
                 }
                 for (int fd : g_evdevFds) close(fd);
                 g_evdevFds.clear();
+            }
+
+            void requestStop() override
+            {
+                g_running = false;
             }
 
             void keyPress(const Key& key) override

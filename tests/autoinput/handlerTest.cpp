@@ -21,6 +21,7 @@ public:
     MOCK_METHOD(bool, installHooks, (), (override));
     MOCK_METHOD(void, runListener, (), (override));
     MOCK_METHOD(void, cleanup, (), (override));
+    MOCK_METHOD(void, requestStop, (), (override));
     MOCK_METHOD(void, keyPress, (const Key& key), (override));
     MOCK_METHOD(void, keyRelease, (const Key& key), (override));
     MOCK_METHOD(void, mousePress, (const Mouse& mouse), (override));
@@ -37,17 +38,20 @@ public:
 class HandlerTest : public ::testing::Test
 {
 protected:
+    std::unique_ptr<Program> m_testProgram;
     void SetUp() override
     {
-        g_program = std::make_unique<Program>();
+        m_testProgram = std::make_unique<Program>();
         auto mock = std::make_unique<MockPlatformBackend>();
         mockPtr = mock.get();
-        g_program->setBackend(std::move(mock));
+        m_testProgram->setBackend(std::move(mock));
+        g_program = m_testProgram.get();
     }
 
     void TearDown() override
     {
-        g_program.reset();
+        g_program = nullptr;
+        m_testProgram.reset();
     }
 
     MockPlatformBackend* mockPtr{ nullptr };

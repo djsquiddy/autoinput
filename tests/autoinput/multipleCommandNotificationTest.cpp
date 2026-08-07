@@ -24,10 +24,12 @@ namespace autoinput::testing
     class ReproNotificationTest : public ::testing::Test
     {
     protected:
+        std::unique_ptr<Program> m_testProgram;
         void SetUp() override
         {
-            g_program = std::make_unique<Program>();
-            g_program->setBackend(std::make_unique<FakeBackend>());
+            m_testProgram = std::make_unique<Program>();
+            m_testProgram->setBackend(std::make_unique<FakeBackend>());
+            g_program = m_testProgram.get();
         }
 
         void TearDown() override
@@ -36,7 +38,8 @@ namespace autoinput::testing
             {
                 g_program->end();
             }
-            g_program.reset();
+            g_program = nullptr;
+            m_testProgram.reset();
         }
     };
 

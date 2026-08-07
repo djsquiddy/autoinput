@@ -19,6 +19,7 @@ public:
     MOCK_METHOD(bool, installHooks, (), (override));
     MOCK_METHOD(void, runListener, (), (override));
     MOCK_METHOD(void, cleanup, (), (override));
+    MOCK_METHOD(void, requestStop, (), (override));
     MOCK_METHOD(void, keyPress, (const Key& key), (override));
     MOCK_METHOD(void, keyRelease, (const Key& key), (override));
     MOCK_METHOD(void, mousePress, (const Mouse& mouse), (override));
@@ -34,14 +35,16 @@ public:
 
 TEST(SignalCleanupTest, SignalEndCallsCleanup)
 {
-    g_program = std::make_unique<Program>();
+    auto testProgram = std::make_unique<Program>();
     auto mock = std::make_unique<MockCleanupBackend>();
     MockCleanupBackend* mockPtr = mock.get();
-    g_program->setBackend(std::move(mock));
+    testProgram->setBackend(std::move(mock));
+    g_program = testProgram.get();
     
     EXPECT_CALL(*mockPtr, cleanup()).Times(Exactly(1));
     
     platform::signalEnd();
 
-    g_program.reset();
+    g_program = nullptr;
+    testProgram.reset();
 }

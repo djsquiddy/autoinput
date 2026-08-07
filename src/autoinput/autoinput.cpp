@@ -72,7 +72,8 @@ namespace autoinput
             m_sequenceHandlers[startKey] = SequenceHandler{ sequenceData, backendPtr };
         }
 
-        auto processKeyString = [this](const std::string& keyStr, const Mouse mouse, Key targetKey, const ActionState action, const bool isStart, const std::string& name = "", const std::string& group = "") {
+        bool success = true;
+        auto processKeyString = [this, &success](const std::string& keyStr, const Mouse mouse, Key targetKey, const ActionState action, const bool isStart, const std::string& name = "", const std::string& group = "") {
             const auto mouseTrigger = mouseButtonFromArguments(keyStr);
             KeyInfo info{
                 .mouse = mouse,
@@ -91,6 +92,12 @@ namespace autoinput
             {
                 info.triggerKey = Key::fromString(keyStr);
                 info.virtualKey = platform::getVirtualKey(info.triggerKey);
+
+                if (info.virtualKey == 0 && !info.triggerKey.character.empty())
+                {
+                    Logger::error("Invalid key: {}\n", keyStr);
+                    success = false;
+                }
 
                 if (keyStr.length() == 1)
                 {
@@ -155,7 +162,7 @@ namespace autoinput
 
         m_notificationService = std::make_unique<NotificationService>(m_arguments.statusNotificationMode, m_arguments.jsonOutput);
 
-        return true;
+        return success;
     }
 
     // ReSharper disable once CppMemberFunctionMayBeConst
@@ -177,7 +184,14 @@ namespace autoinput
         }
     }
 
-    // ReSharper disable once CppMemberFunctionMayBeConst
+    void Program::requestStop()
+    {
+        if (m_backend)
+        {
+            m_backend->requestStop();
+        }
+    }
+
     void Program::cleanup()
     {
         if (m_backend)
@@ -659,6 +673,12 @@ namespace autoinput
                     }
                 }
             }
+
+            if (m_statusCallback)
+            {
+                m_statusCallback({ isActive, triggeredCommandName, triggeredCommandActive });
+            }
+
             m_lastIsActiveIndicator = isActive;
             m_lastTriggeredCommandName = triggeredCommandName;
             m_lastTriggeredCommandActive = triggeredCommandActive;

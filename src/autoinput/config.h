@@ -116,6 +116,14 @@ namespace autoinput
     [[nodiscard]] std::filesystem::path getConfigFilePath(const std::string& filePath);
 
     /**
+     * @brief Resolves a configuration name or path to a full file path using a specific environment.
+     * @param filePath The configuration name (e.g. "default") or path.
+     * @param environment The environment to use for path detection.
+     * @return The resolved filesystem path.
+     */
+    [[nodiscard]] std::filesystem::path getConfigFilePath(const std::string& filePath, const IEnvironment& environment);
+
+    /**
      * @brief Loads configuration data from a file.
      * @param configPath The path to the configuration file.
      * @return An optional ConfigData object if successful.
@@ -196,7 +204,8 @@ namespace autoinput
         [[nodiscard]] std::vector<ConfigInfo> listAvailableConfigs() const;
         [[nodiscard]] std::vector<ConfigInfo> listAvailableConfigs(ConfigType configType) const;
         [[nodiscard]] ValidationResult validateConfig(const std::string& source) const;
-        ProgramArguments* loadConfigAsArguments(std::string_view source);
+        [[nodiscard]] std::unique_ptr<ProgramArguments> loadConfigAsArguments(std::string_view source) const;
+        [[nodiscard]] bool applyConfigToArguments(std::string_view source, ProgramArguments& arguments) const;
 
     private:
         const IEnvironment& m_environment;

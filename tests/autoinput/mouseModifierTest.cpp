@@ -18,6 +18,7 @@ public:
     MOCK_METHOD(bool, installHooks, (), (override));
     MOCK_METHOD(void, runListener, (), (override));
     MOCK_METHOD(void, cleanup, (), (override));
+    MOCK_METHOD(void, requestStop, (), (override));
     MOCK_METHOD(void, keyPress, (const Key& key), (override));
     MOCK_METHOD(void, keyRelease, (const Key& key), (override));
     MOCK_METHOD(void, mousePress, (const Mouse& mouse), (override));

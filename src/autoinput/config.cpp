@@ -7,6 +7,8 @@
 #include "autoinput/config.h"
 
 #include "errorCode.h"
+#include "autoinput/arguments.h"
+#include "autoinput/configMetadata.h"
 #include "autoinput/utils.h"
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
@@ -226,12 +228,7 @@ namespace autoinput
 
     fs::path getConfigsPath(const IEnvironment& environment)
     {
-        static fs::path configsPath;
-        if (configsPath.empty())
-        {
-            configsPath = environment.executablePath() / "configs";
-        }
-        return configsPath;
+        return environment.executablePath() / "configs";
     }
     
     fs::path getUserConfigsPath()
@@ -251,18 +248,23 @@ namespace autoinput
 
     fs::path getConfigFilePath(const std::string& filePath)
     {
+        return getConfigFilePath(filePath, SystemEnvironment::instance());
+    }
+
+    fs::path getConfigFilePath(const std::string& filePath, const IEnvironment& environment)
+    {
         fs::path configFilePath{ filePath };
         if (configFilePath.extension() != ".toml")
         {
             configFilePath = filePath + ".toml";
         }
 
-        if (fs::path userPath = getUserConfigsPath() / configFilePath; fs::exists(userPath))
+        if (fs::path userPath = getUserConfigsPath(environment) / configFilePath; fs::exists(userPath))
         {
             return userPath;
         }
 
-        const fs::path globalPath = getConfigsPath() / configFilePath;
+        const fs::path globalPath = getConfigsPath(environment) / configFilePath;
         if (fs::exists(globalPath))
         {
             return globalPath;
@@ -730,9 +732,129 @@ namespace autoinput
         };
     }
 
-    ProgramArguments* ConfigService::loadConfigAsArguments(std::string_view source)
+    std::unique_ptr<ProgramArguments> ConfigService::loadConfigAsArguments(const std::string_view source) const
     {
+        auto args = std::make_unique<ProgramArguments>();
+        if (applyConfigToArguments(source, *args))
+        {
+            return args;
+        }
         return nullptr;
+    }
+
+    bool ConfigService::applyConfigToArguments(const std::string_view source, ProgramArguments& arguments) const
+    {
+        if (source.empty())
+        {
+            return true;
+        }
+
+        const auto configPath = getConfigFilePath(std::string(source), m_environment);
+
+        if (!doesConfigDataExists(configPath))
+        {
+            return false;
+        }
+
+        const auto foundConfigData = loadConfigData(configPath);
+        if (!foundConfigData.has_value())
+        {
+            return false;
+        }
+
+        const ConfigData& configData = *foundConfigData;
+
+        for (const CommandData& cmd : configData.commands)
+        {
+            const auto state = actionStateFromArguments(cmd.action);
+            const auto action = state != ActionState::INVALID ? state : ActionState::CLICK;
+
+            for (const std::string& button : cmd.buttons)
+            {
+                const auto mouse = Mouse::fromString(button);
+                if (mouse.button == MouseButton::None)
+                {
+                    Logger::error("Invalid parameter {} for button type. Choices: {}\n", button, ConfigMetadata::validMouseButtonChoices());
+                    return false;
+                }
+
+                arguments.buttons.push_back(mouse);
+                arguments.targetActions.push_back(action);
+                arguments.commandNames.push_back(cmd.name);
+                arguments.exclusiveGroups.push_back(cmd.exclusiveGroup);
+            }
+
+#if AUTOINPUT_HOOK_KEYBOARD_ENABLED
+            for (const std::string& key : cmd.keys)
+            {
+                arguments.keys.push_back(Key::fromString(key));
+                arguments.targetActions.push_back(action);
+                arguments.commandNames.push_back(cmd.name);
+                arguments.exclusiveGroups.push_back(cmd.exclusiveGroup);
+            }
+#endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
+
+            for (const std::string& startKey : cmd.startKeys)
+            {
+                arguments.startKeys.push_back(startKey);
+            }
+
+            if (!cmd.pressWait.empty())
+            {
+                if (!arguments.delayData.parseWaitTimeDelay(cmd.pressWait, true))
+                {
+                    return false;
+                }
+            }
+
+            if (!cmd.releaseWait.empty())
+            {
+                if (!arguments.delayData.parseWaitTimeDelay(cmd.releaseWait, false))
+                {
+                    return false;
+                }
+            }
+        }
+
+        if (!configData.endKey.empty())
+        {
+            arguments.endKey = configData.endKey;
+        }
+
+        if (!configData.application.empty())
+        {
+            arguments.applicationName = configData.application;
+        }
+
+        if (!configData.blacklist.empty())
+        {
+            if (!configData.appendBlacklist)
+            {
+                arguments.blacklist.clear();
+            }
+
+            arguments.blacklist.insert(
+                arguments.blacklist.end(),
+                configData.blacklist.begin(),
+                configData.blacklist.end()
+            );
+        }
+
+        if (!configData.statusNotificationMode.empty())
+        {
+            arguments.statusNotificationMode = statusNotificationModeFromString(configData.statusNotificationMode);
+        }
+
+        if (!configData.sequences.empty())
+        {
+            arguments.sequences.insert(
+                arguments.sequences.end(),
+                configData.sequences.begin(),
+                configData.sequences.end()
+            );
+        }
+
+        return arguments.postParseArguments();
     }
 
     std::vector<ConfigInfo> ConfigService::listAvailableConfigs() const

@@ -10,6 +10,7 @@
 #include <memory>
 #include <thread>
 #include <chrono>
+#include <atomic>
 
 #include "autoinput/types.h"
 #include "autoinput/logger.h"
@@ -51,6 +52,11 @@ namespace autoinput
          * @brief Cleans up backend resources.
          */
         virtual void cleanup() = 0;
+
+        /**
+         * @brief Requests the backend to stop its listener loop.
+         */
+        virtual void requestStop() = 0;
 
         /**
          * @brief Simulates a full key press (down and up).
@@ -124,8 +130,9 @@ namespace autoinput
     {
     public:
         bool installHooks() override { return true; }
-        void runListener() override { while (true) std::this_thread::sleep_for(std::chrono::hours(1)); }
+        void runListener() override { m_stop = false; while (!m_stop) std::this_thread::sleep_for(std::chrono::milliseconds(100)); }
         void cleanup() override {}
+        void requestStop() override { m_stop = true; }
         
         void keyPress(const Key& key) override { Logger::info("[FAKE] Pressing key: {}\n", key.toString()); }
         void keyRelease(const Key& key) override { Logger::info("[FAKE] Releasing key: {}\n", key.toString()); }
@@ -152,6 +159,8 @@ namespace autoinput
                 .getCursorPosition = true
             };
         }
+    private:
+        std::atomic<bool> m_stop{ false };
     };
 
 #ifdef _WIN32

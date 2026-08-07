@@ -91,6 +91,11 @@ namespace autoinput
         void runListener();
 
         /**
+         * @brief Requests the program to stop its listener loop.
+         */
+        void requestStop();
+
+        /**
          * @brief Cleans up resources, including uninstalling hooks.
          */
         void cleanup();
@@ -229,7 +234,7 @@ namespace autoinput
      */
     void cleanup();
 
-    inline std::unique_ptr<Program> g_program{ nullptr };
+    inline Program* g_program{ nullptr };
 }
 
 #endif // INCLUDE_AUTOINPUT_AUTOINPUT_H

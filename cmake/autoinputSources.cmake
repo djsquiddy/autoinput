@@ -2,6 +2,7 @@ function(autoinput_get_common_sources output_var)
     set(sources
             ${CMAKE_SOURCE_DIR}/src/pch.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/autoinput.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/autoinput.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/automationController.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/automationController.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/defaults.h
@@ -27,7 +28,6 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/keyboard.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/keyInfo.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/platform.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/autoInput.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/utils.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/utils.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/logger.h
@@ -127,6 +127,8 @@ function(autoinput_get_test_sources output_var)
             ${CMAKE_SOURCE_DIR}/tests/autoinput/fixVerificationTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/multipleCommandNotificationTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/runCommandRefactorTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/configServiceTest.cpp
+            ${CMAKE_SOURCE_DIR}/tests/autoinput/automationControllerTest.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/testEnvironment.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/backendTest_linux.cpp
             ${CMAKE_SOURCE_DIR}/tests/autoinput/backendCapabilitiesTest.cpp

@@ -29,10 +29,10 @@ namespace autoinput
 
     namespace platform
     {
+        DWORD g_mainThreadId = 0;
+
         namespace
         {
-            DWORD g_mainThreadId = 0;
-
             BOOL WINAPI ConsoleHandler(const DWORD dwType)
             {
                 if (dwType == CTRL_C_EVENT || dwType == CTRL_BREAK_EVENT || dwType == CTRL_CLOSE_EVENT)
@@ -430,6 +430,7 @@ namespace autoinput
 
             void runListener() override
             {
+                platform::g_mainThreadId = GetCurrentThreadId();
                 MSG msg;
                 while (GetMessage(&msg, NULL, 0, 0))
                 {
@@ -454,6 +455,14 @@ namespace autoinput
                 {
                     UnhookWinEvent(g_hFocusHook);
                     g_hFocusHook = nullptr;
+                }
+            }
+
+            void requestStop() override
+            {
+                if (platform::g_mainThreadId != 0)
+                {
+                    PostThreadMessage(platform::g_mainThreadId, WM_QUIT, 0, 0);
                 }
             }
 

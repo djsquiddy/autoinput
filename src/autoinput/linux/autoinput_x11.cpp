@@ -70,6 +70,11 @@ namespace autoinput
         class X11Backend : public IPlatformBackend
         {
         public:
+            void requestStop() override
+            {
+                // TODO: Implement
+            }
+
             bool installHooks() override
             {
                 XInitThreads();
@@ -160,6 +165,11 @@ namespace autoinput
                     XCloseDisplay(g_display);
                     g_display = nullptr;
                 }
+            }
+
+            void requestStop() override
+            {
+                g_running = false;
             }
 
             void keyPress(const Key& key) override

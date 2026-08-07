@@ -11,7 +11,6 @@
 namespace autoinput
 {
     ProgramArguments::ProgramArguments()
-        : NonCopyable()
     {
     }
 

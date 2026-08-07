@@ -232,10 +232,12 @@ namespace autoinput::cli
 
     ErrorCode runProgramWithArguments(const std::function<bool(ProgramArguments&)>& configureArguments)
     {
-        g_program = std::make_unique<Program>();
+        auto program = std::make_unique<Program>();
+        g_program = program.get();
 
-        if (!configureArguments(g_program->arguments()))
+        if (!configureArguments(program->arguments()))
         {
+            g_program = nullptr;
             return Logger::fatalError({
                 .code = ErrorCode::InvalidParam,
                 .message = "Failed to configure program arguments."
@@ -245,15 +247,17 @@ namespace autoinput::cli
         auto backend = BackendFactory::createPlatformBackend();
         if (!backend)
         {
+            g_program = nullptr;
             return Logger::fatalError({
                 .code = ErrorCode::FailedToInstallHooks,
                 .message = "Failed to create platform backend."
             });
         }
 
-        g_program->setBackend(std::move(backend));
-        if (!g_program->init())
+        program->setBackend(std::move(backend));
+        if (!program->init())
         {
+            g_program = nullptr;
             return Logger::fatalError({
                 .code = ErrorCode::FailedToInstallHooks,
                 .message = "Program initialization failed."
@@ -262,13 +266,14 @@ namespace autoinput::cli
 
         if (!installHooks())
         {
+            g_program = nullptr;
             return Logger::fatalError({
                 .code = ErrorCode::FailedToInstallHooks,
                 .message = "Failed to install input hooks."
             });
         }
 
-        g_program->printProgramInfo();
+        program->printProgramInfo();
         platform::setupSignalHandler();
 
         Logger::print("Global keyboard listener started. Press Ctrl+C to exit.\n\n");
@@ -278,6 +283,7 @@ namespace autoinput::cli
         Logger::debug("Exiting listener loop.\n");
 
         cleanup();
+        g_program = nullptr;
 
         return ErrorCode::Success;
     }

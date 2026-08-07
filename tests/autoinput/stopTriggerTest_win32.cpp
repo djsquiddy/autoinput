@@ -14,10 +14,12 @@ namespace autoinput
     class StopTriggerReproTest : public ::testing::Test
     {
     protected:
+        std::unique_ptr<Program> m_testProgram;
         void SetUp() override
         {
-            g_program = std::make_unique<Program>();
-            g_program->setBackend(std::make_unique<FakeBackend>());
+            m_testProgram = std::make_unique<Program>();
+            m_testProgram->setBackend(std::make_unique<FakeBackend>());
+            g_program = m_testProgram.get();
         }
 
         void TearDown() override
@@ -26,7 +28,8 @@ namespace autoinput
             {
                 g_program->end();
             }
-            g_program.reset();
+            g_program = nullptr;
+            m_testProgram.reset();
         }
     };
 
@@ -81,8 +84,9 @@ namespace autoinput
 
         for (const auto& tc : testCases)
         {
-            g_program = std::make_unique<Program>();
-            g_program->setBackend(std::make_unique<FakeBackend>());
+            auto testProgram = std::make_unique<Program>();
+            testProgram->setBackend(std::make_unique<FakeBackend>());
+            g_program = testProgram.get();
             g_program->arguments().endKey = tc.keyName;
             ASSERT_TRUE(g_program->init());
 
@@ -97,6 +101,8 @@ namespace autoinput
             data.internal = winData;
             
             EXPECT_TRUE(g_program->processKeyEvent(KeyboardInput(data))) << "Failed for key: " << tc.keyName;
+            
+            g_program = nullptr;
         }
     }
 

@@ -209,4 +209,23 @@ namespace autoinput
         EXPECT_EQ(arguments.startKeys[0], "f2");
         EXPECT_EQ(arguments.startKeys[1], "f2");
     }
+
+    TEST(ProgramArgumentsTest, IsMovable)
+    {
+        ProgramArguments args;
+        args.programName = "test_program";
+        args.endKey = "f10";
+        args.commandNames = {"cmd1", "cmd2"};
+        
+        ProgramArguments moved = std::move(args);
+        
+        EXPECT_EQ(moved.programName, "test_program");
+        EXPECT_EQ(moved.endKey, "f10");
+        EXPECT_EQ(moved.commandNames.size(), 2);
+        EXPECT_EQ(moved.commandNames[0], "cmd1");
+        
+        // Original should be empty
+        EXPECT_TRUE(args.programName.empty());
+        EXPECT_TRUE(args.commandNames.empty());
+    }
 }

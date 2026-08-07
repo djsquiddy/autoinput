@@ -23,7 +23,7 @@
 
 namespace autoinput
 {
-    class ProgramArguments : public NonCopyable
+    class ProgramArguments
     {
     public:
         /**
@@ -32,9 +32,29 @@ namespace autoinput
         ProgramArguments();
 
         /**
+         * @brief Copy constructor.
+         */
+        ProgramArguments(const ProgramArguments&) = delete;
+
+        /**
+         * @brief Copy assignment operator.
+         */
+        ProgramArguments& operator=(const ProgramArguments&) = delete;
+
+        /**
+         * @brief Move constructor.
+         */
+        ProgramArguments(ProgramArguments&&) noexcept = default;
+
+        /**
+         * @brief Move assignment operator.
+         */
+        ProgramArguments& operator=(ProgramArguments&&) noexcept = default;
+
+        /**
          * @brief Default destructor.
          */
-        ~ProgramArguments() override = default;
+        virtual ~ProgramArguments() = default;
 
         std::string programName{};
 
