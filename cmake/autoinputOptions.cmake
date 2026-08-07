@@ -6,4 +6,4 @@ option(ENABLE_MOUSE_HOOK "Enable the mouse listeners" ON)
 option(ENABLE_FAKE_HOOK "Enable only logging the events instead of actually performing them" OFF)
 
 option(AUTOINPUT_BUILD_TESTS "Build autoinput tests" ON)
-option(AUTOINPUT_BUILD_TRAY "Build the system tray" OFF)
+option(AUTOINPUT_BUILD_TRAY "Build the system tray" ON)

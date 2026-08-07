@@ -228,6 +228,34 @@ Used to list all currently running application names. This is helpful for findin
 autoinput apps list
 ```
 
+### System Tray Frontend (Windows only)
+
+`autoinput` includes an optional system tray frontend that allows you to manage automation without using the command line.
+
+#### Features
+- Start and stop automation from the system tray.
+- Select from available configurations in a submenu.
+- Open the user configuration directory directly.
+- Real-time status indication via the tray icon and tooltip.
+- Desktop notifications for errors and status changes.
+
+#### Building with Tray Support
+Tray support is optional and can be enabled during the CMake configuration step:
+
+```powershell
+cmake -DAUTOINPUT_BUILD_TRAY=ON ..
+cmake --build .
+```
+
+This will produce an additional executable named `autoinput_tray` (or `autoinput_tray.exe` on Windows).
+
+#### Running the Tray App
+Simply run the `autoinput_tray` executable. It will appear in your system tray (notification area). Right-click the icon to access the menu.
+
+The tray app discovers configurations from the same locations as the CLI:
+- Built-in configurations in the `configs/` directory relative to the executable.
+- User-level configurations in `~/.autoinput/` (Linux) or `%USERPROFILE%/.autoinput/` (Windows).
+
 ### Configuration
 
 The application supports loading settings from TOML files.

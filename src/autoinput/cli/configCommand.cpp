@@ -59,6 +59,7 @@ namespace autoinput::cli
 
         [[nodiscard]] ErrorCode executeListConfigs()
         {
+            Logger::debug("Listing configurations\n");
             listConfigsFromDirectory(getConfigsPath(), "Global");
             listConfigsFromDirectory(getUserConfigsPath(), "User");
             return ErrorCode::Success;
@@ -66,8 +67,17 @@ namespace autoinput::cli
 
         [[nodiscard]] ErrorCode executeValidateConfig(const ConfigService& configService, const std::string& source)
         {
+            Logger::info("Validating configuration: {}\n", source);
             const auto result = configService.validateConfig(source);
             printValidationJson(result);
+            if (result.isValid)
+            {
+                Logger::info("Configuration is valid: {}\n", source);
+            }
+            else
+            {
+                Logger::error("Configuration is invalid: {}\n", source);
+            }
             return result.isValid ? ErrorCode::Success : ErrorCode::FailedToLoadConfig;
         }
 
@@ -76,17 +86,21 @@ namespace autoinput::cli
             const std::string& destination,
             const bool force)
         {
+            Logger::info("Duplicating configuration: {} -> {}\n", source, destination);
             if (duplicateConfig(source, destination, force))
             {
+                Logger::info("Successfully duplicated configuration to {}\n", destination);
                 return ErrorCode::Success;
             }
 
+            Logger::error("Failed to duplicate configuration: {} -> {}\n", source, destination);
             return ErrorCode::FailedToLoadConfig;
         }
 
         [[nodiscard]] ErrorCode executePrintConfigPath(const std::string& nameOrPath)
         {
             const auto configPath = getConfigFilePath(nameOrPath);
+            Logger::debug("Resolving config path for {}: {}\n", nameOrPath, configPath.string());
             Logger::print("{}\n", configPath.string());
             return ErrorCode::Success;
         }

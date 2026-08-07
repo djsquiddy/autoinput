@@ -25,15 +25,18 @@ namespace autoinput::cli
             }
 
             const auto configPath = getConfigFilePath(configName);
+            Logger::info("Loading configuration file: {}\n", configPath.string());
 
             if (!doesConfigDataExists(configPath))
             {
+                Logger::error("Configuration file does not exist: {}\n", configPath.string());
                 return false;
             }
 
             const auto foundConfigData = loadConfigData(configPath);
             if (!foundConfigData.has_value())
             {
+                Logger::error("Failed to load configuration data from: {}\n", configPath.string());
                 return false;
             }
 
@@ -532,7 +535,7 @@ namespace autoinput::cli
 
             if (saveConfigData(arguments.toConfigData(), dumpPath, m_context.settings.getDefaults()))
             {
-                Logger::print("Configuration saved to: {}\n", dumpPath.string());
+                Logger::info("Configuration saved to: {}\n", dumpPath.string());
                 return ErrorCode::Success;
             }
 

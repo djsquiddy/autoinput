@@ -53,6 +53,7 @@ namespace autoinput::cli
         {
         case AppsAction::List:
         {
+            Logger::debug("Listing running applications\n");
             const auto apps = platform::getRunningApplicationNames();
             if (apps.empty())
             {

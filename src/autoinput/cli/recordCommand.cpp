@@ -154,6 +154,7 @@ namespace autoinput::cli
 
     ErrorCode RecordCommand::execute()
     {
+        Logger::info("Starting input recording session: {}\n", m_config.name);
         return runProgramWithArguments([this](ProgramArguments& arguments)
         {
             return applyRecordConfigToArguments(m_config, m_context, arguments);

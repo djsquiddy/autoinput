@@ -232,6 +232,7 @@ namespace autoinput::cli
 
     ErrorCode runProgramWithArguments(const std::function<bool(ProgramArguments&)>& configureArguments)
     {
+        Logger::debug("Initializing program with arguments\n");
         auto program = std::make_unique<Program>();
         g_program = program.get();
 
@@ -244,6 +245,7 @@ namespace autoinput::cli
             });
         }
 
+        Logger::debug("Creating platform backend\n");
         auto backend = BackendFactory::createPlatformBackend();
         if (!backend)
         {
@@ -264,6 +266,7 @@ namespace autoinput::cli
             });
         }
 
+        Logger::debug("Installing input hooks\n");
         if (!installHooks())
         {
             g_program = nullptr;
@@ -276,11 +279,11 @@ namespace autoinput::cli
         program->printProgramInfo();
         platform::setupSignalHandler();
 
-        Logger::print("Global keyboard listener started. Press Ctrl+C to exit.\n\n");
+        Logger::info("Global keyboard listener started. Press Ctrl+C to exit.\n");
 
         runListener();
 
-        Logger::debug("Exiting listener loop.\n");
+        Logger::info("Exiting listener loop.\n");
 
         cleanup();
         g_program = nullptr;
