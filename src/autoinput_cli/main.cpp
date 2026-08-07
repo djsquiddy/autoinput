@@ -10,7 +10,7 @@
 #include "autoinput/errorCode.h"
 #include "autoinput/cli/cliApplication.h"
 
-int main(int argc, char* argv[])
+int main(int argc, char** argv)
 {
     using namespace autoinput;
 

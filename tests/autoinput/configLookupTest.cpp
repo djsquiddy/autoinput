@@ -1,3 +1,8 @@
+/**
+ * @file configLookupTest.cpp
+ * @author djsquiddy
+ * @date August 2026
+ */
 #include <gtest/gtest.h>
 #include <fstream>
 #include <filesystem>
