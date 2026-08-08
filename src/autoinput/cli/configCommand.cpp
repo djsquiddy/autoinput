@@ -10,6 +10,8 @@
 #include "autoinput/errorCode.h"
 #include <filesystem>
 
+#include "autoinput/services/configService.h"
+
 namespace autoinput::cli
 {
     namespace
@@ -65,7 +67,7 @@ namespace autoinput::cli
             return ErrorCode::Success;
         }
 
-        [[nodiscard]] ErrorCode executeValidateConfig(const ConfigService& configService, const std::string& source)
+        [[nodiscard]] ErrorCode executeValidateConfig(const services::ConfigService& configService, const std::string& source)
         {
             Logger::info("Validating configuration: {}\n", source);
             const auto result = configService.validateConfig(source);
@@ -239,7 +241,7 @@ namespace autoinput::cli
         }
     }
 
-    bool ConfigData::validate() const
+    bool ConfigCliData::validate() const
     {
         switch (action)
         {

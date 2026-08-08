@@ -29,9 +29,9 @@ namespace autoinput::cli
     [[nodiscard]] HelpEntry getActionHelpEntry(ConfigAction action);
     void printActionHelp(ConfigAction action, const CommandContext& context);
 
-    struct ConfigData : ICommandData
+    struct ConfigCliData : ICommandData
     {
-        ~ConfigData() override = default;
+        ~ConfigCliData() override = default;
         ConfigAction action{ ConfigAction::None };
         std::string source;
         std::string destination;
@@ -45,7 +45,7 @@ namespace autoinput::cli
     public:
         using MultiCommand::MultiCommand;
 
-        ConfigData data{};
+        ConfigCliData data{};
 
         /**
          * @brief Gets the command name.

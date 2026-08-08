@@ -7,3 +7,4 @@ option(ENABLE_FAKE_HOOK "Enable only logging the events instead of actually perf
 
 option(AUTOINPUT_BUILD_TESTS "Build autoinput tests" ON)
 option(AUTOINPUT_BUILD_TRAY "Build the system tray" ON)
+option(AUTOINPUT_BUILD_UI "Build the UI" ON)

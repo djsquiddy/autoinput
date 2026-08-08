@@ -15,13 +15,14 @@
 #include "autoinput/errorCode.h"
 #include "autoinput/platform.h"
 #include "autoinput/utils.h"
+#include "autoinput/services/configService.h"
 
 namespace autoinput::cli
 {
     CliApplication::CliApplication()
         : m_command{}
     {
-        m_context.configService = std::make_shared<ConfigService>(SystemEnvironment::instance());
+        m_context.configService = std::make_shared<services::ConfigService>(SystemEnvironment::instance());
     }
 
     ErrorCode CliApplication::parse(const gsl::span<char*> cliArgs)

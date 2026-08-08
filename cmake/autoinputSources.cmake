@@ -51,6 +51,10 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/terminal.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.cpp
+            # Services
+            ${CMAKE_SOURCE_DIR}/src/autoinput/services/configService.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/services/configService.cpp
+
             # Cli source
             ${CMAKE_SOURCE_DIR}/src/autoinput/cli/commandBase.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/cli/commandBase.cpp

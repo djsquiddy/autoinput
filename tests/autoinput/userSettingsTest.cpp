@@ -90,6 +90,7 @@ blacklist = ["app1.exe", "app2.exe"]
 )toml");
 
         createSettingsFile(m_tempHome / ".autoinput" / "settings.toml", R"toml(
+appendBlacklist = false
 blacklist = ["app3.exe"]
 )toml");
 

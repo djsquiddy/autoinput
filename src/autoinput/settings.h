@@ -42,6 +42,19 @@ namespace autoinput
          */
         [[nodiscard]] const DefaultSettings& getDefaults() const { return m_defaults; }
 
+        /**
+         * @brief Sets the default settings.
+         * @param defaults The new default settings.
+         */
+        void setDefaults(const DefaultSettings& defaults) { m_defaults = defaults; }
+
+        /**
+         * @brief Saves the current settings to a file.
+         * @param path The destination path.
+         * @return True if successful.
+         */
+        bool save(const std::filesystem::path& path) const;
+
 
     private:
         bool loadFromFile(const std::filesystem::path& path);

@@ -16,6 +16,11 @@
 #include <string>
 #include <mutex>
 
+namespace autoinput::services
+{
+    class ConfigService;
+}
+
 namespace autoinput::tray
 {
     class TrayApp
@@ -30,7 +35,7 @@ namespace autoinput::tray
 
     protected:
         std::unique_ptr<AutomationController> m_controller;
-        std::unique_ptr<ConfigService> m_configService;
+        std::unique_ptr<services::ConfigService> m_configService;
         std::unique_ptr<IEnvironment> m_environment;
         std::unique_ptr<ITrayIcon> m_trayIcon;
         bool m_running = true;

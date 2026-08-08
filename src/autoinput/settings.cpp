@@ -5,6 +5,7 @@
  */
 #include "autoinput/settings.h"
 #include "autoinput/logger.h"
+#include <fstream>
 
 namespace autoinput
 {
@@ -26,6 +27,41 @@ namespace autoinput
         const bool loadedUser = loadFromFile(getUserConfigsPath() / "settings.toml");
 
         return loadedBuiltIn || loadedUser;
+    }
+
+    bool Settings::save(const std::filesystem::path& path) const
+    {
+        toml::table table;
+        table.insert("start", m_defaults.start);
+        table.insert("end", m_defaults.end);
+        if (!m_defaults.press.empty()) table.insert("press", m_defaults.press);
+        if (!m_defaults.release.empty()) table.insert("release", m_defaults.release);
+        table.insert("action", m_defaults.action);
+        table.insert("button", m_defaults.button);
+        if (!m_defaults.application.empty()) table.insert("application", m_defaults.application);
+        table.insert("appendBlacklist", m_defaults.appendBlacklist);
+        table.insert("statusNotificationMode", m_defaults.statusNotificationMode);
+        table.insert("logLevel", m_defaults.logLevel);
+
+        if (!m_defaults.blacklist.empty())
+        {
+            toml::array arr;
+            for (const auto& item : m_defaults.blacklist)
+            {
+                arr.push_back(item);
+            }
+            table.insert("blacklist", std::move(arr));
+        }
+
+        std::ofstream file(path);
+        if (!file)
+        {
+            Logger::error("Failed to open settings file for writing: {}", path.string());
+            return false;
+        }
+
+        file << table;
+        return true;
     }
 
     bool Settings::loadFromFile(const std::filesystem::path& path)
@@ -51,15 +87,15 @@ namespace autoinput
             tryGetTableValue(t, "release", m_defaults.release);
             tryGetTableValue(t, "action", m_defaults.action);
             tryGetTableValue(t, "button", m_defaults.button);
+            tryGetTableValue(t, "application", m_defaults.application);
             tryGetTableValue(t, "statusNotificationMode", m_defaults.statusNotificationMode);
             tryGetTableValue(t, "logLevel", m_defaults.logLevel);
 
-            bool appendBlacklist = false;
-            tryGetTableValue(t, "appendBlacklist", appendBlacklist);
+            tryGetTableValue(t, "appendBlacklist", m_defaults.appendBlacklist);
 
             if (const auto blacklist = t.get("blacklist"); blacklist && blacklist->is_array())
             {
-                if (!appendBlacklist)
+                if (!m_defaults.appendBlacklist)
                 {
                     m_defaults.blacklist.clear();
                 }

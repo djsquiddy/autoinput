@@ -27,6 +27,16 @@
 
 namespace autoinput
 {
+    enum class ConfigType : u8
+    {
+        Unknown = 0,
+        Global,
+        User
+    };
+    [[nodiscard]] std::string_view configTypeToString(ConfigType configType);
+    [[nodiscard]] std::filesystem::path configTypeToPath(ConfigType configType);
+    [[nodiscard]] std::filesystem::path configTypeToPath(ConfigType configType, const IEnvironment& environment);
+
     struct CommandData
     {
         std::string name;
@@ -65,7 +75,9 @@ namespace autoinput
         std::string release{};
         std::string action{ defaults::DefaultActionName };
         std::string button{ defaults::DefaultMouseButtonName };
+        std::string application{};
         std::vector<std::string> blacklist{};
+        bool appendBlacklist{ true };
         std::string statusNotificationMode{ defaults::DefaultStatusNotificationMode };
         std::string logLevel{ defaults::DefaultLogLevel };
     };
@@ -156,6 +168,12 @@ namespace autoinput
     bool doesConfigDataExists(const std::filesystem::path& configPath);
 
     /**
+     * @brief Lists all available configuration names from both system and user directories.
+     * @return A vector of configuration names (without extension).
+     */
+    [[nodiscard]] std::vector<std::string> listAvailableConfigs();
+
+    /**
      * @brief Tries to get a value from a TOML node.
      * @tparam node_type The type of the TOML node.
      * @tparam date_type The type of the value to retrieve.
@@ -175,41 +193,6 @@ namespace autoinput
         return false;
     }
 
-    enum class ConfigType : u8
-    {
-        Unknown = 0,
-        Global,
-        User
-    };
-    [[nodiscard]] std::string_view configTypeToString(ConfigType configType);
-    [[nodiscard]] std::filesystem::path configTypeToPath(ConfigType configType);
-    [[nodiscard]] std::filesystem::path configTypeToPath(ConfigType configType, const IEnvironment& environment);
-
-    struct ConfigInfo
-    {
-        ConfigType type{ ConfigType::Unknown };
-        std::filesystem::path filepath;
-
-        [[nodiscard]] bool isValid() const { return type != ConfigType::Unknown; }
-        [[nodiscard]] std::string fileName() const;
-        [[nodiscard]] std::string fileStem() const;
-    };
-    class ProgramArguments;
-
-    class ConfigService
-    {
-    public:
-        explicit ConfigService(const IEnvironment& environment);
-
-        [[nodiscard]] std::vector<ConfigInfo> listAvailableConfigs() const;
-        [[nodiscard]] std::vector<ConfigInfo> listAvailableConfigs(ConfigType configType) const;
-        [[nodiscard]] ValidationResult validateConfig(const std::string& source) const;
-        [[nodiscard]] std::unique_ptr<ProgramArguments> loadConfigAsArguments(std::string_view source) const;
-        [[nodiscard]] bool applyConfigToArguments(std::string_view source, ProgramArguments& arguments) const;
-
-    private:
-        const IEnvironment& m_environment;
-    };
 }
 
 

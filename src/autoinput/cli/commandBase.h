@@ -16,6 +16,11 @@
 
 namespace autoinput
 {
+    namespace services
+    {
+        class ConfigService;
+    }
+
     enum class ErrorCode : i32;
 }
 
@@ -34,7 +39,7 @@ namespace autoinput::cli
     {
         GlobalCliOptions global;
         Settings settings;
-        std::shared_ptr<ConfigService> configService{ nullptr };
+        std::shared_ptr<services::ConfigService> configService{ nullptr };
     };
 
     struct HelpEntry

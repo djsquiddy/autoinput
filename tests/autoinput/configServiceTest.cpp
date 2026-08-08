@@ -9,6 +9,8 @@
 #include "testUtils.h"
 #include <fstream>
 
+#include "autoinput/services/configService.h"
+
 namespace autoinput
 {
     class MockEnvironment : public IEnvironment
@@ -43,7 +45,7 @@ start = "f2"
         env.m_exePath = tempDir.path();
         env.m_homePath = tempDir.path();
 
-        ConfigService service(env);
+        services::ConfigService service(env);
         ProgramArguments args;
         
         ASSERT_TRUE(service.applyConfigToArguments("test_config", args));

@@ -14,52 +14,12 @@
 #include <any>
 #include <type_traits>
 #include <functional>
-#include <iostream>
 #include <format>
-
 
 #define AUTOINPUT_UNUSED(...) static_cast<void>(__VA_ARGS__)
 
-// NOLINTBEGIN(bugprone-macro-parentheses)
-#define AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(enum_class) \
-    constexpr enum_class operator|(enum_class lhs, enum_class rhs) \
-    { \
-        using enum_class_t = std::underlying_type_t<enum_class>; \
-        return static_cast<enum_class>(static_cast<enum_class_t>(lhs) | static_cast<enum_class_t>(rhs)); \
-    } \
-    constexpr enum_class operator|=(enum_class& lhs, enum_class rhs) \
-    { \
-        lhs = lhs | rhs; \
-        return lhs; \
-    } \
-    constexpr enum_class operator&(enum_class lhs, enum_class rhs) \
-    { \
-        using enum_class_t = std::underlying_type_t<enum_class>; \
-        return static_cast<enum_class>(static_cast<enum_class_t>(lhs) & static_cast<enum_class_t>(rhs)); \
-    } \
-    constexpr enum_class operator&=(enum_class& lhs, enum_class rhs) \
-    { \
-        lhs = lhs & rhs; \
-        return lhs; \
-    } \
-    constexpr enum_class operator^(enum_class lhs, enum_class rhs) \
-    { \
-        using enum_class_t = std::underlying_type_t<enum_class>; \
-        return static_cast<enum_class>(static_cast<enum_class_t>(lhs) ^ static_cast<enum_class_t>(rhs)); \
-    } \
-    constexpr enum_class operator^=(enum_class& lhs, enum_class rhs) \
-    { \
-        lhs = lhs ^ rhs; \
-        return lhs; \
-    } \
-    constexpr enum_class operator~(enum_class lhs) \
-    { \
-        using enum_class_t = std::underlying_type_t<enum_class>; \
-        return static_cast<enum_class>(~static_cast<enum_class_t>(lhs)); \
-    } \
-
-
-// NOLINTEND(bugprone-macro-parentheses)
+// Enable operators only for specific enums (manual or via trait)
+#define AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(E) template<> inline constexpr bool is_flag_enum<E> = true;
 
 namespace autoinput
 {
@@ -75,6 +35,81 @@ namespace autoinput
 
     using f32 = float;
     using f64 = double;
+
+    template<typename T>
+    inline constexpr bool is_flag_enum = false;
+
+    // Concept checking the trait
+    template<typename T>
+    concept FlagEnum = std::is_enum_v<T> && is_flag_enum<T>;
+
+    // Operator enabled ONLY if FlagEnum concept is satisfied
+    template<FlagEnum E>
+    constexpr E operator|(E lhs, E rhs)
+    {
+        using U = std::underlying_type_t<E>;
+        return static_cast<E>(static_cast<U>(lhs) | static_cast<U>(rhs));
+    }
+
+    template<FlagEnum E>
+    constexpr E operator|=(E& lhs, E rhs)
+    {
+        lhs = lhs | rhs;
+        return lhs;
+    }
+
+    template<FlagEnum E>
+    constexpr E operator&(E lhs, E rhs)
+    {
+        using U = std::underlying_type_t<E>;
+        return static_cast<E>(static_cast<U>(lhs) & static_cast<U>(rhs));
+    }
+
+    template<FlagEnum E>
+    constexpr E operator&=(E& lhs, E rhs)
+    {
+        lhs = lhs & rhs;
+        return lhs;
+    }
+
+    template<FlagEnum E>
+    constexpr E operator^(E lhs, E rhs)
+    {
+        using U = std::underlying_type_t<E>;
+        return static_cast<E>(static_cast<U>(lhs) ^ static_cast<U>(rhs));
+    }
+
+    template<FlagEnum E>
+    constexpr E operator^=(E& lhs, E rhs)
+    {
+        lhs = lhs ^ rhs;
+        return lhs;
+    }
+
+    template<FlagEnum E>
+    constexpr E operator~(E lhs)
+    {
+        using U = std::underlying_type_t<E>;
+        return static_cast<E>(~static_cast<U>(lhs));
+    }
+
+    template<FlagEnum E>
+    bool isFlagSet(const E lhs, const E rhs)
+    {
+        return (lhs & rhs) == rhs;
+    }
+
+    template<FlagEnum E>
+    void setFlag(E& lhs, const E rhs)
+    {
+        lhs |= rhs;
+    }
+
+    template<FlagEnum E>
+    void clearFlag(E& lhs, const E rhs)
+    {
+        lhs &= ~rhs;
+    }
 
     struct Point
     {
@@ -142,6 +177,7 @@ namespace autoinput
         Back = 1 << 3,
         Forward = 1 << 4,
     };
+    AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(MouseButton);
 
     template<>
     struct HashFunction<MouseButton>
@@ -152,7 +188,6 @@ namespace autoinput
             return std::hash<button_t>()(static_cast<button_t>(button));
         }
     };
-    AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(MouseButton);
 
     enum class KeyModifier : uint8_t
     {
@@ -163,6 +198,8 @@ namespace autoinput
         Meta = 1 << 4, // Windows key
         Function = 1 << 5,
     };
+
+    AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(KeyModifier);
 
     /**
      * @brief Converts a KeyModifier to its string representation.
@@ -186,7 +223,6 @@ namespace autoinput
             return std::hash<key_t>()(static_cast<key_t>(button));
         }
     };
-    AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(KeyModifier);
 
     struct Mouse
     {

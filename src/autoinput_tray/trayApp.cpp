@@ -7,9 +7,9 @@
 #include "autoinput/logger.h"
 #include "autoinput/backendFactory.h"
 #include "autoinput/autoinput.h"
-#include <iostream>
-
 #include "autoinput/platform.h"
+#include "autoinput/services/configService.h"
+#include <iostream>
 
 
 namespace autoinput::tray
@@ -17,7 +17,7 @@ namespace autoinput::tray
     TrayApp::TrayApp()
     {
         m_environment = std::make_unique<SystemEnvironment>();
-        m_configService = std::make_unique<ConfigService>(*m_environment);
+        m_configService = std::make_unique<services::ConfigService>(*m_environment);
         m_controller = std::make_unique<AutomationController>();
         
         m_controller->setStatusCallback([this](const ProgramStatus& status) {
