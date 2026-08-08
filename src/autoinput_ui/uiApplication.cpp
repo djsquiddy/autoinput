@@ -1,12 +1,19 @@
 #include "uiApplication.h"
+#include "imgui_impl_raylib.h"
 #include "settingsEditorWindow.h"
 #include "configEditorWindow.h"
+#include "autoinput/config.h"
+#include "autoinput/logger.h"
 #include <raylib.h>
 #include <imgui.h>
-#include <rlImGui.h>
 
 namespace autoinput::ui
 {
+    namespace
+    {
+        namespace fs = std::filesystem;
+    }
+
     UiApplication::UiApplication()
     {
         m_settingsEditor = std::make_unique<SettingsEditorWindow>();
@@ -31,15 +38,55 @@ namespace autoinput::ui
 
     void UiApplication::initialize()
     {
-        SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-        InitWindow(1024, 768, "autoinput UI");
+        Logger::info("Initializing UI Application...");
+        SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_HIGHDPI);
+        InitWindow(1024, 768, "autoinput");
         SetTargetFPS(60);
-        rlImGuiSetup(true);
+
+        ImGui::CreateContext();
+        ImGui_ImplRaylib_Init();
+        ImGui::StyleColorsDark();
+
+        if (ImGui::GetCurrentContext())
+        {
+            Logger::info("ImGui context created successfully.");
+            
+            // Explicitly build font atlas
+            unsigned char* pixels;
+            int width, height;
+            ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+            
+            if (ImGui::GetIO().Fonts->IsBuilt())
+            {
+                Logger::info("ImGui font atlas built successfully. Size: {}x{}", width, height);
+            }
+            else
+            {
+                Logger::error("ImGui font atlas NOT built even after GetTexData!");
+            }
+        }
+        else
+        {
+            Logger::error("Failed to create ImGui context!");
+        }
+
+        // Set imgui.ini path to user config directory
+        const auto userConfigPath = getUserConfigsPath();
+        if (!userConfigPath.empty())
+        {
+            if (!fs::exists(userConfigPath))
+            {
+                fs::create_directories(userConfigPath);
+            }
+            static std::string iniPath = (userConfigPath / "imgui.ini").string();
+            ImGui::GetIO().IniFilename = iniPath.c_str();
+        }
     }
 
     void UiApplication::shutdown()
     {
-        rlImGuiShutdown();
+        ImGui_ImplRaylib_Shutdown();
+        ImGui::DestroyContext();
         CloseWindow();
     }
 
@@ -58,15 +105,17 @@ namespace autoinput::ui
         BeginDrawing();
         ClearBackground(DARKGRAY);
 
-        rlImGuiBegin();
+        ImGui_ImplRaylib_NewFrame();
+        ImGui::NewFrame();
 
         // UI Layout
-        ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight())), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        ImGui::SetNextWindowSize(ImVec2((float)GetScreenWidth(), (float)GetScreenHeight()));
+        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                                      ImGuiWindowFlags_NoMove | ImGuiWindowFlags_MenuBar |
+                                      ImGuiWindowFlags_NoCollapse;
 
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-
-        if (ImGui::Begin("AutoInput UI", nullptr, window_flags))
+        if (ImGui::Begin("AutoInput UI", nullptr, windowFlags))
         {
             if (ImGui::BeginMenuBar())
             {
@@ -87,6 +136,11 @@ namespace autoinput::ui
                     if (ImGui::MenuItem("Config Editor"))
                     {
                         m_configEditor->open();
+                    }
+                    ImGui::Separator();
+                    if (ImGui::MenuItem("ImGui Demo"))
+                    {
+                        m_showDemoWindow = true;
                     }
                     ImGui::EndMenu();
                 }
@@ -124,7 +178,7 @@ namespace autoinput::ui
 
             ImGui::Separator();
             ImGui::Text("Log / Status Panel:");
-            ImGui::BeginChild("LogRegion", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), true);
+            ImGui::BeginChild("LogRegion", ImVec2(0, 0), true);
             ImGui::TextUnformatted("Application initialized.");
             ImGui::TextUnformatted("Ready to receive commands.");
             ImGui::EndChild();
@@ -134,7 +188,13 @@ namespace autoinput::ui
         m_settingsEditor->render();
         m_configEditor->render();
 
-        rlImGuiEnd();
+        if (m_showDemoWindow)
+        {
+            ImGui::ShowDemoWindow(&m_showDemoWindow);
+        }
+
+        ImGui::Render();
+        ImGui_ImplRaylib_RenderDrawData(ImGui::GetDrawData());
 
         EndDrawing();
     }

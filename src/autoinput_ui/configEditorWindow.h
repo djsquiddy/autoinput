@@ -39,6 +39,8 @@ namespace autoinput::ui
 
         bool m_isOpen = false;
         bool m_isDirty = false;
+        bool m_shouldFocus = false;
+        bool m_showSaveConfirmation = false;
         autoinput::ConfigData m_draft;
         std::string m_currentConfigName;
         std::filesystem::path m_currentConfigPath;

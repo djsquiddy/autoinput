@@ -27,13 +27,24 @@ namespace autoinput::ui
 
     void SettingsEditorWindow::open()
     {
-        m_isOpen = true;
-        loadSettings();
+        if (!m_isOpen)
+        {
+            m_isOpen = true;
+            loadSettings();
+        }
+        m_shouldFocus = true;
     }
 
     void SettingsEditorWindow::close()
     {
-        m_isOpen = false;
+        if (m_isDirty)
+        {
+            m_showSaveConfirmation = true;
+        }
+        else
+        {
+            m_isOpen = false;
+        }
     }
 
     void SettingsEditorWindow::loadSettings()
@@ -135,11 +146,18 @@ namespace autoinput::ui
 
     void SettingsEditorWindow::render()
     {
-        if (!m_isOpen)
+        if (!m_isOpen && !m_showSaveConfirmation)
         {
             return;
         }
 
+        if (m_shouldFocus)
+        {
+            ImGui::SetNextWindowFocus();
+            m_shouldFocus = false;
+        }
+
+        bool openBefore = m_isOpen;
         if (ImGui::Begin("Settings", &m_isOpen, ImGuiWindowFlags_AlwaysAutoResize))
         {
             if (m_isDirty)
@@ -243,12 +261,43 @@ namespace autoinput::ui
         }
         ImGui::End();
 
-        if (!m_isOpen && m_isDirty)
+        if (openBefore && !m_isOpen && m_isDirty)
         {
-            // Here we could show a confirmation dialog, but for now just close.
-            // The requirements say "warn before discarding unsaved edits".
-            // I'll handle this by not allowing close if dirty, or showing a popup.
-            // For simplicity, I'll just check if it was closed via the (X) button.
+            m_isOpen = true;
+            m_showSaveConfirmation = true;
+        }
+
+        if (m_showSaveConfirmation)
+        {
+            ImGui::OpenPopup("Save Changes?");
+            if (ImGui::BeginPopupModal("Save Changes?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("You have unsaved changes. Do you want to save them before closing?");
+                ImGui::Separator();
+
+                if (ImGui::Button("Save", ImVec2(120, 0)))
+                {
+                    saveSettings(true);
+                    m_isOpen = false;
+                    m_showSaveConfirmation = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Discard", ImVec2(120, 0)))
+                {
+                    m_isDirty = false;
+                    m_isOpen = false;
+                    m_showSaveConfirmation = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    m_showSaveConfirmation = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
         }
     }
 }

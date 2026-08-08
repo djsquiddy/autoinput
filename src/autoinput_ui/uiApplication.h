@@ -25,6 +25,7 @@ namespace autoinput::ui
         void render();
 
         bool m_shouldClose{ false };
+        bool m_showDemoWindow{ false };
         std::string m_statusText{ "Ready" };
 
         std::unique_ptr<SettingsEditorWindow> m_settingsEditor;

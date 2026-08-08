@@ -27,13 +27,24 @@ namespace autoinput::ui
 
     void ConfigEditorWindow::open()
     {
-        m_isOpen = true;
-        refreshConfigList();
+        if (!m_isOpen)
+        {
+            m_isOpen = true;
+            refreshConfigList();
+        }
+        m_shouldFocus = true;
     }
 
     void ConfigEditorWindow::close()
     {
-        m_isOpen = false;
+        if (m_isDirty)
+        {
+            m_showSaveConfirmation = true;
+        }
+        else
+        {
+            m_isOpen = false;
+        }
     }
 
     void ConfigEditorWindow::refreshConfigList()
@@ -113,11 +124,18 @@ namespace autoinput::ui
 
     void ConfigEditorWindow::render()
     {
-        if (!m_isOpen)
+        if (!m_isOpen && !m_showSaveConfirmation)
         {
             return;
         }
 
+        if (m_shouldFocus)
+        {
+            ImGui::SetNextWindowFocus();
+            m_shouldFocus = false;
+        }
+
+        bool openBefore = m_isOpen;
         if (ImGui::Begin("Config Editor", &m_isOpen))
         {
             // Toolbar
@@ -222,6 +240,45 @@ namespace autoinput::ui
             }
         }
         ImGui::End();
+
+        if (openBefore && !m_isOpen && m_isDirty)
+        {
+            m_isOpen = true;
+            m_showSaveConfirmation = true;
+        }
+
+        if (m_showSaveConfirmation)
+        {
+            ImGui::OpenPopup("Save Changes?");
+            if (ImGui::BeginPopupModal("Save Changes?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::Text("You have unsaved changes in [%s]. Do you want to save them before closing?", m_currentConfigName.c_str());
+                ImGui::Separator();
+
+                if (ImGui::Button("Save", ImVec2(120, 0)))
+                {
+                    saveConfig(false);
+                    m_isOpen = false;
+                    m_showSaveConfirmation = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Discard", ImVec2(120, 0)))
+                {
+                    m_isDirty = false;
+                    m_isOpen = false;
+                    m_showSaveConfirmation = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                {
+                    m_showSaveConfirmation = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
+        }
     }
 
     void ConfigEditorWindow::renderGlobalSettings() {

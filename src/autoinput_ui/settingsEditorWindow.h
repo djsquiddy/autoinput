@@ -36,6 +36,8 @@ namespace autoinput::ui
 
         bool m_isOpen = false;
         bool m_isDirty = false;
+        bool m_shouldFocus = false;
+        bool m_showSaveConfirmation = false;
         autoinput::Settings m_settings;
         autoinput::DefaultSettings m_draft;
         std::vector<autoinput::ValidationError> m_validationErrors;
