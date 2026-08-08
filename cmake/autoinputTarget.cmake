@@ -1,4 +1,6 @@
 function(configure_autoinput_target target_name)
+    target_compile_definitions(${target_name} PUBLIC AUTOINPUT_VERSION="${PROJECT_VERSION}")
+
     if(ENABLE_KEYBOARD_HOOK)
         target_compile_definitions(${target_name} PUBLIC AUTOINPUT_HOOK_KEYBOARD_ENABLED=1)
     else()

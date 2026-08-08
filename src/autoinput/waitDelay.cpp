@@ -12,6 +12,9 @@
 #include <cctype>
 #include <algorithm>
 #include <gsl/gsl>
+#include <charconv>
+#include <format>
+#include <optional>
 
 namespace autoinput
 {
@@ -56,157 +59,41 @@ namespace autoinput
             if (usePressRange) return formatDuration(minWaitPressDelay) + ".." + formatDuration(maxWaitPressDelay);
             return formatDuration(minWaitPressDelay);
         }
-        
+
         if (!hasRelease) return "";
         if (useReleaseRange) return formatDuration(minWaitReleaseDelay) + ".." + formatDuration(maxWaitReleaseDelay);
         return formatDuration(minWaitReleaseDelay);
     }
 
-    bool WaitDelayData::parseWaitTimeDelay(std::string_view waitTimeDelayArg, const bool isPressWait)
+    bool WaitDelayData::parseWaitTimeDelay(const std::string_view waitTimeDelayArg, const bool isPressWait)
     {
-        if (!isValidWaitDelay(waitTimeDelayArg))
+        const auto parsed = parseWaitDelayInput(waitTimeDelayArg);
+        if (!parsed)
         {
             return false;
         }
 
-        struct NumberIndexData
-        {
-            std::string_view numberData;
-            size_t startIndex = 0;
-            size_t endIndex = 0;
-            size_t durationStartIndex = 0;
-            size_t durationEndIndex = 0;
-
-            void init()
-            {
-                for (size_t i = 0; i < numberData.size(); ++i)
-                {
-                    if (!isdigit(numberData[i]))
-                    {
-                        endIndex = i;
-                        durationStartIndex = i;
-                        break;
-                    }
-                }
-
-                if (endIndex == 0)
-                {
-                    // We don't have a duration type
-                    endIndex = numberData.size();
-                }
-                else
-                {
-                    durationEndIndex = numberData.size();
-                }
-
-                Logger::debug("Wait Number data:\n");
-                Logger::debug("Number   Start Index: {} End Index: {}\n", startIndex, endIndex);
-                Logger::debug("Number              : {}\n", getNumber());
-                Logger::debug("Duration Start Index: {} End Index: {}\n", durationStartIndex, durationEndIndex);
-                Logger::debug("Duration            : {}\n", getMilliseconds());
-            }
-
-            [[nodiscard]] int32_t getNumber() const
-            {
-                return parseStringToInt(numberData.substr(startIndex, endIndex - startIndex));
-            }
-
-            [[nodiscard]] std::chrono::milliseconds getMilliseconds() const
-            {
-                const auto number = getNumber();
-                if (durationStartIndex == 0)
-                {
-                    return std::chrono::milliseconds(number);
-                }
-
-                const auto durationType = numberData.substr(durationStartIndex, durationEndIndex - durationStartIndex);
-                if (durationType == "s")
-                {
-                    const std::chrono::seconds seconds{number};
-                    return {seconds};
-                }
-                if (durationType == "m")
-                {
-                    const std::chrono::minutes minutes{number};
-                    return {minutes};
-                }
-                if (durationType == "ms")
-                {
-                    return std::chrono::milliseconds(number);
-                }
-
-                Logger::error("Unrecognized duration type: {}\n", durationType);
-                Logger::error("Recognized options: [s|m|ms]\n");
-                return std::chrono::milliseconds(number);
-            }
-        };
-
-        auto getNumberIndexData = [](const std::string_view numberData) -> NumberIndexData
-        {
-            NumberIndexData data{.numberData = numberData};
-            data.init();
-            return data;
-        };
-
-        if (waitTimeDelayArg.contains(".."))
-        {
-            const auto index = waitTimeDelayArg.find("..");
-            const auto minWait = waitTimeDelayArg.substr(0, index);
-            const auto maxWait = waitTimeDelayArg.substr(index + 2);
-            const auto minWaitNumber = getNumberIndexData(minWait);
-            const auto maxWaitNumber = getNumberIndexData(maxWait);
-            if (isPressWait)
-            {
-                hasPress = usePressRange = true;
-                minWaitPressDelay = minWaitNumber.getMilliseconds();
-                maxWaitPressDelay = maxWaitNumber.getMilliseconds();
-            }
-            else
-            {
-                hasRelease = useReleaseRange = true;
-                minWaitReleaseDelay = minWaitNumber.getMilliseconds();
-                maxWaitReleaseDelay = maxWaitNumber.getMilliseconds();
-            }
-            return true;
-        }
-
-        const auto waitNumber = getNumberIndexData(waitTimeDelayArg);
         if (isPressWait)
         {
-            hasPress = true;
-            usePressRange = false;
-            minWaitPressDelay = maxWaitPressDelay = waitNumber.getMilliseconds();
+            hasPress = parsed->hasValue;
+            usePressRange = parsed->useRange;
+            minWaitPressDelay = waitDelayInputToMilliseconds(parsed->minValue, parsed->durationType);
+            maxWaitPressDelay = waitDelayInputToMilliseconds(parsed->maxValue, parsed->durationType);
         }
         else
         {
-            hasRelease = true;
-            useReleaseRange = false;
-            minWaitReleaseDelay = maxWaitReleaseDelay = waitNumber.getMilliseconds();
+            hasRelease = parsed->hasValue;
+            useReleaseRange = parsed->useRange;
+            minWaitReleaseDelay = waitDelayInputToMilliseconds(parsed->minValue, parsed->durationType);
+            maxWaitReleaseDelay = waitDelayInputToMilliseconds(parsed->maxValue, parsed->durationType);
         }
+
         return true;
     }
 
-    bool isValidWaitDelay(std::string_view wait)
+    bool isValidWaitDelay(const std::string_view wait)
     {
-        if (wait.empty()) return false;
-
-        auto checkPart = [](std::string_view part) {
-            if (part.empty()) return false;
-            size_t i = 0;
-            while (i < part.size() && std::isdigit(static_cast<unsigned char>(part[i]))) i++;
-            if (i == 0) return false; // No digits
-
-            std::string_view unit = part.substr(i);
-            return unit.empty() || unit == "ms" || unit == "s" || unit == "m";
-        };
-
-        if (wait.contains(".."))
-        {
-            size_t pos = wait.find("..");
-            return checkPart(wait.substr(0, pos)) && checkPart(wait.substr(pos + 2));
-        }
-
-        return checkPart(wait);
+        return parseWaitDelayInput(wait).has_value();
     }
 
     std::chrono::milliseconds parseWaitDelay(const std::string_view delayStr)
@@ -217,5 +104,149 @@ namespace autoinput
             return data.getPressDelay();
         }
         return std::chrono::milliseconds(0);
+    }
+
+    std::optional<WaitDelayInput> parseWaitDelayInput(const std::string_view value)
+    {
+        if (value.empty())
+        {
+            return std::nullopt;
+        }
+
+        auto trim = [](std::string_view sv) -> std::string_view {
+            while (!sv.empty() && std::isspace(static_cast<unsigned char>(sv.front()))) sv.remove_prefix(1);
+            while (!sv.empty() && std::isspace(static_cast<unsigned char>(sv.back()))) sv.remove_suffix(1);
+            return sv;
+        };
+
+        auto parsePart = [trim](std::string_view part, double& outValue, std::string& outUnit) -> bool {
+            part = trim(part);
+            if (part.empty()) return false;
+
+            size_t i = 0;
+            bool hasDecimal = false;
+            while (i < part.size() && (std::isdigit(static_cast<unsigned char>(part[i])) || (part[i] == '.' && !hasDecimal)))
+            {
+                if (part[i] == '.') hasDecimal = true;
+                i++;
+            }
+
+            if (i == 0) return false;
+
+            const std::string numStr(part.substr(0, i));
+            const std::string_view unitPart = part.substr(i);
+
+            try
+            {
+                outValue = std::stod(numStr);
+            }
+            catch (...)
+            {
+                return false;
+            }
+
+            if (!unitPart.empty())
+            {
+                outUnit = std::string(unitPart);
+                if (outUnit != "ms" && outUnit != "s" && outUnit != "m")
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                outUnit = "ms";
+            }
+
+            return true;
+        };
+
+        WaitDelayInput result;
+        result.hasValue = true;
+
+        if (value.contains(".."))
+        {
+            result.useRange = true;
+            const size_t pos = value.find("..");
+            const std::string_view minPart = value.substr(0, pos);
+            const std::string_view maxPart = value.substr(pos + 2);
+
+            std::string unitMin, unitMax;
+            if (parsePart(minPart, result.minValue, unitMin) &&
+                parsePart(maxPart, result.maxValue, unitMax))
+            {
+                result.durationType = unitMax; // Default to second unit if they differ
+                
+                if (unitMin != unitMax)
+                {
+                    // Normalize minValue to unitMax
+                    const auto msMin = waitDelayInputToMilliseconds(result.minValue, unitMin);
+                    if (unitMax == "m")
+                    {
+                        result.minValue = static_cast<double>(msMin.count()) / 60000.0;
+                    }
+                    else if (unitMax == "s")
+                    {
+                        result.minValue = static_cast<double>(msMin.count()) / 1000.0;
+                    }
+                    else
+                    {
+                        result.minValue = static_cast<double>(msMin.count());
+                    }
+                }
+                return result;
+            }
+            return std::nullopt;
+        }
+
+        if (parsePart(value, result.minValue, result.durationType))
+        {
+            result.maxValue = result.minValue;
+            result.useRange = false;
+            return result;
+        }
+
+        return std::nullopt;
+    }
+
+    std::string formatWaitDelayInput(const WaitDelayInput& input)
+    {
+        if (!input.hasValue)
+        {
+            return "";
+        }
+
+        auto formatValue = [](const double val) -> std::string {
+            std::string s = std::format("{:.3f}", val);
+            // Remove trailing zeros and dot
+            if (s.contains('.'))
+            {
+                while (s.ends_with('0')) s.pop_back();
+                if (s.ends_with('.')) s.pop_back();
+            }
+            return s;
+        };
+
+        if (input.useRange)
+        {
+            return std::format("{}..{}{}", formatValue(input.minValue), formatValue(input.maxValue), input.durationType);
+        }
+
+        return std::format("{}{}", formatValue(input.minValue), input.durationType);
+    }
+
+    std::chrono::milliseconds waitDelayInputToMilliseconds(const double value, const std::string_view durationType)
+    {
+        if (durationType == "m")
+        {
+            return std::chrono::milliseconds{ static_cast<int64_t>(std::round(value * 60.0 * 1000.0)) };
+        }
+
+        if (durationType == "s")
+        {
+            return std::chrono::milliseconds{ static_cast<int64_t>(std::round(value * 1000.0)) };
+        }
+
+        return std::chrono::milliseconds{ static_cast<int64_t>(std::round(value)) };
     }
 }

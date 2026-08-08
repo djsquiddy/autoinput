@@ -14,6 +14,11 @@
 namespace autoinput::defaults
 {
     /**
+     * @brief
+     */
+    constexpr std::string_view SettingFileName = "settings.toml";
+
+    /**
      * @brief The default key to start the autoinput action.
      */
     constexpr std::string_view StartKey = "f2";

@@ -67,6 +67,19 @@ namespace autoinput
      * @return The duration in milliseconds.
      */
     std::chrono::milliseconds parseWaitDelay(std::string_view delayStr);
+
+    struct WaitDelayInput
+    {
+        double minValue{ 0.0 };
+        double maxValue{ 0.0 };
+        bool useRange{ false };
+        bool hasValue{ false };
+        std::string durationType{ "ms" };
+    };
+
+    std::optional<WaitDelayInput> parseWaitDelayInput(std::string_view value);
+    std::string formatWaitDelayInput(const WaitDelayInput& input);
+    std::chrono::milliseconds waitDelayInputToMilliseconds(double value, std::string_view durationType);
 }
 
 #endif // INCLUDE_AUTOINPUT_WAIT_DELAY_H

@@ -61,6 +61,8 @@ namespace autoinput
         static const std::vector<SettingKey> s_keys;
         DefaultSettings m_defaults;
     };
+
+    bool saveUserSettings(const Settings& settings);
 }
 
 #endif // INCLUDE_AUTOINPUT_SETTINGS_H

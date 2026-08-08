@@ -16,6 +16,11 @@ namespace autoinput
         {"logLevel","Log level to use."}
     };
 
+    bool saveUserSettings(const Settings& settings)
+    {
+        return settings.save(getUserConfigsPath() / defaults::SettingFileName);
+    }
+
     bool Settings::load(const std::optional<std::filesystem::path>& path)
     {
         if (path.has_value())
@@ -23,8 +28,8 @@ namespace autoinput
             return loadFromFile(path.value());
         }
 
-        const bool loadedBuiltIn = loadFromFile(getConfigsPath() / "settings.toml");
-        const bool loadedUser = loadFromFile(getUserConfigsPath() / "settings.toml");
+        const bool loadedBuiltIn = loadFromFile(getConfigsPath() / defaults::SettingFileName);
+        const bool loadedUser = loadFromFile(getUserConfigsPath() / defaults::SettingFileName);
 
         return loadedBuiltIn || loadedUser;
     }
@@ -46,9 +51,13 @@ namespace autoinput
         if (!m_defaults.blacklist.empty())
         {
             toml::array arr;
+            std::set<std::string> visited{};
             for (const auto& item : m_defaults.blacklist)
             {
-                arr.push_back(item);
+                if (const auto [fst, snd] = visited.insert(item); snd)
+                {
+                    arr.push_back(item);
+                }
             }
             table.insert("blacklist", std::move(arr));
         }
@@ -79,43 +88,32 @@ namespace autoinput
         }
 
         toml::table table = std::move(result).table();
-        
-        auto applySettings = [&](const toml::table& t) {
-            tryGetTableValue(t, "start", m_defaults.start);
-            tryGetTableValue(t, "end", m_defaults.end);
-            tryGetTableValue(t, "press", m_defaults.press);
-            tryGetTableValue(t, "release", m_defaults.release);
-            tryGetTableValue(t, "action", m_defaults.action);
-            tryGetTableValue(t, "button", m_defaults.button);
-            tryGetTableValue(t, "application", m_defaults.application);
-            tryGetTableValue(t, "statusNotificationMode", m_defaults.statusNotificationMode);
-            tryGetTableValue(t, "logLevel", m_defaults.logLevel);
+        // Apply top-level settings
 
-            tryGetTableValue(t, "appendBlacklist", m_defaults.appendBlacklist);
+        tryGetTableValue(table, "start", m_defaults.start);
+        tryGetTableValue(table, "end", m_defaults.end);
+        tryGetTableValue(table, "press", m_defaults.press);
+        tryGetTableValue(table, "release", m_defaults.release);
+        tryGetTableValue(table, "action", m_defaults.action);
+        tryGetTableValue(table, "button", m_defaults.button);
+        tryGetTableValue(table, "application", m_defaults.application);
+        tryGetTableValue(table, "statusNotificationMode", m_defaults.statusNotificationMode);
+        tryGetTableValue(table, "logLevel", m_defaults.logLevel);
+        tryGetTableValue(table, "appendBlacklist", m_defaults.appendBlacklist);
 
-            if (const auto blacklist = t.get("blacklist"); blacklist && blacklist->is_array())
+        if (const auto blacklist = table.get("blacklist"); blacklist && blacklist->is_array())
+        {
+            if (!m_defaults.appendBlacklist)
             {
-                if (!m_defaults.appendBlacklist)
+                m_defaults.blacklist.clear();
+            }
+            for (auto& item : *blacklist->as_array())
+            {
+                if (item.is_string())
                 {
-                    m_defaults.blacklist.clear();
-                }
-                for (auto& item : *blacklist->as_array())
-                {
-                    if (item.is_string())
-                    {
-                        m_defaults.blacklist.push_back(item.as_string()->get());
-                    }
+                    m_defaults.blacklist.push_back(item.as_string()->get());
                 }
             }
-        };
-
-        // Apply top-level settings
-        applySettings(table);
-
-        // Also apply [defaults] if it exists (for backward compatibility)
-        if (const auto defaults = table["defaults"].as_table())
-        {
-            applySettings(*defaults);
         }
 
         return true;

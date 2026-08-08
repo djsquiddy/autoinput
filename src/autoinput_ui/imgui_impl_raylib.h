@@ -1,5 +1,5 @@
 /**
-* @file  imgui_impl_raylib.h
+ * @file imgui_impl_raylib.h
  * @author djsquiddy
  * @date August 2026
  */

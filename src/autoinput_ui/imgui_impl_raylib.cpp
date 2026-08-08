@@ -1,5 +1,5 @@
 /**
-* @file  imgui_impl_raylib.cpp
+ * @file imgui_impl_raylib.cpp
  * @author djsquiddy
  * @date August 2026
  */
@@ -142,7 +142,8 @@ bool ImGui_ImplRaylib_Init()
 
 void ImGui_ImplRaylib_Shutdown()
 {
-    if (g_FontTexture.id != 0) {
+    if (g_FontTexture.id != 0)
+    {
         UnloadTexture(g_FontTexture);
         g_FontTexture = { 0 };
     }
@@ -153,17 +154,17 @@ void ImGui_ImplRaylib_NewFrame()
 {
     ImGuiIO& io = ImGui::GetIO();
 
-    io.DisplaySize = ImVec2((float)GetScreenWidth(), (float)GetScreenHeight());
+    io.DisplaySize = ImVec2(static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight()));
     
     Vector2 scale = GetWindowScaleDPI();
     io.DisplayFramebufferScale = ImVec2(scale.x, scale.y);
 
     double currentTime = GetTime();
-    io.DeltaTime = g_Time > 0.0 ? (float)(currentTime - g_Time) : (float)(1.0f / 60.0f);
+    io.DeltaTime = g_Time > 0.0 ? static_cast<float>(currentTime - g_Time) : (float)(1.0f / 60.0f);
     g_Time = currentTime;
 
     // Mouse
-    io.AddMousePosEvent((float)GetMouseX(), (float)GetMouseY());
+    io.AddMousePosEvent(static_cast<float>(GetMouseX()), static_cast<float>(GetMouseY()));
     
     auto handleMouseButton = [&](int rayBtn, ImGuiMouseButton imguiBtn)
     {
@@ -180,8 +181,14 @@ void ImGui_ImplRaylib_NewFrame()
     // Keyboard
     for (int key = 32; key < 349; key++)
     {
-        if (IsKeyPressed(key)) io.AddKeyEvent(RaylibKeyToImGuiKey(key), true);
-        else if (IsKeyReleased(key)) io.AddKeyEvent(RaylibKeyToImGuiKey(key), false);
+        if (IsKeyPressed(key))
+        {
+            io.AddKeyEvent(RaylibKeyToImGuiKey(key), true);
+        }
+        else if (IsKeyReleased(key))
+        {
+            io.AddKeyEvent(RaylibKeyToImGuiKey(key), false);
+        }
     }
     
     // Modifiers
@@ -252,10 +259,10 @@ void ImGui_ImplRaylib_RenderDrawData(ImDrawData* draw_data)
                 const ImDrawVert& v = vtx_buffer[pcmd->VtxOffset + idx];
 
                 Color c = {
-                    .r = (unsigned char)(v.col & 0xFF),
-                    .g = (unsigned char)((v.col >> 8) & 0xFF),
-                    .b = (unsigned char)((v.col >> 16) & 0xFF),
-                    .a = (unsigned char)((v.col >> 24) & 0xFF)
+                    .r = static_cast<unsigned char>(v.col & 0xFF),
+                    .g = static_cast<unsigned char>((v.col >> 8) & 0xFF),
+                    .b = static_cast<unsigned char>((v.col >> 16) & 0xFF),
+                    .a = static_cast<unsigned char>((v.col >> 24) & 0xFF)
                 };
                 rlColor4ub(c.r, c.g, c.b, c.a);
                 rlTexCoord2f(v.uv.x, v.uv.y);

@@ -1,13 +1,1 @@
-blacklist = [
-    "Explorer.EXE",
-    "Discord.exe",
-    "WindowsTerminal.exe",
-    "Zed.exe",
-    "cmd.exe",
-    "brave.exe",
-    "steamwebhelper.exe",
-    "clion64.exe",
-    "RazerAppEngine.exe",
-    "sublime_merge.exe"
-]
 statusNotificationMode = "console"

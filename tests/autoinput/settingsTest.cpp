@@ -39,7 +39,6 @@ namespace autoinput
         const std::filesystem::path path = makeTemporarySettingsFile(
             "autoinput_settings_defaults_test.toml",
             R"toml(
-[defaults]
 start = "f8"
 end = "f9"
 press = "500ms"
@@ -68,7 +67,6 @@ button = "right"
         const std::filesystem::path path = makeTemporarySettingsFile(
             "autoinput_settings_partial_test.toml",
             R"toml(
-[defaults]
 start = "f10"
 )toml"
         );

@@ -1,9 +1,9 @@
 /**
-* @file main.cpp
+ * @file main.cpp
  * @author djsquiddy
  * @date August 2026
  */
-#include "uiApplication.h"
+#include "app/uiApplication.h"
 #include "autoinput/logger.h"
 #include "autoinput/platform.h"
 #include <exception>
