@@ -17,6 +17,8 @@
 #include <random>
 #include <fstream>
 
+#include "autoinput/platform.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -37,6 +39,18 @@ namespace autoinput::test
     {
     public:
         std::filesystem::path executablePath() const override { return m_executablePath; }
+            std::filesystem::path executableDirectoryPath() const override
+            {
+                if (!m_executableDirectoryPath.empty())
+                {
+                    return m_executableDirectoryPath;
+                }
+
+                return m_executablePath.has_filename()
+                    ? m_executablePath.parent_path()
+                    : m_executablePath;
+            }
+
         std::filesystem::path userHomePath() const override { return m_userHomePath; }
         std::optional<std::string> environmentVariable(std::string_view name) const override
         {
@@ -49,11 +63,13 @@ namespace autoinput::test
         }
 
         void setExecutablePath(std::filesystem::path path) { m_executablePath = std::move(path); }
+        void setExecutableDirectoryPath(std::filesystem::path path) { m_executableDirectoryPath = std::move(path); }
         void setUserHomePath(std::filesystem::path path) { m_userHomePath = std::move(path); }
         void setEnvironmentVariable(std::string name, std::string value) { m_variables[std::move(name)] = std::move(value); }
 
     private:
         std::filesystem::path m_executablePath;
+        std::filesystem::path m_executableDirectoryPath;
         std::filesystem::path m_userHomePath;
         std::map<std::string, std::string, std::less<>> m_variables;
     };

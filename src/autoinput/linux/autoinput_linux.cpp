@@ -387,9 +387,14 @@ namespace autoinput
             if (len != -1)
             {
                 buffer[len] = '\0';
-                return std::filesystem::path(buffer).parent_path();
+                return std::filesystem::path(buffer);
             }
             return std::filesystem::current_path();
+        }
+
+        std::filesystem::path getExecutableDirectoryPath()
+        {
+            return getExecutablePath().parent_path();
         }
 
         std::filesystem::path getUserHomePath()

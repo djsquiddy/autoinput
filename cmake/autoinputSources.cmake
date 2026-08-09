@@ -56,6 +56,10 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/services/automationRuntimeClient.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/services/configService.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/services/configService.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/services/processTransport.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/services/processTransport.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/services/runtimeProtocol.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/services/runtimeProtocol.cpp
 
             # Cli source
             ${CMAKE_SOURCE_DIR}/src/autoinput/cli/commandBase.h
@@ -74,6 +78,8 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/cli/helpCommand.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/cli/settingsCommand.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/cli/settingsCommand.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/serveCommand.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/serveCommand.cpp
     )
 
     if(WIN32)

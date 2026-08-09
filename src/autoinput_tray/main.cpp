@@ -5,7 +5,8 @@
  */
 #include "trayApp.h"
 #include "autoinput/logger.h"
-#include "autoinput/platform.h"
+#include "autoinput/environment.h"
+
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -17,7 +18,7 @@ namespace
     {
         using namespace autoinput;
         Logger::setLogLevel(LogLevel::Info);
-        const auto logPath = platform::getExecutablePath() / "app.log";
+        const auto logPath = SystemEnvironment::instance().executableDirectoryPath() / "traylog";
         Logger::setFile(logPath.string());
 
         // ReSharper disable once CppLocalVariableMayBeConst

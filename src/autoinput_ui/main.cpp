@@ -5,7 +5,7 @@
  */
 #include "app/uiApplication.h"
 #include "autoinput/logger.h"
-#include "autoinput/platform.h"
+#include "autoinput/environment.h"
 #include <exception>
 
 #ifdef _WIN32
@@ -22,7 +22,7 @@ namespace
 
         try
         {
-            const auto logPath = platform::getExecutablePath() / "ui.log";
+            const auto logPath = SystemEnvironment::instance().executableDirectoryPath() / "ui.log";
             Logger::setFile(logPath.string());
 
             UiApplication app{};

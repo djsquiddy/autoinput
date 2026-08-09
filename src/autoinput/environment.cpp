@@ -14,6 +14,11 @@ namespace autoinput
         return platform::getExecutablePath();
     }
 
+    std::filesystem::path SystemEnvironment::executableDirectoryPath() const
+    {
+        return platform::getExecutableDirectoryPath();
+    }
+
     std::filesystem::path SystemEnvironment::userHomePath() const
     {
         return platform::getUserHomePath();

@@ -7,6 +7,7 @@
 #include "autoinput/cli/appsCommand.h"
 #include "autoinput/cli/configCommand.h"
 #include "autoinput/cli/helpCommand.h"
+#include "autoinput/cli/serveCommand.h"
 #include "autoinput/cli/recordCommand.h"
 #include "autoinput/cli/runCommand.h"
 #include "autoinput/autoinput.h"
@@ -16,6 +17,7 @@
 #include "autoinput/platform.h"
 #include "autoinput/utils.h"
 #include "autoinput/services/configService.h"
+#include <format>
 
 namespace autoinput::cli
 {
@@ -313,6 +315,11 @@ namespace autoinput::cli
         if (commandName == "apps")
         {
             return std::make_unique<AppsCommand>(context);
+        }
+
+        if (commandName == "serve")
+        {
+            return std::make_unique<ServeCommand>(context);
         }
 
         if (commandName == "help")

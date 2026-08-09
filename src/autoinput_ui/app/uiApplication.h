@@ -9,6 +9,11 @@
 
 #include <memory>
 
+namespace autoinput::services
+{
+    class IAutomationRuntimeClient;
+}
+
 namespace autoinput::ui
 {
     class IUiBackend;
@@ -30,6 +35,12 @@ namespace autoinput::ui
          * @brief Starts the application main loop.
          */
         void run();
+
+        /**
+         * @brief Gets the automation runtime client.
+         * @return The runtime client.
+         */
+        autoinput::services::IAutomationRuntimeClient& getRuntimeClient() const;
 
     private:
         /**
@@ -60,6 +71,7 @@ namespace autoinput::ui
         bool m_shouldClose{ false };
         std::unique_ptr<IUiBackend> m_uiBackend;
         std::unique_ptr<WindowManager> m_windowManager;
+        std::unique_ptr<services::IAutomationRuntimeClient> m_runtimeClient;
     };
 }
 

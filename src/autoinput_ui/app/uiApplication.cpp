@@ -9,15 +9,18 @@
 #include "../windows/mainWindow.h"
 #include "../windows/settingsEditorWindow.h"
 #include "../windows/configEditorWindow.h"
+#include "../windows/runtimeWindow.h"
 #include "autoinput/config.h"
 #include "autoinput/logger.h"
+#include "autoinput/services/automationRuntimeClient.h"
 #include <raylib.h>
 
 namespace autoinput::ui
 {
     UiApplication::UiApplication()
-        : m_windowManager{ std::make_unique<WindowManager>() }
-        , m_uiBackend{ createUiBackend() }
+        : m_uiBackend{ createUiBackend() }
+        , m_windowManager{ std::make_unique<WindowManager>() }
+        , m_runtimeClient{ autoinput::services::createAutomationRuntimeClient(services::AutomationRuntimeClientMode::InProcess) }
     {
     }
 
@@ -43,6 +46,11 @@ namespace autoinput::ui
         shutdown();
     }
 
+    autoinput::services::IAutomationRuntimeClient& UiApplication::getRuntimeClient() const
+    {
+        return *m_runtimeClient;
+    }
+
     void UiApplication::initialize()
     {
         Logger::info("Initializing UI Application...");
@@ -51,6 +59,7 @@ namespace autoinput::ui
         m_windowManager->addWindow<MainWindow>("main", *m_windowManager);
         m_windowManager->addWindow<SettingsEditorWindow>("settings");
         m_windowManager->addWindow<ConfigEditorWindow>("config-editor");
+        m_windowManager->addWindow<RuntimeWindow>("runtime", getRuntimeClient());
         
         m_windowManager->open("main");
     }

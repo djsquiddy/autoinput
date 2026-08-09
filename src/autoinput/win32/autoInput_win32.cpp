@@ -152,7 +152,12 @@ namespace autoinput
             char buffer[MAX_PATH];
             // ReSharper disable once CppZeroConstantCanBeReplacedWithNullptr
             GetModuleFileNameA(NULL, buffer, MAX_PATH);
-            return std::filesystem::path(buffer).parent_path();
+            return { buffer };
+        }
+
+        std::filesystem::path getExecutableDirectoryPath()
+        {
+            return getExecutablePath().parent_path();
         }
 
         std::filesystem::path getUserHomePath()

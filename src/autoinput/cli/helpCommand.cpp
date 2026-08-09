@@ -10,7 +10,9 @@
 #include "configCommand.h"
 #include "recordCommand.h"
 #include "runCommand.h"
+#include "serveCommand.h"
 #include "autoinput/errorCode.h"
+#include <format>
 
 namespace autoinput::cli
 {
@@ -44,7 +46,8 @@ namespace autoinput::cli
             return m_topics[0] == "run" ||
                    m_topics[0] == "record" ||
                    m_topics[0] == "config" ||
-                   m_topics[0] == "apps";
+                   m_topics[0] == "apps" ||
+                   m_topics[0] == "serve";
         }
 
         if (m_topics.size() == 2 && m_topics[0] == "config")
@@ -142,12 +145,14 @@ namespace autoinput::cli
         const RecordCommand recordCommand{ m_context };
         const ConfigCommand configCommand{ m_context };
         const AppsCommand appsCommand{ m_context };
+        const ServeCommand serveCommand{ m_context };
 
         logHelpEntries("Commands", {
             runCommand.getHelpEntry(),
             recordCommand.getHelpEntry(),
             configCommand.getHelpEntry(),
             appsCommand.getHelpEntry(),
+            serveCommand.getHelpEntry(),
             getHelpEntry(),
         });
 
@@ -155,6 +160,8 @@ namespace autoinput::cli
             std::format("{} help run", m_context.global.programName),
             std::format("{} help config", m_context.global.programName),
             std::format("{} help config validate", m_context.global.programName),
+            std::format("{} help serve", m_context.global.programName),
+            std::format("{} serve --stdio", m_context.global.programName),
         });
 
         Logger::print("\n");

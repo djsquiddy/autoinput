@@ -8,6 +8,10 @@ set(AUTOINPUT_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/utilsTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/argumentsTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/cliCommandTest.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/autoinput/serveCommandTest.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/autoinput/runtimeProtocolTest.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/autoinput/processTransportTest.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/autoinput/processTransportIntegrationTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/recorderArgumentsTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/recorderTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/configTest.cpp
@@ -67,11 +71,5 @@ target_compile_definitions(${PROJECT_NAME_TEST} PRIVATE AUTOINPUT_EXE_PATH="$<TA
 
 configure_autoinput_target(${PROJECT_NAME_TEST})
 configure_autoinput_platform(${PROJECT_NAME_TEST})
-
-add_custom_command(TARGET ${PROJECT_NAME_TEST} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_LIST_DIR}/configs"
-        "$<TARGET_FILE_DIR:${PROJECT_NAME_TEST}>/configs"
-)
 
 gtest_discover_tests(${PROJECT_NAME_TEST})

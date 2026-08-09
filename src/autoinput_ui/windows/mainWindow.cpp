@@ -44,6 +44,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("config-editor");
                 }
+                if (ImGui::MenuItem("Automation Runtime"))
+                {
+                    m_windows.open("runtime");
+                }
                 ImGui::Separator();
                 if (ImGui::MenuItem("ImGui Demo", nullptr, m_showDemoWindow))
                 {
@@ -71,6 +75,11 @@ namespace autoinput::ui
         if (ImGui::Button("Record"))
         {
             m_statusText = "Recording...";
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Automation Runtime"))
+        {
+            m_windows.open("runtime");
         }
         ImGui::SameLine();
         if (ImGui::Button("Settings"))

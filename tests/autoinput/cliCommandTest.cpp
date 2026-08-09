@@ -42,6 +42,7 @@ namespace autoinput::cli
             {"autoinput", "help", "config"},
             {"autoinput", "help", "config", "validate"},
             {"autoinput", "help", "apps"},
+            {"autoinput", "help", "serve"},
             {"autoinput", "--json", "config", "validate", "my-config"}
         };
 

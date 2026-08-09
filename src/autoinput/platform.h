@@ -55,6 +55,12 @@ namespace autoinput
         std::filesystem::path getExecutablePath();
 
         /**
+         * @brief Gets the path to the current executable directory.
+         * @return The executable directory path.
+         */
+        std::filesystem::path getExecutableDirectoryPath();
+
+        /**
          * @brief Gets the path to the user's home directory.
          * @return The home directory path.
          */

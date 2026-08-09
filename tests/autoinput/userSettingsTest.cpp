@@ -15,7 +15,7 @@
 
 #include "autoinput/settings.h"
 #include "autoinput/config.h"
-#include "autoinput/platform.h"
+#include "autoinput/environment.h"
 #include "testUtils.h"
 
 namespace autoinput
@@ -46,7 +46,7 @@ namespace autoinput
         void SetUp() override
         {
             // Ensure built-in configs dir exists
-            m_builtinConfigsDir = platform::getExecutablePath() / "configs";
+            m_builtinConfigsDir = SystemEnvironment::instance().executableDirectoryPath() / "configs";
             std::filesystem::create_directories(m_builtinConfigsDir);
             
             // Clean up any existing settings files

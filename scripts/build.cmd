@@ -1,4 +1,4 @@
-@echo off
+@echo on
 setlocal
 set "CURRENT_DIR=%~dp0"
 set "BuildType=%~1"
@@ -6,6 +6,10 @@ if "%BuildType%"=="" set "BuildType=Release"
 set "BUILD_TESTS=OFF"
 set "BUILD_TRAY=OFF"
 set "BUILD_UI=OFF"
+
+set "BUILD_TESTS=ON"
+set "BUILD_TRAY=ON"
+set "BUILD_UI=ON"
 
 pushd "%CURRENT_DIR%\.." || exit /b 1
 

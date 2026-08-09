@@ -228,7 +228,7 @@ namespace autoinput
 
     fs::path getConfigsPath(const IEnvironment& environment)
     {
-        return environment.executablePath() / "configs";
+        return environment.executableDirectoryPath() / "configs";
     }
     
     fs::path getUserConfigsPath()

@@ -19,9 +19,10 @@ namespace autoinput
         std::filesystem::path m_exePath;
         std::filesystem::path m_homePath;
 
-        std::filesystem::path executablePath() const override { return m_exePath; }
-        std::filesystem::path userHomePath() const override { return m_homePath; }
-        std::optional<std::string> environmentVariable(std::string_view name) const override { return std::nullopt; }
+        [[nodiscard]] std::filesystem::path executablePath() const override { return m_exePath; }
+        [[nodiscard]] std::filesystem::path executableDirectoryPath() const override { return m_exePath.parent_path(); }
+        [[nodiscard]] std::filesystem::path userHomePath() const override { return m_homePath; }
+        [[nodiscard]] std::optional<std::string> environmentVariable(std::string_view name) const override { return std::nullopt; }
     };
 
     TEST(ConfigServiceTest, ApplyConfigToArgumentsLoadsCorrectData)
@@ -42,7 +43,7 @@ start = "f2"
         file.close();
 
         MockEnvironment env;
-        env.m_exePath = tempDir.path();
+        env.m_exePath = tempDir.path() / "test_exe";
         env.m_homePath = tempDir.path();
 
         services::ConfigService service(env);

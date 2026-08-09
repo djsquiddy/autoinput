@@ -5,11 +5,14 @@
 */
 
 #include "autoinput/services/automationRuntimeClient.h"
-
+#include "autoinput/services/processTransport.h"
+#include "autoinput/services/runtimeProtocol.h"
+#include "autoinput/platform.h"
 
 #include "autoinput/arguments.h"
 #include "autoinput/logger.h"
 #include <exception>
+#include <format>
 
 namespace autoinput::services
 {
@@ -19,49 +22,102 @@ namespace autoinput::services
             "Process automation runtime client is not implemented yet.";
     }
 
+    ProcessAutomationRuntimeClient::ProcessAutomationRuntimeClient(std::unique_ptr<IProcessTransport> transport)
+        : m_transport(std::move(transport))
+    {
+    }
+
+    ProcessAutomationRuntimeClient::~ProcessAutomationRuntimeClient()
+    {
+        if (m_transport && m_transport->running())
+        {
+            // Try to shutdown gracefully
+            AUTOINPUT_UNUSED(sendRequest(m_nextRequestId++, "shutdown"));
+            m_transport->stop();
+        }
+    }
+
     RuntimeOperationResult ProcessAutomationRuntimeClient::start(std::string_view configName)
     {
-        return {
-            .success = false,
-            .status = RuntimeStatus::Error,
-            .message = std::format(
-                "{} Cannot start config: {}",
-                ProcessClientNotImplementedMessage,
-                configName
-            )
-        };
+        return sendRequest(m_nextRequestId++, "start", configName);
     }
 
     RuntimeOperationResult ProcessAutomationRuntimeClient::stop()
     {
-        return {
-            .success = false,
-            .status = RuntimeStatus::Error,
-            .message = ProcessClientNotImplementedMessage
-        };
+        return sendRequest(m_nextRequestId++, "stop");
     }
 
     RuntimeOperationResult ProcessAutomationRuntimeClient::pause()
     {
-        return {
-            .success = false,
-            .status = RuntimeStatus::Error,
-            .message = ProcessClientNotImplementedMessage
-        };
+        return sendRequest(m_nextRequestId++, "pause");
     }
 
     RuntimeOperationResult ProcessAutomationRuntimeClient::resume()
     {
-        return {
-            .success = false,
-            .status = RuntimeStatus::Error,
-            .message = ProcessClientNotImplementedMessage
-        };
+        return sendRequest(m_nextRequestId++, "resume");
     }
 
     RuntimeStatus ProcessAutomationRuntimeClient::getStatus() const
     {
-        return RuntimeStatus::Stopped;
+        return m_status;
+    }
+
+    RuntimeOperationResult ProcessAutomationRuntimeClient::sendRequest(std::uint64_t id, std::string_view method, std::string_view config)
+    {
+        if (!m_transport)
+        {
+            return { false, RuntimeStatus::Error, "Transport is not available." };
+        }
+
+        if (!m_transport->running())
+        {
+            if (!m_transport->start())
+            {
+                std::string error = m_transport->lastError();
+                return { false, RuntimeStatus::Error, error.empty() ? "Failed to start process transport." : std::format("Failed to start process transport: {}", error) };
+            }
+        }
+
+        std::string requestJson;
+        if (method == "start")
+        {
+            requestJson = buildStartRuntimeRequest(id, config);
+        }
+        else
+        {
+            requestJson = buildRuntimeRequest(id, method);
+        }
+
+        if (!m_transport->writeLine(requestJson))
+        {
+            m_status = RuntimeStatus::Error;
+            const std::string error = m_transport->lastError();
+            return {
+                false,
+                RuntimeStatus::Error,
+                error.empty()
+                    ? "Failed to write request to transport."
+                    : std::format("Failed to write request to transport: {}", error)
+            };
+        }
+
+        auto responseJson = m_transport->readLine(std::chrono::milliseconds(5000));
+        if (!responseJson)
+        {
+            m_status = RuntimeStatus::Error;
+            const std::string error = m_transport->lastError();
+            return {
+                false,
+                RuntimeStatus::Error,
+                error.empty()
+                    ? "Failed to read response from transport."
+                    : std::format("Failed to read response from transport: {}", error)
+            };
+        }
+
+        auto result = parseRuntimeResponse(*responseJson);
+        m_status = result.status;
+        return result;
     }
 
     InProcessAutomationRuntimeClient::InProcessAutomationRuntimeClient(const IEnvironment& environment)
@@ -215,4 +271,25 @@ namespace autoinput::services
         return m_currentConfig;
     }
 
+    std::unique_ptr<IAutomationRuntimeClient> createAutomationRuntimeClient(AutomationRuntimeClientMode mode)
+    {
+        switch (mode)
+        {
+            case AutomationRuntimeClientMode::InProcess:
+                return std::make_unique<InProcessAutomationRuntimeClient>();
+        case AutomationRuntimeClientMode::Process:
+                return createProcessAutomationRuntimeClient(SystemEnvironment::instance());
+            default:
+                return nullptr;
+        }
+    }
+
+    std::unique_ptr<IAutomationRuntimeClient> createProcessAutomationRuntimeClient(const IEnvironment& environment)
+    {
+        auto transport = std::make_unique<StdioProcessTransport>(
+            environment.executablePath(),
+            std::vector<std::string>{ "serve", "--stdio" }
+        );
+        return std::make_unique<ProcessAutomationRuntimeClient>(std::move(transport));
+    }
 }

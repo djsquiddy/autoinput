@@ -17,8 +17,8 @@ if(AUTOINPUT_BUILD_UI)
     set(AUTOINPUT_UI_SOURCES
             ${CMAKE_CURRENT_LIST_DIR}/main.cpp
             ${CMAKE_CURRENT_LIST_DIR}/ui.h
-            core/uibackend.cpp
-            core/uibackend.h
+            ${CMAKE_CURRENT_LIST_DIR}/core/uibackend.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/core/uibackend.h
 
             # App
             ${CMAKE_CURRENT_LIST_DIR}/app/uiApplication.cpp
@@ -52,39 +52,41 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/windows/configEditorWindow.h
             ${CMAKE_CURRENT_LIST_DIR}/windows/aboutWindow.cpp
             ${CMAKE_CURRENT_LIST_DIR}/windows/aboutWindow.h
+            ${CMAKE_CURRENT_LIST_DIR}/windows/runtimeWindow.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/windows/runtimeWindow.h
 
             # External sources
             ${IMGUI_SOURCES}
     )
 
-    add_executable(autoinput_ui
+    add_executable(${PROJECT_NAME_UI}
             ${AUTOINPUT_UI_SOURCES}
     )
 
-    target_include_directories(autoinput_ui
+    target_include_directories(${PROJECT_NAME_UI}
             PRIVATE
             ${CMAKE_CURRENT_LIST_DIR}
             ${imgui_SOURCE_DIR}
             ${imgui_SOURCE_DIR}/misc/cpp
     )
 
-    target_link_libraries(autoinput_ui
+    target_link_libraries(${PROJECT_NAME_UI}
             PRIVATE
             autoinput_core
             raylib
     )
 
     if(WIN32)
-        target_link_libraries(autoinput_ui
+        target_link_libraries(${PROJECT_NAME_UI}
                 PRIVATE
                 winmm
                 gdi32
         )
-        set_target_properties(autoinput_ui PROPERTIES
+        set_target_properties(${PROJECT_NAME_UI} PROPERTIES
                 WIN32_EXECUTABLE TRUE
         )
     endif()
 
-    configure_autoinput_target(autoinput_ui)
-    configure_autoinput_platform(autoinput_ui)
+    configure_autoinput_target(${PROJECT_NAME_UI})
+    configure_autoinput_platform(${PROJECT_NAME_UI})
 endif(AUTOINPUT_BUILD_UI)

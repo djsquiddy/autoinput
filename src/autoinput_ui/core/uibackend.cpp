@@ -228,8 +228,7 @@ namespace autoinput::ui
         ImGui::StyleColorsDark();
 
         // Set imgui.ini path to user config directory
-        const auto userConfigPath = getUserConfigsPath();
-        if (!userConfigPath.empty())
+        if (const auto userConfigPath = getUserConfigsPath(); !userConfigPath.empty())
         {
             if (!fs::exists(userConfigPath))
             {
@@ -255,8 +254,6 @@ namespace autoinput::ui
     {
         BeginDrawing();
         ClearBackground(DARKGRAY);
-
-        ImGui::NewFrame();
 
         ImGuiIO& io = ImGui::GetIO();
 
@@ -328,6 +325,8 @@ namespace autoinput::ui
             m_fontTexture = LoadTextureFromImage(image);
             io.Fonts->SetTexID((ImTextureID)(intptr_t)m_fontTexture.id);
         }
+
+        ImGui::NewFrame();
     }
 
     void ImGuiRaylibBackEnd::render()

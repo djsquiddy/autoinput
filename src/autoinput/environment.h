@@ -29,6 +29,12 @@ namespace autoinput
         [[nodiscard]] virtual std::filesystem::path executablePath() const = 0;
 
         /**
+         * @brief Gets the path to the current executable directory.
+         * @return The path to the executable directory.
+         */
+        [[nodiscard]] virtual std::filesystem::path executableDirectoryPath() const = 0;
+
+        /**
          * @brief Gets the path to the user's home directory.
          * @return The path to the user's home directory.
          */
@@ -49,6 +55,7 @@ namespace autoinput
     {
     public:
         [[nodiscard]] std::filesystem::path executablePath() const override;
+        [[nodiscard]] std::filesystem::path executableDirectoryPath() const override;
         [[nodiscard]] std::filesystem::path userHomePath() const override;
         [[nodiscard]] std::optional<std::string> environmentVariable(std::string_view name) const override;
 
