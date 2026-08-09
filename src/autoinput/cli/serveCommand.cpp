@@ -139,6 +139,48 @@ namespace autoinput::cli
             {
                 result = runtime.sendTestNotification(request.title, request.body);
             }
+            else if (request.method == "start_recording")
+            {
+                SequenceConfig config;
+                config.name = request.recordName;
+                config.recordMouseMoves = request.recordMouseMoves;
+                config.startKey = request.recordStartKey;
+                config.endKey = request.recordEndKey;
+                config.playStartKey = request.recordPlayStartKey;
+                config.mouseSampleDelay = request.recordMouseSample;
+                
+                runtime.startRecording(config);
+                result = { true, runtime.getStatus(), "Recording started." };
+            }
+            else if (request.method == "stop_recording")
+            {
+                runtime.stopRecording();
+                result = { true, runtime.getStatus(), "Recording stopped." };
+            }
+            else if (request.method == "pause_recording")
+            {
+                runtime.pauseRecording();
+                result = { true, runtime.getStatus(), "Recording paused." };
+            }
+            else if (request.method == "resume_recording")
+            {
+                runtime.resumeRecording();
+                result = { true, runtime.getStatus(), "Recording resumed." };
+            }
+            else if (request.method == "discard_recording")
+            {
+                runtime.discardRecording();
+                result = { true, runtime.getStatus(), "Recording discarded." };
+            }
+            else if (request.method == "get_recorded_sequence")
+            {
+                auto seq = runtime.getRecordedSequence();
+                result = { true, runtime.getStatus(), "Sequence retrieved." };
+                if (seq)
+                {
+                    result.sequence = *seq;
+                }
+            }
             else if (request.method == "shutdown")
             {
                 result = runtime.stop();

@@ -36,6 +36,13 @@ namespace autoinput
 
         void runCommand(std::string_view name);
 
+        void startRecording(const SequenceConfig& config);
+        void stopRecording();
+        void pauseRecording();
+        void resumeRecording();
+        void discardRecording();
+        [[nodiscard]] const RecordedSequence* getRecordedSequence() const;
+
         [[nodiscard]] IPlatformBackend* getBackend() const;
 
     private:

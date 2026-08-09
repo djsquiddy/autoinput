@@ -26,7 +26,11 @@ namespace autoinput::ui
     {
         for (auto& window : m_windows | std::views::values)
         {
-            window->render();
+            if (window->isOpen())
+            {
+                window->update();
+                window->render();
+            }
         }
     }
 }

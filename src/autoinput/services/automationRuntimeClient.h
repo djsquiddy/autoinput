@@ -38,6 +38,10 @@ namespace autoinput::services
         std::string message{};
         std::string backendName{};
         BackendCapabilities capabilities{};
+        bool recording{ false };
+        bool recordingPaused{ false };
+        uint32_t recordedEventCount{ 0 };
+        std::optional<RecordedSequence> sequence;
     };
 
     class IAutomationRuntimeClient
@@ -61,6 +65,17 @@ namespace autoinput::services
         [[nodiscard]] virtual BackendCapabilities getBackendCapabilities() const = 0;
         [[nodiscard]] virtual std::string getBackendName() const = 0;
         [[nodiscard]] virtual RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message) = 0;
+
+        virtual RuntimeOperationResult startRecording(const SequenceConfig& config) = 0;
+        virtual RuntimeOperationResult stopRecording() = 0;
+        virtual RuntimeOperationResult pauseRecording() = 0;
+        virtual RuntimeOperationResult resumeRecording() = 0;
+        virtual RuntimeOperationResult discardRecording() = 0;
+        virtual std::optional<RecordedSequence> getRecordedSequence() const = 0;
+
+        [[nodiscard]] virtual bool isRecording() const = 0;
+        [[nodiscard]] virtual bool isRecordingPaused() const = 0;
+        [[nodiscard]] virtual uint32_t getRecordedEventCount() const = 0;
     };
 
     class ProcessAutomationRuntimeClient final : public IAutomationRuntimeClient
@@ -68,7 +83,7 @@ namespace autoinput::services
     public:
         explicit ProcessAutomationRuntimeClient(std::unique_ptr<IProcessTransport> transport);
         ~ProcessAutomationRuntimeClient() override;
-        
+
         [[nodiscard]] RuntimeOperationResult start(std::string_view configName) override;
         [[nodiscard]] RuntimeOperationResult stop() override;
         [[nodiscard]] RuntimeOperationResult pause() override;
@@ -86,6 +101,17 @@ namespace autoinput::services
         [[nodiscard]] std::string getBackendName() const override;
         [[nodiscard]] RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message) override;
 
+        RuntimeOperationResult startRecording(const SequenceConfig& config) override;
+        RuntimeOperationResult stopRecording() override;
+        RuntimeOperationResult pauseRecording() override;
+        RuntimeOperationResult resumeRecording() override;
+        RuntimeOperationResult discardRecording() override;
+        std::optional<RecordedSequence> getRecordedSequence() const override;
+
+        [[nodiscard]] bool isRecording() const override;
+        [[nodiscard]] bool isRecordingPaused() const override;
+        [[nodiscard]] uint32_t getRecordedEventCount() const override;
+
     private:
         RuntimeOperationResult sendRequest(std::uint64_t id, std::string_view method, std::string_view config = "");
         
@@ -93,6 +119,9 @@ namespace autoinput::services
         mutable RuntimeStatus m_status{ RuntimeStatus::Stopped };
         mutable std::uint64_t m_nextRequestId{ 1 };
         mutable std::string m_lastMessage;
+        bool m_recording{ false };
+        bool m_recordingPaused{ false };
+        uint32_t m_recordedEventCount{ 0 };
     };
 
     class InProcessAutomationRuntimeClient final : public IAutomationRuntimeClient
@@ -118,6 +147,17 @@ namespace autoinput::services
         [[nodiscard]] std::string getBackendName() const override;
         [[nodiscard]] RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message) override;
 
+        RuntimeOperationResult startRecording(const SequenceConfig& config) override;
+        RuntimeOperationResult stopRecording() override;
+        RuntimeOperationResult pauseRecording() override;
+        RuntimeOperationResult resumeRecording() override;
+        RuntimeOperationResult discardRecording() override;
+        std::optional<RecordedSequence> getRecordedSequence() const override;
+
+        [[nodiscard]] bool isRecording() const override;
+        [[nodiscard]] bool isRecordingPaused() const override;
+        [[nodiscard]] uint32_t getRecordedEventCount() const override;
+
     private:
         ConfigService m_configService;
         AutomationController m_controller;
@@ -125,6 +165,9 @@ namespace autoinput::services
         std::string m_currentConfig;
         std::string m_activeCommand;
         std::string m_lastMessage;
+        bool m_recording{ false };
+        bool m_recordingPaused{ false };
+        uint32_t m_recordedEventCount{ 0 };
     };
 
     enum class AutomationRuntimeClientMode

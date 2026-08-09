@@ -45,11 +45,11 @@ namespace autoinput::services
     {
         RuntimeOperationResult result{ true, RuntimeStatus::Running, "Started successfully" };
         std::string json = buildRuntimeResponse(10, result);
-        EXPECT_EQ(json, "{\"id\":10,\"success\":true,\"status\":\"running\",\"message\":\"Started successfully\"}");
+        EXPECT_EQ(json, "{\"id\":10,\"success\":true,\"status\":\"running\",\"message\":\"Started successfully\",\"recording\":false,\"recording_paused\":false,\"recorded_event_count\":0}");
 
         result = { false, RuntimeStatus::Stopped, "Failed to start" };
         json = buildRuntimeResponse(11, result);
-        EXPECT_EQ(json, "{\"id\":11,\"success\":false,\"status\":\"stopped\",\"message\":\"Failed to start\"}");
+        EXPECT_EQ(json, "{\"id\":11,\"success\":false,\"status\":\"stopped\",\"message\":\"Failed to start\",\"recording\":false,\"recording_paused\":false,\"recorded_event_count\":0}");
 
         result = {
             false,
@@ -59,7 +59,7 @@ namespace autoinput::services
 
         EXPECT_EQ(
             buildRuntimeResponse(1, result),
-            "{\"id\":1,\"success\":false,\"status\":\"error\",\"message\":\"Bad \\\"config\\\"\\nTry again\"}"
+            "{\"id\":1,\"success\":false,\"status\":\"error\",\"message\":\"Bad \\\"config\\\"\\nTry again\",\"recording\":false,\"recording_paused\":false,\"recorded_event_count\":0}"
         );
     }
 

@@ -21,13 +21,17 @@ namespace autoinput
     {
         Waiting,
         Recording,
+        Paused,
         Finished,
         Cancelled
     };
 
     struct SequenceConfig
     {
-        bool recordMouseMoves{};
+        bool recordMouseMoves{ false };
+        bool recordMouseClicks{ true };
+        bool recordKeyboardEvents{ true };
+        bool recordDelays{ true };
         std::string name{};
         std::string startKey{};
         std::string endKey{};
@@ -69,6 +73,31 @@ namespace autoinput
          * @param isSynthetic True if the event was synthetically generated.
          */
         void onMouseMove(int32_t x, int32_t y, bool isSynthetic = false);
+
+        /**
+         * @brief Starts recording immediately.
+         */
+        void start();
+
+        /**
+         * @brief Pauses recording.
+         */
+        void pause();
+
+        /**
+         * @brief Resumes recording.
+         */
+        void resume();
+
+        /**
+         * @brief Stops recording and marks it as finished.
+         */
+        void stop();
+
+        /**
+         * @brief Cancels recording and discards events.
+         */
+        void cancel();
 
         /**
          * @brief Gets the current state of the recorder.

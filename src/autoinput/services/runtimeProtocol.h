@@ -24,6 +24,17 @@ namespace autoinput::services
         std::string command;
         std::string title;
         std::string body;
+
+        bool recordMouseMoves{ false };
+        bool recordMouseClicks{ true };
+        bool recordKeyboardEvents{ true };
+        bool recordDelays{ true };
+        std::string recordName;
+        std::string recordStartKey;
+        std::string recordEndKey;
+        std::string recordPlayStartKey;
+        std::string recordMouseSample;
+
         bool valid{ false }; 
         std::string error; 
     };
@@ -35,6 +46,8 @@ namespace autoinput::services
     std::string buildStartRuntimeRequest(std::uint64_t id, std::string_view configName);
     std::string buildRunCommandRequest(std::uint64_t id, std::string_view configName, std::string_view commandName);
     std::string buildTestNotificationRequest(std::uint64_t id, std::string_view title, std::string_view body);
+    std::string buildStartRecordingRequest(std::uint64_t id, const SequenceConfig& config);
+    std::string buildGetRecordedSequenceRequest(std::uint64_t id);
     std::string buildRuntimeResponse(std::uint64_t id, const RuntimeOperationResult& result);
 
     RuntimeProtocolRequest parseRuntimeRequest(std::string_view jsonLine);

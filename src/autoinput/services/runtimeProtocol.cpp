@@ -203,6 +203,17 @@ namespace autoinput::services
             id, jsonEscape(title), jsonEscape(body));
     }
 
+    std::string buildStartRecordingRequest(std::uint64_t id, const SequenceConfig& config)
+    {
+        return std::format("{{\"id\":{},\"method\":\"start_recording\",\"params\":{{\"name\":\"{}\",\"recordMouseMoves\":{},\"recordMouseClicks\":{},\"recordKeyboardEvents\":{},\"recordDelays\":{},\"startKey\":\"{}\",\"endKey\":\"{}\",\"playStartKey\":\"{}\",\"mouseSampleDelay\":\"{}\"}}}}",
+            id, jsonEscape(config.name), config.recordMouseMoves ? "true" : "false", config.recordMouseClicks ? "true" : "false", config.recordKeyboardEvents ? "true" : "false", config.recordDelays ? "true" : "false", jsonEscape(config.startKey), jsonEscape(config.endKey), jsonEscape(config.playStartKey), jsonEscape(config.mouseSampleDelay));
+    }
+
+    std::string buildGetRecordedSequenceRequest(std::uint64_t id)
+    {
+        return std::format("{{\"id\":{},\"method\":\"get_recorded_sequence\"}}", id);
+    }
+
     std::string buildRuntimeResponse(std::uint64_t id, const RuntimeOperationResult& result)
     {
         std::string extra;
@@ -218,6 +229,34 @@ namespace autoinput::services
                 result.capabilities.syntheticMouseInput ? "true" : "false",
                 result.capabilities.absoluteMouseMovement ? "true" : "false",
                 result.capabilities.getCursorPosition ? "true" : "false");
+        }
+        
+        extra += std::format(",\"recording\":{},\"recording_paused\":{},\"recorded_event_count\":{}",
+            result.recording ? "true" : "false",
+            result.recordingPaused ? "true" : "false",
+            result.recordedEventCount);
+
+        if (result.sequence)
+        {
+            std::string seqJson = std::format(",\"sequence\":{{\"name\":\"{}\",\"start\":\"{}\",\"repeat\":{},\"events\":[",
+                jsonEscape(result.sequence->name), jsonEscape(result.sequence->start), result.sequence->repeat ? "true" : "false");
+            
+            for (size_t i = 0; i < result.sequence->events.size(); ++i)
+            {
+                const auto& event = result.sequence->events[i];
+                seqJson += std::format("{{\"type\":\"{}\",\"delay\":\"{}\"",
+                    recordedEventTypeToString(event.type), jsonEscape(event.delay));
+                
+                if (event.key) seqJson += std::format(",\"key\":\"{}\"", jsonEscape(*event.key));
+                if (event.button) seqJson += std::format(",\"button\":\"{}\"", jsonEscape(*event.button));
+                if (event.x) seqJson += std::format(",\"x\":{}", *event.x);
+                if (event.y) seqJson += std::format(",\"y\":{}", *event.y);
+                
+                seqJson += "}";
+                if (i < result.sequence->events.size() - 1) seqJson += ",";
+            }
+            seqJson += "]}}";
+            extra += seqJson;
         }
 
         return std::format("{{\"id\":{},\"success\":{},\"status\":\"{}\",\"message\":\"{}\"{}}}",
@@ -349,6 +388,46 @@ namespace autoinput::services
                 }
             }
         }
+        else if (request.method == "start_recording")
+        {
+            auto paramsPos = json.find("\"params\"");
+            if (paramsPos != std::string_view::npos)
+            {
+                std::string_view paramsSub = json.substr(paramsPos);
+                
+                std::string_view nameStr = findRawValue(paramsSub, "name", isString);
+                if (!nameStr.empty())
+                    request.recordName = isString ? jsonUnescape(nameStr) : std::string(nameStr);
+
+                std::string_view recordMouseMovesStr = findRawValue(paramsSub, "recordMouseMoves", isString);
+                request.recordMouseMoves = (recordMouseMovesStr == "true");
+
+                std::string_view recordMouseClicksStr = findRawValue(paramsSub, "recordMouseClicks", isString);
+                if (!recordMouseClicksStr.empty()) request.recordMouseClicks = (recordMouseClicksStr == "true");
+
+                std::string_view recordKeyboardEventsStr = findRawValue(paramsSub, "recordKeyboardEvents", isString);
+                if (!recordKeyboardEventsStr.empty()) request.recordKeyboardEvents = (recordKeyboardEventsStr == "true");
+
+                std::string_view recordDelaysStr = findRawValue(paramsSub, "recordDelays", isString);
+                if (!recordDelaysStr.empty()) request.recordDelays = (recordDelaysStr == "true");
+
+                std::string_view startKeyStr = findRawValue(paramsSub, "startKey", isString);
+                if (!startKeyStr.empty())
+                    request.recordStartKey = isString ? jsonUnescape(startKeyStr) : std::string(startKeyStr);
+
+                std::string_view endKeyStr = findRawValue(paramsSub, "endKey", isString);
+                if (!endKeyStr.empty())
+                    request.recordEndKey = isString ? jsonUnescape(endKeyStr) : std::string(endKeyStr);
+
+                std::string_view playStartKeyStr = findRawValue(paramsSub, "playStartKey", isString);
+                if (!playStartKeyStr.empty())
+                    request.recordPlayStartKey = isString ? jsonUnescape(playStartKeyStr) : std::string(playStartKeyStr);
+
+                std::string_view mouseSampleDelayStr = findRawValue(paramsSub, "mouseSampleDelay", isString);
+                if (!mouseSampleDelayStr.empty())
+                    request.recordMouseSample = isString ? jsonUnescape(mouseSampleDelayStr) : std::string(mouseSampleDelayStr);
+            }
+        }
 
         request.valid = true;
         return request;
@@ -391,6 +470,73 @@ namespace autoinput::services
             result.capabilities.syntheticMouseInput = findRawValue(capsSub, "syntheticMouseInput", isString) == "true";
             result.capabilities.absoluteMouseMovement = findRawValue(capsSub, "absoluteMouseMovement", isString) == "true";
             result.capabilities.getCursorPosition = findRawValue(capsSub, "getCursorPosition", isString) == "true";
+        }
+
+        result.recording = findRawValue(json, "recording", isString) == "true";
+        result.recordingPaused = findRawValue(json, "recording_paused", isString) == "true";
+        std::string_view eventCountStr = findRawValue(json, "recorded_event_count", isString);
+        if (!eventCountStr.empty())
+        {
+            result.recordedEventCount = static_cast<uint32_t>(parseStringToInt(eventCountStr));
+        }
+
+        auto sequencePos = json.find("\"sequence\"");
+        if (sequencePos != std::string_view::npos)
+        {
+            std::string_view seqSub = json.substr(sequencePos);
+            RecordedSequence seq;
+            
+            bool isStr = false;
+            std::string_view nameStr = findRawValue(seqSub, "name", isStr);
+            seq.name = isStr ? jsonUnescape(nameStr) : std::string(nameStr);
+            
+            std::string_view startStr = findRawValue(seqSub, "start", isStr);
+            seq.start = isStr ? jsonUnescape(startStr) : std::string(startStr);
+            
+            std::string_view repeatStr = findRawValue(seqSub, "repeat", isStr);
+            seq.repeat = (repeatStr == "true");
+            
+            auto eventsPos = seqSub.find("\"events\"");
+            if (eventsPos != std::string_view::npos)
+            {
+                auto arrayStart = seqSub.find('[', eventsPos);
+                auto arrayEnd = seqSub.find(']', arrayStart);
+                if (arrayStart != std::string_view::npos && arrayEnd != std::string_view::npos)
+                {
+                    std::string_view eventsArray = seqSub.substr(arrayStart + 1, arrayEnd - arrayStart - 1);
+                    size_t pos = 0;
+                    while ((pos = eventsArray.find('{', pos)) != std::string_view::npos)
+                    {
+                        size_t endPos = eventsArray.find('}', pos);
+                        if (endPos == std::string_view::npos) break;
+                        
+                        std::string_view eventJson = eventsArray.substr(pos, endPos - pos + 1);
+                        RecordedEvent event;
+                        
+                        std::string_view typeStr = findRawValue(eventJson, "type", isStr);
+                        event.type = recordedEventTypeFromString(isStr ? jsonUnescape(typeStr) : typeStr);
+                        
+                        std::string_view delayStr = findRawValue(eventJson, "delay", isStr);
+                        event.delay = isStr ? jsonUnescape(delayStr) : std::string(delayStr);
+                        
+                        std::string_view keyStr = findRawValue(eventJson, "key", isStr);
+                        if (!keyStr.empty()) event.key = isStr ? jsonUnescape(keyStr) : std::string(keyStr);
+                        
+                        std::string_view buttonStr = findRawValue(eventJson, "button", isStr);
+                        if (!buttonStr.empty()) event.button = isStr ? jsonUnescape(buttonStr) : std::string(buttonStr);
+                        
+                        std::string_view xStr = findRawValue(eventJson, "x", isStr);
+                        if (!xStr.empty()) event.x = parseStringToInt(xStr);
+                        
+                        std::string_view yStr = findRawValue(eventJson, "y", isStr);
+                        if (!yStr.empty()) event.y = parseStringToInt(yStr);
+                        
+                        seq.events.push_back(std::move(event));
+                        pos = endPos + 1;
+                    }
+                }
+            }
+            result.sequence = std::move(seq);
         }
 
         return result;

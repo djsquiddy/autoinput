@@ -79,6 +79,13 @@ namespace autoinput::ui
          */
         [[nodiscard]] const std::string& getTitle() const { return m_title; }
 
+        /**
+         * @brief Updates the window state.
+         * 
+         * This is called once per frame before rendering.
+         */
+        virtual void update() {}
+
     protected:
         /**
          * @brief Hook called when the window is opened.

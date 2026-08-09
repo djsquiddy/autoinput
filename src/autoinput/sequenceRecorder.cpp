@@ -32,10 +32,7 @@ namespace autoinput
         {
             if (keyStr == m_config.startKey && isDown)
             {
-                m_state = RecorderState::Recording;
-                m_startTime = std::chrono::steady_clock::now();
-                m_lastEventTime = m_startTime;
-                Logger::info("Recording started...\n");
+                start();
             }
             return;
         }
@@ -44,8 +41,12 @@ namespace autoinput
         {
             if (keyStr == m_config.endKey && isDown)
             {
-                m_state = RecorderState::Finished;
-                Logger::info("Recording finished.\n");
+                stop();
+                return;
+            }
+
+            if (!m_config.recordKeyboardEvents)
+            {
                 return;
             }
 
@@ -59,7 +60,7 @@ namespace autoinput
 
     void SequenceRecorder::onMouseEvent(const Mouse& mouse, const bool isDown, const int32_t x, const int32_t y, const bool isSynthetic)
     {
-        if (isSynthetic || m_state != RecorderState::Recording)
+        if (isSynthetic || m_state != RecorderState::Recording || !m_config.recordMouseClicks)
         {
             return;
         }
@@ -95,6 +96,53 @@ namespace autoinput
         m_lastMouseMoveTime = now;
     }
 
+    void SequenceRecorder::start()
+    {
+        if (m_state == RecorderState::Waiting)
+        {
+            m_state = RecorderState::Recording;
+            m_startTime = std::chrono::steady_clock::now();
+            m_lastEventTime = m_startTime;
+            Logger::info("Recording started...\n");
+        }
+    }
+
+    void SequenceRecorder::pause()
+    {
+        if (m_state == RecorderState::Recording)
+        {
+            m_state = RecorderState::Paused;
+            Logger::info("Recording paused.\n");
+        }
+    }
+
+    void SequenceRecorder::resume()
+    {
+        if (m_state == RecorderState::Paused)
+        {
+            m_state = RecorderState::Recording;
+            // Adjust last event time to avoid long pause gap
+            m_lastEventTime = std::chrono::steady_clock::now();
+            Logger::info("Recording resumed.\n");
+        }
+    }
+
+    void SequenceRecorder::stop()
+    {
+        if (m_state == RecorderState::Recording || m_state == RecorderState::Paused)
+        {
+            m_state = RecorderState::Finished;
+            Logger::info("Recording finished.\n");
+        }
+    }
+
+    void SequenceRecorder::cancel()
+    {
+        m_state = RecorderState::Cancelled;
+        m_sequence.events.clear();
+        Logger::info("Recording cancelled.\n");
+    }
+
     void SequenceRecorder::addEvent(RecordedEvent event)
     {
         m_sequence.events.emplace_back(std::move(event));
@@ -103,6 +151,10 @@ namespace autoinput
 
     std::string SequenceRecorder::getElapsedDelay() const
     {
+        if (!m_config.recordDelays)
+        {
+            return "0ms";
+        }
         const auto now = std::chrono::steady_clock::now();
         const auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastEventTime);
         return std::format("{}ms", diff.count());

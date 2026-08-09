@@ -62,6 +62,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/windows/logViewerWindow.h
             ${CMAKE_CURRENT_LIST_DIR}/windows/backendDiagnosticsWindow.cpp
             ${CMAKE_CURRENT_LIST_DIR}/windows/backendDiagnosticsWindow.h
+            ${CMAKE_CURRENT_LIST_DIR}/windows/sequenceRecorderWindow.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/windows/sequenceRecorderWindow.h
 
             # External sources
             ${IMGUI_SOURCES}

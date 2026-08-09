@@ -64,6 +64,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("backend-diagnostics");
                 }
+                if (ImGui::MenuItem("Sequence Recorder"))
+                {
+                    m_windows.open("sequence-recorder");
+                }
                 ImGui::Separator();
                 if (ImGui::MenuItem("ImGui Demo", nullptr, m_showDemoWindow))
                 {
@@ -116,6 +120,11 @@ namespace autoinput::ui
         if (ImGui::Button("Diagnostics"))
         {
             m_windows.open("backend-diagnostics");
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Sequence Recorder"))
+        {
+            m_windows.open("sequence-recorder");
         }
 
         ImGui::Separator();

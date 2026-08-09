@@ -152,6 +152,51 @@ namespace autoinput
         }
     }
 
+    void AutomationController::startRecording(const SequenceConfig& config)
+    {
+        if (m_program)
+        {
+            m_program->startRecording(config);
+        }
+    }
+
+    void AutomationController::stopRecording()
+    {
+        if (m_program)
+        {
+            m_program->stopRecording();
+        }
+    }
+
+    void AutomationController::pauseRecording()
+    {
+        if (m_program)
+        {
+            m_program->pauseRecording();
+        }
+    }
+
+    void AutomationController::resumeRecording()
+    {
+        if (m_program)
+        {
+            m_program->resumeRecording();
+        }
+    }
+
+    void AutomationController::discardRecording()
+    {
+        if (m_program)
+        {
+            m_program->discardRecording();
+        }
+    }
+
+    const RecordedSequence* AutomationController::getRecordedSequence() const
+    {
+        return m_program ? m_program->getRecordedSequence() : nullptr;
+    }
+
     IPlatformBackend* AutomationController::getBackend() const
     {
         return m_program ? m_program->getBackend() : nullptr;

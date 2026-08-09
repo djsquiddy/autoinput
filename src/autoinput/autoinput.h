@@ -35,6 +35,10 @@ namespace autoinput
         bool active = false;
         std::string triggeredCommandName;
         std::optional<bool> triggeredCommandActive;
+
+        bool recording = false;
+        bool recordingPaused = false;
+        uint32_t recordedEventCount = 0;
     };
 
     using StatusCallback = std::function<void(const ProgramStatus&)>;
@@ -201,7 +205,14 @@ namespace autoinput
          */
         void updateStatusIndicator(const std::string& triggeredCommandName = "", std::optional<bool> triggeredCommandActive = std::nullopt);
 
-        void setStatusCallback(StatusCallback callback);;
+        void setStatusCallback(StatusCallback callback);
+
+        void startRecording(const SequenceConfig& config);
+        void stopRecording();
+        void pauseRecording();
+        void resumeRecording();
+        void discardRecording();
+        [[nodiscard]] const RecordedSequence* getRecordedSequence() const;
 
     private:
         StatusCallback m_statusCallback{ nullptr };

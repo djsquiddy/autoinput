@@ -651,8 +651,11 @@ namespace autoinput
             }
         }
 
+        const bool recording = m_recorder && (m_recorder->getState() == RecorderState::Recording || m_recorder->getState() == RecorderState::Paused);
+
         if (isActive != m_lastIsActiveIndicator || 
-            (!triggeredCommandName.empty() && (triggeredCommandName != m_lastTriggeredCommandName || triggeredCommandActive != m_lastTriggeredCommandActive)))
+            (!triggeredCommandName.empty() && (triggeredCommandName != m_lastTriggeredCommandName || triggeredCommandActive != m_lastTriggeredCommandActive)) ||
+            recording)
         {
             if (m_notificationService)
             {
@@ -688,7 +691,19 @@ namespace autoinput
 
             if (m_statusCallback)
             {
-                m_statusCallback({ isActive, triggeredCommandName, triggeredCommandActive });
+                ProgramStatus status;
+                status.active = isActive;
+                status.triggeredCommandName = triggeredCommandName;
+                status.triggeredCommandActive = triggeredCommandActive;
+                
+                if (m_recorder)
+                {
+                    status.recording = recording;
+                    status.recordingPaused = m_recorder->getState() == RecorderState::Paused;
+                    status.recordedEventCount = static_cast<uint32_t>(m_recorder->getSequence().events.size());
+                }
+
+                m_statusCallback(status);
             }
 
             m_lastIsActiveIndicator = isActive;
@@ -763,6 +778,55 @@ namespace autoinput
     void Program::setStatusCallback(StatusCallback callback)
     {
         m_statusCallback = std::move(callback);
+    }
+
+    void Program::startRecording(const SequenceConfig& config)
+    {
+        m_recorder = std::make_unique<SequenceRecorder>(config);
+        m_recorder->start();
+        updateStatusIndicator();
+    }
+
+    void Program::stopRecording()
+    {
+        if (m_recorder)
+        {
+            m_recorder->stop();
+            updateStatusIndicator();
+        }
+    }
+
+    void Program::pauseRecording()
+    {
+        if (m_recorder)
+        {
+            m_recorder->pause();
+            updateStatusIndicator();
+        }
+    }
+
+    void Program::resumeRecording()
+    {
+        if (m_recorder)
+        {
+            m_recorder->resume();
+            updateStatusIndicator();
+        }
+    }
+
+    void Program::discardRecording()
+    {
+        if (m_recorder)
+        {
+            m_recorder->cancel();
+            m_recorder.reset();
+            updateStatusIndicator();
+        }
+    }
+
+    const RecordedSequence* Program::getRecordedSequence() const
+    {
+        return m_recorder ? &m_recorder->getSequence() : nullptr;
     }
 
     bool installHooks()

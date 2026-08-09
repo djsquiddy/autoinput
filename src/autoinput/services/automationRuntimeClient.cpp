@@ -92,6 +92,9 @@ namespace autoinput::services
         auto result = parseRuntimeResponse(*responseJson);
         m_status = result.status;
         m_lastMessage = result.message;
+        this->m_recording = result.recording;
+        this->m_recordingPaused = result.recordingPaused;
+        this->m_recordedEventCount = result.recordedEventCount;
         return result;
     }
 
@@ -135,7 +138,90 @@ namespace autoinput::services
         auto res = parseRuntimeResponse(*response);
         m_status = res.status;
         m_lastMessage = res.message;
+        this->m_recording = res.recording;
+        this->m_recordingPaused = res.recordingPaused;
+        this->m_recordedEventCount = res.recordedEventCount;
         return res;
+    }
+
+    RuntimeOperationResult ProcessAutomationRuntimeClient::startRecording(const SequenceConfig& config)
+    {
+        const std::uint64_t id = m_nextRequestId++;
+        const std::string request = buildStartRecordingRequest(id, config);
+        
+        if (!m_transport->writeLine(request))
+        {
+            return { false, m_status, "Failed to write to transport." };
+        }
+
+        auto response = m_transport->readLine(std::chrono::milliseconds(5000));
+        if (!response)
+        {
+            return { false, m_status, "Failed to read from transport (timeout)." };
+        }
+
+        auto res = parseRuntimeResponse(*response);
+        m_status = res.status;
+        m_lastMessage = res.message;
+        this->m_recording = res.recording;
+        this->m_recordingPaused = res.recordingPaused;
+        this->m_recordedEventCount = res.recordedEventCount;
+        return res;
+    }
+
+    RuntimeOperationResult ProcessAutomationRuntimeClient::stopRecording()
+    {
+        return sendRequest(m_nextRequestId++, "stop_recording");
+    }
+
+    RuntimeOperationResult ProcessAutomationRuntimeClient::pauseRecording()
+    {
+        return sendRequest(m_nextRequestId++, "pause_recording");
+    }
+
+    RuntimeOperationResult ProcessAutomationRuntimeClient::resumeRecording()
+    {
+        return sendRequest(m_nextRequestId++, "resume_recording");
+    }
+
+    RuntimeOperationResult ProcessAutomationRuntimeClient::discardRecording()
+    {
+        return sendRequest(m_nextRequestId++, "discard_recording");
+    }
+
+    std::optional<RecordedSequence> ProcessAutomationRuntimeClient::getRecordedSequence() const
+    {
+        const std::uint64_t id = m_nextRequestId++;
+        const std::string request = buildGetRecordedSequenceRequest(id);
+        
+        if (!m_transport->writeLine(request))
+        {
+            return std::nullopt;
+        }
+
+        auto response = m_transport->readLine(std::chrono::milliseconds(10000)); // Longer timeout for large sequences
+        if (!response)
+        {
+            return std::nullopt;
+        }
+
+        auto res = parseRuntimeResponse(*response);
+        return res.sequence;
+    }
+
+    bool ProcessAutomationRuntimeClient::isRecording() const
+    {
+        return m_recording;
+    }
+
+    bool ProcessAutomationRuntimeClient::isRecordingPaused() const
+    {
+        return m_recordingPaused;
+    }
+
+    uint32_t ProcessAutomationRuntimeClient::getRecordedEventCount() const
+    {
+        return m_recordedEventCount;
     }
 
     std::string ProcessAutomationRuntimeClient::getActiveConfig() const
@@ -216,6 +302,9 @@ namespace autoinput::services
         auto result = parseRuntimeResponse(*responseJson);
         m_status = result.status;
         m_lastMessage = result.message;
+        this->m_recording = result.recording;
+        this->m_recordingPaused = result.recordingPaused;
+        this->m_recordedEventCount = result.recordedEventCount;
         return result;
     }
 
@@ -224,6 +313,15 @@ namespace autoinput::services
     {
         m_controller.setStatusCallback([this](const ProgramStatus& status)
         {
+            if (status.active || status.recording)
+            {
+                m_status = RuntimeStatus::Running;
+            }
+            else
+            {
+                m_status = RuntimeStatus::Stopped;
+            }
+            
             if (status.active)
             {
                 m_activeCommand = status.triggeredCommandName;
@@ -232,6 +330,10 @@ namespace autoinput::services
             {
                 m_activeCommand.clear();
             }
+
+            this->m_recording = status.recording;
+            this->m_recordingPaused = status.recordingPaused;
+            this->m_recordedEventCount = status.recordedEventCount;
         });
     }
 
@@ -473,6 +575,58 @@ namespace autoinput::services
 #endif
         svc.notifyStatus(true, std::format("{}: {}", title, message));
         return { true, m_status, "Notification sent" };
+    }
+
+    RuntimeOperationResult InProcessAutomationRuntimeClient::startRecording(const SequenceConfig& config)
+    {
+        m_controller.startRecording(config);
+        return { true, m_status, "Recording started." };
+    }
+
+    RuntimeOperationResult InProcessAutomationRuntimeClient::stopRecording()
+    {
+        m_controller.stopRecording();
+        return { true, m_status, "Recording stopped." };
+    }
+
+    RuntimeOperationResult InProcessAutomationRuntimeClient::pauseRecording()
+    {
+        m_controller.pauseRecording();
+        return { true, m_status, "Recording paused." };
+    }
+
+    RuntimeOperationResult InProcessAutomationRuntimeClient::resumeRecording()
+    {
+        m_controller.resumeRecording();
+        return { true, m_status, "Recording resumed." };
+    }
+
+    RuntimeOperationResult InProcessAutomationRuntimeClient::discardRecording()
+    {
+        m_controller.discardRecording();
+        return { true, m_status, "Recording discarded." };
+    }
+
+    std::optional<RecordedSequence> InProcessAutomationRuntimeClient::getRecordedSequence() const
+    {
+        auto seq = m_controller.getRecordedSequence();
+        if (seq) return *seq;
+        return std::nullopt;
+    }
+
+    bool InProcessAutomationRuntimeClient::isRecording() const
+    {
+        return m_recording;
+    }
+
+    bool InProcessAutomationRuntimeClient::isRecordingPaused() const
+    {
+        return m_recordingPaused;
+    }
+
+    uint32_t InProcessAutomationRuntimeClient::getRecordedEventCount() const
+    {
+        return m_recordedEventCount;
     }
 
     std::unique_ptr<IAutomationRuntimeClient> createAutomationRuntimeClient(AutomationRuntimeClientMode mode)
