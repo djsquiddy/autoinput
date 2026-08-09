@@ -117,6 +117,10 @@ namespace autoinput::cli
             {
                 result = runtime.resume();
             }
+            else if (request.method == "run_command")
+            {
+                result = runtime.runCommand(request.config, request.command);
+            }
             else if (request.method == "status")
             {
                 result = { true, runtime.getStatus(), "Status retrieved." };

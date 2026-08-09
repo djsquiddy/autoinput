@@ -46,6 +46,7 @@ namespace autoinput::services
         [[nodiscard]] virtual RuntimeOperationResult stop() = 0;
         [[nodiscard]] virtual RuntimeOperationResult pause() = 0;
         [[nodiscard]] virtual RuntimeOperationResult resume() = 0;
+        [[nodiscard]] virtual RuntimeOperationResult runCommand(std::string_view configName, std::string_view commandName) = 0;
         [[nodiscard]] virtual RuntimeStatus getStatus() const = 0;
         
         [[nodiscard]] virtual std::string getActiveConfig() const = 0;
@@ -64,6 +65,7 @@ namespace autoinput::services
         [[nodiscard]] RuntimeOperationResult stop() override;
         [[nodiscard]] RuntimeOperationResult pause() override;
         [[nodiscard]] RuntimeOperationResult resume() override;
+        [[nodiscard]] RuntimeOperationResult runCommand(std::string_view configName, std::string_view commandName) override;
         [[nodiscard]] RuntimeStatus getStatus() const override;
 
         [[nodiscard]] std::string getActiveConfig() const override;
@@ -90,6 +92,7 @@ namespace autoinput::services
         [[nodiscard]] RuntimeOperationResult stop() override;
         [[nodiscard]] RuntimeOperationResult pause() override;
         [[nodiscard]] RuntimeOperationResult resume() override;
+        [[nodiscard]] RuntimeOperationResult runCommand(std::string_view configName, std::string_view commandName) override;
         [[nodiscard]] RuntimeStatus getStatus() const override;
 
         [[nodiscard]] std::string getActiveConfig() const override;

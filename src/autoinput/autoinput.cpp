@@ -453,6 +453,18 @@ namespace autoinput
         }
     }
 
+    void Program::runCommand(std::string_view name)
+    {
+        for (const KeyInfo& keyInfo : m_keyInfo)
+        {
+            if (keyInfo.name == name)
+            {
+                start(keyInfo);
+                return;
+            }
+        }
+    }
+
     void Program::end()
     {
         for (auto& mouseHandler : m_mouseHandlers | std::views::values)

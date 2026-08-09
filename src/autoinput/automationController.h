@@ -34,6 +34,8 @@ namespace autoinput
 
         void setStatusCallback(StatusCallback callback);
 
+        void runCommand(std::string_view name);
+
     private:
         StatusCallback m_statusCallback{ nullptr };
         std::unique_ptr<Program> m_program;

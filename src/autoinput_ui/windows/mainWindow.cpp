@@ -52,6 +52,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("runtime-dashboard");
                 }
+                if (ImGui::MenuItem("Command Runner"))
+                {
+                    m_windows.open("command-runner");
+                }
                 ImGui::Separator();
                 if (ImGui::MenuItem("ImGui Demo", nullptr, m_showDemoWindow))
                 {

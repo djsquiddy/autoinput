@@ -57,6 +57,43 @@ namespace autoinput::services
         return sendRequest(m_nextRequestId++, "resume");
     }
 
+    RuntimeOperationResult ProcessAutomationRuntimeClient::runCommand(std::string_view configName, std::string_view commandName)
+    {
+        if (!m_transport)
+        {
+            return { false, RuntimeStatus::Stopped, "Transport not initialized." };
+        }
+
+        const std::uint64_t id = m_nextRequestId++;
+        const std::string request = buildRunCommandRequest(id, configName, commandName);
+
+        if (!m_transport->writeLine(request))
+        {
+            m_status = RuntimeStatus::Error;
+            const std::string error = m_transport->lastError();
+            m_lastMessage = error.empty()
+                ? "Failed to write run_command request to transport."
+                : std::format("Failed to write run_command request to transport: {}", error);
+            return { false, RuntimeStatus::Error, m_lastMessage };
+        }
+
+        auto responseJson = m_transport->readLine();
+        if (!responseJson)
+        {
+            m_status = RuntimeStatus::Error;
+            const std::string error = m_transport->lastError();
+            m_lastMessage = error.empty()
+                ? "Failed to read run_command response from transport."
+                : std::format("Failed to read run_command response from transport: {}", error);
+            return { false, RuntimeStatus::Error, m_lastMessage };
+        }
+
+        auto result = parseRuntimeResponse(*responseJson);
+        m_status = result.status;
+        m_lastMessage = result.message;
+        return result;
+    }
+
     RuntimeStatus ProcessAutomationRuntimeClient::getStatus() const
     {
         return m_status;
@@ -285,11 +322,34 @@ namespace autoinput::services
 
     RuntimeOperationResult InProcessAutomationRuntimeClient::resume()
     {
-        return {
-            .success = false,
-            .status = getStatus(),
-            .message = "Resume is not supported by the in-process automation runtime yet."
-        };
+        m_controller.resume();
+        m_status = RuntimeStatus::Running;
+        m_lastMessage = "Automation resumed.";
+        return { true, RuntimeStatus::Running, m_lastMessage };
+    }
+
+    RuntimeOperationResult InProcessAutomationRuntimeClient::runCommand(std::string_view configName, std::string_view commandName)
+    {
+        try
+        {
+            if (m_status != RuntimeStatus::Running || m_currentConfig != configName)
+            {
+                auto startResult = start(configName);
+                if (!startResult.success)
+                {
+                    return startResult;
+                }
+            }
+
+            m_controller.runCommand(commandName);
+            m_lastMessage = std::format("Command '{}' triggered.", commandName);
+            return { true, m_status, m_lastMessage };
+        }
+        catch (const std::exception& e)
+        {
+            m_lastMessage = std::format("Error triggering command: {}", e.what());
+            return { false, m_status, m_lastMessage };
+        }
     }
 
     RuntimeStatus InProcessAutomationRuntimeClient::getStatus() const

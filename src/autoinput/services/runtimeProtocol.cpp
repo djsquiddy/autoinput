@@ -191,6 +191,12 @@ namespace autoinput::services
         return std::format("{{\"id\":{},\"method\":\"start\",\"params\":{{\"config\":\"{}\"}}}}", id, jsonEscape(configName));
     }
 
+    std::string buildRunCommandRequest(std::uint64_t id, std::string_view configName, std::string_view commandName)
+    {
+        return std::format("{{\"id\":{},\"method\":\"run_command\",\"params\":{{\"config\":\"{}\",\"command\":\"{}\"}}}}", 
+            id, jsonEscape(configName), jsonEscape(commandName));
+    }
+
     std::string buildRuntimeResponse(std::uint64_t id, const RuntimeOperationResult& result)
     {
         return std::format("{{\"id\":{},\"success\":{},\"status\":\"{}\",\"message\":\"{}\"}}",
@@ -272,6 +278,32 @@ namespace autoinput::services
             if (request.config.empty())
             {
                 request.error = "Missing config for start request.";
+                return request;
+            }
+        }
+        else if (request.method == "run_command")
+        {
+            auto paramsPos = json.find("\"params\"");
+            if (paramsPos != std::string_view::npos)
+            {
+                std::string_view paramsSub = json.substr(paramsPos);
+                
+                std::string_view configStr = findRawValue(paramsSub, "config", isString);
+                if (!configStr.empty())
+                {
+                    request.config = isString ? jsonUnescape(configStr) : std::string(configStr);
+                }
+
+                std::string_view commandStr = findRawValue(paramsSub, "command", isString);
+                if (!commandStr.empty())
+                {
+                    request.command = isString ? jsonUnescape(commandStr) : std::string(commandStr);
+                }
+            }
+
+            if (request.command.empty())
+            {
+                request.error = "Missing command for run_command request.";
                 return request;
             }
         }

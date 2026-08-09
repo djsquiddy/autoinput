@@ -126,6 +126,12 @@ namespace autoinput
         void end();
 
         /**
+         * @brief Programmatically runs a command by name.
+         * @param name The name of the command to run.
+         */
+        void runCommand(std::string_view name);
+
+        /**
          * @brief Gets the list of key information configured.
          * @return A const reference to the vector of KeyInfo.
          */

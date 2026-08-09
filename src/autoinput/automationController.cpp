@@ -143,4 +143,12 @@ namespace autoinput
         // TODO: implement
         m_paused = true;
     }
+
+    void AutomationController::runCommand(std::string_view name)
+    {
+        if (m_program && m_running)
+        {
+            m_program->runCommand(name);
+        }
+    }
 }

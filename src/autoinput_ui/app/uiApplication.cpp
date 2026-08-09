@@ -11,6 +11,7 @@
 #include "../windows/configEditorWindow.h"
 #include "../windows/runtimeWindow.h"
 #include "../windows/runtimeDashboardWindow.h"
+#include "../windows/commandRunnerWindow.h"
 #include "autoinput/config.h"
 #include "autoinput/logger.h"
 #include "autoinput/services/automationRuntimeClient.h"
@@ -62,6 +63,7 @@ namespace autoinput::ui
         m_windowManager->addWindow<ConfigEditorWindow>("config-editor");
         m_windowManager->addWindow<RuntimeWindow>("runtime", getRuntimeClient());
         m_windowManager->addWindow<RuntimeDashboardWindow>("runtime-dashboard", getRuntimeClient());
+        m_windowManager->addWindow<CommandRunnerWindow>("command-runner", getRuntimeClient(), SystemEnvironment::instance());
         
         m_windowManager->open("main");
     }

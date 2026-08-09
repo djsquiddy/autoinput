@@ -34,6 +34,11 @@ namespace autoinput::services
             buildStartRuntimeRequest(1, "my \"config\""),
             "{\"id\":1,\"method\":\"start\",\"params\":{\"config\":\"my \\\"config\\\"\"}}"
         );
+
+        EXPECT_EQ(
+            buildRunCommandRequest(4, "my-config", "my-command"),
+            "{\"id\":4,\"method\":\"run_command\",\"params\":{\"config\":\"my-config\",\"command\":\"my-command\"}}"
+        );
     }
 
     TEST(RuntimeProtocolTest, BuildResponse)
@@ -81,6 +86,12 @@ namespace autoinput::services
         );
         EXPECT_TRUE(req.valid);
         EXPECT_EQ(req.config, "my \"config\"");
+
+        req = parseRuntimeRequest("{\"id\":4,\"method\":\"run_command\",\"params\":{\"config\":\"c\",\"command\":\"cmd\"}}");
+        EXPECT_TRUE(req.valid);
+        EXPECT_EQ(req.method, "run_command");
+        EXPECT_EQ(req.config, "c");
+        EXPECT_EQ(req.command, "cmd");
     }
 
     TEST(RuntimeProtocolTest, ParseInvalidRequest)
@@ -113,6 +124,10 @@ namespace autoinput::services
         req = parseRuntimeRequest("{\"id\":1,\"method\":\"start\",\"params\":{\"config\":\"\"}}");
         EXPECT_FALSE(req.valid);
         EXPECT_EQ(req.error, "Missing config for start request.");
+
+        req = parseRuntimeRequest("{\"id\":1,\"method\":\"run_command\",\"params\":{\"config\":\"c\"}}");
+        EXPECT_FALSE(req.valid);
+        EXPECT_EQ(req.error, "Missing command for run_command request.");
 
         req = parseRuntimeRequest("{\"id\":1,\"method\":123}");
         EXPECT_FALSE(req.valid);
