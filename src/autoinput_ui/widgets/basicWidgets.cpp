@@ -26,4 +26,24 @@ namespace autoinput::ui::widgets
         }
         ImGui::PopStyleColor();
     }
+
+    void RuntimeStatusIndicator(const std::string& status)
+    {
+        ImVec4 color(1.0f, 1.0f, 1.0f, 1.0f); // Default white
+
+        if (status == "Running" || status == "Healthy")
+        {
+            color = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // Green
+        }
+        else if (status == "Idle" || status == "Warning" || status == "Starting" || status == "Paused" || status == "Stopped")
+        {
+            color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
+        }
+        else if (status == "Error")
+        {
+            color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Red
+        }
+
+        ImGui::TextColored(color, "%s", status.c_str());
+    }
 }

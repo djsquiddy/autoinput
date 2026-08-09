@@ -41,6 +41,13 @@ namespace autoinput::ui::widgets
      * @param errors The errors to display.
      */
     void ValidationErrors(std::span<const ValidationError> errors);
+
+    /**
+     * @brief Renders a runtime status indicator with color.
+     * 
+     * @param status The runtime status to display.
+     */
+    void RuntimeStatusIndicator(const std::string& status);
     
     /**
      * @brief Executes a widget function and marks a boolean as dirty if the widget reports a change.

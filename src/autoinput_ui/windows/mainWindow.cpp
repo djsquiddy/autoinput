@@ -48,6 +48,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("runtime");
                 }
+                if (ImGui::MenuItem("Runtime Dashboard"))
+                {
+                    m_windows.open("runtime-dashboard");
+                }
                 ImGui::Separator();
                 if (ImGui::MenuItem("ImGui Demo", nullptr, m_showDemoWindow))
                 {
@@ -80,6 +84,11 @@ namespace autoinput::ui
         if (ImGui::Button("Automation Runtime"))
         {
             m_windows.open("runtime");
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Runtime Dashboard"))
+        {
+            m_windows.open("runtime-dashboard");
         }
         ImGui::SameLine();
         if (ImGui::Button("Settings"))

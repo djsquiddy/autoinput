@@ -54,6 +54,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/windows/aboutWindow.h
             ${CMAKE_CURRENT_LIST_DIR}/windows/runtimeWindow.cpp
             ${CMAKE_CURRENT_LIST_DIR}/windows/runtimeWindow.h
+            ${CMAKE_CURRENT_LIST_DIR}/windows/runtimeDashboardWindow.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/windows/runtimeDashboardWindow.h
 
             # External sources
             ${IMGUI_SOURCES}

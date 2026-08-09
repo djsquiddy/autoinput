@@ -62,6 +62,26 @@ namespace autoinput::services
         return m_status;
     }
 
+    std::string ProcessAutomationRuntimeClient::getActiveConfig() const
+    {
+        return ""; // Not implemented for process client yet
+    }
+
+    std::string ProcessAutomationRuntimeClient::getActiveCommand() const
+    {
+        return ""; // Not implemented for process client yet
+    }
+
+    std::string ProcessAutomationRuntimeClient::getLastMessage() const
+    {
+        return m_lastMessage;
+    }
+
+    bool ProcessAutomationRuntimeClient::isBackendAvailable() const
+    {
+        return m_transport && m_transport->running();
+    }
+
     RuntimeOperationResult ProcessAutomationRuntimeClient::sendRequest(std::uint64_t id, std::string_view method, std::string_view config)
     {
         if (!m_transport)
@@ -92,12 +112,13 @@ namespace autoinput::services
         {
             m_status = RuntimeStatus::Error;
             const std::string error = m_transport->lastError();
+            m_lastMessage = error.empty()
+                ? "Failed to write request to transport."
+                : std::format("Failed to write request to transport: {}", error);
             return {
                 false,
                 RuntimeStatus::Error,
-                error.empty()
-                    ? "Failed to write request to transport."
-                    : std::format("Failed to write request to transport: {}", error)
+                m_lastMessage
             };
         }
 
@@ -106,23 +127,36 @@ namespace autoinput::services
         {
             m_status = RuntimeStatus::Error;
             const std::string error = m_transport->lastError();
+            m_lastMessage = error.empty()
+                ? "Failed to read response from transport."
+                : std::format("Failed to read response from transport: {}", error);
             return {
                 false,
                 RuntimeStatus::Error,
-                error.empty()
-                    ? "Failed to read response from transport."
-                    : std::format("Failed to read response from transport: {}", error)
+                m_lastMessage
             };
         }
 
         auto result = parseRuntimeResponse(*responseJson);
         m_status = result.status;
+        m_lastMessage = result.message;
         return result;
     }
 
     InProcessAutomationRuntimeClient::InProcessAutomationRuntimeClient(const IEnvironment& environment)
         : m_configService{ environment }
     {
+        m_controller.setStatusCallback([this](const ProgramStatus& status)
+        {
+            if (status.active)
+            {
+                m_activeCommand = status.triggeredCommandName;
+            }
+            else
+            {
+                m_activeCommand.clear();
+            }
+        });
     }
 
     InProcessAutomationRuntimeClient::~InProcessAutomationRuntimeClient()
@@ -168,28 +202,31 @@ namespace autoinput::services
 
             m_currentConfig = std::string(configName);
             m_status = RuntimeStatus::Running;
+            m_lastMessage = std::format("Automation started with config: {}", configName);
             return {
                 .success = true,
                 .status = RuntimeStatus::Running,
-                .message = std::format("Automation started with config: {}", configName)
+                .message = m_lastMessage
             };
         }
         catch (const std::exception& e)
         {
             m_status = RuntimeStatus::Error;
+            m_lastMessage = std::format("Unhandled exception while starting automation runtime: {}", e.what());
             return {
                 .success = false,
                 .status = RuntimeStatus::Error,
-                .message = std::format("Unhandled exception while starting automation runtime: {}", e.what())
+                .message = m_lastMessage
             };
         }
         catch (...)
         {
             m_status = RuntimeStatus::Error;
+            m_lastMessage = "Unknown error while starting automation runtime.";
             return {
                 .success = false,
                 .status = RuntimeStatus::Error,
-                .message = "Unknown error while starting automation runtime."
+                .message = m_lastMessage
             };
         }
     }
@@ -205,30 +242,34 @@ namespace autoinput::services
 
             m_status = RuntimeStatus::Stopped;
             m_currentConfig.clear();
+            m_activeCommand.clear();
+            m_lastMessage = "Automation stopped.";
             return {
                 .success = true,
                 .status = RuntimeStatus::Stopped,
-                .message = "Automation stopped."
+                .message = m_lastMessage
             };
         }
         catch (const std::exception& e)
         {
             m_status = RuntimeStatus::Error;
-            Logger::error("Unhandled exception while stopping automation runtime: {}", e.what());
+            m_lastMessage = e.what();
+            Logger::error("Unhandled exception while stopping automation runtime: {}", m_lastMessage);
             return {
                 .success = false,
                 .status = RuntimeStatus::Error,
-                .message = e.what()
+                .message = m_lastMessage
             };
         }
         catch (...)
         {
             m_status = RuntimeStatus::Error;
-            Logger::error("Unknown error while stopping automation runtime.");
+            m_lastMessage = "Unknown error while stopping automation runtime.";
+            Logger::error(m_lastMessage);
             return {
                 .success = false,
                 .status = RuntimeStatus::Error,
-                .message = "Unknown error while stopping automation runtime."
+                .message = m_lastMessage
             };
         }
     }
@@ -266,9 +307,24 @@ namespace autoinput::services
         return RuntimeStatus::Stopped;
     }
 
-    std::string_view InProcessAutomationRuntimeClient::getCurrentConfig() const
+    std::string InProcessAutomationRuntimeClient::getActiveConfig() const
     {
         return m_currentConfig;
+    }
+
+    std::string InProcessAutomationRuntimeClient::getActiveCommand() const
+    {
+        return m_activeCommand;
+    }
+
+    std::string InProcessAutomationRuntimeClient::getLastMessage() const
+    {
+        return m_lastMessage;
+    }
+
+    bool InProcessAutomationRuntimeClient::isBackendAvailable() const
+    {
+        return true; // In-process is always available if we got here
     }
 
     std::unique_ptr<IAutomationRuntimeClient> createAutomationRuntimeClient(AutomationRuntimeClientMode mode)

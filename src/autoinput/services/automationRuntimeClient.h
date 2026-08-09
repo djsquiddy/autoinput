@@ -47,6 +47,11 @@ namespace autoinput::services
         [[nodiscard]] virtual RuntimeOperationResult pause() = 0;
         [[nodiscard]] virtual RuntimeOperationResult resume() = 0;
         [[nodiscard]] virtual RuntimeStatus getStatus() const = 0;
+        
+        [[nodiscard]] virtual std::string getActiveConfig() const = 0;
+        [[nodiscard]] virtual std::string getActiveCommand() const = 0;
+        [[nodiscard]] virtual std::string getLastMessage() const = 0;
+        [[nodiscard]] virtual bool isBackendAvailable() const = 0;
     };
 
     class ProcessAutomationRuntimeClient final : public IAutomationRuntimeClient
@@ -61,12 +66,18 @@ namespace autoinput::services
         [[nodiscard]] RuntimeOperationResult resume() override;
         [[nodiscard]] RuntimeStatus getStatus() const override;
 
+        [[nodiscard]] std::string getActiveConfig() const override;
+        [[nodiscard]] std::string getActiveCommand() const override;
+        [[nodiscard]] std::string getLastMessage() const override;
+        [[nodiscard]] bool isBackendAvailable() const override;
+
     private:
         RuntimeOperationResult sendRequest(std::uint64_t id, std::string_view method, std::string_view config = "");
         
         std::unique_ptr<IProcessTransport> m_transport;
         mutable RuntimeStatus m_status{ RuntimeStatus::Stopped };
         mutable std::uint64_t m_nextRequestId{ 1 };
+        mutable std::string m_lastMessage;
     };
 
     class InProcessAutomationRuntimeClient final : public IAutomationRuntimeClient
@@ -81,13 +92,18 @@ namespace autoinput::services
         [[nodiscard]] RuntimeOperationResult resume() override;
         [[nodiscard]] RuntimeStatus getStatus() const override;
 
-        [[nodiscard]] std::string_view getCurrentConfig() const;
+        [[nodiscard]] std::string getActiveConfig() const override;
+        [[nodiscard]] std::string getActiveCommand() const override;
+        [[nodiscard]] std::string getLastMessage() const override;
+        [[nodiscard]] bool isBackendAvailable() const override;
 
     private:
         ConfigService m_configService;
         AutomationController m_controller;
         RuntimeStatus m_status{ RuntimeStatus::Stopped };
         std::string m_currentConfig;
+        std::string m_activeCommand;
+        std::string m_lastMessage;
     };
 
     enum class AutomationRuntimeClientMode
