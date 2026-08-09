@@ -11,6 +11,7 @@
 
 namespace autoinput::ui
 {
+    class IUiBackend;
     class WindowManager;
 
     /**
@@ -57,6 +58,7 @@ namespace autoinput::ui
         void render();
 
         bool m_shouldClose{ false };
+        std::unique_ptr<IUiBackend> m_uiBackend;
         std::unique_ptr<WindowManager> m_windowManager;
     };
 }

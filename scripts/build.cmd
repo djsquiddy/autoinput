@@ -3,6 +3,9 @@ setlocal
 set "CURRENT_DIR=%~dp0"
 set "BuildType=%~1"
 if "%BuildType%"=="" set "BuildType=Release"
+set "BUILD_TESTS=OFF"
+set "BUILD_TRAY=OFF"
+set "BUILD_UI=OFF"
 
 pushd "%CURRENT_DIR%\.." || exit /b 1
 
@@ -13,13 +16,18 @@ pushd "%CURRENT_DIR%\.." || exit /b 1
 
     pushd build || goto :end
         echo Running CMake...
-        cmake -G Ninja -DCMAKE_BUILD_TYPE=%BuildType% .. || goto :end
+        cmake -G Ninja^
+            -DCMAKE_BUILD_TYPE=%BuildType%^
+            -DAUTOINPUT_BUILD_TESTS=%BUILD_TESTS%^
+            -DAUTOINPUT_BUILD_TRAY=%BUILD_TRAY%^
+            -DAUTOINPUT_BUILD_UI=%BUILD_UI%^
+            .. || goto :end
         echo Finished running CMake.
         echo Rebuilding...
         ninja || goto :end
         echo Finished rebuilding.
         echo Running tests...
-        .\bin\autoinput_tests.exe || goto :end
+        .\bin\autoinput-tests.exe || goto :end
         echo Finished running tests.
     popd
 popd

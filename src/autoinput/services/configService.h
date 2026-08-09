@@ -4,8 +4,8 @@
  * @date August 2026
  */
 
-#ifndef INCLUDE_AUTOINPUT_CONFIG_SERVICE_H
-#define INCLUDE_AUTOINPUT_CONFIG_SERVICE_H
+#ifndef INCLUDE_AUTOINPUT_SERVICES_CONFIG_SERVICE_H
+#define INCLUDE_AUTOINPUT_SERVICES_CONFIG_SERVICE_H
 #pragma once
 
 #include "autoinput/config.h"
@@ -49,4 +49,4 @@ namespace autoinput::services
 }
 
 
-#endif // INCLUDE_AUTOINPUT_CONFIG_SERVICE_H
+#endif // INCLUDE_AUTOINPUT_SERVICES_CONFIG_SERVICE_H

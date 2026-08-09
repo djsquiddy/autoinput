@@ -52,6 +52,8 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.cpp
             # Services
+            ${CMAKE_SOURCE_DIR}/src/autoinput/services/automationRuntimeClient.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/services/automationRuntimeClient.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/services/configService.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/services/configService.cpp
 
@@ -87,62 +89,6 @@ function(autoinput_get_common_sources output_var)
                 ${CMAKE_SOURCE_DIR}/src/autoinput/linux/autoInput_wayland.cpp
                 ${CMAKE_SOURCE_DIR}/src/autoinput/linux/internalData_linux.h
                 ${CMAKE_SOURCE_DIR}/src/autoinput/linux/notifications_linux.cpp
-        )
-    endif()
-
-    set(${output_var} ${sources} PARENT_SCOPE)
-endfunction()
-
-function(autoinput_get_test_sources output_var)
-    set(sources
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/keyTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/configMetadataTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/typesTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/utilsTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/argumentsTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/cliCommandTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/recorderArgumentsTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/recorderTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/configTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/configValidatorTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/configValidationIntegrationTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/validateConfigCliTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/duplicateConfigCliTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/runtimeConfigTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/positionalArgumentsTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseTriggerLogicTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/settingsTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/handlerTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/mousePrioritizationTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/notificationTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseTest_win32.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/win32/notificationWin32Test.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/signalCleanupTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/mouseModifierTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/userSettingsTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/sequenceTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/saveConfigTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/waitDelayTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/exclusivityTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/focusTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/stopTriggerTest_win32.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/configLookupTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/statusIndicatorTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/fixVerificationTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/multipleCommandNotificationTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/runCommandRefactorTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/configServiceTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/automationControllerTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/testEnvironment.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/backendTest_linux.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/backendCapabilitiesTest.cpp
-            ${CMAKE_SOURCE_DIR}/tests/autoinput/testUtils.h
-    )
-
-    if(UNIX AND NOT APPLE)
-        list(APPEND sources
-                ${CMAKE_SOURCE_DIR}/tests/autoinput/dispatchTest_linux.cpp
         )
     endif()
 

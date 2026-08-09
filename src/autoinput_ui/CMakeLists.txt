@@ -17,8 +17,8 @@ if(AUTOINPUT_BUILD_UI)
     set(AUTOINPUT_UI_SOURCES
             ${CMAKE_CURRENT_LIST_DIR}/main.cpp
             ${CMAKE_CURRENT_LIST_DIR}/ui.h
-            ${CMAKE_CURRENT_LIST_DIR}/imgui_impl_raylib.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/imgui_impl_raylib.h
+            core/uibackend.cpp
+            core/uibackend.h
 
             # App
             ${CMAKE_CURRENT_LIST_DIR}/app/uiApplication.cpp

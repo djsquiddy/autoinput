@@ -123,6 +123,12 @@ namespace autoinput
         m_running = false;
     }
 
+    void AutomationController::resume()
+    {
+        // TODO: implement
+        m_paused = false;
+    }
+
     void AutomationController::setStatusCallback(StatusCallback callback)
     {
         m_statusCallback = std::move(callback);
@@ -132,8 +138,9 @@ namespace autoinput
         }
     }
 
-    bool AutomationController::running() const
+    void AutomationController::pause()
     {
-        return m_running;
+        // TODO: implement
+        m_paused = true;
     }
 }

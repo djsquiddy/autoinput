@@ -26,7 +26,11 @@ namespace autoinput
 
         bool start(ProgramArguments arguments);
         void stop();
-        [[nodiscard]] bool running() const;
+        [[nodiscard]] bool running() const { return m_running; }
+        [[nodiscard]] bool paused() const { return m_paused; }
+
+        void pause();
+        void resume();
 
         void setStatusCallback(StatusCallback callback);
 
@@ -35,6 +39,7 @@ namespace autoinput
         std::unique_ptr<Program> m_program;
         std::jthread m_worker;
         std::atomic_bool m_running{ false };
+        std::atomic_bool m_paused{ false };
     };
 }
 

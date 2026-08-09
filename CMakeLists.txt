@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 4.2)
 project(autoinput VERSION 0.1.0 LANGUAGES CXX)
 
+set(PROJECT_NAME_TEST ${PROJECT_NAME}-test)
+set(PROJECT_NAME_TRAY ${PROJECT_NAME}-tray)
+set(PROJECT_NAME_UI ${PROJECT_NAME}-ui)
+
 # Sets Static Runtime: /MTd for Debug, /MT for Release
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
