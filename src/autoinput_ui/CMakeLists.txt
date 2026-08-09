@@ -66,6 +66,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/windows/sequenceRecorderWindow.h
             ${CMAKE_CURRENT_LIST_DIR}/windows/sequenceEditorWindow.cpp
             ${CMAKE_CURRENT_LIST_DIR}/windows/sequenceEditorWindow.h
+            ${CMAKE_CURRENT_LIST_DIR}/windows/configManagerWindow.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/windows/configManagerWindow.h
 
             # External sources
             ${IMGUI_SOURCES}

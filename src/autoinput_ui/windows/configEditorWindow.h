@@ -32,6 +32,12 @@ namespace autoinput::ui
     public:
         ConfigEditorWindow();
 
+        /**
+         * @brief Loads a specific configuration.
+         * @param nameOrPath Name of the config or direct path to file.
+         */
+        void loadConfig(const std::string& nameOrPath);
+
     protected:
         void renderContent() override;
         void save() override;
@@ -41,12 +47,6 @@ namespace autoinput::ui
          * @brief Scans the configs directory and refreshes the list of available configs.
          */
         void refreshConfigList();
-
-        /**
-         * @brief Loads a specific configuration.
-         * @param nameOrPath Name of the config or direct path to file.
-         */
-        void loadConfig(const std::string& nameOrPath);
 
         /**
          * @brief Saves the current configuration.

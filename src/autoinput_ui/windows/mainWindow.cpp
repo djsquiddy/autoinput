@@ -44,6 +44,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("config-editor");
                 }
+                if (ImGui::MenuItem("Config Manager"))
+                {
+                    m_windows.open("config-manager");
+                }
                 if (ImGui::MenuItem("Automation Runtime"))
                 {
                     m_windows.open("runtime");
@@ -119,6 +123,11 @@ namespace autoinput::ui
         if (ImGui::Button("Config Editor"))
         {
             m_windows.open("config-editor");
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Config Manager"))
+        {
+            m_windows.open("config-manager");
         }
         ImGui::SameLine();
         if (ImGui::Button("Diagnostics"))
