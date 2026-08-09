@@ -42,6 +42,8 @@ namespace autoinput::services
         bool recordingPaused{ false };
         uint32_t recordedEventCount{ 0 };
         std::optional<RecordedSequence> sequence;
+        std::vector<AppWindowInfo> windows;
+        std::optional<AppWindowInfo> foregroundWindow;
     };
 
     class IAutomationRuntimeClient
@@ -62,6 +64,18 @@ namespace autoinput::services
         [[nodiscard]] virtual bool isBackendAvailable() const = 0;
 
         [[nodiscard]] virtual RuntimeOperationResult ping() = 0;
+        /**
+         * @brief Enumerates all visible windows.
+         * @return A vector of AppWindowInfo.
+         */
+        [[nodiscard]] virtual std::vector<AppWindowInfo> enumerateWindows() = 0;
+
+        /**
+         * @brief Gets the information of the current foreground window.
+         * @return An AppWindowInfo struct, or std::nullopt if not available.
+         */
+        [[nodiscard]] virtual std::optional<AppWindowInfo> getForegroundWindow() = 0;
+
         [[nodiscard]] virtual BackendCapabilities getBackendCapabilities() const = 0;
         [[nodiscard]] virtual std::string getBackendName() const = 0;
         [[nodiscard]] virtual RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message) = 0;
@@ -97,6 +111,8 @@ namespace autoinput::services
         [[nodiscard]] bool isBackendAvailable() const override;
 
         [[nodiscard]] RuntimeOperationResult ping() override;
+        [[nodiscard]] std::vector<AppWindowInfo> enumerateWindows() override;
+        [[nodiscard]] std::optional<AppWindowInfo> getForegroundWindow() override;
         [[nodiscard]] BackendCapabilities getBackendCapabilities() const override;
         [[nodiscard]] std::string getBackendName() const override;
         [[nodiscard]] RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message) override;
@@ -143,6 +159,8 @@ namespace autoinput::services
         [[nodiscard]] bool isBackendAvailable() const override;
 
         [[nodiscard]] RuntimeOperationResult ping() override;
+        [[nodiscard]] std::vector<AppWindowInfo> enumerateWindows() override;
+        [[nodiscard]] std::optional<AppWindowInfo> getForegroundWindow() override;
         [[nodiscard]] BackendCapabilities getBackendCapabilities() const override;
         [[nodiscard]] std::string getBackendName() const override;
         [[nodiscard]] RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message) override;

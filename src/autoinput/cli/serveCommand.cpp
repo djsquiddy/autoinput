@@ -125,6 +125,16 @@ namespace autoinput::cli
             {
                 result = { true, runtime.getStatus(), "Status retrieved." };
             }
+            else if (request.method == "enumerate_windows")
+            {
+                result = { true, runtime.getStatus(), "Windows enumerated." };
+                result.windows = runtime.enumerateWindows();
+            }
+            else if (request.method == "get_foreground_window")
+            {
+                result = { true, runtime.getStatus(), "Foreground window retrieved." };
+                result.foregroundWindow = runtime.getForegroundWindow();
+            }
             else if (request.method == "ping")
             {
                 result = runtime.ping();

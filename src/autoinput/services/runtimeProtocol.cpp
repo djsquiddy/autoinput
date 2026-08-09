@@ -8,6 +8,7 @@
 #include <format>
 #include <algorithm>
 #include <cctype>
+#include <charconv>
 
 namespace autoinput::services
 {
@@ -257,6 +258,34 @@ namespace autoinput::services
             }
             seqJson += "]}}";
             extra += seqJson;
+        }
+
+        auto appWindowInfoToJson = [](const AppWindowInfo& info) {
+            return std::format(
+                "{{\"process_name\":\"{}\",\"window_title\":\"{}\",\"pid\":{},\"executable_path\":\"{}\",\"backend_id\":\"{}\"}}",
+                jsonEscape(info.processName),
+                jsonEscape(info.windowTitle),
+                info.pid,
+                jsonEscape(info.executablePath),
+                jsonEscape(info.backendId)
+            );
+        };
+
+        if (!result.windows.empty())
+        {
+            std::string windowsJson = ",\"windows\":[";
+            for (size_t i = 0; i < result.windows.size(); ++i)
+            {
+                windowsJson += appWindowInfoToJson(result.windows[i]);
+                if (i < result.windows.size() - 1) windowsJson += ",";
+            }
+            windowsJson += "]";
+            extra += windowsJson;
+        }
+
+        if (result.foregroundWindow)
+        {
+            extra += std::format(",\"foreground_window\":{}", appWindowInfoToJson(*result.foregroundWindow));
         }
 
         return std::format("{{\"id\":{},\"success\":{},\"status\":\"{}\",\"message\":\"{}\"{}}}",
@@ -537,6 +566,70 @@ namespace autoinput::services
                 }
             }
             result.sequence = std::move(seq);
+        }
+
+        auto parseWindowInfo = [&](std::string_view json) {
+            AppWindowInfo info;
+            bool isStr = false;
+            
+            std::string_view procStr = findRawValue(json, "process_name", isStr);
+            if (!procStr.empty()) info.processName = isStr ? jsonUnescape(procStr) : std::string(procStr);
+            
+            std::string_view titleStr = findRawValue(json, "window_title", isStr);
+            if (!titleStr.empty()) info.windowTitle = isStr ? jsonUnescape(titleStr) : std::string(titleStr);
+            
+            std::string_view pidStr = findRawValue(json, "pid", isStr);
+            if (!pidStr.empty()) {
+                std::from_chars(pidStr.data(), pidStr.data() + pidStr.size(), info.pid);
+            }
+            
+            std::string_view pathStr = findRawValue(json, "executable_path", isStr);
+            if (!pathStr.empty()) info.executablePath = isStr ? jsonUnescape(pathStr) : std::string(pathStr);
+            
+            std::string_view backendStr = findRawValue(json, "backend_id", isStr);
+            if (!backendStr.empty()) info.backendId = isStr ? jsonUnescape(backendStr) : std::string(backendStr);
+            
+            return info;
+        };
+
+        auto windowsPos = jsonLine.find("\"windows\"");
+        if (windowsPos != std::string_view::npos)
+        {
+            auto arrayStart = jsonLine.find('[', windowsPos);
+            auto arrayEnd = jsonLine.find(']', arrayStart);
+            if (arrayStart != std::string_view::npos && arrayEnd != std::string_view::npos)
+            {
+                std::string_view windowsArray = jsonLine.substr(arrayStart + 1, arrayEnd - arrayStart - 1);
+                size_t pos = 0;
+                while ((pos = windowsArray.find('{', pos)) != std::string_view::npos)
+                {
+                    size_t endPos = windowsArray.find('}', pos);
+                    if (endPos == std::string_view::npos) break;
+                    result.windows.push_back(parseWindowInfo(windowsArray.substr(pos, endPos - pos + 1)));
+                    pos = endPos + 1;
+                }
+            }
+        }
+
+        auto foregroundPos = jsonLine.find("\"foreground_window\"");
+        if (foregroundPos != std::string_view::npos)
+        {
+            auto objStart = jsonLine.find('{', foregroundPos);
+            int braceCount = 0;
+            size_t pos = objStart;
+            while (pos != std::string_view::npos && pos < jsonLine.size())
+            {
+                if (jsonLine[pos] == '{') braceCount++;
+                else if (jsonLine[pos] == '}') {
+                    braceCount--;
+                    if (braceCount == 0) break;
+                }
+                pos++;
+            }
+            if (objStart != std::string_view::npos && pos < jsonLine.size())
+            {
+                result.foregroundWindow = parseWindowInfo(jsonLine.substr(objStart, pos - objStart + 1));
+            }
         }
 
         return result;

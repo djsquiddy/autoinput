@@ -117,6 +117,15 @@ namespace autoinput
         i32 y{ 0 };
     };
 
+    struct AppWindowInfo
+    {
+        std::string processName;
+        std::string windowTitle;
+        u64 pid{ 0 };
+        std::string executablePath;
+        std::string backendId;
+    };
+
     struct KeyboardData
     {
         std::any internal;

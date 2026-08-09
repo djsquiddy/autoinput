@@ -29,6 +29,8 @@ public:
     MOCK_METHOD(void, mouseUp, (const Mouse& mouse), (override));
     MOCK_METHOD(void, moveMouseTo, (int32_t x, int32_t y), (override));
     MOCK_METHOD((std::pair<int32_t, int32_t>), getCursorPosition, (), (override));
+    MOCK_METHOD(std::vector<AppWindowInfo>, enumerateWindows, (), (override));
+    MOCK_METHOD(std::optional<AppWindowInfo>, getForegroundWindow, (), (override));
     BackendCapabilities capabilities() const override { return {}; }
     std::string getName() const override { return "Mock Mouse Modifier Backend"; }
 };

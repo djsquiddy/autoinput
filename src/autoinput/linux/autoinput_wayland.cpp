@@ -299,6 +299,16 @@ namespace autoinput
                 return { 0, 0 };
             }
 
+            std::vector<AppWindowInfo> enumerateWindows() override
+            {
+                return {};
+            }
+
+            std::optional<AppWindowInfo> getForegroundWindow() override
+            {
+                return std::nullopt;
+            }
+
             BackendCapabilities capabilities() const override
             {
                 return {

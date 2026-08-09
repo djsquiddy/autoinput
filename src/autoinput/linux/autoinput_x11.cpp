@@ -9,6 +9,9 @@
 #include "autoinput/logger.h"
 #include "autoinput/types.h"
 #include "autoinput/linux/internalData_linux.h"
+#include <format>
+#include <filesystem>
+#include <set>
 
 namespace autoinput
 {
@@ -65,6 +68,92 @@ namespace autoinput
             case MouseButton::Forward: return 9;
             default: return 0;
             }
+        }
+
+        AppWindowInfo getX11AppWindowInfo(Window window)
+        {
+            AppWindowInfo info;
+            info.backendId = std::format("{}", window);
+
+            // Window Title
+            char* name = nullptr;
+            if (XFetchName(g_display, window, &name))
+            {
+                if (name)
+                {
+                    info.windowTitle = name;
+                    XFree(name);
+                }
+            }
+
+            // If XFetchName fails, try _NET_WM_NAME
+            if (info.windowTitle.empty())
+            {
+                Atom actual_type;
+                int actual_format;
+                unsigned long nitems, bytes_after;
+                unsigned char* prop = nullptr;
+                Atom netWmName = XInternAtom(g_display, "_NET_WM_NAME", False);
+                Atom utf8String = XInternAtom(g_display, "UTF8_STRING", False);
+                
+                if (XGetWindowProperty(g_display, window, netWmName,
+                    0, 1024, False, utf8String,
+                    &actual_type, &actual_format, &nitems, &bytes_after, &prop) == Success)
+                {
+                    if (prop)
+                    {
+                        info.windowTitle = reinterpret_cast<char*>(prop);
+                        XFree(prop);
+                    }
+                }
+            }
+
+            // PID
+            Atom pidAtom = XInternAtom(g_display, "_NET_WM_PID", True);
+            if (pidAtom != None)
+            {
+                Atom actual_type;
+                int actual_format;
+                unsigned long nitems, bytes_after;
+                unsigned char* prop = nullptr;
+                if (XGetWindowProperty(g_display, window, pidAtom, 0, 1, False, XA_CARDINAL,
+                    &actual_type, &actual_format, &nitems, &bytes_after, &prop) == Success)
+                {
+                    if (prop)
+                    {
+                        info.pid = *reinterpret_cast<unsigned long*>(prop);
+                        XFree(prop);
+                    }
+                }
+            }
+
+            // Process Name and Executable Path from PID
+            if (info.pid > 0)
+            {
+                char buf[1024];
+                std::string path = std::format("/proc/{}/exe", info.pid);
+                ssize_t len = readlink(path.c_str(), buf, sizeof(buf) - 1);
+                if (len != -1)
+                {
+                    buf[len] = '\0';
+                    info.executablePath = buf;
+                    info.processName = std::filesystem::path(buf).filename().string();
+                }
+            }
+            
+            // Fallback for process name if we couldn't get it from PID
+            if (info.processName.empty())
+            {
+                 XClassHint classHint;
+                 if (XGetClassHint(g_display, window, &classHint))
+                 {
+                     info.processName = classHint.res_name ? classHint.res_name : "";
+                     if (classHint.res_name) XFree(classHint.res_name);
+                     if (classHint.res_class) XFree(classHint.res_class);
+                 }
+            }
+
+            return info;
         }
 
         class X11Backend : public IPlatformBackend
@@ -296,6 +385,44 @@ namespace autoinput
                     return { rootX, rootY };
                 }
                 return { 0, 0 };
+            }
+
+            std::vector<AppWindowInfo> enumerateWindows() override
+            {
+                std::vector<AppWindowInfo> windows;
+                if (!g_display) return windows;
+
+                Window root_return, parent_return;
+                Window* children_return;
+                unsigned int nchildren_return;
+
+                if (XQueryTree(g_display, g_rootWindow, &root_return, &parent_return, &children_return, &nchildren_return))
+                {
+                    for (unsigned int i = 0; i < nchildren_return; ++i)
+                    {
+                        XWindowAttributes attrs;
+                        if (XGetWindowAttributes(g_display, children_return[i], &attrs) && attrs.map_state == IsViewable)
+                        {
+                            AppWindowInfo info = getX11AppWindowInfo(children_return[i]);
+                            if (!info.windowTitle.empty() || !info.processName.empty())
+                            {
+                                windows.push_back(info);
+                            }
+                        }
+                    }
+                    if (children_return) XFree(children_return);
+                }
+                return windows;
+            }
+
+            std::optional<AppWindowInfo> getForegroundWindow() override
+            {
+                if (!g_display) return std::nullopt;
+                Window focusedWindow;
+                int revert_to;
+                XGetInputFocus(g_display, &focusedWindow, &revert_to);
+                if (focusedWindow == None || focusedWindow == PointerRoot) return std::nullopt;
+                return getX11AppWindowInfo(focusedWindow);
             }
 
             BackendCapabilities capabilities() const override

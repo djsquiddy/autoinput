@@ -113,6 +113,37 @@ namespace autoinput
             return "";
         }
 
+        AppWindowInfo getAppWindowInfo(HWND hwnd)
+        {
+            AppWindowInfo info;
+            info.backendId = std::format("0x{:x}", reinterpret_cast<uintptr_t>(hwnd));
+
+            char title[256];
+            if (GetWindowTextA(hwnd, title, sizeof(title)))
+            {
+                info.windowTitle = title;
+            }
+
+            DWORD pid = 0;
+            GetWindowThreadProcessId(hwnd, &pid);
+            info.pid = pid;
+
+            const HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+            if (hProcess)
+            {
+                char path[MAX_PATH];
+                DWORD size = sizeof(path);
+                if (QueryFullProcessImageNameA(hProcess, 0, path, &size))
+                {
+                    info.executablePath = path;
+                    info.processName = std::filesystem::path(path).filename().string();
+                }
+                CloseHandle(hProcess);
+            }
+
+            return info;
+        }
+
         std::vector<std::string> getRunningApplicationNames()
         {
             std::set<std::string> names;
@@ -661,6 +692,34 @@ namespace autoinput
                     return { static_cast<int32_t>(p.x), static_cast<int32_t>(p.y) };
                 }
                 return { 0, 0 };
+            }
+
+            std::vector<AppWindowInfo> enumerateWindows() override
+            {
+                std::vector<AppWindowInfo> windows;
+                EnumWindows([](HWND hwnd, LPARAM lParam) -> BOOL {
+                    if (IsWindowVisible(hwnd))
+                    {
+                        int length = GetWindowTextLengthA(hwnd);
+                        if (length > 0)
+                        {
+                            auto* windowsPtr = reinterpret_cast<std::vector<AppWindowInfo>*>(lParam);
+                            windowsPtr->push_back(platform::getAppWindowInfo(hwnd));
+                        }
+                    }
+                    return TRUE;
+                }, reinterpret_cast<LPARAM>(&windows));
+                return windows;
+            }
+
+            std::optional<AppWindowInfo> getForegroundWindow() override
+            {
+                HWND hwnd = GetForegroundWindow();
+                if (hwnd)
+                {
+                    return platform::getAppWindowInfo(hwnd);
+                }
+                return std::nullopt;
             }
 
             BackendCapabilities capabilities() const override

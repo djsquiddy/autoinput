@@ -18,6 +18,7 @@
 #include "../windows/sequenceEditorWindow.h"
 #include "../windows/configManagerWindow.h"
 #include "../windows/hotkeyManagerWindow.h"
+#include "../windows/applicationPickerWindow.h"
 #include "autoinput/config.h"
 #include "autoinput/logger.h"
 #include "autoinput/services/automationRuntimeClient.h"
@@ -76,6 +77,7 @@ namespace autoinput::ui
         m_windowManager->addWindow<SequenceEditorWindow>("sequence-editor");
         m_windowManager->addWindow<ConfigManagerWindow>("config-manager", *m_windowManager, SystemEnvironment::instance());
         m_windowManager->addWindow<HotkeyManagerWindow>("hotkey-manager", *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
+        m_windowManager->addWindow<ApplicationPickerWindow>("application-picker", *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
         
         m_windowManager->open("main");
     }

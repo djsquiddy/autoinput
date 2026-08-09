@@ -52,6 +52,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("hotkey-manager");
                 }
+                if (ImGui::MenuItem("Application Picker"))
+                {
+                    m_windows.open("application-picker");
+                }
                 if (ImGui::MenuItem("Automation Runtime"))
                 {
                     m_windows.open("runtime");
@@ -137,6 +141,11 @@ namespace autoinput::ui
         if (ImGui::Button("Hotkey Manager"))
         {
             m_windows.open("hotkey-manager");
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("App Picker"))
+        {
+            m_windows.open("application-picker");
         }
         ImGui::SameLine();
         if (ImGui::Button("Diagnostics"))

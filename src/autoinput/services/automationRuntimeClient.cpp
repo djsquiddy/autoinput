@@ -108,6 +108,18 @@ namespace autoinput::services
         return sendRequest(m_nextRequestId++, "ping");
     }
 
+    std::vector<AppWindowInfo> ProcessAutomationRuntimeClient::enumerateWindows()
+    {
+        auto res = sendRequest(m_nextRequestId++, "enumerate_windows");
+        return res.windows;
+    }
+
+    std::optional<AppWindowInfo> ProcessAutomationRuntimeClient::getForegroundWindow()
+    {
+        auto res = sendRequest(m_nextRequestId++, "get_foreground_window");
+        return res.foregroundWindow;
+    }
+
     BackendCapabilities ProcessAutomationRuntimeClient::getBackendCapabilities() const
     {
         // Query diagnostics to get capabilities
@@ -629,12 +641,32 @@ namespace autoinput::services
         return m_recordedEventCount;
     }
 
+    std::vector<AppWindowInfo> InProcessAutomationRuntimeClient::enumerateWindows()
+    {
+        auto* backend = m_controller.getBackend();
+        if (backend)
+        {
+            return backend->enumerateWindows();
+        }
+        return {};
+    }
+
+    std::optional<AppWindowInfo> InProcessAutomationRuntimeClient::getForegroundWindow()
+    {
+        auto* backend = m_controller.getBackend();
+        if (backend)
+        {
+            return backend->getForegroundWindow();
+        }
+        return std::nullopt;
+    }
+
     std::unique_ptr<IAutomationRuntimeClient> createAutomationRuntimeClient(AutomationRuntimeClientMode mode)
     {
         switch (mode)
         {
             case AutomationRuntimeClientMode::InProcess:
-                return std::make_unique<InProcessAutomationRuntimeClient>();
+                return std::make_unique<InProcessAutomationRuntimeClient>(SystemEnvironment::instance());
         case AutomationRuntimeClientMode::Process:
                 return createProcessAutomationRuntimeClient(SystemEnvironment::instance());
             default:

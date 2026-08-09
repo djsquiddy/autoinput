@@ -120,6 +120,18 @@ namespace autoinput
         virtual std::pair<int32_t, int32_t> getCursorPosition() = 0;
 
         /**
+         * @brief Enumerates all visible windows.
+         * @return A vector of AppWindowInfo.
+         */
+        virtual std::vector<AppWindowInfo> enumerateWindows() = 0;
+
+        /**
+         * @brief Gets the information of the current foreground window.
+         * @return An AppWindowInfo struct, or std::nullopt if not available.
+         */
+        virtual std::optional<AppWindowInfo> getForegroundWindow() = 0;
+
+        /**
          * @brief Gets the capabilities of this backend.
          * @return A BackendCapabilities struct.
          */
@@ -151,6 +163,8 @@ namespace autoinput
         void mouseUp(const Mouse& mouse) override { Logger::info("[FAKE] Mouse up: {}\n", mouse.toString()); }
         void moveMouseTo(int32_t x, int32_t y) override { Logger::info("[FAKE] Move mouse to: {}, {}\n", x, y); }
         std::pair<int32_t, int32_t> getCursorPosition() override { return { 0, 0 }; }
+        std::vector<AppWindowInfo> enumerateWindows() override { return {}; }
+        std::optional<AppWindowInfo> getForegroundWindow() override { return std::nullopt; }
 
         BackendCapabilities capabilities() const override
         {
