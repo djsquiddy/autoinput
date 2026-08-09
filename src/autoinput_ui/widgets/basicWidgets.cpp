@@ -6,6 +6,7 @@
 #include "basicWidgets.h"
 #include "autoinput/configValidator.h"
 #include <imgui.h>
+#include <format>
 
 namespace autoinput::ui::widgets
 {
@@ -18,13 +19,37 @@ namespace autoinput::ui::widgets
     {
         if (errors.empty()) return;
 
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 0.4f, 1.0f));
-        ImGui::Text("Validation Errors:");
         for (const auto& error : errors)
         {
-            ImGui::BulletText("%s", error.message.c_str());
+            ImVec4 color;
+            switch (error.severity)
+            {
+            case ValidationSeverity::Info: color = ImVec4(0.5f, 0.5f, 0.9f, 1.0f); break; // Blue-ish
+            case ValidationSeverity::Warning: color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); break; // Yellow
+            case ValidationSeverity::Error: color = ImVec4(1.0f, 0.4f, 0.4f, 1.0f); break; // Red
+            default: color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); break;
+            }
+
+            ImGui::PushStyleColor(ImGuiCol_Text, color);
+            std::string label = error.message;
+            if (!error.section.empty())
+            {
+                if (!error.field.empty())
+                    label = std::format("[{}.{}] {}", error.section, error.field, label);
+                else
+                    label = std::format("[{}] {}", error.section, label);
+            }
+
+            ImGui::BulletText("%s", label.c_str());
+            
+            if (!error.suggestedFix.empty())
+            {
+                ImGui::Indent();
+                ImGui::TextDisabled("Suggestion: %s", error.suggestedFix.c_str());
+                ImGui::Unindent();
+            }
+            ImGui::PopStyleColor();
         }
-        ImGui::PopStyleColor();
     }
 
     void RuntimeStatusIndicator(const std::string& status)

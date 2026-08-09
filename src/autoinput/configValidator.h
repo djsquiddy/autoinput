@@ -10,16 +10,29 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace autoinput
 {
     struct ConfigData;
     struct CommandData;
     struct RuntimeConfig;
+    struct DefaultSettings;
+
+    enum class ValidationSeverity : uint8_t
+    {
+        Info,
+        Warning,
+        Error
+    };
 
     struct ValidationError
     {
         std::string message;
+        ValidationSeverity severity{ ValidationSeverity::Error };
+        std::string section;
+        std::string field;
+        std::string suggestedFix;
     };
 
     struct ValidationResult
@@ -28,6 +41,13 @@ namespace autoinput
         std::string configPath;
         std::vector<ValidationError> errors{};
     };
+
+    /**
+     * @brief Validates DefaultSettings (global settings).
+     * @param settings The settings to validate.
+     * @return A vector of validation errors. Empty if valid.
+     */
+    std::vector<ValidationError> validateSettings(const DefaultSettings& settings);
 
     /**
      * @brief Validates ConfigData (raw TOML data).

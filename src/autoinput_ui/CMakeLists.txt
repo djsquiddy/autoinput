@@ -72,6 +72,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/windows/hotkeyManagerWindow.h
             ${CMAKE_CURRENT_LIST_DIR}/windows/applicationPickerWindow.cpp
             ${CMAKE_CURRENT_LIST_DIR}/windows/applicationPickerWindow.h
+            ${CMAKE_CURRENT_LIST_DIR}/windows/validationReportWindow.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/windows/validationReportWindow.h
 
             # External sources
             ${IMGUI_SOURCES}

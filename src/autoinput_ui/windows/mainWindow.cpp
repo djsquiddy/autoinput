@@ -84,6 +84,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("sequence-editor");
                 }
+                if (ImGui::MenuItem("Validation Report"))
+                {
+                    m_windows.open("validation-report");
+                }
                 ImGui::Separator();
                 if (ImGui::MenuItem("ImGui Demo", nullptr, m_showDemoWindow))
                 {
@@ -161,6 +165,11 @@ namespace autoinput::ui
         if (ImGui::Button("Sequence Editor"))
         {
             m_windows.open("sequence-editor");
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Validation"))
+        {
+            m_windows.open("validation-report");
         }
 
         ImGui::Separator();
