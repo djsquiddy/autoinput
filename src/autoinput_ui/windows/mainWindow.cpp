@@ -56,6 +56,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("command-runner");
                 }
+                if (ImGui::MenuItem("Logs"))
+                {
+                    m_windows.open("logs");
+                }
                 ImGui::Separator();
                 if (ImGui::MenuItem("ImGui Demo", nullptr, m_showDemoWindow))
                 {

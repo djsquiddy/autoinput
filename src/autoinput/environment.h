@@ -46,6 +46,13 @@ namespace autoinput
          * @return The value of the environment variable, or std::nullopt if not found.
          */
         [[nodiscard]] virtual std::optional<std::string> environmentVariable(std::string_view name) const = 0;
+
+        /**
+         * @brief Opens a file or folder using the platform's default application.
+         * @param path The path to open.
+         * @return True if successful.
+         */
+        virtual bool openPath(const std::filesystem::path& path) const = 0;
     };
 
     /**
@@ -58,6 +65,7 @@ namespace autoinput
         [[nodiscard]] std::filesystem::path executableDirectoryPath() const override;
         [[nodiscard]] std::filesystem::path userHomePath() const override;
         [[nodiscard]] std::optional<std::string> environmentVariable(std::string_view name) const override;
+        bool openPath(const std::filesystem::path& path) const override;
 
         /**
          * @brief Gets the singleton instance of SystemEnvironment.

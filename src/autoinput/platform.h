@@ -67,6 +67,13 @@ namespace autoinput
         std::filesystem::path getUserHomePath();
 
         /**
+         * @brief Opens a file or folder using the platform's default application.
+         * @param path The path to open.
+         * @return True if successful.
+         */
+        bool openPath(const std::filesystem::path& path);
+
+        /**
          * @brief Creates a platform-specific desktop notification sink.
          * @return A unique pointer to the notification sink.
          */

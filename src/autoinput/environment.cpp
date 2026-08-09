@@ -33,6 +33,11 @@ namespace autoinput
         return std::nullopt;
     }
 
+    bool SystemEnvironment::openPath(const std::filesystem::path& path) const
+    {
+        return platform::openPath(path);
+    }
+
     const SystemEnvironment& SystemEnvironment::instance()
     {
         static SystemEnvironment instance;

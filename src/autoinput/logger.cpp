@@ -17,6 +17,10 @@ namespace autoinput
     LogLevel logLevelFromString(const std::string_view str)
     {
         const std::string level = toLowerCase(str);
+        if (level == "t" || level == "trace")
+        {
+            return LogLevel::Trace;
+        }
         if (level == "d" || level == "debug")
         {
             return LogLevel::Debug;
@@ -67,6 +71,10 @@ namespace autoinput
         std::string name;
         switch (level)
         {
+        case LogLevel::Trace:
+            color = Color::Cyan;
+            name = isShorthand ? "T" : "TRACE";
+            break;
         case LogLevel::Debug:
             color = Color::Blue;
             name = isShorthand ? "D" : "DEBUG";
@@ -170,6 +178,16 @@ namespace autoinput
         return {instance(), LogLevel::Debug, loc};
     }
 
+    LogStream Logger::traceStream(std::source_location loc)
+    {
+        return {instance(), LogLevel::Trace, loc};
+    }
+
+    void Logger::trace(const std::string_view msg, const std::source_location loc)
+    {
+        instance().log_impl(LogLevel::Trace, msg, loc);
+    }
+
     void Logger::debug(const std::string_view msg, const std::source_location loc)
     {
         instance().log_impl(LogLevel::Debug, msg, loc);
@@ -248,6 +266,8 @@ namespace autoinput
 
         std::string formatted;
         std::string consoleMsg;
+        std::string timeStr;
+
         // Internal implementation logic
         if (level == LogLevel::Print)
         {
@@ -260,7 +280,6 @@ namespace autoinput
                 return;
             }
 
-            std::string timeStr;
             char timeBuffer[32];
             try {
                 const auto now = std::chrono::system_clock::now();
@@ -305,6 +324,24 @@ namespace autoinput
         {
             getConsoleStream(level) << consoleMsg;
         }
+
+        if (level != LogLevel::Print)
+        {
+            m_recentLogs.push_back(LogEntry{
+                level,
+                std::string(msg),
+                timeStr,
+                std::filesystem::path(loc.file_name()).filename().string(),
+                std::string(loc.function_name()),
+                static_cast<int>(loc.line())
+            });
+
+            if (m_recentLogs.size() > MAX_RECENT_LOGS)
+            {
+                m_recentLogs.erase(m_recentLogs.begin());
+            }
+        }
+
         if (m_fileStream.is_open())
         {
             m_fileStream << formatted;
@@ -417,5 +454,27 @@ namespace autoinput
     {
         std::scoped_lock lock(m_mutex);
         return m_fileName;
+    }
+
+    std::vector<LogEntry> Logger::getRecentLogs()
+    {
+        return instance().getRecentLogs_impl();
+    }
+
+    std::vector<LogEntry> Logger::getRecentLogs_impl() const
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_recentLogs;
+    }
+
+    void Logger::clearRecentLogs()
+    {
+        instance().clearRecentLogs_impl();
+    }
+
+    void Logger::clearRecentLogs_impl()
+    {
+        std::scoped_lock lock(m_mutex);
+        m_recentLogs.clear();
     }
 }

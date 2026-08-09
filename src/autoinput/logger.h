@@ -30,13 +30,27 @@ namespace autoinput
 
     enum class LogLevel : uint8_t
     {
-        Debug = 0,
-        Info = 1,
-        Print = 2,
-        Warning = 3,
-        Error = 4,
-        Fatal = 5,
-        Unknown = 6
+        Trace = 0,
+        Debug = 1,
+        Info = 2,
+        Print = 3,
+        Warning = 4,
+        Error = 5,
+        Fatal = 6,
+        Unknown = 7
+    };
+
+    /**
+     * @brief Represents a single log entry for in-memory storage.
+     */
+    struct LogEntry
+    {
+        LogLevel level;
+        std::string message;
+        std::string timestamp;
+        std::string file;
+        std::string function;
+        int line;
     };
 
     /**
@@ -171,6 +185,16 @@ namespace autoinput
         static void print(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
 
         /**
+         * @brief Logs a message at Trace level.
+         */
+        static void trace(std::string_view msg, std::source_location loc = std::source_location::current());
+        /**
+         * @brief Logs a formatted message at Trace level.
+         */
+        template <typename... Args>
+        static void trace(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args);
+
+        /**
          * @brief Logs a message at Info level.
          */
         static void info(std::string_view msg, std::source_location loc = std::source_location::current());
@@ -199,6 +223,7 @@ namespace autoinput
         static ErrorCode fatalError(const ErrorMessage& error);
         static void fatalError(const std::vector<ErrorMessage>& errors);
 
+        static LogStream traceStream(std::source_location loc = std::source_location::current());
         static LogStream debugStream(std::source_location loc = std::source_location::current());
         static LogStream printStream(std::source_location loc = std::source_location::current());
         static LogStream infoStream(std::source_location loc = std::source_location::current());
@@ -218,6 +243,17 @@ namespace autoinput
         // Optional: Allow configuring the file path at runtime
         static void setFile(const std::string& filename);
         static const std::string& getFileName();
+
+        /**
+         * @brief Gets recent log entries stored in memory.
+         * @return A vector of LogEntry objects.
+         */
+        static std::vector<LogEntry> getRecentLogs();
+
+        /**
+         * @brief Clears the in-memory log entries.
+         */
+        static void clearRecentLogs();
 
     private:
         friend class LogStream;
@@ -240,13 +276,26 @@ namespace autoinput
 
         void setFile_impl(const std::string& filename);
         const std::string& getFileName_impl() const;
+
+        std::vector<LogEntry> getRecentLogs_impl() const;
+        void clearRecentLogs_impl();
+
         std::atomic<LogLevel> m_logLevel{ LogLevel::Info };
         std::atomic<bool> m_isTesting{ false };
         std::atomic<bool> m_consoleOutputEnabled{ true };
         std::string m_fileName{};
         std::ofstream m_fileStream;
+        std::vector<LogEntry> m_recentLogs;
+        static constexpr size_t MAX_RECENT_LOGS = 1000;
         mutable std::mutex m_mutex;
     };
+
+    template <typename ... Args>
+    void Logger::trace(Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)
+    {
+        const std::string msg = std::vformat(fmt.value.get(), std::make_format_args(args...));
+        instance().log_impl(LogLevel::Trace, msg, fmt.loc);
+    }
 
     template <typename ... Args>
     void Logger::log(const LogLevel level, Fmt<std::type_identity_t<Args>...> fmt, Args&&... args)

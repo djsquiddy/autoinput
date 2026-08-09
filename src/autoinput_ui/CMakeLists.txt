@@ -58,6 +58,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/windows/runtimeDashboardWindow.h
             ${CMAKE_CURRENT_LIST_DIR}/windows/commandRunnerWindow.cpp
             ${CMAKE_CURRENT_LIST_DIR}/windows/commandRunnerWindow.h
+            ${CMAKE_CURRENT_LIST_DIR}/windows/logViewerWindow.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/windows/logViewerWindow.h
 
             # External sources
             ${IMGUI_SOURCES}

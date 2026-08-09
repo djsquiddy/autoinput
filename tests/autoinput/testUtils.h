@@ -62,6 +62,8 @@ namespace autoinput::test
             return std::nullopt;
         }
 
+        bool openPath(const std::filesystem::path& path) const override { return true; }
+
         void setExecutablePath(std::filesystem::path path) { m_executablePath = std::move(path); }
         void setExecutableDirectoryPath(std::filesystem::path path) { m_executableDirectoryPath = std::move(path); }
         void setUserHomePath(std::filesystem::path path) { m_userHomePath = std::move(path); }
