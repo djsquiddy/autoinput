@@ -48,6 +48,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("config-manager");
                 }
+                if (ImGui::MenuItem("Hotkey Manager"))
+                {
+                    m_windows.open("hotkey-manager");
+                }
                 if (ImGui::MenuItem("Automation Runtime"))
                 {
                     m_windows.open("runtime");
@@ -128,6 +132,11 @@ namespace autoinput::ui
         if (ImGui::Button("Config Manager"))
         {
             m_windows.open("config-manager");
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Hotkey Manager"))
+        {
+            m_windows.open("hotkey-manager");
         }
         ImGui::SameLine();
         if (ImGui::Button("Diagnostics"))
