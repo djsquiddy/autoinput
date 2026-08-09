@@ -48,6 +48,12 @@ namespace autoinput
         [[nodiscard]] virtual std::optional<std::string> environmentVariable(std::string_view name) const = 0;
 
         /**
+         * @brief Gets the display name of the current platform.
+         * @return The platform name.
+         */
+        [[nodiscard]] virtual std::string platformName() const = 0;
+
+        /**
          * @brief Opens a file or folder using the platform's default application.
          * @param path The path to open.
          * @return True if successful.
@@ -65,6 +71,7 @@ namespace autoinput
         [[nodiscard]] std::filesystem::path executableDirectoryPath() const override;
         [[nodiscard]] std::filesystem::path userHomePath() const override;
         [[nodiscard]] std::optional<std::string> environmentVariable(std::string_view name) const override;
+        [[nodiscard]] std::string platformName() const override;
         bool openPath(const std::filesystem::path& path) const override;
 
         /**

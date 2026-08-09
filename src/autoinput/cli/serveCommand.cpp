@@ -125,6 +125,20 @@ namespace autoinput::cli
             {
                 result = { true, runtime.getStatus(), "Status retrieved." };
             }
+            else if (request.method == "ping")
+            {
+                result = runtime.ping();
+            }
+            else if (request.method == "get_diagnostics")
+            {
+                result = { true, runtime.getStatus(), "Diagnostics retrieved." };
+                result.backendName = runtime.getBackendName();
+                result.capabilities = runtime.getBackendCapabilities();
+            }
+            else if (request.method == "test_notification")
+            {
+                result = runtime.sendTestNotification(request.title, request.body);
+            }
             else if (request.method == "shutdown")
             {
                 result = runtime.stop();

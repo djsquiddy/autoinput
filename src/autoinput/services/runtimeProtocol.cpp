@@ -197,13 +197,35 @@ namespace autoinput::services
             id, jsonEscape(configName), jsonEscape(commandName));
     }
 
+    std::string buildTestNotificationRequest(std::uint64_t id, std::string_view title, std::string_view body)
+    {
+        return std::format("{{\"id\":{},\"method\":\"test_notification\",\"params\":{{\"title\":\"{}\",\"body\":\"{}\"}}}}",
+            id, jsonEscape(title), jsonEscape(body));
+    }
+
     std::string buildRuntimeResponse(std::uint64_t id, const RuntimeOperationResult& result)
     {
-        return std::format("{{\"id\":{},\"success\":{},\"status\":\"{}\",\"message\":\"{}\"}}",
+        std::string extra;
+        if (!result.backendName.empty())
+        {
+            extra += std::format(",\"backend_name\":\"{}\"", jsonEscape(result.backendName));
+            extra += std::format(",\"capabilities\":{{\"keyboardHooks\":{},\"mouseHooks\":{},\"focusDetection\":{},\"listApplications\":{},\"syntheticKeyboardInput\":{},\"syntheticMouseInput\":{},\"absoluteMouseMovement\":{},\"getCursorPosition\":{}}}",
+                result.capabilities.keyboardHooks ? "true" : "false",
+                result.capabilities.mouseHooks ? "true" : "false",
+                result.capabilities.focusDetection ? "true" : "false",
+                result.capabilities.listApplications ? "true" : "false",
+                result.capabilities.syntheticKeyboardInput ? "true" : "false",
+                result.capabilities.syntheticMouseInput ? "true" : "false",
+                result.capabilities.absoluteMouseMovement ? "true" : "false",
+                result.capabilities.getCursorPosition ? "true" : "false");
+        }
+
+        return std::format("{{\"id\":{},\"success\":{},\"status\":\"{}\",\"message\":\"{}\"{}}}",
             id,
             result.success ? "true" : "false",
             runtimeStatusToString(result.status),
-            jsonEscape(result.message));
+            jsonEscape(result.message),
+            extra);
     }
 
     RuntimeProtocolRequest parseRuntimeRequest(std::string_view jsonLine)
@@ -307,6 +329,26 @@ namespace autoinput::services
                 return request;
             }
         }
+        else if (request.method == "test_notification")
+        {
+            auto paramsPos = json.find("\"params\"");
+            if (paramsPos != std::string_view::npos)
+            {
+                std::string_view paramsSub = json.substr(paramsPos);
+                
+                std::string_view titleStr = findRawValue(paramsSub, "title", isString);
+                if (!titleStr.empty())
+                {
+                    request.title = isString ? jsonUnescape(titleStr) : std::string(titleStr);
+                }
+
+                std::string_view bodyStr = findRawValue(paramsSub, "body", isString);
+                if (!bodyStr.empty())
+                {
+                    request.body = isString ? jsonUnescape(bodyStr) : std::string(bodyStr);
+                }
+            }
+        }
 
         request.valid = true;
         return request;
@@ -330,6 +372,26 @@ namespace autoinput::services
 
         std::string_view messageStr = findRawValue(json, "message", isString);
         result.message = isString ? jsonUnescape(messageStr) : std::string(messageStr);
+
+        std::string_view backendNameStr = findRawValue(json, "backend_name", isString);
+        if (!backendNameStr.empty())
+        {
+            result.backendName = isString ? jsonUnescape(backendNameStr) : std::string(backendNameStr);
+        }
+
+        auto capsPos = json.find("\"capabilities\"");
+        if (capsPos != std::string_view::npos)
+        {
+            std::string_view capsSub = json.substr(capsPos);
+            result.capabilities.keyboardHooks = findRawValue(capsSub, "keyboardHooks", isString) == "true";
+            result.capabilities.mouseHooks = findRawValue(capsSub, "mouseHooks", isString) == "true";
+            result.capabilities.focusDetection = findRawValue(capsSub, "focusDetection", isString) == "true";
+            result.capabilities.listApplications = findRawValue(capsSub, "listApplications", isString) == "true";
+            result.capabilities.syntheticKeyboardInput = findRawValue(capsSub, "syntheticKeyboardInput", isString) == "true";
+            result.capabilities.syntheticMouseInput = findRawValue(capsSub, "syntheticMouseInput", isString) == "true";
+            result.capabilities.absoluteMouseMovement = findRawValue(capsSub, "absoluteMouseMovement", isString) == "true";
+            result.capabilities.getCursorPosition = findRawValue(capsSub, "getCursorPosition", isString) == "true";
+        }
 
         return result;
     }

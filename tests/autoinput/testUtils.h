@@ -62,6 +62,8 @@ namespace autoinput::test
             return std::nullopt;
         }
 
+        std::string platformName() const override { return "FakePlatform"; }
+
         bool openPath(const std::filesystem::path& path) const override { return true; }
 
         void setExecutablePath(std::filesystem::path path) { m_executablePath = std::move(path); }

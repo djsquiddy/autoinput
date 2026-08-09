@@ -13,6 +13,7 @@
 #include "../windows/runtimeDashboardWindow.h"
 #include "../windows/commandRunnerWindow.h"
 #include "../windows/logViewerWindow.h"
+#include "../windows/backendDiagnosticsWindow.h"
 #include "autoinput/config.h"
 #include "autoinput/logger.h"
 #include "autoinput/services/automationRuntimeClient.h"
@@ -66,6 +67,7 @@ namespace autoinput::ui
         m_windowManager->addWindow<RuntimeDashboardWindow>("runtime-dashboard", getRuntimeClient());
         m_windowManager->addWindow<CommandRunnerWindow>("command-runner", getRuntimeClient(), SystemEnvironment::instance());
         m_windowManager->addWindow<LogViewerWindow>("logs", SystemEnvironment::instance());
+        m_windowManager->addWindow<BackendDiagnosticsWindow>("backend-diagnostics", getRuntimeClient(), SystemEnvironment::instance());
         
         m_windowManager->open("main");
     }

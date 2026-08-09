@@ -33,6 +33,19 @@ namespace autoinput
         return std::nullopt;
     }
 
+    std::string SystemEnvironment::platformName() const
+    {
+#ifdef _WIN32
+        return "Windows";
+#elif __linux__
+        return "Linux";
+#elif __APPLE__
+        return "macOS";
+#else
+        return "Unknown";
+#endif
+    }
+
     bool SystemEnvironment::openPath(const std::filesystem::path& path) const
     {
         return platform::openPath(path);

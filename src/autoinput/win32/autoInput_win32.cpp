@@ -676,6 +676,8 @@ namespace autoinput
                     .getCursorPosition = true
                 };
             }
+
+            std::string getName() const override { return "Windows Backend"; }
         };
     }
 

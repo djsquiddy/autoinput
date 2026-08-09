@@ -151,4 +151,9 @@ namespace autoinput
             m_program->runCommand(name);
         }
     }
+
+    IPlatformBackend* AutomationController::getBackend() const
+    {
+        return m_program ? m_program->getBackend() : nullptr;
+    }
 }

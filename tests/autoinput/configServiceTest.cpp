@@ -23,6 +23,7 @@ namespace autoinput
         [[nodiscard]] std::filesystem::path executableDirectoryPath() const override { return m_exePath.parent_path(); }
         [[nodiscard]] std::filesystem::path userHomePath() const override { return m_homePath; }
         [[nodiscard]] std::optional<std::string> environmentVariable(std::string_view name) const override { return std::nullopt; }
+        [[nodiscard]] std::string platformName() const override { return "MockPlatform"; }
         bool openPath(const std::filesystem::path& path) const override { return true; }
     };
 

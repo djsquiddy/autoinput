@@ -124,6 +124,12 @@ namespace autoinput
          * @return A BackendCapabilities struct.
          */
         virtual BackendCapabilities capabilities() const = 0;
+
+        /**
+         * @brief Gets the display name of this backend.
+         * @return The name of the backend.
+         */
+        virtual std::string getName() const = 0;
     };
 
     class FakeBackend : public IPlatformBackend
@@ -159,6 +165,8 @@ namespace autoinput
                 .getCursorPosition = true
             };
         }
+
+        std::string getName() const override { return "Fake Backend"; }
     private:
         std::atomic<bool> m_stop{ false };
     };

@@ -31,6 +31,7 @@ public:
     MOCK_METHOD(void, moveMouseTo, (int32_t x, int32_t y), (override));
     MOCK_METHOD((std::pair<int32_t, int32_t>), getCursorPosition, (), (override));
     BackendCapabilities capabilities() const override { return {}; }
+    std::string getName() const override { return "Mock Cleanup Backend"; }
 };
 
 TEST(SignalCleanupTest, SignalEndCallsCleanup)

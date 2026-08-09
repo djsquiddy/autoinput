@@ -60,6 +60,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/windows/commandRunnerWindow.h
             ${CMAKE_CURRENT_LIST_DIR}/windows/logViewerWindow.cpp
             ${CMAKE_CURRENT_LIST_DIR}/windows/logViewerWindow.h
+            ${CMAKE_CURRENT_LIST_DIR}/windows/backendDiagnosticsWindow.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/windows/backendDiagnosticsWindow.h
 
             # External sources
             ${IMGUI_SOURCES}

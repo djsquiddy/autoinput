@@ -36,6 +36,8 @@ namespace autoinput
 
         void runCommand(std::string_view name);
 
+        [[nodiscard]] IPlatformBackend* getBackend() const;
+
     private:
         StatusCallback m_statusCallback{ nullptr };
         std::unique_ptr<Program> m_program;

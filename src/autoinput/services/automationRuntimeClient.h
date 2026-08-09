@@ -12,6 +12,7 @@
 #include "autoinput/environment.h"
 #include "autoinput/services/configService.h"
 #include "autoinput/types.h"
+#include "autoinput/backend.h"
 #include <memory>
 #include <string>
 #include <string_view>
@@ -35,6 +36,8 @@ namespace autoinput::services
         bool success{ false };
         RuntimeStatus status{ RuntimeStatus::Stopped };
         std::string message{};
+        std::string backendName{};
+        BackendCapabilities capabilities{};
     };
 
     class IAutomationRuntimeClient
@@ -53,6 +56,11 @@ namespace autoinput::services
         [[nodiscard]] virtual std::string getActiveCommand() const = 0;
         [[nodiscard]] virtual std::string getLastMessage() const = 0;
         [[nodiscard]] virtual bool isBackendAvailable() const = 0;
+
+        [[nodiscard]] virtual RuntimeOperationResult ping() = 0;
+        [[nodiscard]] virtual BackendCapabilities getBackendCapabilities() const = 0;
+        [[nodiscard]] virtual std::string getBackendName() const = 0;
+        [[nodiscard]] virtual RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message) = 0;
     };
 
     class ProcessAutomationRuntimeClient final : public IAutomationRuntimeClient
@@ -72,6 +80,11 @@ namespace autoinput::services
         [[nodiscard]] std::string getActiveCommand() const override;
         [[nodiscard]] std::string getLastMessage() const override;
         [[nodiscard]] bool isBackendAvailable() const override;
+
+        [[nodiscard]] RuntimeOperationResult ping() override;
+        [[nodiscard]] BackendCapabilities getBackendCapabilities() const override;
+        [[nodiscard]] std::string getBackendName() const override;
+        [[nodiscard]] RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message) override;
 
     private:
         RuntimeOperationResult sendRequest(std::uint64_t id, std::string_view method, std::string_view config = "");
@@ -99,6 +112,11 @@ namespace autoinput::services
         [[nodiscard]] std::string getActiveCommand() const override;
         [[nodiscard]] std::string getLastMessage() const override;
         [[nodiscard]] bool isBackendAvailable() const override;
+
+        [[nodiscard]] RuntimeOperationResult ping() override;
+        [[nodiscard]] BackendCapabilities getBackendCapabilities() const override;
+        [[nodiscard]] std::string getBackendName() const override;
+        [[nodiscard]] RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message) override;
 
     private:
         ConfigService m_configService;

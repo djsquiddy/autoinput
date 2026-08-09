@@ -8,6 +8,7 @@
 #include "autoinput/services/processTransport.h"
 #include "autoinput/services/runtimeProtocol.h"
 #include "autoinput/platform.h"
+#include "autoinput/backendFactory.h"
 
 #include "autoinput/arguments.h"
 #include "autoinput/logger.h"
@@ -97,6 +98,44 @@ namespace autoinput::services
     RuntimeStatus ProcessAutomationRuntimeClient::getStatus() const
     {
         return m_status;
+    }
+
+    RuntimeOperationResult ProcessAutomationRuntimeClient::ping()
+    {
+        return sendRequest(m_nextRequestId++, "ping");
+    }
+
+    BackendCapabilities ProcessAutomationRuntimeClient::getBackendCapabilities() const
+    {
+        // Query diagnostics to get capabilities
+        auto res = const_cast<ProcessAutomationRuntimeClient*>(this)->sendRequest(m_nextRequestId++, "get_diagnostics");
+        return res.capabilities;
+    }
+
+    std::string ProcessAutomationRuntimeClient::getBackendName() const
+    {
+        auto res = const_cast<ProcessAutomationRuntimeClient*>(this)->sendRequest(m_nextRequestId++, "get_diagnostics");
+        return res.backendName;
+    }
+
+    RuntimeOperationResult ProcessAutomationRuntimeClient::sendTestNotification(std::string_view title, std::string_view message)
+    {
+        const std::string request = buildTestNotificationRequest(m_nextRequestId++, title, message);
+        if (!m_transport->writeLine(request))
+        {
+            return { false, m_status, "Failed to write to transport." };
+        }
+
+        auto response = m_transport->readLine(std::chrono::milliseconds(5000));
+        if (!response)
+        {
+            return { false, m_status, "Failed to read from transport (timeout)." };
+        }
+
+        auto res = parseRuntimeResponse(*response);
+        m_status = res.status;
+        m_lastMessage = res.message;
+        return res;
     }
 
     std::string ProcessAutomationRuntimeClient::getActiveConfig() const
@@ -385,6 +424,55 @@ namespace autoinput::services
     bool InProcessAutomationRuntimeClient::isBackendAvailable() const
     {
         return true; // In-process is always available if we got here
+    }
+
+    RuntimeOperationResult InProcessAutomationRuntimeClient::ping()
+    {
+        return { true, m_status, "Pong (In-Process)" };
+    }
+
+    BackendCapabilities InProcessAutomationRuntimeClient::getBackendCapabilities() const
+    {
+        if (auto* backend = m_controller.getBackend())
+        {
+            return backend->capabilities();
+        }
+        
+        // If not running, try to get a temporary backend for detection
+        auto tempBackend = BackendFactory::createPlatformBackend();
+        if (tempBackend)
+        {
+            return tempBackend->capabilities();
+        }
+
+        return {};
+    }
+
+    std::string InProcessAutomationRuntimeClient::getBackendName() const
+    {
+        if (auto* backend = m_controller.getBackend())
+        {
+            return backend->getName();
+        }
+
+        auto tempBackend = BackendFactory::createPlatformBackend();
+        if (tempBackend)
+        {
+            return tempBackend->getName();
+        }
+
+        return "Unknown";
+    }
+
+    RuntimeOperationResult InProcessAutomationRuntimeClient::sendTestNotification(std::string_view title, std::string_view message)
+    {
+        NotificationService svc(StatusNotificationMode::Desktop, false);
+        // Add default sinks
+#ifdef _WIN32
+        svc.addSink(platform::createDesktopNotificationSink());
+#endif
+        svc.notifyStatus(true, std::format("{}: {}", title, message));
+        return { true, m_status, "Notification sent" };
     }
 
     std::unique_ptr<IAutomationRuntimeClient> createAutomationRuntimeClient(AutomationRuntimeClientMode mode)

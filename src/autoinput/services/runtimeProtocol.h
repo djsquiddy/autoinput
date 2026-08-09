@@ -22,6 +22,8 @@ namespace autoinput::services
         std::string method; 
         std::string config; 
         std::string command;
+        std::string title;
+        std::string body;
         bool valid{ false }; 
         std::string error; 
     };
@@ -32,6 +34,7 @@ namespace autoinput::services
     std::string buildRuntimeRequest(std::uint64_t id, std::string_view method);
     std::string buildStartRuntimeRequest(std::uint64_t id, std::string_view configName);
     std::string buildRunCommandRequest(std::uint64_t id, std::string_view configName, std::string_view commandName);
+    std::string buildTestNotificationRequest(std::uint64_t id, std::string_view title, std::string_view body);
     std::string buildRuntimeResponse(std::uint64_t id, const RuntimeOperationResult& result);
 
     RuntimeProtocolRequest parseRuntimeRequest(std::string_view jsonLine);

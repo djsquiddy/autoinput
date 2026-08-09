@@ -60,6 +60,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("logs");
                 }
+                if (ImGui::MenuItem("Backend Diagnostics"))
+                {
+                    m_windows.open("backend-diagnostics");
+                }
                 ImGui::Separator();
                 if (ImGui::MenuItem("ImGui Demo", nullptr, m_showDemoWindow))
                 {
@@ -107,6 +111,11 @@ namespace autoinput::ui
         if (ImGui::Button("Config Editor"))
         {
             m_windows.open("config-editor");
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Diagnostics"))
+        {
+            m_windows.open("backend-diagnostics");
         }
 
         ImGui::Separator();
