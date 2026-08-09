@@ -15,6 +15,7 @@
 #include "../windows/logViewerWindow.h"
 #include "../windows/backendDiagnosticsWindow.h"
 #include "../windows/sequenceRecorderWindow.h"
+#include "../windows/sequenceEditorWindow.h"
 #include "autoinput/config.h"
 #include "autoinput/logger.h"
 #include "autoinput/services/automationRuntimeClient.h"
@@ -70,6 +71,7 @@ namespace autoinput::ui
         m_windowManager->addWindow<LogViewerWindow>("logs", SystemEnvironment::instance());
         m_windowManager->addWindow<BackendDiagnosticsWindow>("backend-diagnostics", getRuntimeClient(), SystemEnvironment::instance());
         m_windowManager->addWindow<SequenceRecorderWindow>("sequence-recorder", getRuntimeClient(), SystemEnvironment::instance());
+        m_windowManager->addWindow<SequenceEditorWindow>("sequence-editor");
         
         m_windowManager->open("main");
     }

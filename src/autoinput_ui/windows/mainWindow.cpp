@@ -68,6 +68,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("sequence-recorder");
                 }
+                if (ImGui::MenuItem("Sequence Editor"))
+                {
+                    m_windows.open("sequence-editor");
+                }
                 ImGui::Separator();
                 if (ImGui::MenuItem("ImGui Demo", nullptr, m_showDemoWindow))
                 {
@@ -125,6 +129,11 @@ namespace autoinput::ui
         if (ImGui::Button("Sequence Recorder"))
         {
             m_windows.open("sequence-recorder");
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Sequence Editor"))
+        {
+            m_windows.open("sequence-editor");
         }
 
         ImGui::Separator();
