@@ -74,6 +74,13 @@ namespace autoinput::ui
         {
             return it->second;
         }
+
+        if (m_missingKeys.find(key) == m_missingKeys.end())
+        {
+            Logger::warn("Localization: Key not found: {}", key);
+            m_missingKeys.emplace(key);
+        }
+
         return key;
     }
 
@@ -84,6 +91,13 @@ namespace autoinput::ui
         {
             return it->second;
         }
+
+        if (m_missingKeys.find(key) == m_missingKeys.end())
+        {
+            Logger::warn("Localization: Key not found: {} (using fallback: {})", key, fallback);
+            m_missingKeys.emplace(key);
+        }
+
         return std::string(fallback);
     }
 

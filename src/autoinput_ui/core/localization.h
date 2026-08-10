@@ -13,6 +13,8 @@
 #include <map>
 #include <memory>
 #include <format>
+#include <set>
+#include <vector>
 
 namespace autoinput::ui
 {
@@ -80,6 +82,7 @@ namespace autoinput::ui
 
     private:
         std::map<std::string, std::string, std::less<>> m_strings;
+        mutable std::set<std::string, std::less<>> m_missingKeys;
     };
 }
 
