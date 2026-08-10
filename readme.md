@@ -4,18 +4,25 @@ A versatile C++ utility for automating mouse and keyboard input on Windows and L
 
 ### Features
 
-- **Autoclicker**: Simulate mouse clicks (left, right, middle) at specified intervals. Support for keyboard modifiers (e.g., `shift+left`) is included.
-- **Auto-keypresser**: Simulate keyboard input.
-- **Flexible Triggering**: Start and stop actions using global hotkeys.
-- **Focus Management**: Ability to whitelist or blacklist specific applications to prevent automation from running when they are in focus.
-- **Delay Randomization**: Support for randomized press and release delays (e.g., `500ms..1s`).
-- **Configuration Support**: Load complex action mappings from TOML files. The program looks for configurations in the `configs/` directory relative to its executable and in the user-level directory (`~/.autoinput/` on Linux, `%USERPROFILE%/.autoinput/` on Windows). User-level configurations in `settings.toml` automatically override built-in defaults.
-- **Multi-command Support**: Run multiple independent automation commands simultaneously from a single configuration file.
-- **Mutually Exclusive Command Groups**: Declare groups of commands where only one can be active at a time. Starting one command in a group automatically stops any other active command in the same group.
-- **Safety First**: Integrated with Microsoft GSL for robust memory management.
-- **Desktop Notifications**: Optional desktop status notifications for active/paused state changes.
-- **Cross-platform Support**: Works on Windows (via `SendInput`), Linux X11 (via `XTest`), and Linux Wayland (via `uinput`).
-- **No Network Dependencies**: No external network connections or dependencies. No telemetry or analytics.
+- Mouse and keyboard automation.
+- Click and hold actions.
+- Keyboard and mouse hotkeys for start/toggle/stop.
+- Modifier/key-combo support such as `shift+left` and `ctrl+v`.
+- Application focus allowlist/blacklist behavior.
+- Fixed and randomized timing ranges.
+- TOML configuration loading.
+- Multi-command configurations.
+- Mutually exclusive command groups via `exclusiveGroup`.
+- Sequence recording and playback.
+- Configuration listing, validation, duplication/copying, and saving.
+- JSON output where supported, especially validation.
+- Console and desktop status notifications.
+- Runtime service mode for frontend/integration use.
+- Optional graphical UI frontend.
+- Optional Windows system tray frontend.
+- Windows, Linux X11, and Linux Wayland backend support.
+- Configurable build options for optional components.
+- No telemetry / no analytics.
 
 ### Requirements
 
@@ -41,6 +48,17 @@ cd build
 cmake ..
 make
 ```
+
+### Build Options
+
+You can customize the build by passing the following options to `cmake`:
+
+- `AUTOINPUT_BUILD_TESTS`: Build unit and integration tests (defaults to `OFF`).
+- `AUTOINPUT_BUILD_TRAY`: Build the optional system tray frontend for Windows (defaults to `OFF`).
+- `AUTOINPUT_BUILD_UI`: Build the optional graphical UI frontend (defaults to `OFF`).
+- `ENABLE_KEYBOARD_HOOK`: Enable low-level keyboard hook support for global hotkeys (defaults to `ON`).
+- `ENABLE_MOUSE_HOOK`: Enable low-level mouse hook support for global hotkeys (defaults to `ON`).
+- `ENABLE_FAKE_HOOK`: Use a dummy hook implementation for development or restricted environments (defaults to `OFF`).
 
 ### Shell Completion
 
@@ -89,6 +107,7 @@ autoinput [global options] <command> [options]
 
 - **run**: Run input automation from command options or a TOML configuration.
 - **record**: Record input events and save them as a replayable configuration.
+- **serve**: Start the runtime protocol service for frontend or integration use.
 - **config**: Manage and validate autoinput configuration files.
 - **apps**: List all currently running application names.
 - **help**: Show help for autoinput commands.
@@ -186,6 +205,20 @@ autoinput run --config my-macro
 ```
 (By default, the sequence will play when you press `F6`, and can be stopped by the global end key `F3`).
 
+### The `serve` Command
+
+Used to run the runtime protocol service over standard input/output. This is designed for graphical frontends or integration clients that need to control the automation runtime programmatically.
+
+#### Options
+
+- `--stdio`: Use standard input and output for the service protocol (required).
+
+#### Example
+
+```bash
+autoinput serve --stdio
+```
+
 ### The `config` Command
 
 Used to manage, list, and validate configurations.
@@ -254,7 +287,43 @@ Simply run the `autoinput_tray` executable. It will appear in your system tray (
 
 The tray app discovers configurations from the same locations as the CLI:
 - Built-in configurations in the `configs/` directory relative to the executable.
-- User-level configurations in `~/.autoinput/` (Linux) or `%USERPROFILE%/.autoinput/` (Windows).
+- User-level configurations in `%USERPROFILE%/.autoinput/`.
+
+### Graphical UI Frontend
+
+The graphical UI provides visual management of automation, configurations, runtime state, logs, settings, and diagnostics. It is built with Dear ImGui and provides a more comprehensive interface than the system tray application.
+
+#### Features
+
+- Main dashboard/window hub.
+- Config manager and config editor.
+- Settings editor.
+- Command runner.
+- Command palette.
+- Sequence editor.
+- Sequence recorder.
+- Runtime dashboard.
+- Advanced runtime controls with start/stop/pause/resume.
+- Validation report viewer.
+- Log viewer.
+- Import/export tools.
+- Backup/restore tools.
+- Backend diagnostics.
+- Application picker.
+- Notification tester.
+- Setup wizard.
+- About window.
+
+#### Building with UI Support
+
+UI support is optional and can be enabled during the CMake configuration step:
+
+```bash
+cmake -DAUTOINPUT_BUILD_UI=ON ..
+cmake --build .
+```
+
+This will produce an additional executable named `autoinput_ui` (or `autoinput_ui.exe` on Windows) when the required dependencies are available.
 
 ### Configuration
 
