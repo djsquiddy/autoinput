@@ -18,6 +18,17 @@ namespace autoinput::ui
     void LogViewerWindow::onOpen()
     {
         refreshLogs();
+        m_lastRefreshTime = std::chrono::steady_clock::now();
+    }
+
+    void LogViewerWindow::update()
+    {
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastRefreshTime).count() > 500)
+        {
+            refreshLogs();
+            m_lastRefreshTime = now;
+        }
     }
 
     void LogViewerWindow::refreshLogs()
@@ -229,13 +240,5 @@ namespace autoinput::ui
             ImGui::EndTable();
         }
         ImGui::EndChild();
-        
-        // Refresh every few frames if window is open
-        static int frameCounter = 0;
-        if (++frameCounter > 60) // Roughly once per second at 60fps
-        {
-            refreshLogs();
-            frameCounter = 0;
-        }
     }
 }

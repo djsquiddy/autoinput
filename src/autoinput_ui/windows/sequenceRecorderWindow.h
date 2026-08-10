@@ -24,6 +24,10 @@ namespace autoinput::ui
         void renderContent() override;
         void update() override;
 
+    protected:
+        void save() override;
+        void discardChanges() override;
+
     private:
         services::IAutomationRuntimeClient& m_runtimeClient;
         const IEnvironment& m_environment;
@@ -42,7 +46,6 @@ namespace autoinput::ui
         char m_mouseSampleDelay[64]{ "100ms" };
         
         std::string m_statusMessage;
-        bool m_isDirty{ false };
         
         // Recording state (cached from runtime)
         bool m_isRecording{ false };

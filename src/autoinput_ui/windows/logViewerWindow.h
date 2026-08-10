@@ -12,6 +12,7 @@
 #include "autoinput/environment.h"
 #include <vector>
 #include <string>
+#include <chrono>
 
 namespace autoinput::ui
 {
@@ -25,6 +26,7 @@ namespace autoinput::ui
 
     protected:
         void renderContent() override;
+        void update() override;
         void onOpen() override;
 
     private:
@@ -42,6 +44,7 @@ namespace autoinput::ui
         int m_selectedLogLevel{ 0 }; // 0: All, 1: Trace, 2: Debug, 3: Info, 4: Warning, 5: Error
         bool m_autoScroll{ true };
         bool m_scrollToBottom{ false };
+        std::chrono::steady_clock::time_point m_lastRefreshTime;
 
         void applyFilters();
     };

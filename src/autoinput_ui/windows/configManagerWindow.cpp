@@ -6,6 +6,7 @@
 #include "configManagerWindow.h"
 #include "../widgets/basicWidgets.h"
 #include "../widgets/formWidgets.h"
+#include "../core/windowIds.h"
 #include "autoinput/logger.h"
 #include "autoinput/configValidator.h"
 #include "configEditorWindow.h"
@@ -110,6 +111,13 @@ namespace autoinput::ui
         std::string newName = entry.name + "_copy";
         std::filesystem::path destPath = autoinput::getUserConfigsPath(m_environment) / (newName + ".toml");
         
+        int suffix = 1;
+        while (std::filesystem::exists(destPath))
+        {
+            newName = entry.name + std::format("_copy_{}", suffix++);
+            destPath = autoinput::getUserConfigsPath(m_environment) / (newName + ".toml");
+        }
+        
         if (autoinput::duplicateConfig(entry.path.string(), destPath.string(), false))
         {
             m_statusMessage = std::format("Duplicated {} to {}", entry.name, newName);
@@ -130,6 +138,12 @@ namespace autoinput::ui
         }
 
         const std::filesystem::path newPath = entry.path.parent_path() / (newName + ".toml");
+        if (std::filesystem::exists(newPath))
+        {
+            m_statusMessage = std::format("Error: Config '{}' already exists.", newName);
+            return;
+        }
+
         try
         {
             std::filesystem::rename(entry.path, newPath);
@@ -167,9 +181,15 @@ namespace autoinput::ui
         std::string name = sourcePath.stem().string();
         const std::filesystem::path destPath = getUserConfigsPath(m_environment) / (name + ".toml");
         
+        if (std::filesystem::exists(destPath))
+        {
+            m_statusMessage = std::format("Error: Config '{}' already exists in user directory.", name);
+            return;
+        }
+
         try
         {
-            std::filesystem::copy_file(sourcePath, destPath, std::filesystem::copy_options::overwrite_existing);
+            std::filesystem::copy_file(sourcePath, destPath, std::filesystem::copy_options::none);
             m_statusMessage = std::format("Imported config: {}", name);
             refreshConfigs();
         }
@@ -181,9 +201,15 @@ namespace autoinput::ui
 
     void ConfigManagerWindow::exportConfig(const ConfigEntry& entry, const std::filesystem::path& destPath)
     {
+        if (std::filesystem::exists(destPath))
+        {
+            m_statusMessage = std::format("Error: Destination '{}' already exists.", destPath.filename().string());
+            return;
+        }
+
         try
         {
-            std::filesystem::copy_file(entry.path, destPath, std::filesystem::copy_options::overwrite_existing);
+            std::filesystem::copy_file(entry.path, destPath, std::filesystem::copy_options::none);
             m_statusMessage = std::format("Exported {} to {}", entry.name, destPath.string());
         }
         catch (const std::exception& e)
@@ -261,10 +287,10 @@ namespace autoinput::ui
             
             if (ImGui::Button("Open in Editor"))
             {
-                if (auto editor = m_windowManager.findAs<ConfigEditorWindow>("config-editor"))
+                if (auto editor = m_windowManager.findAs<ConfigEditorWindow>(WindowIds::ConfigEditor))
                 {
                     editor->loadConfig(selected.path.string());
-                    m_windowManager.open("config-editor");
+                    m_windowManager.open(WindowIds::ConfigEditor);
                 }
             }
             ImGui::SameLine();

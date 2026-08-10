@@ -5,30 +5,12 @@
  */
 #include "mainWindow.h"
 #include "../core/windowManager.h"
+#include "../core/windowIds.h"
+#include "../core/uiActions.h"
 #include <imgui.h>
 
 namespace autoinput::ui
 {
-    namespace
-    {
-        void toggleWindowButton(WindowManager& windowManager, const char* windowName)
-        {
-            auto* window = windowManager.find(windowName);
-            if (!window)
-            {
-                return;
-            }
-
-            if (window->isOpen())
-            {
-                window->requestClose();
-                return;
-            }
-
-            windowManager.open(window);
-        }
-    }
-
     MainWindow::MainWindow(WindowManager& windows)
         : UiWindow("AutoInput Main"), m_windows(windows)
     {
@@ -58,86 +40,23 @@ namespace autoinput::ui
             {
                 if (ImGui::MenuItem("Command Palette", "Ctrl+P"))
                 {
-                    m_windows.open("command-palette");
+                    m_windows.open(WindowIds::CommandPalette);
                 }
                 ImGui::Separator();
-                if (ImGui::MenuItem("Settings"))
+                
+                auto actions = UiActionRegistry::getActions();
+                for (const auto& action : actions)
                 {
-                    m_windows.open("settings");
+                    if (ImGui::MenuItem(action.label.c_str()))
+                    {
+                        UiActionRegistry::execute(action.id, m_windows);
+                    }
                 }
-                if (ImGui::MenuItem("Config Editor"))
-                {
-                    m_windows.open("config-editor");
-                }
-                if (ImGui::MenuItem("Config Manager"))
-                {
-                    m_windows.open("config-manager");
-                }
-                if (ImGui::MenuItem("Import / Export"))
-                {
-                    m_windows.open("import-export");
-                }
-                if (ImGui::MenuItem("Hotkey Manager"))
-                {
-                    m_windows.open("hotkey-manager");
-                }
-                if (ImGui::MenuItem("Backup / Restore"))
-                {
-                    m_windows.open("backup-restore");
-                }
-                if (ImGui::MenuItem("Application Picker"))
-                {
-                    m_windows.open("application-picker");
-                }
-                if (ImGui::MenuItem("Automation Runtime"))
-                {
-                    m_windows.open("runtime");
-                }
-                if (ImGui::MenuItem("Runtime Dashboard"))
-                {
-                    m_windows.open("runtime-dashboard");
-                }
-                if (ImGui::MenuItem("Command Runner"))
-                {
-                    m_windows.open("command-runner");
-                }
-                if (ImGui::MenuItem("Logs"))
-                {
-                    m_windows.open("logs");
-                }
-                if (ImGui::MenuItem("Backend Diagnostics"))
-                {
-                    m_windows.open("backend-diagnostics");
-                }
-                if (ImGui::MenuItem("Sequence Recorder"))
-                {
-                    m_windows.open("sequence-recorder");
-                }
-                if (ImGui::MenuItem("Sequence Editor"))
-                {
-                    m_windows.open("sequence-editor");
-                }
-                if (ImGui::MenuItem("Validation Report"))
-                {
-                    m_windows.open("validation-report");
-                }
-                if (ImGui::MenuItem("Setup Wizard"))
-                {
-                    m_windows.open("setup-wizard");
-                }
-                if (ImGui::MenuItem("Notification Tester"))
-                {
-                    m_windows.open("notification-tester");
-                }
+                
                 ImGui::Separator();
                 if (ImGui::MenuItem("ImGui Demo", nullptr, m_showDemoWindow))
                 {
                     m_showDemoWindow = !m_showDemoWindow;
-                }
-                ImGui::Separator();
-                if (ImGui::MenuItem("About AutoInput"))
-                {
-                    m_windows.open("about");
                 }
                 ImGui::EndMenu();
             }
@@ -145,99 +64,39 @@ namespace autoinput::ui
         }
 
         ImGui::Text("AutoInput UI");
-        ImGui::Text("Status: %s", m_statusText.c_str());
         ImGui::Separator();
 
-        if (ImGui::Button("Run"))
+        // Quick Actions
+        if (ImGui::Button("Run Command", ImVec2(150, 40)))
         {
-            m_statusText = "Running...";
+            m_windows.open(WindowIds::CommandRunner);
         }
         ImGui::SameLine();
-        if (ImGui::Button("Stop"))
+        if (ImGui::Button("Runtime Status", ImVec2(150, 40)))
         {
-            m_statusText = "Stopped";
+            m_windows.open(WindowIds::RuntimeDashboard);
         }
         ImGui::SameLine();
-        if (ImGui::Button("Record"))
+        if (ImGui::Button("Record Sequence", ImVec2(150, 40)))
         {
-            m_statusText = "Recording...";
-        }
-        // ImGui::SameLine();
-        if (ImGui::Button("Automation Runtime"))
-        {
-            toggleWindowButton(m_windows, "runtime");
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Runtime Dashboard"))
-        {
-            toggleWindowButton(m_windows, "runtime-dashboard");
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Settings"))
-        {
-            toggleWindowButton(m_windows, "settings");
-        }
-        // ImGui::SameLine();
-        if (ImGui::Button("Config Editor"))
-        {
-            toggleWindowButton(m_windows, "config-editor");
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Config Manager"))
-        {
-            toggleWindowButton(m_windows, "config-manager");
-        }
-        // ImGui::SameLine();
-        if (ImGui::Button("Hotkey Manager"))
-        {
-            toggleWindowButton(m_windows, "hotkey-manager");
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("App Picker"))
-        {
-            toggleWindowButton(m_windows, "application-picker");
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Backup / Restore"))
-        {
-            toggleWindowButton(m_windows, "backup-restore");
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Diagnostics"))
-        {
-            toggleWindowButton(m_windows, "backend-diagnostics");
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Sequence Recorder"))
-        {
-            toggleWindowButton(m_windows, "sequence-recorder");
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Sequence Editor"))
-        {
-            toggleWindowButton(m_windows, "sequence-editor");
-        }
-        // ImGui::SameLine();
-        if (ImGui::Button("Validation"))
-        {
-            toggleWindowButton(m_windows, "validation-report");
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Setup Wizard"))
-        {
-            toggleWindowButton(m_windows, "setup-wizard");
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Notification Tester"))
-        {
-            toggleWindowButton(m_windows, "notification-tester");
+            m_windows.open(WindowIds::SequenceRecorder);
         }
 
+        ImGui::Spacing();
+        ImGui::Text("Shortcuts");
+        if (ImGui::Button("Config Manager")) m_windows.open(WindowIds::ConfigManager);
+        ImGui::SameLine();
+        if (ImGui::Button("Settings")) m_windows.open(WindowIds::Settings);
+        ImGui::SameLine();
+        if (ImGui::Button("Logs")) m_windows.open(WindowIds::Logs);
+        ImGui::SameLine();
+        if (ImGui::Button("Diagnostics")) m_windows.open(WindowIds::BackendDiagnostics);
+
         ImGui::Separator();
-        ImGui::Text("Log / Status Panel:");
-        ImGui::BeginChild("LogRegion", ImVec2(0, 0), true);
+        ImGui::Text("Information:");
+        ImGui::BeginChild("StatusRegion", ImVec2(0, 0), true);
         ImGui::TextUnformatted("Application initialized.");
-        ImGui::TextUnformatted("Ready to receive commands.");
+        ImGui::TextUnformatted("Press Ctrl+P to open the Command Palette.");
         ImGui::EndChild();
 
         if (m_showDemoWindow)

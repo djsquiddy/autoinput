@@ -68,6 +68,11 @@ namespace autoinput::ui
          */
         void render();
 
+        /**
+         * @brief Updates all registered windows.
+         */
+        void update();
+
     private:
         std::unordered_map<std::string, std::unique_ptr<UiWindow>> m_windows;
     };

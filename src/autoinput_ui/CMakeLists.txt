@@ -28,6 +28,9 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/core/uiWindow.h
             ${CMAKE_CURRENT_LIST_DIR}/core/windowManager.cpp
             ${CMAKE_CURRENT_LIST_DIR}/core/windowManager.h
+            ${CMAKE_CURRENT_LIST_DIR}/core/windowIds.h
+            ${CMAKE_CURRENT_LIST_DIR}/core/uiActions.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/core/uiActions.h
             ${CMAKE_CURRENT_LIST_DIR}/core/imguiScope.h
             # Widgets
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.cpp

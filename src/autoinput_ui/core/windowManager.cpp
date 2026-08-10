@@ -37,8 +37,18 @@ namespace autoinput::ui
         {
             if (window->isOpen())
             {
-                window->update();
                 window->render();
+            }
+        }
+    }
+
+    void WindowManager::update()
+    {
+        for (auto& window : m_windows | std::views::values)
+        {
+            if (window->isOpen())
+            {
+                window->update();
             }
         }
     }

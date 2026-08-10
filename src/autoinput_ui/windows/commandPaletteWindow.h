@@ -38,7 +38,7 @@ namespace autoinput::ui
         bool hasCloseButton() const override { return false; }
 
     private:
-        void registerCommands();
+        void refreshActions();
         void executeCommand(const PaletteCommand& cmd);
 
         WindowManager& m_windowManager;

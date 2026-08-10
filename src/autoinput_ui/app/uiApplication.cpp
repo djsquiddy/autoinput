@@ -4,6 +4,7 @@
  * @date August 2026
  */
 #include "uiApplication.h"
+#include "../core/windowIds.h"
 #include "../core/uibackend.h"
 #include "../core/windowManager.h"
 #include "../windows/mainWindow.h"
@@ -62,7 +63,7 @@ namespace autoinput::ui
         shutdown();
     }
 
-    autoinput::services::IAutomationRuntimeClient& UiApplication::getRuntimeClient() const
+    services::IAutomationRuntimeClient& UiApplication::getRuntimeClient() const
     {
         return *m_runtimeClient;
     }
@@ -72,34 +73,34 @@ namespace autoinput::ui
         Logger::info("Initializing UI Application...");
         m_uiBackend->init();
 
-        m_windowManager->addWindow<MainWindow>("main", *m_windowManager);
-        m_windowManager->addWindow<SettingsEditorWindow>("settings");
-        m_windowManager->addWindow<ConfigEditorWindow>("config-editor");
-        m_windowManager->addWindow<RuntimeWindow>("runtime", getRuntimeClient());
-        m_windowManager->addWindow<RuntimeDashboardWindow>("runtime-dashboard", getRuntimeClient());
-        m_windowManager->addWindow<CommandRunnerWindow>("command-runner", getRuntimeClient(), SystemEnvironment::instance());
-        m_windowManager->addWindow<LogViewerWindow>("logs", SystemEnvironment::instance());
-        m_windowManager->addWindow<BackendDiagnosticsWindow>("backend-diagnostics", getRuntimeClient(), SystemEnvironment::instance());
-        m_windowManager->addWindow<SequenceRecorderWindow>("sequence-recorder", getRuntimeClient(), SystemEnvironment::instance());
-        m_windowManager->addWindow<SequenceEditorWindow>("sequence-editor");
-        m_windowManager->addWindow<ConfigManagerWindow>("config-manager", *m_windowManager, SystemEnvironment::instance());
-        m_windowManager->addWindow<HotkeyManagerWindow>("hotkey-manager", *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
-        m_windowManager->addWindow<ApplicationPickerWindow>("application-picker", *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
-        m_windowManager->addWindow<windows::ValidationReportWindow>("validation-report", *m_windowManager, SystemEnvironment::instance());
-        m_windowManager->addWindow<SetupWizardWindow>("setup-wizard", *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
-        m_windowManager->addWindow<NotificationTesterWindow>("notification-tester", getRuntimeClient());
-        m_windowManager->addWindow<CommandPaletteWindow>("command-palette", *m_windowManager);
-        m_windowManager->addWindow<AboutWindow>("about", getRuntimeClient(), SystemEnvironment::instance());
-        m_windowManager->addWindow<ImportExportWindow>("import-export");
-        m_windowManager->addWindow<BackupRestoreWindow>("backup-restore");
+        m_windowManager->addWindow<MainWindow>(std::string(WindowIds::Main), *m_windowManager);
+        m_windowManager->addWindow<SettingsEditorWindow>(std::string(WindowIds::Settings));
+        m_windowManager->addWindow<ConfigEditorWindow>(std::string(WindowIds::ConfigEditor));
+        m_windowManager->addWindow<RuntimeWindow>(std::string(WindowIds::Runtime), getRuntimeClient());
+        m_windowManager->addWindow<RuntimeDashboardWindow>(std::string(WindowIds::RuntimeDashboard), getRuntimeClient());
+        m_windowManager->addWindow<CommandRunnerWindow>(std::string(WindowIds::CommandRunner), getRuntimeClient(), SystemEnvironment::instance());
+        m_windowManager->addWindow<LogViewerWindow>(std::string(WindowIds::Logs), SystemEnvironment::instance());
+        m_windowManager->addWindow<BackendDiagnosticsWindow>(std::string(WindowIds::BackendDiagnostics), getRuntimeClient(), SystemEnvironment::instance());
+        m_windowManager->addWindow<SequenceRecorderWindow>(std::string(WindowIds::SequenceRecorder), getRuntimeClient(), SystemEnvironment::instance());
+        m_windowManager->addWindow<SequenceEditorWindow>(std::string(WindowIds::SequenceEditor));
+        m_windowManager->addWindow<ConfigManagerWindow>(std::string(WindowIds::ConfigManager), *m_windowManager, SystemEnvironment::instance());
+        m_windowManager->addWindow<HotkeyManagerWindow>(std::string(WindowIds::HotkeyManager), *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
+        m_windowManager->addWindow<ApplicationPickerWindow>(std::string(WindowIds::ApplicationPicker), *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
+        m_windowManager->addWindow<windows::ValidationReportWindow>(std::string(WindowIds::ValidationReport), *m_windowManager, SystemEnvironment::instance());
+        m_windowManager->addWindow<SetupWizardWindow>(std::string(WindowIds::SetupWizard), *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
+        m_windowManager->addWindow<NotificationTesterWindow>(std::string(WindowIds::NotificationTester), getRuntimeClient());
+        m_windowManager->addWindow<CommandPaletteWindow>(std::string(WindowIds::CommandPalette), *m_windowManager);
+        m_windowManager->addWindow<AboutWindow>(std::string(WindowIds::About), getRuntimeClient(), SystemEnvironment::instance());
+        m_windowManager->addWindow<ImportExportWindow>(std::string(WindowIds::ImportExport));
+        m_windowManager->addWindow<BackupRestoreWindow>(std::string(WindowIds::BackupRestore));
         
-        m_windowManager->open("main");
+        m_windowManager->open(WindowIds::Main);
 
         // Open setup wizard if not completed
         Settings settings;
         if (settings.load() && !settings.getDefaults().setupCompleted)
         {
-            m_windowManager->open("setup-wizard");
+            m_windowManager->open(WindowIds::SetupWizard);
         }
     }
 
@@ -113,13 +114,13 @@ namespace autoinput::ui
         // Global shortcut for Command Palette (Ctrl+P or Ctrl+Shift+P)
         if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_P))
         {
-            m_windowManager->open("command-palette");
+            m_windowManager->open(WindowIds::CommandPalette);
         }
     }
 
     void UiApplication::update()
     {
-        // No-op
+        m_windowManager->update();
     }
 
     void UiApplication::render()

@@ -5,6 +5,7 @@
  */
 #include "hotkeyManagerWindow.h"
 #include "../widgets/basicWidgets.h"
+#include "../core/windowIds.h"
 #include "autoinput/logger.h"
 #include "autoinput/services/configService.h"
 #include "autoinput/configValidator.h"
@@ -387,10 +388,10 @@ namespace autoinput::ui
                     ImGui::SameLine();
                     if (ImGui::Button("Edit"))
                     {
-                        if (auto editor = m_windowManager.findAs<ConfigEditorWindow>("config-editor"))
+                        if (auto editor = m_windowManager.findAs<ConfigEditorWindow>(WindowIds::ConfigEditor))
                         {
                             editor->loadConfig(m_currentConfigName);
-                            m_windowManager.open("config-editor");
+                            m_windowManager.open(WindowIds::ConfigEditor);
                             // We can't easily jump to a specific command/sequence yet without adding more API to ConfigEditorWindow
                         }
                     }

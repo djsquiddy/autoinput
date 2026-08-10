@@ -5,6 +5,8 @@
  */
 #include "commandPaletteWindow.h"
 #include "../core/windowManager.h"
+#include "../core/windowIds.h"
+#include "../core/uiActions.h"
 #include "autoinput/logger.h"
 #include <imgui.h>
 #include <algorithm>
@@ -17,7 +19,7 @@ namespace autoinput::ui
         : UiWindow("Command Palette")
         , m_windowManager(windowManager)
     {
-        registerCommands();
+        refreshActions();
     }
 
     void CommandPaletteWindow::onOpen()
@@ -25,6 +27,7 @@ namespace autoinput::ui
         m_filter[0] = '\0';
         m_selectedIndex = 0;
         m_focusSearch = true;
+        refreshActions();
     }
 
     int CommandPaletteWindow::getFlags() const
@@ -34,34 +37,16 @@ namespace autoinput::ui
                ImGuiWindowFlags_AlwaysAutoResize;
     }
 
-    void CommandPaletteWindow::registerCommands()
+    void CommandPaletteWindow::refreshActions()
     {
         m_commands.clear();
-        
-        // Window commands
-        m_commands.push_back({ "Open Config Editor", "Window", [this] { m_windowManager.open("config-editor"); } });
-        m_commands.push_back({ "Open Settings", "Window", [this] { m_windowManager.open("settings"); } });
-        m_commands.push_back({ "Open Logs", "Window", [this] { m_windowManager.open("logs"); } });
-        m_commands.push_back({ "Open About", "Window", [this] { m_windowManager.open("about"); } });
-        m_commands.push_back({ "Open Config Manager", "Window", [this] { m_windowManager.open("config-manager"); } });
-        m_commands.push_back({ "Open Import / Export", "Window", [this] { m_windowManager.open("import-export"); } });
-        m_commands.push_back({ "Open Hotkey Manager", "Window", [this] { m_windowManager.open("hotkey-manager"); } });
-        m_commands.push_back({ "Open Application Picker", "Window", [this] { m_windowManager.open("application-picker"); } });
-        m_commands.push_back({ "Open Validation Report", "Window", [this] { m_windowManager.open("validation-report"); } });
-        m_commands.push_back({ "Open Setup Wizard", "Window", [this] { m_windowManager.open("setup-wizard"); } });
-        m_commands.push_back({ "Open Backup / Restore", "Window", [this] { m_windowManager.open("backup-restore"); } });
-
-        // Runtime commands
-        m_commands.push_back({ "Open Runtime Dashboard", "Runtime", [this] { m_windowManager.open("runtime-dashboard"); } });
-        m_commands.push_back({ "Open Command Runner", "Runtime", [this] { m_windowManager.open("command-runner"); } });
-        m_commands.push_back({ "Open Sequence Recorder", "Runtime", [this] { m_windowManager.open("sequence-recorder"); } });
-        m_commands.push_back({ "Open Backend Diagnostics", "Runtime", [this] { m_windowManager.open("backend-diagnostics"); } });
-        m_commands.push_back({ "Open Notification Tester", "Runtime", [this] { m_windowManager.open("notification-tester"); } });
-
-        // Config commands
-        m_commands.push_back({ "Validate All Configs", "Config", [this] { 
-            m_windowManager.open("validation-report");
-        } });
+        auto actions = UiActionRegistry::getActions();
+        for (const auto& action : actions)
+        {
+            m_commands.push_back({ action.label, action.category, [this, id = action.id] { 
+                UiActionRegistry::execute(id, m_windowManager); 
+            } });
+        }
     }
 
     void CommandPaletteWindow::renderContent()

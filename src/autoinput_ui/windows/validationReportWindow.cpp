@@ -6,6 +6,7 @@
 #include "validationReportWindow.h"
 #include "../widgets/basicWidgets.h"
 #include "../core/windowManager.h"
+#include "../core/windowIds.h"
 #include "configEditorWindow.h"
 #include "autoinput/logger.h"
 #include <imgui.h>
@@ -254,7 +255,7 @@ namespace autoinput::ui::windows
     {
         if (issue.sourcePath.empty()) return;
 
-        auto editor = m_windowManager.findAs<ConfigEditorWindow>("config-editor");
+        auto editor = m_windowManager.findAs<ConfigEditorWindow>(WindowIds::ConfigEditor);
         if (editor)
         {
             editor->loadConfig(issue.sourcePath);

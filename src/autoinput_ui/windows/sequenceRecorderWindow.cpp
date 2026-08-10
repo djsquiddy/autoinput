@@ -51,7 +51,7 @@ namespace autoinput::ui
                 if (seq)
                 {
                     m_recordedSequence = std::move(seq);
-                    m_isDirty = true;
+                    markDirty();
                 }
             }
         }
@@ -78,7 +78,7 @@ namespace autoinput::ui
             m_recordingStartTime = std::chrono::steady_clock::now();
             m_eventCount = 0;
             m_recordedSequence = std::nullopt;
-            m_isDirty = true;
+            markDirty();
         }
         else
         {
@@ -131,8 +131,19 @@ namespace autoinput::ui
             m_statusMessage = "Recording discarded.";
             m_recordedSequence = std::nullopt;
             m_eventCount = 0;
-            m_isDirty = false;
+            clearDirty();
         }
+    }
+
+    void SequenceRecorderWindow::save()
+    {
+        saveSequence();
+    }
+
+    void SequenceRecorderWindow::discardChanges()
+    {
+        discardRecording();
+        UiWindow::discardChanges();
     }
 
     void SequenceRecorderWindow::saveSequence()
@@ -179,7 +190,7 @@ namespace autoinput::ui
         if (saveConfigData(configData, configPath))
         {
             m_statusMessage = std::format("Sequence '{}' saved to config '{}'.", m_recordedSequence->name, configName);
-            m_isDirty = false;
+            clearDirty();
         }
         else
         {
@@ -240,7 +251,7 @@ namespace autoinput::ui
         ImGui::SameLine();
         if (ImGui::Button("Discard"))
         {
-            if (m_isDirty)
+            if (isDirty())
             {
                 ImGui::OpenPopup("Confirm Discard");
             }
@@ -315,7 +326,7 @@ namespace autoinput::ui
         
         ImGui::Text("Events: %u | Time: %02lld:%02lld", m_eventCount, elapsed.count() / 60, elapsed.count() % 60);
         
-        if (m_isDirty)
+        if (isDirty())
         {
             ImGui::SameLine();
             ImGui::TextColored(ImVec4(1, 1, 0, 1), "[Unsaved]");
