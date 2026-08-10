@@ -153,7 +153,7 @@ namespace autoinput::ui::windows
         std::string current = m_configService.getCurrentConfig();
         if (current.empty())
         {
-            m_statusMessage = loc.text("labels.noConfigSelected");
+            m_statusMessage = loc.text("status.noConfigSelected");
             return;
         }
 
@@ -168,7 +168,7 @@ namespace autoinput::ui::windows
             m_issues.push_back(ValidationIssue{ current, result.configPath, "Config", err });
         }
 
-        m_statusMessage = loc.format("labels.validatedCurrentConfig", current, result.errors.size());
+        m_statusMessage = loc.format("status.validatedCurrentConfig", current, result.errors.size());
     }
 
     void ValidationReportWindow::runAllConfigsValidation()
@@ -193,7 +193,7 @@ namespace autoinput::ui::windows
             }
         }
 
-        m_statusMessage = loc.format("labels.validatedAllConfigs", configs.size(), totalIssues);
+        m_statusMessage = loc.format("status.validatedAllConfigs", configs.size(), totalIssues);
     }
 
     void ValidationReportWindow::runSettingsValidation()
@@ -212,13 +212,13 @@ namespace autoinput::ui::windows
             m_issues.push_back(ValidationIssue{ std::string(loc.text("labels.globalSettings")), "", "Settings", err });
         }
 
-        m_statusMessage = loc.format("labels.validatedSettings", errors.size());
+        m_statusMessage = loc.format("status.validatedSettings", errors.size());
     }
 
     void ValidationReportWindow::clearResults()
     {
         m_issues.clear();
-        m_statusMessage = Localization::get().text("labels.resultsCleared");
+        m_statusMessage = Localization::get().text("status.resultsCleared");
     }
 
     void ValidationReportWindow::copyReport()
@@ -254,7 +254,7 @@ namespace autoinput::ui::windows
         }
 
         ImGui::SetClipboardText(report.c_str());
-        m_statusMessage = loc.text("labels.reportCopied");
+        m_statusMessage = loc.text("status.reportCopied");
     }
 
     void ValidationReportWindow::openInEditor(const ValidationIssue& issue)

@@ -4,34 +4,37 @@
  * @date August 2026
  */
 #include "localization.h"
-#include "../../autoinput/logger.h"
-#include "../../autoinput/environment.h"
+#include <autoinput/logger.h>
+#include <autoinput/environment.h>
+#include <algorithm>
+#include <map>
 
 #ifndef TOML_EXCEPTIONS
 #define TOML_EXCEPTIONS 0
 #endif
 #include <toml++/toml.hpp>
 
-#include <iostream>
-
 namespace autoinput::ui
 {
     namespace
     {
-        void flattenTable(std::map<std::string, std::string, std::less<>>& strings, const toml::table& table, const std::string& prefix)
+        size_t flattenTable(std::map<std::string, std::string, std::less<>>& strings, const toml::table& table, const std::string& prefix)
         {
+            size_t count = 0;
             for (auto&& [key, value] : table)
             {
                 std::string fullKey = prefix.empty() ? std::string(key.str()) : prefix + "." + std::string(key.str());
                 if (value.is_table())
                 {
-                    flattenTable(strings, *value.as_table(), fullKey);
+                    count += flattenTable(strings, *value.as_table(), fullKey);
                 }
                 else if (value.is_string())
                 {
                     strings[fullKey] = value.as_string()->get();
+                    count++;
                 }
             }
+            return count;
         }
     }
 
@@ -56,8 +59,11 @@ namespace autoinput::ui
             {
                 m_strings.clear();
             }
-            flattenTable(m_strings, std::move(result).table(), "");
-            Logger::info("Localization: Loaded {} strings from {} (Total: {})", m_strings.size(), path.string(), m_strings.size());
+            
+            size_t loaded = flattenTable(m_strings, std::move(result).table(), "");
+            
+            Logger::info("Localization: Loaded {} strings from {} (Total: {}, Mode: {})", 
+                loaded, path.string(), m_strings.size(), clearExisting ? "Clear" : "Overlay");
             return true;
         }
         catch (const std::exception& e)
@@ -69,13 +75,12 @@ namespace autoinput::ui
 
     std::string_view Localization::text(std::string_view key) const
     {
-        auto it = m_strings.find(key);
-        if (it != m_strings.end())
+        if (const auto it = m_strings.find(key); it != m_strings.end())
         {
             return it->second;
         }
 
-        if (m_missingKeys.find(key) == m_missingKeys.end())
+        if (!m_missingKeys.contains(key))
         {
             Logger::warn("Localization: Key not found: {}", key);
             m_missingKeys.emplace(key);
@@ -86,13 +91,12 @@ namespace autoinput::ui
 
     std::string Localization::textOr(std::string_view key, std::string_view fallback) const
     {
-        auto it = m_strings.find(key);
-        if (it != m_strings.end())
+        if (const auto it = m_strings.find(key); it != m_strings.end())
         {
             return it->second;
         }
 
-        if (m_missingKeys.find(key) == m_missingKeys.end())
+        if (!m_missingKeys.contains(key))
         {
             Logger::warn("Localization: Key not found: {} (using fallback: {})", key, fallback);
             m_missingKeys.emplace(key);
@@ -101,9 +105,9 @@ namespace autoinput::ui
         return std::string(fallback);
     }
 
-    bool Localization::has(std::string_view key) const
+    bool Localization::has(const std::string_view key) const
     {
-        return m_strings.find(key) != m_strings.end();
+        return m_strings.contains(key);
     }
 
     Localization& Localization::get()
@@ -127,18 +131,18 @@ namespace autoinput::ui
             {
                 if (entry.is_regular_file() && entry.path().extension() == ".toml")
                 {
-                    languages.push_back(entry.path().stem().string());
+                    languages.emplace_back(entry.path().stem().string());
                 }
             }
         }
         
         if (languages.empty())
         {
-            languages.push_back("en-US");
+            languages.emplace_back("en-US");
         }
         
         // Sort alphabetically
-        std::sort(languages.begin(), languages.end());
+        std::ranges::sort(languages);
         
         return languages;
     }

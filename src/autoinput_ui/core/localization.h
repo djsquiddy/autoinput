@@ -7,6 +7,7 @@
 #define INCLUDE_AUTOINPUT_UI_CORE_LOCALIZATION_H
 #pragma once
 
+#include <autoinput/logger.h>
 #include <string>
 #include <string_view>
 #include <filesystem>
@@ -66,7 +67,15 @@ namespace autoinput::ui
         template<typename... Args>
         std::string format(std::string_view key, Args&&... args) const
         {
-            return std::vformat(text(key), std::make_format_args(args...));
+            try
+            {
+                return std::vformat(text(key), std::make_format_args(args...));
+            }
+            catch (const std::format_error& e)
+            {
+                Logger::warn("Localization format error for key '{}': {}", key, e.what());
+                return std::string(text(key));
+            }
         }
 
         /**
