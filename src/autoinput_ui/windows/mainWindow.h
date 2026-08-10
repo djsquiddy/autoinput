@@ -29,23 +29,22 @@ namespace autoinput::ui
          */
         explicit MainWindow(WindowManager& windows);
 
+        /**
+         * @brief Checks if the user requested to exit the application from the menu.
+         * @return true if exit requested.
+         */
+        [[nodiscard]] bool shouldExit() const { return m_shouldExit; }
+
     protected:
         void renderContent() override;
-        int getFlags() const override;
-        bool hasCloseButton() const override { return false; }
+        [[nodiscard]] int getFlags() const override;
+        [[nodiscard]] bool hasCloseButton() const override { return false; }
 
     private:
         WindowManager& m_windows;
         std::string m_statusText{ "Ready" };
         bool m_showDemoWindow{ false };
         bool m_shouldExit{ false };
-
-    public:
-        /**
-         * @brief Checks if the user requested to exit the application from the menu.
-         * @return true if exit requested.
-         */
-        [[nodiscard]] bool shouldExit() const { return m_shouldExit; }
     };
 }
 

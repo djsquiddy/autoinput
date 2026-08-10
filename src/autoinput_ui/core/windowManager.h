@@ -58,6 +58,12 @@ namespace autoinput::ui
         void open(std::string_view id);
 
         /**
+         * @brief Opens the given window.
+         * @param window The window to open.
+         */
+        void open(UiWindow* window);
+
+        /**
          * @brief Renders all registered windows.
          */
         void render();

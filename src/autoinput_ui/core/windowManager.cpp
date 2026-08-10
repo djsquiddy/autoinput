@@ -8,15 +8,24 @@
 
 namespace autoinput::ui
 {
-    UiWindow* WindowManager::find(std::string_view id)
+    UiWindow* WindowManager::find(const std::string_view id)
     {
         const std::string windowId{ id };
         return m_windows.contains(windowId) ? m_windows[windowId].get() : nullptr;
     }
 
-    void WindowManager::open(std::string_view id)
+    void WindowManager::open(const std::string_view id)
     {
         if (auto* window = find(id))
+        {
+            window->open();
+        }
+    }
+
+    // ReSharper disable once CppMemberFunctionMayBeStatic
+    void WindowManager::open(UiWindow* window) // NOLINT(*-convert-member-functions-to-static)
+    {
+        if (window)
         {
             window->open();
         }

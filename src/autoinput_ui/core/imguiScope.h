@@ -87,6 +87,30 @@ namespace autoinput::ui
         ImGuiTreeNodeScope(const ImGuiTreeNodeScope&) = delete;
         ImGuiTreeNodeScope& operator=(const ImGuiTreeNodeScope&) = delete;
     };
+
+    struct ImGuiFontScope
+    {
+        explicit ImGuiFontScope()
+        {
+            ImGui::PushFont(ImGui::GetFont());
+        }
+        ~ImGuiFontScope()
+        {
+            ImGui::PopFont();
+        }
+    };
+
+    struct ImGuiFontSizeScope
+    {
+        explicit ImGuiFontSizeScope(const float newScale)
+        {
+            ImGui::SetWindowFontScale(newScale);
+        }
+        ~ImGuiFontSizeScope()
+        {
+            ImGui::SetWindowFontScale(1.0f);
+        }
+    };
 }
 
 #endif // INCLUDE_AUTOINPUT_UI_CORE_IMGUI_SCOPE_H

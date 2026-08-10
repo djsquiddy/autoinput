@@ -9,6 +9,26 @@
 
 namespace autoinput::ui
 {
+    namespace
+    {
+        void toggleWindowButton(WindowManager& windowManager, const char* windowName)
+        {
+            auto* window = windowManager.find(windowName);
+            if (!window)
+            {
+                return;
+            }
+
+            if (window->isOpen())
+            {
+                window->requestClose();
+                return;
+            }
+
+            windowManager.open(window);
+        }
+    }
+
     MainWindow::MainWindow(WindowManager& windows)
         : UiWindow("AutoInput Main"), m_windows(windows)
     {
@@ -116,60 +136,60 @@ namespace autoinput::ui
         {
             m_statusText = "Recording...";
         }
-        ImGui::SameLine();
+        // ImGui::SameLine();
         if (ImGui::Button("Automation Runtime"))
         {
-            m_windows.open("runtime");
+            toggleWindowButton(m_windows, "runtime");
         }
         ImGui::SameLine();
         if (ImGui::Button("Runtime Dashboard"))
         {
-            m_windows.open("runtime-dashboard");
+            toggleWindowButton(m_windows, "runtime-dashboard");
         }
         ImGui::SameLine();
         if (ImGui::Button("Settings"))
         {
-            m_windows.open("settings");
+            toggleWindowButton(m_windows, "settings");
         }
-        ImGui::SameLine();
+        // ImGui::SameLine();
         if (ImGui::Button("Config Editor"))
         {
-            m_windows.open("config-editor");
+            toggleWindowButton(m_windows, "config-editor");
         }
         ImGui::SameLine();
         if (ImGui::Button("Config Manager"))
         {
-            m_windows.open("config-manager");
+            toggleWindowButton(m_windows, "config-manager");
         }
-        ImGui::SameLine();
+        // ImGui::SameLine();
         if (ImGui::Button("Hotkey Manager"))
         {
-            m_windows.open("hotkey-manager");
+            toggleWindowButton(m_windows, "hotkey-manager");
         }
         ImGui::SameLine();
         if (ImGui::Button("App Picker"))
         {
-            m_windows.open("application-picker");
+            toggleWindowButton(m_windows, "application-picker");
         }
         ImGui::SameLine();
         if (ImGui::Button("Diagnostics"))
         {
-            m_windows.open("backend-diagnostics");
+            toggleWindowButton(m_windows, "backend-diagnostics");
         }
         ImGui::SameLine();
         if (ImGui::Button("Sequence Recorder"))
         {
-            m_windows.open("sequence-recorder");
+            toggleWindowButton(m_windows, "sequence-recorder");
         }
         ImGui::SameLine();
         if (ImGui::Button("Sequence Editor"))
         {
-            m_windows.open("sequence-editor");
+            toggleWindowButton(m_windows, "sequence-editor");
         }
-        ImGui::SameLine();
+        // ImGui::SameLine();
         if (ImGui::Button("Validation"))
         {
-            m_windows.open("validation-report");
+            toggleWindowButton(m_windows, "validation-report");
         }
 
         ImGui::Separator();
