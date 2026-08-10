@@ -31,6 +31,8 @@ namespace autoinput::services
         Error
     };
 
+    const char* statusToString(RuntimeStatus status);
+
     struct RuntimeOperationResult
     {
         bool success{ false };

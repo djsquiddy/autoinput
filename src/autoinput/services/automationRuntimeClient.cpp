@@ -17,10 +17,17 @@
 
 namespace autoinput::services
 {
-    namespace
+    const char* statusToString(const RuntimeStatus status)
     {
-        constexpr auto ProcessClientNotImplementedMessage =
-            "Process automation runtime client is not implemented yet.";
+        switch (status)
+        {
+        case RuntimeStatus::Stopped:  return "Stopped";
+        case RuntimeStatus::Starting: return "Starting";
+        case RuntimeStatus::Running:  return "Running";
+        case RuntimeStatus::Paused:   return "Paused";
+        case RuntimeStatus::Error:    return "Error";
+        default:                      return "Unknown";
+        }
     }
 
     ProcessAutomationRuntimeClient::ProcessAutomationRuntimeClient(std::unique_ptr<IProcessTransport> transport)

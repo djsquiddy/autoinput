@@ -10,24 +10,9 @@
 
 namespace autoinput::ui
 {
-    namespace
-    {
-        const char* statusToString(services::RuntimeStatus status)
-        {
-            switch (status)
-            {
-            case services::RuntimeStatus::Stopped:  return "Stopped";
-            case services::RuntimeStatus::Starting: return "Starting";
-            case services::RuntimeStatus::Running:  return "Running";
-            case services::RuntimeStatus::Paused:   return "Paused";
-            case services::RuntimeStatus::Error:    return "Error";
-            default:                                return "Unknown";
-            }
-        }
-    }
-
     RuntimeDashboardWindow::RuntimeDashboardWindow(services::IAutomationRuntimeClient& runtimeClient)
-        : UiWindow("Runtime Dashboard"), m_runtimeClient(runtimeClient)
+        : UiWindow("Runtime Dashboard")
+        , m_runtimeClient(runtimeClient)
     {
     }
 
@@ -99,7 +84,7 @@ namespace autoinput::ui
         if (!canStart) ImGui::BeginDisabled();
         if (ImGui::Button("Start"))
         {
-            auto result = m_runtimeClient.start(m_configInput);
+            const auto result = m_runtimeClient.start(m_configInput);
             m_lastOperationMessage = result.message;
         }
         if (!canStart) ImGui::EndDisabled();
@@ -117,8 +102,8 @@ namespace autoinput::ui
         if (!canStop) ImGui::BeginDisabled(); 
         if (ImGui::Button("Restart"))
         {
-            m_runtimeClient.stop();
-            auto result = m_runtimeClient.start(activeConfig.empty() ? m_configInput : activeConfig);
+            AUTOINPUT_UNUSED(m_runtimeClient.stop());
+            const auto result = m_runtimeClient.start(activeConfig.empty() ? m_configInput : activeConfig);
             m_lastOperationMessage = result.message;
         }
         if (!canStop) ImGui::EndDisabled();
