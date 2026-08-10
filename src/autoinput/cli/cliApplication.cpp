@@ -10,12 +10,12 @@
 #include "autoinput/cli/serveCommand.h"
 #include "autoinput/cli/recordCommand.h"
 #include "autoinput/cli/runCommand.h"
-#include "autoinput/autoinput.h"
-#include "autoinput/backendFactory.h"
-#include "autoinput/configMetadata.h"
-#include "autoinput/errorCode.h"
-#include "autoinput/platform.h"
-#include "autoinput/utils.h"
+#include "autoinput/app/autoinput.h"
+#include "autoinput/platform/backendFactory.h"
+#include "autoinput/config/configMetadata.h"
+#include "autoinput/support/errorCode.h"
+#include "autoinput/platform/platform.h"
+#include "autoinput/support/utils.h"
 #include "autoinput/services/configService.h"
 #include <format>
 

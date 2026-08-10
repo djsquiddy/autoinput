@@ -6,7 +6,7 @@
 
 #include "settingsCommand.h"
 
-#include "autoinput/errorCode.h"
+#include "autoinput/support/errorCode.h"
 
 namespace autoinput::cli
 {

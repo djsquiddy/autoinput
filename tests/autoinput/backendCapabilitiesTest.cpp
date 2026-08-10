@@ -4,7 +4,7 @@
  * @date August 2026
  */
 #include <gtest/gtest.h>
-#include "autoinput/backend.h"
+#include "autoinput/platform/backend.h"
 
 namespace autoinput
 {

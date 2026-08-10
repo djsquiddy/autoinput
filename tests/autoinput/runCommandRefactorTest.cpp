@@ -4,8 +4,8 @@
  * @date August 2026
  */
 #include "autoinput/cli/cliApplication.h"
-#include "autoinput/config.h"
-#include "autoinput/errorCode.h"
+#include "autoinput/config/config.h"
+#include "autoinput/support/errorCode.h"
 #include "testUtils.h"
 
 #include <filesystem>

@@ -6,7 +6,7 @@
 #include <fstream>
 #include <gtest/gtest.h>
 
-#include "autoinput/config.h"
+#include "autoinput/config/config.h"
 #include "testUtils.h"
 
 namespace autoinput

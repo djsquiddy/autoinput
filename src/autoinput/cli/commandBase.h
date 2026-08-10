@@ -1,16 +1,17 @@
 /**
  * @file commandBase.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
 
-#ifndef INCLUDE_AUTOINPUT_COMMAND_BASE_H
-#define INCLUDE_AUTOINPUT_COMMAND_BASE_H
+#ifndef INCLUDE_AUTOINPUT_CLI_COMMANDBASE_H
+#define INCLUDE_AUTOINPUT_CLI_COMMANDBASE_H
 #pragma once
 
-#include "autoinput/types.h"
-#include "autoinput/logger.h"
-#include "autoinput/settings.h"
+#include "autoinput/support/types.h"
+#include "autoinput/support/logger.h"
+#include "autoinput/config/settings.h"
 #include <string_view>
 #include <gsl/gsl>
 
@@ -170,4 +171,4 @@ namespace autoinput::cli
     std::string_view safeGetNextArgument(size_t i, gsl::span<char*> args);
 }
 
-#endif // INCLUDE_AUTOINPUT_COMMAND_BASE_H
+#endif // INCLUDE_AUTOINPUT_CLI_COMMANDBASE_H

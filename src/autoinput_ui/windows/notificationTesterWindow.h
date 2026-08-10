@@ -1,5 +1,6 @@
 /**
  * @file notificationTesterWindow.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
@@ -9,7 +10,7 @@
 
 #include "../core/uiWindow.h"
 #include "autoinput/services/automationRuntimeClient.h"
-#include "autoinput/settings.h"
+#include "autoinput/config/settings.h"
 #include <string>
 
 namespace autoinput::ui

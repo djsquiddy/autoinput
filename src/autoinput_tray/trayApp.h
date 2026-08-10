@@ -1,5 +1,6 @@
 /**
  * @file trayApp.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
@@ -8,9 +9,9 @@
 #pragma once
 
 #include "trayIcon.h"
-#include "autoinput/automationController.h"
-#include "autoinput/config.h"
-#include "autoinput/environment.h"
+#include "autoinput/app/automationController.h"
+#include "autoinput/config/config.h"
+#include "autoinput/platform/environment.h"
 #include <memory>
 #include <vector>
 #include <string>

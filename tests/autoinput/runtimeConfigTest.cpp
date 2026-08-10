@@ -5,8 +5,8 @@
  */
 
 #include <gtest/gtest.h>
-#include "autoinput/runtimeConfig.h"
-#include "autoinput/config.h"
+#include "autoinput/config/runtimeConfig.h"
+#include "autoinput/config/config.h"
 
 namespace autoinput
 {

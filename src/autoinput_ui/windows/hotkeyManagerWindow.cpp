@@ -7,9 +7,9 @@
 #include "../widgets/basicWidgets.h"
 #include "../core/windowIds.h"
 #include "../core/localization.h"
-#include "autoinput/logger.h"
+#include "autoinput/support/logger.h"
 #include "autoinput/services/configService.h"
-#include "autoinput/configValidator.h"
+#include "autoinput/config/configValidator.h"
 #include "../core/windowManager.h"
 #include "configEditorWindow.h"
 #include <imgui.h>

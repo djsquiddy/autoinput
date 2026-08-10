@@ -1,18 +1,19 @@
 /**
  * @file settingsCommand.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
 
-#ifndef INCLUDE_AUTOINPUT_SETTINGS_COMMAND_H
-#define INCLUDE_AUTOINPUT_SETTINGS_COMMAND_H
+#ifndef INCLUDE_AUTOINPUT_CLI_SETTINGSCOMMAND_H
+#define INCLUDE_AUTOINPUT_CLI_SETTINGSCOMMAND_H
 #pragma once
 
 #include "commandBase.h"
-#include "autoinput/command.h"
+#include "autoinput/input/command.h"
 #include "autoinput/cli/commandBase.h"
-#include "autoinput/mouse.h"
-#include "autoinput/types.h"
+#include "autoinput/input/mouse.h"
+#include "autoinput/support/types.h"
 
 namespace autoinput::cli
 {
@@ -84,4 +85,4 @@ namespace autoinput::cli
         void printHelp() const override;
     };
 }
-#endif // INCLUDE_AUTOINPUT_SETTINGS_COMMAND_H
+#endif // INCLUDE_AUTOINPUT_CLI_SETTINGSCOMMAND_H

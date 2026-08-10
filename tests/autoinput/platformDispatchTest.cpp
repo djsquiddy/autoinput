@@ -4,9 +4,9 @@
  * @date August 2026
  */
 #include <gtest/gtest.h>
-#include "autoinput/keyboard.h"
-#include "autoinput/mouse.h"
-#include "autoinput/linux/internalData_linux.h"
+#include "autoinput/input/keyboard.h"
+#include "autoinput/input/mouse.h"
+#include "autoinput/platform/linux/internalData_linux.h"
 
 using namespace autoinput;
 

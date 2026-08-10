@@ -4,8 +4,8 @@
  * @date July 2026
 */
 #include "testUtils.h"
-#include "autoinput/autoinput.h"
-#include "autoinput/backend.h"
+#include "autoinput/app/autoinput.h"
+#include "autoinput/platform/backend.h"
 #include <set>
 #include <thread>
 #include <gtest/gtest.h>

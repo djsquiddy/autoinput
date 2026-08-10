@@ -1,5 +1,6 @@
 /**
  * @file setupWizardWindow.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
@@ -8,10 +9,10 @@
 #pragma once
 
 #include "../core/uiWindow.h"
-#include "autoinput/environment.h"
+#include "autoinput/platform/environment.h"
 #include "autoinput/services/automationRuntimeClient.h"
-#include "autoinput/settings.h"
-#include "autoinput/config.h"
+#include "autoinput/config/settings.h"
+#include "autoinput/config/config.h"
 
 namespace autoinput::ui
 {

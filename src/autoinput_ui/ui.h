@@ -1,5 +1,6 @@
 /**
  * @file ui.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */

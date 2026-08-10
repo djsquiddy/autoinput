@@ -1,5 +1,6 @@
 /**
  * @file aboutWindow.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
@@ -9,7 +10,7 @@
 #pragma once
 #include "ui.h"
 #include "autoinput/services/automationRuntimeClient.h"
-#include "autoinput/environment.h"
+#include "autoinput/platform/environment.h"
 
 namespace autoinput::ui
 {

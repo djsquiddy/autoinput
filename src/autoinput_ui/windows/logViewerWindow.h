@@ -1,5 +1,6 @@
 /**
  * @file logViewerWindow.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
@@ -8,8 +9,8 @@
 #pragma once
 
 #include "../core/uiWindow.h"
-#include "autoinput/logger.h"
-#include "autoinput/environment.h"
+#include "autoinput/support/logger.h"
+#include "autoinput/platform/environment.h"
 #include <vector>
 #include <string>
 #include <chrono>

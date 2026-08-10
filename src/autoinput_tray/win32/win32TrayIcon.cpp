@@ -10,7 +10,7 @@
 #include <gdiplus.h>
 #include <objidl.h>
 #include "win32TrayIcon.h"
-#include "autoinput/logger.h"
+#include "autoinput/support/logger.h"
 #include <stdexcept>
 #include <vector>
 

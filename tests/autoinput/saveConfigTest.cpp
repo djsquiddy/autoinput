@@ -13,13 +13,13 @@
 #include <stdlib.h>
 #endif
 
-#include "autoinput/config.h"
-#include "autoinput/platform.h"
-#include "autoinput/types.h"
+#include "autoinput/config/config.h"
+#include "autoinput/platform/platform.h"
+#include "autoinput/support/types.h"
 #include "autoinput/cli/cliApplication.h"
 #include "autoinput/cli/runCommand.h"
 #include "autoinput/cli/commandBase.h"
-#include "autoinput/errorCode.h"
+#include "autoinput/support/errorCode.h"
 #include "testUtils.h"
 
 namespace autoinput

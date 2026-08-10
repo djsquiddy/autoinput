@@ -5,7 +5,7 @@
  */
 #include "basicWidgets.h"
 #include "../core/localization.h"
-#include "autoinput/configValidator.h"
+#include "autoinput/config/configValidator.h"
 #include <imgui.h>
 #include <format>
 

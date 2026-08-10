@@ -4,8 +4,8 @@
  * @date August 2026
  */
 #include <gtest/gtest.h>
-#include "autoinput/sequenceRecorder.h"
-#include "autoinput/types.h"
+#include "autoinput/input/sequenceRecorder.h"
+#include "autoinput/support/types.h"
 #include <filesystem>
 #include <fstream>
 #include <thread>

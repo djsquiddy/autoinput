@@ -3,11 +3,11 @@
  * @author djsquiddy
  * @date August 2026
  */
-#include "autoinput/config.h"
-#include "autoinput/configValidator.h"
-#include "autoinput/sequence.h"
-#include "autoinput/backend.h"
-#include "autoinput/autoinput.h"
+#include "autoinput/config/config.h"
+#include "autoinput/config/configValidator.h"
+#include "autoinput/input/sequence.h"
+#include "autoinput/platform/backend.h"
+#include "autoinput/app/autoinput.h"
 #include "testUtils.h"
 #include <gtest/gtest.h>
 #include <filesystem>

@@ -4,8 +4,8 @@
  * @date August 2026
  */
 #include <gtest/gtest.h>
-#include "autoinput/notifications.h"
-#include "autoinput/platform.h"
+#include "autoinput/platform/notifications.h"
+#include "autoinput/platform/platform.h"
 
 #ifdef _WIN32
 #include <windows.h>

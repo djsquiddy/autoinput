@@ -4,11 +4,11 @@
  * @date August 2026
  */
 #include <gtest/gtest.h>
-#include "autoinput/mouse.h"
+#include "autoinput/input/mouse.h"
 
 using namespace autoinput;
 
-#include "autoinput/win32/internalData_win32.h"
+#include "autoinput/platform/win32/internalData_win32.h"
 
 TEST(MousePrioritizationTest, GetButtonStatePrioritization)
 {

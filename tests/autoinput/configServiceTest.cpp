@@ -4,8 +4,8 @@
  * @date August 2026
  */
 #include <gtest/gtest.h>
-#include "autoinput/config.h"
-#include "autoinput/arguments.h"
+#include "autoinput/config/config.h"
+#include "autoinput/cli/arguments.h"
 #include "testUtils.h"
 #include <fstream>
 

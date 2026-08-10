@@ -1,16 +1,17 @@
 /**
  * @file configCommand.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
-#ifndef INCLUDE_AUTOINPUT_CONFIG_COMMAND_H
-#define INCLUDE_AUTOINPUT_CONFIG_COMMAND_H
+#ifndef INCLUDE_AUTOINPUT_CLI_CONFIGCOMMAND_H
+#define INCLUDE_AUTOINPUT_CLI_CONFIGCOMMAND_H
 #pragma once
 
 #include "autoinput/cli/commandBase.h"
-#include "autoinput/command.h"
-#include "autoinput/mouse.h"
-#include "autoinput/types.h"
+#include "autoinput/input/command.h"
+#include "autoinput/input/mouse.h"
+#include "autoinput/support/types.h"
 #include <gsl/gsl>
 
 namespace autoinput::cli
@@ -86,4 +87,4 @@ namespace autoinput::cli
     };
 }
 
-#endif // INCLUDE_AUTOINPUT_CONFIG_COMMAND_H
+#endif // INCLUDE_AUTOINPUT_CLI_CONFIGCOMMAND_H

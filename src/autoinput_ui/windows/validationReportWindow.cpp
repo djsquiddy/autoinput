@@ -9,7 +9,7 @@
 #include "../core/windowIds.h"
 #include "../core/localization.h"
 #include "configEditorWindow.h"
-#include "autoinput/logger.h"
+#include "autoinput/support/logger.h"
 #include <imgui.h>
 #include <format>
 #include <algorithm>

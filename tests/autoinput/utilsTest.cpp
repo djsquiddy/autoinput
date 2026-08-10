@@ -5,7 +5,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "autoinput/utils.h"
+#include "autoinput/support/utils.h"
 
 namespace autoinput
 {

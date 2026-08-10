@@ -4,9 +4,9 @@
  * @date August 2026
  */
 #include <gtest/gtest.h>
-#include "autoinput/configValidator.h"
-#include "autoinput/config.h"
-#include "autoinput/runtimeConfig.h"
+#include "autoinput/config/configValidator.h"
+#include "autoinput/config/config.h"
+#include "autoinput/config/runtimeConfig.h"
 
 namespace autoinput
 {

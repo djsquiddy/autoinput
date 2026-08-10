@@ -6,9 +6,9 @@
 
 #include "autoinput/services/configService.h"
 
-#include "autoinput/arguments.h"
-#include "autoinput/configMetadata.h"
-#include "autoinput/logger.h"
+#include "autoinput/cli/arguments.h"
+#include "autoinput/config/configMetadata.h"
+#include "autoinput/support/logger.h"
 
 namespace autoinput::services
 {

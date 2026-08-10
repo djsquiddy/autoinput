@@ -4,8 +4,8 @@
  * @date August 2026
  */
 #include "autoinput/cli/appsCommand.h"
-#include "autoinput/errorCode.h"
-#include "autoinput/platform.h"
+#include "autoinput/support/errorCode.h"
+#include "autoinput/platform/platform.h"
 
 namespace autoinput::cli
 {

@@ -1,5 +1,6 @@
 /**
  * @file commandRunnerWindow.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
@@ -10,7 +11,7 @@
 #include "../core/uiWindow.h"
 #include "autoinput/services/automationRuntimeClient.h"
 #include "autoinput/services/configService.h"
-#include "autoinput/config.h"
+#include "autoinput/config/config.h"
 #include <vector>
 #include <string>
 

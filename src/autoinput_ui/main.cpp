@@ -4,8 +4,8 @@
  * @date August 2026
  */
 #include "app/uiApplication.h"
-#include "autoinput/logger.h"
-#include "autoinput/environment.h"
+#include "autoinput/support/logger.h"
+#include "autoinput/platform/environment.h"
 #include <exception>
 
 #ifdef _WIN32

@@ -8,8 +8,8 @@
 #include "../widgets/basicWidgets.h"
 #include "../widgets/formWidgets.h"
 #include "../core/localization.h"
-#include "autoinput/logger.h"
-#include "autoinput/defaults.h"
+#include "autoinput/support/logger.h"
+#include "autoinput/config/defaults.h"
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include <format>

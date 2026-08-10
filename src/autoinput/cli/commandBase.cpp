@@ -4,7 +4,7 @@
  * @date August 2026
  */
 #include "autoinput/cli/commandBase.h"
-#include "autoinput/utils.h"
+#include "autoinput/support/utils.h"
 
 namespace autoinput::cli
 {

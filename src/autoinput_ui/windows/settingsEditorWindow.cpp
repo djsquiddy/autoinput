@@ -6,8 +6,8 @@
 #include "settingsEditorWindow.h"
 #include "../widgets/basicWidgets.h"
 #include "../core/localization.h"
-#include "autoinput/configValidator.h"
-#include "autoinput/config.h"
+#include "autoinput/config/configValidator.h"
+#include "autoinput/config/config.h"
 #include <imgui.h>
 
 namespace autoinput::ui

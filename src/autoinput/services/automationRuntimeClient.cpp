@@ -7,11 +7,11 @@
 #include "autoinput/services/automationRuntimeClient.h"
 #include "autoinput/services/processTransport.h"
 #include "autoinput/services/runtimeProtocol.h"
-#include "autoinput/platform.h"
-#include "autoinput/backendFactory.h"
+#include "autoinput/platform/platform.h"
+#include "autoinput/platform/backendFactory.h"
 
-#include "autoinput/arguments.h"
-#include "autoinput/logger.h"
+#include "autoinput/cli/arguments.h"
+#include "autoinput/support/logger.h"
 #include <exception>
 #include <format>
 

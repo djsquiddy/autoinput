@@ -6,11 +6,11 @@
 #include "backupRestoreWindow.h"
 #include "../widgets/basicWidgets.h"
 #include "../core/localization.h"
-#include "autoinput/logger.h"
-#include "autoinput/config.h"
-#include "autoinput/defaults.h"
-#include "autoinput/environment.h"
-#include "autoinput/configValidator.h"
+#include "autoinput/support/logger.h"
+#include "autoinput/config/config.h"
+#include "autoinput/config/defaults.h"
+#include "autoinput/platform/environment.h"
+#include "autoinput/config/configValidator.h"
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include <filesystem>

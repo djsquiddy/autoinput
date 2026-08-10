@@ -5,7 +5,7 @@
  */
 #include "commandEditor.h"
 #include "../widgets/formWidgets.h"
-#include "autoinput/config.h"
+#include "autoinput/config/config.h"
 #include <imgui.h>
 #include <array>
 

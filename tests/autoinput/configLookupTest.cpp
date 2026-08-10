@@ -6,8 +6,8 @@
 #include <gtest/gtest.h>
 #include <fstream>
 #include <filesystem>
-#include "autoinput/config.h"
-#include "autoinput/platform.h"
+#include "autoinput/config/config.h"
+#include "autoinput/platform/platform.h"
 #include "testUtils.h"
 
 namespace autoinput

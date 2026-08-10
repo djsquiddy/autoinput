@@ -5,8 +5,8 @@
  */
 #include <gtest/gtest.h>
 #include <algorithm>
-#include "autoinput/configMetadata.h"
-#include "autoinput/defaults.h"
+#include "autoinput/config/configMetadata.h"
+#include "autoinput/config/defaults.h"
 
 namespace autoinput
 {

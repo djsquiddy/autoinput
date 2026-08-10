@@ -6,7 +6,7 @@
 #include "applicationPickerWindow.h"
 #include "../widgets/basicWidgets.h"
 #include "../core/localization.h"
-#include "autoinput/logger.h"
+#include "autoinput/support/logger.h"
 #include "autoinput/services/configService.h"
 #include "../core/windowManager.h"
 #include "configEditorWindow.h"

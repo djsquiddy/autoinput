@@ -6,9 +6,9 @@
 
 #include "aboutWindow.h"
 #include "../core/localization.h"
-#include "autoinput/logger.h"
-#include "autoinput/config.h"
-#include "autoinput/defaults.h"
+#include "autoinput/support/logger.h"
+#include "autoinput/config/config.h"
+#include "autoinput/config/defaults.h"
 #include <imgui.h>
 #include <format>
 #include <string>
@@ -89,7 +89,7 @@ namespace autoinput::ui
  
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0); ImGui::Text("%s:", loc.text("labels.runtimeStatus").data());
-                ImGui::TableSetColumnIndex(1); ImGui::Text("%s", status);
+                ImGui::TableSetColumnIndex(1); ImGui::Text("%s", status.c_str());
  
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0); ImGui::Text("%s:", loc.text("labels.globalConfigDir").data());

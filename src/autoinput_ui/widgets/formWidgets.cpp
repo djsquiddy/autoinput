@@ -5,7 +5,7 @@
  */
 #include "formWidgets.h"
 #include "core/imguiScope.h"
-#include "autoinput/waitDelay.h"
+#include "autoinput/input/waitDelay.h"
 #include <format>
 #include <imgui.h>
 #include <misc/cpp/imgui_stdlib.h>

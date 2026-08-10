@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "autoinput/waitDelay.h"
+#include "autoinput/input/waitDelay.h"
 
 using namespace autoinput;
 

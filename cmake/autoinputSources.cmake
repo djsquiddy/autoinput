@@ -1,56 +1,56 @@
 function(autoinput_get_common_sources output_var)
     set(sources
             ${CMAKE_SOURCE_DIR}/src/pch.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/autoinput.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/autoinput.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/automationController.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/automationController.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/defaults.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/defaults.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/backend.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/backendFactory.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/backendFactory.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/command.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/command.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/environment.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/environment.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/errorCode.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/errorCode.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/arguments.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/waitDelay.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/waitDelay.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/cliHelpFormatter.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/cliHelpFormatter.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/types.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/types.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/mouse.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/keyboard.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/keyInfo.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/platform.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/utils.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/utils.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/logger.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/logger.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/config.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/config.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/configMetadata.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/configMetadata.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/configValidator.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/configValidator.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/runtimeConfig.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/runtimeConfig.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/handlerState.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/settings.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/settings.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/handler.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/sequence.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/sequence.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/sequenceRecorder.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/sequenceRecorder.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/terminal.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/notifications.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/app/autoinput.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/app/autoinput.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/app/automationController.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/app/automationController.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/config/defaults.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/config/defaults.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/platform/backend.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/platform/backendFactory.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/platform/backendFactory.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/input/command.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/input/command.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/platform/environment.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/platform/environment.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/support/errorCode.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/support/errorCode.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/arguments.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/arguments.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/input/waitDelay.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/input/waitDelay.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/cliHelpFormatter.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/cliHelpFormatter.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/support/types.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/support/types.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/input/mouse.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/input/keyboard.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/input/keyInfo.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/platform/platform.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/support/utils.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/support/utils.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/support/logger.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/support/logger.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/config/config.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/config/config.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/config/configMetadata.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/config/configMetadata.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/config/configValidator.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/config/configValidator.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/config/runtimeConfig.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/config/runtimeConfig.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/app/handlerState.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/config/settings.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/config/settings.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/app/handler.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/input/sequence.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/input/sequence.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/input/sequenceRecorder.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/input/sequenceRecorder.cpp
+            ${CMAKE_SOURCE_DIR}/src/autoinput/platform/terminal.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/platform/notifications.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/platform/notifications.cpp
             # Services
             ${CMAKE_SOURCE_DIR}/src/autoinput/services/automationRuntimeClient.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/services/automationRuntimeClient.cpp
@@ -84,17 +84,17 @@ function(autoinput_get_common_sources output_var)
 
     if(WIN32)
         list(APPEND sources
-                ${CMAKE_SOURCE_DIR}/src/autoinput/win32/autoInput_win32.cpp
-                ${CMAKE_SOURCE_DIR}/src/autoinput/win32/internalData_win32.h
-                ${CMAKE_SOURCE_DIR}/src/autoinput/win32/notifications_win32.cpp
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/win32/autoInput_win32.cpp
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/win32/internalData_win32.h
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/win32/notifications_win32.cpp
         )
     elseif(UNIX AND NOT APPLE)
         list(APPEND sources
-                ${CMAKE_SOURCE_DIR}/src/autoinput/linux/autoInput_linux.cpp
-                ${CMAKE_SOURCE_DIR}/src/autoinput/linux/autoInput_x11.cpp
-                ${CMAKE_SOURCE_DIR}/src/autoinput/linux/autoInput_wayland.cpp
-                ${CMAKE_SOURCE_DIR}/src/autoinput/linux/internalData_linux.h
-                ${CMAKE_SOURCE_DIR}/src/autoinput/linux/notifications_linux.cpp
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/autoInput_linux.cpp
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/autoInput_x11.cpp
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/autoInput_wayland.cpp
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/internalData_linux.h
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/notifications_linux.cpp
         )
     endif()
 

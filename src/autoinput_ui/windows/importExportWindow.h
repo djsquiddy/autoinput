@@ -1,5 +1,6 @@
 /**
  * @file importExportWindow.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
@@ -8,7 +9,7 @@
 #pragma once
 
 #include "../core/uiWindow.h"
-#include "autoinput/config.h"
+#include "autoinput/config/config.h"
 #include <string>
 #include <vector>
 #include <optional>

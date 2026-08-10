@@ -6,7 +6,7 @@
 #include "notificationTesterWindow.h"
 #include "../widgets/basicWidgets.h"
 #include "../core/localization.h"
-#include "autoinput/logger.h"
+#include "autoinput/support/logger.h"
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include <format>

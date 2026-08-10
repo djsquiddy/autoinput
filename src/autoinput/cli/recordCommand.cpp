@@ -5,12 +5,12 @@
  */
 #include "autoinput/cli/recordCommand.h"
 
-#include "autoinput/arguments.h"
+#include "autoinput/cli/arguments.h"
 #include "autoinput/cli/cliApplication.h"
-#include "autoinput/defaults.h"
-#include "autoinput/errorCode.h"
-#include "autoinput/config.h"
-#include "autoinput/logger.h"
+#include "autoinput/config/defaults.h"
+#include "autoinput/support/errorCode.h"
+#include "autoinput/config/config.h"
+#include "autoinput/support/logger.h"
 
 namespace autoinput::cli
 {

@@ -1,5 +1,6 @@
 /**
  * @file localization.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
@@ -7,7 +8,7 @@
 #define INCLUDE_AUTOINPUT_UI_CORE_LOCALIZATION_H
 #pragma once
 
-#include <autoinput/logger.h>
+#include "autoinput/support/logger.h"
 #include <string>
 #include <string_view>
 #include <filesystem>

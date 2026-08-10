@@ -1,5 +1,6 @@
 /**
  * @file validationReportWindow.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
@@ -8,9 +9,9 @@
 #pragma once
 
 #include "autoinput_ui/core/uiWindow.h"
-#include "autoinput/configValidator.h"
+#include "autoinput/config/configValidator.h"
 #include "autoinput/services/configService.h"
-#include "autoinput/settings.h"
+#include "autoinput/config/settings.h"
 #include <vector>
 #include <string>
 

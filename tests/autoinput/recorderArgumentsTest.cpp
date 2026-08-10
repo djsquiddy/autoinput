@@ -4,7 +4,7 @@
  * @date August 2026
  */
 #include "autoinput/cli/cliApplication.h"
-#include "autoinput/errorCode.h"
+#include "autoinput/support/errorCode.h"
 #include <vector>
 #include <string>
 #include <gtest/gtest.h>

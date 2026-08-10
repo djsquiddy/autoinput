@@ -8,8 +8,8 @@
 #include "../widgets/formWidgets.h"
 #include "../core/windowIds.h"
 #include "../core/localization.h"
-#include "autoinput/logger.h"
-#include "autoinput/configValidator.h"
+#include "autoinput/support/logger.h"
+#include "autoinput/config/configValidator.h"
 #include "configEditorWindow.h"
 #include "../core/windowManager.h"
 #include <imgui.h>

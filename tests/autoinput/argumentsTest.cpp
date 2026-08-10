@@ -5,7 +5,7 @@
  */
 #include <gtest/gtest.h>
 
-#include "autoinput/arguments.h"
+#include "autoinput/cli/arguments.h"
 #include "autoinput/cli/commandBase.h"
 
 namespace autoinput

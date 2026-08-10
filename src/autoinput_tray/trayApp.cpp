@@ -4,10 +4,10 @@
  * @date August 2026
  */
 #include "trayApp.h"
-#include "autoinput/logger.h"
-#include "autoinput/backendFactory.h"
-#include "autoinput/autoinput.h"
-#include "autoinput/platform.h"
+#include "autoinput/support/logger.h"
+#include "autoinput/platform/backendFactory.h"
+#include "autoinput/app/autoinput.h"
+#include "autoinput/platform/platform.h"
 #include "autoinput/services/configService.h"
 #include <iostream>
 

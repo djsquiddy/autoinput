@@ -5,8 +5,8 @@
  */
 #include <gtest/gtest.h>
 #include <fstream>
-#include "autoinput/config.h"
-#include "autoinput/configValidator.h"
+#include "autoinput/config/config.h"
+#include "autoinput/config/configValidator.h"
 #include "testUtils.h"
 
 namespace autoinput

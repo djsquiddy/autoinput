@@ -8,7 +8,7 @@
 #include "../core/windowIds.h"
 #include "../core/uiActions.h"
 #include "../core/localization.h"
-#include "autoinput/logger.h"
+#include "autoinput/support/logger.h"
 #include <imgui.h>
 #include <algorithm>
 #include <string>

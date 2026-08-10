@@ -4,8 +4,8 @@
  * @date August 2026
  */
 #include "trayApp.h"
-#include "autoinput/logger.h"
-#include "autoinput/environment.h"
+#include "autoinput/support/logger.h"
+#include "autoinput/platform/environment.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN

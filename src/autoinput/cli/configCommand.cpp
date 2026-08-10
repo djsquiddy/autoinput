@@ -5,9 +5,9 @@
  */
 #include "autoinput/cli/configCommand.h"
 
-#include "autoinput/config.h"
-#include "autoinput/configValidator.h"
-#include "autoinput/errorCode.h"
+#include "autoinput/config/config.h"
+#include "autoinput/config/configValidator.h"
+#include "autoinput/support/errorCode.h"
 #include <filesystem>
 
 #include "autoinput/services/configService.h"

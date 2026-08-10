@@ -6,8 +6,8 @@
 
 #include <gtest/gtest.h>
 
-#include "autoinput/types.h"
-#include "autoinput/mouse.h"
+#include "autoinput/support/types.h"
+#include "autoinput/input/mouse.h"
 
 namespace autoinput
 {

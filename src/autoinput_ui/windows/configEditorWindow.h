@@ -1,5 +1,6 @@
 /**
  * @file configEditorWindow.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
@@ -9,7 +10,7 @@
 
 #include "../core/uiWindow.h"
 #include "../editors/globalSettingsEditor.h"
-#include "autoinput/config.h"
+#include "autoinput/config/config.h"
 #include <vector>
 #include <string>
 #include <filesystem>

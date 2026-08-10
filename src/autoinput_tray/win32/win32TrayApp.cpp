@@ -5,7 +5,7 @@
  */
 #include "win32TrayApp.h"
 #include "win32TrayIcon.h"
-#include "autoinput/logger.h"
+#include "autoinput/support/logger.h"
 #include <shellapi.h>
 
 namespace autoinput::tray

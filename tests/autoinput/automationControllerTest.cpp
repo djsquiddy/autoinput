@@ -4,8 +4,8 @@
  * @date August 2026
  */
 #include <gtest/gtest.h>
-#include "autoinput/automationController.h"
-#include "autoinput/arguments.h"
+#include "autoinput/app/automationController.h"
+#include "autoinput/cli/arguments.h"
 #include <chrono>
 #include <thread>
 

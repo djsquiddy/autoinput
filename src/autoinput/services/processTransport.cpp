@@ -9,7 +9,7 @@
 #endif
 
 #include "autoinput/services/processTransport.h"
-#include "autoinput/logger.h"
+#include "autoinput/support/logger.h"
 #include <format>
 
 namespace autoinput::services

@@ -1,14 +1,15 @@
 /**
  * @file configService.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
 
-#ifndef INCLUDE_AUTOINPUT_SERVICES_CONFIG_SERVICE_H
-#define INCLUDE_AUTOINPUT_SERVICES_CONFIG_SERVICE_H
+#ifndef INCLUDE_AUTOINPUT_SERVICES_CONFIGSERVICE_H
+#define INCLUDE_AUTOINPUT_SERVICES_CONFIGSERVICE_H
 #pragma once
 
-#include "autoinput/config.h"
+#include "autoinput/config/config.h"
 
 namespace autoinput
 {
@@ -49,4 +50,4 @@ namespace autoinput::services
 }
 
 
-#endif // INCLUDE_AUTOINPUT_SERVICES_CONFIG_SERVICE_H
+#endif // INCLUDE_AUTOINPUT_SERVICES_CONFIGSERVICE_H

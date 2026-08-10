@@ -4,9 +4,9 @@
  * @date August 2026
  */
 #include <gtest/gtest.h>
-#include "autoinput/backend.h"
-#include "autoinput/backendFactory.h"
-#include "autoinput/logger.h"
+#include "autoinput/platform/backend.h"
+#include "autoinput/platform/backendFactory.h"
+#include "autoinput/support/logger.h"
 #include "testUtils.h"
 
 namespace autoinput

@@ -8,7 +8,7 @@
 #include <string>
 #include <gsl/gsl>
 
-#include "autoinput/errorCode.h"
+#include "autoinput/support/errorCode.h"
 #include "autoinput/cli/cliApplication.h"
 #include "autoinput/cli/runCommand.h"
 #include "autoinput/cli/recordCommand.h"

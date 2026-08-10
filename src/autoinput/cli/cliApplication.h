@@ -1,16 +1,17 @@
 /**
  * @file cliApplication.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
-#ifndef INCLUDE_AUTOINPUT_CLI_APPLICATION_H
-#define INCLUDE_AUTOINPUT_CLI_APPLICATION_H
+#ifndef INCLUDE_AUTOINPUT_CLI_CLIAPPLICATION_H
+#define INCLUDE_AUTOINPUT_CLI_CLIAPPLICATION_H
 #pragma once
 
 #include "autoinput/cli/commandBase.h"
-#include "autoinput/types.h"
-#include "autoinput/keyboard.h"
-#include "autoinput/waitDelay.h"
+#include "autoinput/support/types.h"
+#include "autoinput/input/keyboard.h"
+#include "autoinput/input/waitDelay.h"
 
 namespace autoinput
 {
@@ -63,4 +64,4 @@ namespace autoinput::cli
     [[nodiscard]] std::unique_ptr<CommandBase> createCommand(std::string_view commandName, CommandContext& context);
 }
 
-#endif // INCLUDE_AUTOINPUT_CLI_APPLICATION_H
+#endif // INCLUDE_AUTOINPUT_CLI_CLIAPPLICATION_H

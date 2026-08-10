@@ -1,8 +1,8 @@
 /**
  * @file stopTriggerTest_win32.cpp
  */
-#include "autoinput/autoinput.h"
-#include "autoinput/win32/internalData_win32.h"
+#include "autoinput/app/autoinput.h"
+#include "autoinput/platform/win32/internalData_win32.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 

@@ -11,7 +11,7 @@
 #include "recordCommand.h"
 #include "runCommand.h"
 #include "serveCommand.h"
-#include "autoinput/errorCode.h"
+#include "autoinput/support/errorCode.h"
 #include <format>
 
 namespace autoinput::cli

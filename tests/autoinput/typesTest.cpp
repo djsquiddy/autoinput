@@ -5,8 +5,8 @@
  */
 #include <gtest/gtest.h>
 
-#include "autoinput/types.h"
-#include "autoinput/terminal.h"
+#include "autoinput/support/types.h"
+#include "autoinput/platform/terminal.h"
 
 namespace autoinput
 {

@@ -1,10 +1,11 @@
 /**
  * @file serveCommand.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
-#ifndef INCLUDE_AUTOINPUT_SERVE_COMMAND_H
-#define INCLUDE_AUTOINPUT_SERVE_COMMAND_H
+#ifndef INCLUDE_AUTOINPUT_CLI_SERVECOMMAND_H
+#define INCLUDE_AUTOINPUT_CLI_SERVECOMMAND_H
 #pragma once
 
 #include "autoinput/cli/commandBase.h"
@@ -29,4 +30,4 @@ namespace autoinput::cli
     };
 }
 
-#endif // INCLUDE_AUTOINPUT_SERVE_COMMAND_H
+#endif // INCLUDE_AUTOINPUT_CLI_SERVECOMMAND_H

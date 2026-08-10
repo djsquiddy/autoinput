@@ -6,8 +6,8 @@
 #include "importExportWindow.h"
 #include "../widgets/basicWidgets.h"
 #include "../core/localization.h"
-#include "autoinput/configValidator.h"
-#include "autoinput/logger.h"
+#include "autoinput/config/configValidator.h"
+#include "autoinput/support/logger.h"
 #include <imgui.h>
 #include <imgui_stdlib.h>
 #include <filesystem>

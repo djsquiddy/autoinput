@@ -5,8 +5,8 @@
  */
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "autoinput/notifications.h"
-#include "autoinput/types.h"
+#include "autoinput/platform/notifications.h"
+#include "autoinput/support/types.h"
 
 namespace autoinput::testing
 {

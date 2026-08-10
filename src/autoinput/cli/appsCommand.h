@@ -1,14 +1,15 @@
 /**
  * @file appsCommand.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
-#ifndef INCLUDE_AUTOINPUT_APPS_COMMAND_H
-#define INCLUDE_AUTOINPUT_APPS_COMMAND_H
+#ifndef INCLUDE_AUTOINPUT_CLI_APPSCOMMAND_H
+#define INCLUDE_AUTOINPUT_CLI_APPSCOMMAND_H
 #pragma once
 
 #include "autoinput/cli/commandBase.h"
-#include "autoinput/types.h"
+#include "autoinput/support/types.h"
 
 namespace autoinput
 {
@@ -75,4 +76,4 @@ namespace autoinput::cli
 
 }
 
-#endif // INCLUDE_AUTOINPUT_APPS_COMMAND_H
+#endif // INCLUDE_AUTOINPUT_CLI_APPSCOMMAND_H

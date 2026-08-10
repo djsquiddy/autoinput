@@ -3,7 +3,7 @@
  * @author djsquiddy
  * @date July 2026
  */
-#include "autoinput/autoinput.h"
+#include "autoinput/app/autoinput.h"
 #include "autoinput/cli/runCommand.h"
 #include "autoinput/cli/commandBase.h"
 #include <gtest/gtest.h>

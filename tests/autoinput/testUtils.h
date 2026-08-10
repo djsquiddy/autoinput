@@ -1,5 +1,6 @@
 /**
  * @file testUtils.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
@@ -17,7 +18,7 @@
 #include <random>
 #include <fstream>
 
-#include "autoinput/platform.h"
+#include "autoinput/platform/platform.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -26,8 +27,8 @@
 #include <sys/wait.h>
 #endif
 
-#include "autoinput/backend.h"
-#include "autoinput/environment.h"
+#include "autoinput/platform/backend.h"
+#include "autoinput/platform/environment.h"
 #include <map>
 
 namespace autoinput::test

@@ -4,8 +4,8 @@
  * @date August 2026
  */
 #include "uibackend.h"
-#include "autoinput/logger.h"
-#include "autoinput/config.h"
+#include "autoinput/support/logger.h"
+#include "autoinput/config/config.h"
 #include <vector>
 #include <cmath>
 #include <filesystem>

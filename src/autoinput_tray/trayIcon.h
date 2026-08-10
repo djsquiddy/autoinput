@@ -1,5 +1,6 @@
 /**
  * @file trayIcon.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
@@ -7,7 +8,7 @@
 #define INCLUDE_AUTOINPUT_TRAY_ICON_H
 #pragma once
 
-#include "autoinput/types.h"
+#include "autoinput/support/types.h"
 
 #include <string>
 #include <functional>

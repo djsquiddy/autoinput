@@ -3,8 +3,8 @@
  * @author djsquiddy
  * @date July 2026
  */
-#include "autoinput/autoinput.h"
-#include "autoinput/backend.h"
+#include "autoinput/app/autoinput.h"
+#include "autoinput/platform/backend.h"
 #include "testUtils.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

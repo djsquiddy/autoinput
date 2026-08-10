@@ -1,15 +1,16 @@
 /**
  * @file runtimeProtocol.h
+ * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
 
-#ifndef INCLUDE_AUTOINPUT_SERVICE_RUNTIME_PROTOCOL_H
-#define INCLUDE_AUTOINPUT_SERVICE_RUNTIME_PROTOCOL_H
+#ifndef INCLUDE_AUTOINPUT_SERVICES_RUNTIMEPROTOCOL_H
+#define INCLUDE_AUTOINPUT_SERVICES_RUNTIMEPROTOCOL_H
 #pragma once
 
 #include "autoinput/services/automationRuntimeClient.h"
-#include "autoinput/types.h"
+#include "autoinput/support/types.h"
 #include <string>
 #include <string_view>
 #include <cstdint>
@@ -57,4 +58,4 @@ namespace autoinput::services
 
 } // namespace autoinput::services 
 
-#endif // INCLUDE_AUTOINPUT_SERVICE_RUNTIME_PROTOCOL_H
+#endif // INCLUDE_AUTOINPUT_SERVICES_RUNTIMEPROTOCOL_H

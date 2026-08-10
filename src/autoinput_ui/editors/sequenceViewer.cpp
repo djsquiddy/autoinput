@@ -4,7 +4,7 @@
  * @date August 2026
  */
 #include "sequenceViewer.h"
-#include "autoinput/config.h"
+#include "autoinput/config/config.h"
 #include <imgui.h>
 
 namespace autoinput::ui::editors

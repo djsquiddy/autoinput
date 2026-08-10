@@ -4,7 +4,7 @@
  * @date August 2026
  */
 #include <gtest/gtest.h>
-#include "autoinput/logger.h"
+#include "autoinput/support/logger.h"
 
 namespace autoinput
 {

@@ -6,8 +6,8 @@
 #include "autoinput/cli/serveCommand.h"
 #include "autoinput/services/automationRuntimeClient.h"
 #include "autoinput/services/runtimeProtocol.h"
-#include "autoinput/errorCode.h"
-#include "autoinput/logger.h"
+#include "autoinput/support/errorCode.h"
+#include "autoinput/support/logger.h"
 #include <iostream>
 #include <string>
 

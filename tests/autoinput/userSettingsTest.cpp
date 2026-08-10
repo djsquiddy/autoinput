@@ -13,9 +13,9 @@
 #include <stdlib.h>
 #endif
 
-#include "autoinput/settings.h"
-#include "autoinput/config.h"
-#include "autoinput/environment.h"
+#include "autoinput/config/settings.h"
+#include "autoinput/config/config.h"
+#include "autoinput/platform/environment.h"
 #include "testUtils.h"
 
 namespace autoinput
