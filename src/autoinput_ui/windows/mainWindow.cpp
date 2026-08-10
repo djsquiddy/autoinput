@@ -56,6 +56,11 @@ namespace autoinput::ui
             }
             if (ImGui::BeginMenu("Edit"))
             {
+                if (ImGui::MenuItem("Command Palette", "Ctrl+P"))
+                {
+                    m_windows.open("command-palette");
+                }
+                ImGui::Separator();
                 if (ImGui::MenuItem("Settings"))
                 {
                     m_windows.open("settings");
@@ -120,6 +125,11 @@ namespace autoinput::ui
                 if (ImGui::MenuItem("ImGui Demo", nullptr, m_showDemoWindow))
                 {
                     m_showDemoWindow = !m_showDemoWindow;
+                }
+                ImGui::Separator();
+                if (ImGui::MenuItem("About AutoInput"))
+                {
+                    m_windows.open("about");
                 }
                 ImGui::EndMenu();
             }

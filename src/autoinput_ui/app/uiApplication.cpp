@@ -22,6 +22,8 @@
 #include "../windows/validationReportWindow.h"
 #include "../windows/setupWizardWindow.h"
 #include "../windows/notificationTesterWindow.h"
+#include "../windows/commandPaletteWindow.h"
+#include "../windows/aboutWindow.h"
 #include "autoinput/config.h"
 #include "autoinput/logger.h"
 #include "autoinput/services/automationRuntimeClient.h"
@@ -84,6 +86,8 @@ namespace autoinput::ui
         m_windowManager->addWindow<windows::ValidationReportWindow>("validation-report", *m_windowManager, SystemEnvironment::instance());
         m_windowManager->addWindow<SetupWizardWindow>("setup-wizard", *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
         m_windowManager->addWindow<NotificationTesterWindow>("notification-tester", getRuntimeClient());
+        m_windowManager->addWindow<CommandPaletteWindow>("command-palette", *m_windowManager);
+        m_windowManager->addWindow<AboutWindow>("about");
         
         m_windowManager->open("main");
 
@@ -102,7 +106,11 @@ namespace autoinput::ui
 
     void UiApplication::handleInput()
     {
-        // No-op
+        // Global shortcut for Command Palette (Ctrl+P or Ctrl+Shift+P)
+        if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_P))
+        {
+            m_windowManager->open("command-palette");
+        }
     }
 
     void UiApplication::update()
