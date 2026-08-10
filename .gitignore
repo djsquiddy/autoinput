@@ -1,6 +1,10 @@
-.idea*
-build*/
-cmake-build*/
-__cmake_system*
-.cache
+build/
+cmake-build-*/
+.cache/
+.vs/
+.idea/
+*.user
 *.log
+*.exe
+*.pdb
+*.ilk
