@@ -34,17 +34,18 @@ namespace autoinput::ui
         auto data = autoinput::loadConfigData(path);
         if (data)
         {
+            auto& loc = Localization::get();
             m_configData = std::move(*data);
             m_currentConfigName = nameOrPath;
             m_currentConfigPath = path;
             m_selectedSequenceIndex = -1;
             clearDirty();
-            m_statusMessage = "Loaded " + path.string();
+            m_statusMessage = loc.format("status.configLoadedPath", path.string());
             m_validationErrors.clear();
         }
         else
         {
-            m_statusMessage = "Failed to load " + nameOrPath;
+            m_statusMessage = Localization::get().format("status.configLoadFailedPath", nameOrPath);
         }
     }
 
@@ -64,27 +65,29 @@ namespace autoinput::ui
 
         if (autoinput::saveConfigData(m_configData, path))
         {
+            auto& loc = Localization::get();
             m_currentConfigPath = path;
             clearDirty();
-            m_statusMessage = "Saved to " + path.string();
+            m_statusMessage = loc.format("status.configSavedTo", path.string());
             refreshConfigList();
         }
         else
         {
-            m_statusMessage = "Failed to save to " + path.string();
+            m_statusMessage = Localization::get().format("status.configSaveFailedTo", path.string());
         }
     }
 
     void SequenceEditorWindow::validate()
     {
+        auto& loc = Localization::get();
         m_validationErrors = autoinput::validateConfigData(m_configData);
         if (m_validationErrors.empty())
         {
-            m_statusMessage = "Configuration is valid.";
+            m_statusMessage = loc.text("status.configValid");
         }
         else
         {
-            m_statusMessage = "Configuration has validation errors.";
+            m_statusMessage = loc.text("status.configInvalid");
         }
     }
 
@@ -93,7 +96,7 @@ namespace autoinput::ui
         m_currentConfigName += "_copy";
         m_currentConfigPath = "";
         markDirty();
-        m_statusMessage = "Configuration duplicated (renamed).";
+        m_statusMessage = Localization::get().text("status.configDuplicated");
     }
 
     void SequenceEditorWindow::normalizeDelays(bool removeZeros)
@@ -140,24 +143,24 @@ namespace autoinput::ui
 
     void SequenceEditorWindow::renderContent()
     {
+        auto& loc = Localization::get();
         renderToolbar();
         
         ImGui::Separator();
-
+ 
         if (isDirty())
         {
-            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Unsaved changes in [%s]", m_currentConfigName.c_str());
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", loc.format("status.unsavedChangesIn", m_currentConfigName).c_str());
         }
         else if (!m_currentConfigName.empty())
         {
-            ImGui::Text("Editing [%s]", m_currentConfigName.c_str());
+            ImGui::Text("%s", loc.format("status.editingConfig", m_currentConfigName).c_str());
         }
 
         renderSequenceSelector();
         ImGui::Separator();
         renderSequenceEditor();
-
-        auto& loc = Localization::get();
+ 
         ImGui::Separator();
         if (ImGui::Button(loc.text("buttons.save").data())) saveConfig(false);
         ImGui::SameLine();
@@ -207,16 +210,17 @@ namespace autoinput::ui
 
     void SequenceEditorWindow::renderSequenceSelector()
     {
+        auto& loc = Localization::get();
         if (m_currentConfigName.empty())
         {
-            ImGui::TextDisabled("Select a configuration to edit sequences.");
+            ImGui::TextDisabled("%s", loc.text("status.selectConfigToEditSequences").data());
             return;
         }
-
+ 
         if (m_configData.sequences.empty())
         {
-            ImGui::Text("No sequences found.");
-            if (ImGui::Button("Add Sequence"))
+            ImGui::Text("%s", loc.text("status.noSequencesFound").data());
+            if (ImGui::Button(loc.text("buttons.add").data()))
             {
                 m_configData.sequences.push_back({ .name = "new_sequence", .start = "f1" });
                 m_selectedSequenceIndex = 0;
@@ -224,14 +228,14 @@ namespace autoinput::ui
             }
             return;
         }
-
-        std::string preview = "Select Sequence...";
+ 
+        std::string preview = std::string(loc.text("status.selectSequence"));
         if (m_selectedSequenceIndex >= 0 && m_selectedSequenceIndex < static_cast<int>(m_configData.sequences.size()))
         {
             preview = m_configData.sequences[m_selectedSequenceIndex].name;
         }
-
-        if (ImGui::BeginCombo("Sequence", preview.c_str()))
+ 
+        if (ImGui::BeginCombo(loc.text("labels.sequence").data(), preview.c_str()))
         {
             for (int i = 0; i < static_cast<int>(m_configData.sequences.size()); ++i)
             {
@@ -243,7 +247,6 @@ namespace autoinput::ui
             ImGui::EndCombo();
         }
         ImGui::SameLine();
-        auto& loc = Localization::get();
         if (ImGui::Button(loc.text("buttons.addNew").data()))
         {
             m_configData.sequences.push_back({ .name = "new_sequence", .start = "f1" });
@@ -269,12 +272,12 @@ namespace autoinput::ui
 
         auto& seq = m_configData.sequences[m_selectedSequenceIndex];
 
-        if (widgets::StringInput("Sequence Name", seq.name)) markDirty();
-        if (widgets::StringInput("Start Hotkey", seq.start)) markDirty();
-        if (ImGui::Checkbox("Repeat", &seq.repeat)) markDirty();
-
+        if (widgets::StringInput(loc.text("labels.sequenceName").data(), seq.name)) markDirty();
+        if (widgets::StringInput(loc.text("labels.startKey").data(), seq.start)) markDirty();
+        if (ImGui::Checkbox(loc.text("buttons.repeat").data(), &seq.repeat)) markDirty();
+ 
         ImGui::Separator();
-        ImGui::Text("Sequence Steps (%zu):", seq.events.size());
+        ImGui::Text("%s", loc.format("labels.sequenceStepsCount", seq.events.size()).c_str());
         
         if (ImGui::Button(loc.text("buttons.normalizeDelays").data())) normalizeDelays(false);
         ImGui::SameLine();
@@ -314,10 +317,18 @@ namespace autoinput::ui
 
     void SequenceEditorWindow::renderStepEditor(autoinput::RecordedEvent& event, size_t index)
     {
+        auto& loc = Localization::get();
         auto& seq = m_configData.sequences[m_selectedSequenceIndex];
-
+ 
         ImGui::TableNextColumn();
-        const char* typeNames[] = { "Delay", "Key Down", "Key Up", "Mouse Down", "Mouse Up", "Mouse Move" };
+        const char* typeNames[] = { 
+            loc.text("labels.delayLabel").data(), 
+            loc.text("labels.keyDownLabel").data(), 
+            loc.text("labels.keyUpLabel").data(), 
+            loc.text("labels.mouseDownLabel").data(), 
+            loc.text("labels.mouseUpLabel").data(), 
+            loc.text("labels.mouseMoveLabel").data() 
+        };
         int typeIdx = static_cast<int>(event.type);
         ImGui::SetNextItemWidth(-FLT_MIN);
         if (ImGui::Combo("##type", &typeIdx, typeNames, IM_ARRAYSIZE(typeNames)))
@@ -364,10 +375,9 @@ namespace autoinput::ui
         }
         else
         {
-            ImGui::TextDisabled("N/A");
+            ImGui::TextDisabled("%s", loc.text("labels.n_a").data());
         }
-
-        auto& loc = Localization::get();
+ 
         ImGui::TableNextColumn();
         if (ImGui::Button(loc.text("buttons.up").data()) && index > 0)
         {

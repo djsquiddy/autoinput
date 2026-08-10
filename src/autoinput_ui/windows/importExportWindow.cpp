@@ -164,76 +164,78 @@ namespace autoinput::ui
 
     void ImportExportWindow::handleExport()
     {
+        auto& loc = Localization::get();
         if (m_exportDestPath.empty())
         {
-            m_exportStatus = "Error: Destination path is empty.";
+            m_exportStatus = loc.text("status.destPathEmpty");
             m_exportSuccess = false;
             return;
         }
-
+ 
         std::filesystem::path destPath(m_exportDestPath);
         if (destPath.extension() != ".toml")
         {
              destPath += ".toml";
         }
-
+ 
         auto config = autoinput::loadConfigData(autoinput::getConfigFilePath(m_availableConfigs[m_selectedExportIndex]));
         if (!config)
         {
-            m_exportStatus = "Error: Failed to load source configuration.";
+            m_exportStatus = loc.text("status.failedToLoadSource");
             m_exportSuccess = false;
             return;
         }
-
+ 
         if (std::filesystem::exists(destPath))
         {
              // For now, since we don't have a modal helper easily accessible here, we just fail and ask user to use a different path
              // or I could implement a simple confirmation flag.
-             m_exportStatus = "Error: Destination file already exists. Please choose a different path.";
+             m_exportStatus = loc.text("status.destFileExists");
              m_exportSuccess = false;
              return;
         }
-
+ 
         if (autoinput::saveConfigData(*config, destPath))
         {
-            m_exportStatus = std::format("Successfully exported to {}", destPath.string());
+            m_exportStatus = loc.format("status.exportSuccess", destPath.string());
             m_exportSuccess = true;
             Logger::info(m_exportStatus);
         }
         else
         {
-            m_exportStatus = "Error: Failed to save to destination.";
+            m_exportStatus = loc.text("status.exportFailed");
             m_exportSuccess = false;
         }
     }
 
     void ImportExportWindow::previewImport()
     {
+        auto& loc = Localization::get();
         m_importPreview.reset();
         m_importValidation.clear();
         m_importStatus.clear();
         m_hasConflict = false;
         m_conflictResolution = ConflictResolution::None;
-
+ 
         if (m_importSourcePath.empty())
         {
-            m_importStatus = "Error: Source path is empty.";
+            m_importStatus = loc.text("status.sourcePathEmpty");
             m_importSuccess = false;
             return;
         }
-
+ 
         std::filesystem::path sourcePath(m_importSourcePath);
         if (!std::filesystem::exists(sourcePath))
         {
-            m_importStatus = "Error: Source file does not exist.";
+            m_importStatus = loc.text("status.sourceFileMissing");
             m_importSuccess = false;
             return;
         }
-
+ 
         auto data = autoinput::loadConfigData(sourcePath);
         if (!data)
         {
-            m_importStatus = "Error: Failed to load or parse configuration.";
+            m_importStatus = loc.text("status.importParseFailed");
             m_importSuccess = false;
             return;
         }
@@ -255,20 +257,21 @@ namespace autoinput::ui
 
     void ImportExportWindow::handleImport()
     {
+        auto& loc = Localization::get();
         if (!m_importPreview)
         {
-            m_importStatus = "Error: No configuration loaded for preview.";
+            m_importStatus = loc.text("status.noImportPreview");
             m_importSuccess = false;
             return;
         }
-
+ 
         if (m_hasConflict && m_conflictResolution == ConflictResolution::Cancel)
         {
-            m_importStatus = "Import cancelled by user.";
+            m_importStatus = loc.text("status.importCancelled");
             m_importSuccess = false;
             return;
         }
-
+ 
         std::filesystem::path sourcePath(m_importSourcePath);
         std::string configName = sourcePath.stem().string();
         
@@ -283,12 +286,12 @@ namespace autoinput::ui
             }
             if (suffix > 1) configName += std::format("_{}", suffix);
         }
-
+ 
         std::filesystem::path destPath = autoinput::getUserConfigsPath() / (configName + ".toml");
         
         if (autoinput::saveConfigData(*m_importPreview, destPath))
         {
-            m_importStatus = std::format("Successfully imported as '{}'", configName);
+            m_importStatus = loc.format("status.importSuccess", configName);
             m_importSuccess = true;
             Logger::info(m_importStatus);
             
@@ -297,7 +300,7 @@ namespace autoinput::ui
                 auto errors = autoinput::validateConfigData(*m_importPreview);
                 if (!errors.empty())
                 {
-                    m_importStatus += " (Warning: Validation failed)";
+                    m_importStatus += loc.text("status.importValidationWarning");
                 }
             }
             
@@ -305,7 +308,7 @@ namespace autoinput::ui
         }
         else
         {
-            m_importStatus = "Error: Failed to save imported configuration.";
+            m_importStatus = loc.text("status.importSaveFailed");
             m_importSuccess = false;
         }
     }

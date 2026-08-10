@@ -4,7 +4,9 @@
  * @date August 2026
  */
 #include "runtimeWindow.h"
+#include "../core/localization.h"
 #include <imgui.h>
+#include <format>
 
 namespace autoinput::ui
 {
@@ -12,19 +14,20 @@ namespace autoinput::ui
     {
         const char* runtimeStatusDisplayName(services::RuntimeStatus status)
         {
+            auto& loc = Localization::get();
             switch (status)
             {
             case services::RuntimeStatus::Stopped:
-                return "Stopped";
+                return loc.text("status.stopped").data();
             case services::RuntimeStatus::Starting:
-                return "Starting";
+                return loc.text("status.starting").data();
             case services::RuntimeStatus::Running:
-                return "Running";
+                return loc.text("status.running").data();
             case services::RuntimeStatus::Paused:
-                return "Paused";
+                return loc.text("status.paused").data();
             case services::RuntimeStatus::Error:
-                return "Error";
-            default: return "Unknown";
+                return loc.text("status.error").data();
+            default: return loc.text("status.unknown").data();
             }
         }
     }
@@ -38,19 +41,20 @@ namespace autoinput::ui
     void RuntimeWindow::renderContent()
     {
         using namespace autoinput::services;
-
-        ImGui::InputText("Config Name", m_configName, sizeof(m_configName));
-
+        auto& loc = Localization::get();
+ 
+        ImGui::InputText(loc.text("labels.configName").data(), m_configName, sizeof(m_configName));
+ 
         RuntimeStatus status = m_runtimeClient.getStatus();
         const char* statusText = runtimeStatusDisplayName(status);
-
-        ImGui::Text("Status: %s", statusText);
-
+ 
+        ImGui::Text("%s: %s", loc.text("labels.status").data(), statusText);
+ 
         bool isRunning = (status == RuntimeStatus::Running || status == RuntimeStatus::Starting);
         bool isStopped = (status == RuntimeStatus::Stopped || status == RuntimeStatus::Error);
-
+ 
         if (isRunning) ImGui::BeginDisabled();
-        if (ImGui::Button("Start"))
+        if (ImGui::Button(loc.text("buttons.start").data()))
         {
             auto result = m_runtimeClient.start(m_configName);
             m_lastMessage = result.message;
@@ -59,7 +63,7 @@ namespace autoinput::ui
         
         ImGui::SameLine();
         if (isStopped) ImGui::BeginDisabled();
-        if (ImGui::Button("Stop"))
+        if (ImGui::Button(loc.text("buttons.stop").data()))
         {
             auto result = m_runtimeClient.stop();
             m_lastMessage = result.message;
@@ -67,23 +71,23 @@ namespace autoinput::ui
         if (isStopped) ImGui::EndDisabled();
         
         ImGui::SameLine();
-        if (ImGui::Button("Pause"))
+        if (ImGui::Button(loc.text("buttons.pause").data()))
         {
             auto result = m_runtimeClient.pause();
             m_lastMessage = result.message;
         }
         
         ImGui::SameLine();
-        if (ImGui::Button("Resume"))
+        if (ImGui::Button(loc.text("buttons.resume").data()))
         {
             auto result = m_runtimeClient.resume();
             m_lastMessage = result.message;
         }
-
+ 
         if (!m_lastMessage.empty())
         {
             ImGui::Separator();
-            ImGui::TextWrapped("Last message: %s", m_lastMessage.c_str());
+            ImGui::TextWrapped("%s", loc.format("labels.lastMessageLabel", m_lastMessage).c_str());
         }
     }
 }

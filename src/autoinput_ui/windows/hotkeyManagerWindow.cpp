@@ -57,6 +57,7 @@ namespace autoinput::ui
         
         if (m_configData)
         {
+            auto& loc = Localization::get();
             // Commands
             for (size_t i = 0; i < m_configData->commands.size(); ++i)
             {
@@ -84,7 +85,7 @@ namespace autoinput::ui
             // Global End Key
             HotkeyEntry endEntry;
             endEntry.type = HotkeyEntry::Type::GlobalEnd;
-            endEntry.name = "Global End Key";
+            endEntry.name = std::string(loc.text("labels.globalEndKey"));
             endEntry.hotkey = m_configData->endKey;
             endEntry.index = 0;
             m_entries.push_back(std::move(endEntry));
@@ -93,7 +94,7 @@ namespace autoinput::ui
         }
         else
         {
-            m_statusMessage = std::format("Failed to load config: {}", m_currentConfigName);
+            m_statusMessage = Localization::get().format("status.failedToLoadConfigWithReason", m_currentConfigName);
         }
         clearDirty();
     }
@@ -149,11 +150,11 @@ namespace autoinput::ui
         auto res = m_runtimeClient.startRecording(config);
         if (res.success)
         {
-            m_statusMessage = "Press any key combination...";
+            m_statusMessage = Localization::get().text("status.pressAnyKey");
         }
         else
         {
-            m_statusMessage = std::format("Failed to start capture: {}", res.message);
+            m_statusMessage = Localization::get().format("status.failedToStartCapture", res.message);
             m_isCapturing = false;
             m_captureTarget = nullptr;
         }
@@ -216,7 +217,7 @@ namespace autoinput::ui
             if (!bestKey.empty())
             {
                 m_captureTarget->hotkey = bestKey;
-                m_statusMessage = std::format("Captured: {}", m_captureTarget->hotkey);
+                m_statusMessage = Localization::get().format("status.capturedKey", m_captureTarget->hotkey);
                 markDirty();
                 validateHotkeys();
             }
@@ -264,12 +265,12 @@ namespace autoinput::ui
         const auto configPath = getConfigFilePath(m_currentConfigName, m_environment);
         if (saveConfigData(*m_configData, configPath))
         {
-            m_statusMessage = std::format("Saved hotkeys to {}.", m_currentConfigName);
+            m_statusMessage = Localization::get().format("status.savedHotkeysTo", m_currentConfigName);
             clearDirty();
         }
         else
         {
-            m_statusMessage = std::format("Failed to save config {}.", m_currentConfigName);
+            m_statusMessage = Localization::get().format("status.failedToSaveConfigWithReason", m_currentConfigName);
         }
     }
 
@@ -308,14 +309,14 @@ namespace autoinput::ui
         if (ImGui::Button(loc.text("buttons.validate").data()))
         {
             validateHotkeys();
-            m_statusMessage = "Validation complete.";
+            m_statusMessage = loc.text("status.validationComplete");
         }
         
         ImGui::Separator();
         
         if (m_isCapturing)
         {
-            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Capturing hotkey for '%s'... Press any key.", m_captureTarget ? m_captureTarget->name.c_str() : "");
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), "%s", loc.format("status.capturingHotkeyFor", m_captureTarget ? m_captureTarget->name : "").c_str());
             if (ImGui::Button(loc.text("buttons.cancel").data()))
             {
                 stopCapture();
@@ -365,12 +366,12 @@ namespace autoinput::ui
                 if (entry.hasConflict)
                 {
                     ImGui::TextColored(ImVec4(1, 0.5f, 0, 1), "%s", loc.text("labels.conflict").data());
-                    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Duplicate hotkey detected.");
+                    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", loc.text("status.duplicateHotkeyDetected").data());
                 }
                 else if (!entry.isValid)
                 {
                     ImGui::TextColored(ImVec4(1, 0, 0, 1), "%s", loc.text("labels.invalid").data());
-                    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Invalid key name.");
+                    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", loc.text("status.invalidKeyName").data());
                 }
                 else
                 {

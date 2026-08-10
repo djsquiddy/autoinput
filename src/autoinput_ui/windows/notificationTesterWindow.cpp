@@ -39,7 +39,7 @@ namespace autoinput::ui
         ImGui::Checkbox(loc.text("labels.overrideMode").data(), &m_useTempMode);
         if (m_useTempMode)
         {
-            const char* modes[] = { "Off", "Console", "Desktop", "Both" };
+            const char* modes[] = { loc.text("status.off").data(), loc.text("status.console").data(), loc.text("status.desktop").data(), loc.text("status.both").data() };
             int currentMode = 0;
             if (m_tempMode == StatusNotificationMode::Console) currentMode = 1;
             else if (m_tempMode == StatusNotificationMode::Desktop) currentMode = 2;
@@ -91,19 +91,20 @@ namespace autoinput::ui
 
     void NotificationTesterWindow::sendNotification(NotificationSeverity severity)
     {
+        auto& loc = Localization::get();
         std::optional<StatusNotificationMode> mode;
         if (m_useTempMode)
         {
             mode = m_tempMode;
         }
-
+ 
         auto result = m_runtimeClient.sendTestNotification(m_testTitle, m_testMessage, severity, mode);
         m_lastSuccess = result.success;
         m_lastResult = result.message;
         
         if (m_lastResult.empty())
         {
-            m_lastResult = m_lastSuccess ? "Success" : "Failed";
+            m_lastResult = m_lastSuccess ? loc.text("status.success") : loc.text("status.failed");
         }
     }
 }

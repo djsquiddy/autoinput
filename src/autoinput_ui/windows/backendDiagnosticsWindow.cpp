@@ -40,26 +40,30 @@ namespace autoinput::ui
 
     void BackendDiagnosticsWindow::pingRuntime()
     {
+        auto& loc = Localization::get();
         m_pingPending = true;
-        m_pingResult = "Pinging...";
+        m_pingResult = loc.text("status.pinging");
         
         std::thread([this]() {
+            auto& loc = Localization::get();
             auto res = m_runtimeClient.ping();
             std::lock_guard lock(g_diagMutex);
-            m_pingResult = res.success ? std::format("Success: {}", res.message) : std::format("Failed: {}", res.message);
+            m_pingResult = res.success ? loc.format("labels.pingSuccess", res.message) : loc.format("labels.pingFailed", res.message);
             m_pingPending = false;
         }).detach();
     }
 
     void BackendDiagnosticsWindow::sendTestNotification()
     {
+        auto& loc = Localization::get();
         m_notificationPending = true;
-        m_notificationResult = "Sending...";
+        m_notificationResult = loc.text("status.sending");
         
         std::thread([this]() {
-            auto res = m_runtimeClient.sendTestNotification("AutoInput Diagnostics", "This is a test notification.");
+            auto& loc = Localization::get();
+            auto res = m_runtimeClient.sendTestNotification(loc.text("labels.appName").data(), loc.text("labels.diagnosticsDescription").data());
             std::lock_guard lock(g_diagMutex);
-            m_notificationResult = res.success ? "Success" : std::format("Failed: {}", res.message);
+            m_notificationResult = res.success ? loc.text("status.success").data() : loc.format("labels.notificationFailed", res.message);
             m_notificationPending = false;
         }).detach();
     }
@@ -86,11 +90,11 @@ namespace autoinput::ui
 
         if (!m_pingResult.empty())
         {
-            ImGui::Text("Ping Result: %s", m_pingResult.c_str());
+            ImGui::Text("%s: %s", loc.text("labels.pingResult").data(), m_pingResult.c_str());
         }
         if (!m_notificationResult.empty())
         {
-            ImGui::Text("Notification Result: %s", m_notificationResult.c_str());
+            ImGui::Text("%s: %s", loc.text("labels.notificationResult").data(), m_notificationResult.c_str());
         }
 
         ImGui::Separator();

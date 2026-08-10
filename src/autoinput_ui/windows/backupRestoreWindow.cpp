@@ -47,6 +47,7 @@ namespace autoinput::ui
 
         try
         {
+            auto& loc = Localization::get();
             for (const auto& entry : fs::directory_iterator(backupDir))
             {
                 if (entry.is_directory())
@@ -57,13 +58,13 @@ namespace autoinput::ui
                     
                     // Parse type from name (e.g., backup_20260810_120000_all)
                     if (backup.name.find("_all") != std::string::npos)
-                        backup.type = "All Configs";
+                        backup.type = loc.text("labels.backupTypeAll");
                     else if (backup.name.find("_settings") != std::string::npos)
-                        backup.type = "Settings";
+                        backup.type = loc.text("labels.backupTypeSettings");
                     else if (backup.name.find("_config_") != std::string::npos)
-                        backup.type = "Single Config";
+                        backup.type = loc.text("labels.backupTypeSingle");
                     else
-                        backup.type = "Unknown";
+                        backup.type = loc.text("status.unknown");
 
                     auto ftime = entry.last_write_time();
                     backup.created = std::chrono::clock_cast<std::chrono::system_clock>(ftime);
@@ -88,7 +89,7 @@ namespace autoinput::ui
         }
         catch (const std::exception& e)
         {
-            Logger::error("Failed to list backups: {}", e.what());
+            Logger::error(Localization::get().format("status.failedToListBackups", e.what()));
         }
     }
 
@@ -308,6 +309,7 @@ namespace autoinput::ui
 
     void BackupRestoreWindow::backupAllConfigs()
     {
+        auto& loc = Localization::get();
         try
         {
             fs::path userDir = autoinput::getUserConfigsPath();
@@ -326,14 +328,14 @@ namespace autoinput::ui
                 }
             }
 
-            m_statusMessage = std::format("Successfully backed up {} configurations.", count);
+            m_statusMessage = loc.format("status.backupAllSuccess", count);
             m_statusIsError = false;
             Logger::info(m_statusMessage);
             refreshBackups();
         }
         catch (const std::exception& e)
         {
-            m_statusMessage = std::format("Backup failed: {}", e.what());
+            m_statusMessage = loc.format("status.backupFailed", e.what());
             m_statusIsError = true;
             Logger::error(m_statusMessage);
         }
@@ -341,6 +343,7 @@ namespace autoinput::ui
 
     void BackupRestoreWindow::backupSelectedConfig(const std::string& configName)
     {
+        auto& loc = Localization::get();
         try
         {
             fs::path configPath = autoinput::getConfigFilePath(configName);
@@ -350,15 +353,15 @@ namespace autoinput::ui
                 fs::create_directories(backupDir);
 
             fs::copy_file(configPath, backupDir / configPath.filename(), fs::copy_options::overwrite_existing);
-
-            m_statusMessage = std::format("Successfully backed up config '{}'.", configName);
+ 
+            m_statusMessage = loc.format("status.backupConfigSuccess", configName);
             m_statusIsError = false;
             Logger::info(m_statusMessage);
             refreshBackups();
         }
         catch (const std::exception& e)
         {
-            m_statusMessage = std::format("Backup failed: {}", e.what());
+            m_statusMessage = loc.format("status.backupFailed", e.what());
             m_statusIsError = true;
             Logger::error(m_statusMessage);
         }
@@ -366,31 +369,32 @@ namespace autoinput::ui
 
     void BackupRestoreWindow::backupSettings()
     {
+        auto& loc = Localization::get();
         try
         {
             fs::path settingsPath = autoinput::getUserConfigsPath() / autoinput::defaults::SettingFileName;
             if (!fs::exists(settingsPath))
             {
-                 m_statusMessage = "Settings file does not exist.";
+                 m_statusMessage = loc.text("status.settingsFileMissing");
                  m_statusIsError = true;
                  return;
             }
-
+ 
             fs::path backupDir = getBackupDirPath() / ("backup_" + getTimestampString() + "_settings");
             
             if (!fs::exists(backupDir))
                 fs::create_directories(backupDir);
-
+ 
             fs::copy_file(settingsPath, backupDir / settingsPath.filename(), fs::copy_options::overwrite_existing);
-
-            m_statusMessage = "Successfully backed up settings.";
+ 
+            m_statusMessage = loc.text("status.backupSettingsSuccess");
             m_statusIsError = false;
             Logger::info(m_statusMessage);
             refreshBackups();
         }
         catch (const std::exception& e)
         {
-            m_statusMessage = std::format("Backup failed: {}", e.what());
+            m_statusMessage = loc.format("status.backupFailed", e.what());
             m_statusIsError = true;
             Logger::error(m_statusMessage);
         }
@@ -398,6 +402,7 @@ namespace autoinput::ui
 
     void BackupRestoreWindow::restoreBackup(const BackupEntry& entry)
     {
+        auto& loc = Localization::get();
         try
         {
             fs::path userDir = autoinput::getUserConfigsPath();
@@ -409,8 +414,8 @@ namespace autoinput::ui
                     fs::copy_file(subEntry.path(), userDir / subEntry.path().filename(), fs::copy_options::overwrite_existing);
                 }
             }
-
-            m_statusMessage = std::format("Successfully restored backup '{}'.", entry.name);
+ 
+            m_statusMessage = loc.format("status.restoreSuccess", entry.name);
             
             // Validate restored configs
             int invalidCount = 0;
@@ -426,12 +431,12 @@ namespace autoinput::ui
                     }
                 }
             }
-
+ 
             if (invalidCount > 0)
             {
-                m_statusMessage += std::format(" Warning: {} configurations have validation errors.", invalidCount);
+                m_statusMessage += loc.format("status.restoreWarning", invalidCount);
             }
-
+ 
             m_statusIsError = false;
             Logger::info(m_statusMessage);
             
@@ -440,7 +445,7 @@ namespace autoinput::ui
         }
         catch (const std::exception& e)
         {
-            m_statusMessage = std::format("Restore failed: {}", e.what());
+            m_statusMessage = loc.format("status.restoreFailed", e.what());
             m_statusIsError = true;
             Logger::error(m_statusMessage);
         }
@@ -448,17 +453,18 @@ namespace autoinput::ui
 
     void BackupRestoreWindow::deleteBackup(const BackupEntry& entry)
     {
+        auto& loc = Localization::get();
         try
         {
             fs::remove_all(entry.path);
-            m_statusMessage = std::format("Successfully deleted backup '{}'.", entry.name);
+            m_statusMessage = loc.format("status.deleteBackupSuccess", entry.name);
             m_statusIsError = false;
             Logger::info(m_statusMessage);
             refreshBackups();
         }
         catch (const std::exception& e)
         {
-            m_statusMessage = std::format("Delete failed: {}", e.what());
+            m_statusMessage = loc.format("status.deleteBackupFailed", e.what());
             m_statusIsError = true;
             Logger::error(m_statusMessage);
         }

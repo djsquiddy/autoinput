@@ -19,6 +19,7 @@ namespace autoinput::ui
     {
         std::string getCompilerInfo()
         {
+            auto& loc = Localization::get();
 #if defined(_MSC_VER)
             return std::format("MSVC {}.{}.{}", _MSC_VER / 100, _MSC_VER % 100, _MSC_FULL_VER % 100000);
 #elif defined(__clang__)
@@ -26,16 +27,17 @@ namespace autoinput::ui
 #elif defined(__GNUC__)
             return std::format("GCC {}.{}.{}", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #else
-            return "Unknown Compiler";
+            return std::string(loc.text("labels.unknownCompiler"));
 #endif
         }
-
+ 
         std::string getBuildConfig()
         {
+            auto& loc = Localization::get();
 #if defined(DEBUG) || defined(_DEBUG)
-            return "Debug";
+            return std::string(loc.text("labels.debug"));
 #else
-            return "Release";
+            return std::string(loc.text("labels.release"));
 #endif
         }
     }
@@ -58,7 +60,14 @@ namespace autoinput::ui
             const auto settingsPath = (autoinput::getUserConfigsPath(m_environment) / autoinput::defaults::SettingFileName).string();
             const auto logPath = autoinput::Logger::getFileName();
             const auto backend = m_runtimeClient.getBackendName();
-            const auto status = services::statusToString(m_runtimeClient.getStatus());
+            const auto rawStatus = services::statusToString(m_runtimeClient.getStatus());
+            std::string status = rawStatus;
+            if (rawStatus == "Running") status = loc.text("status.running");
+            else if (rawStatus == "Stopped") status = loc.text("status.stopped");
+            else if (rawStatus == "Starting") status = loc.text("status.starting");
+            else if (rawStatus == "Paused") status = loc.text("status.paused");
+            else if (rawStatus == "Error") status = loc.text("status.error");
+            else if (rawStatus == "Unknown") status = loc.text("status.unknown");
  
             if (ImGui::BeginTable("DiagnosticsTable", 2, ImGuiTableFlags_BordersInnerV))
             {

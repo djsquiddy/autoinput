@@ -28,10 +28,11 @@ namespace autoinput::ui
 
     void ApplicationPickerWindow::refreshWindows()
     {
+        auto& loc = Localization::get();
         m_windows = m_runtimeClient.enumerateWindows();
         m_foregroundWindow = m_runtimeClient.getForegroundWindow();
         m_selectedWindowIndex = -1;
-        m_statusMessage = std::format("Found {} windows.", m_windows.size());
+        m_statusMessage = loc.format("status.foundWindows", m_windows.size());
     }
 
     void ApplicationPickerWindow::update()
@@ -89,7 +90,7 @@ namespace autoinput::ui
         auto caps = m_runtimeClient.getBackendCapabilities();
         if (!caps.listApplications)
         {
-            ImGui::TextColored(ImVec4(1, 0.5f, 0, 1), "Warning: Backend does not explicitly support application listing.");
+            ImGui::TextColored(ImVec4(1, 0.5f, 0, 1), "%s", loc.text("status.backendListingWarning").data());
         }
 
         // Table
@@ -176,7 +177,7 @@ namespace autoinput::ui
         }
         else
         {
-            ImGui::Text("Select a window from the table to perform actions.");
+            ImGui::Text("%s", loc.text("status.selectWindowToPerformActions").data());
         }
         
         if (!m_statusMessage.empty())
@@ -189,49 +190,55 @@ namespace autoinput::ui
 
     void ApplicationPickerWindow::useAsTarget()
     {
+        auto& loc = Localization::get();
         if (m_selectedWindowIndex < 0) return;
         const auto& win = m_windows[m_selectedWindowIndex];
         ImGui::SetClipboardText(win.processName.c_str());
-        m_statusMessage = std::format("Copied '{}' to clipboard. Paste it into the 'Application' field in Config Editor.", win.processName);
+        m_statusMessage = loc.format("status.copiedToClipboardTarget", win.processName);
     }
-
+ 
     void ApplicationPickerWindow::addToGlobalBlacklist()
     {
+        auto& loc = Localization::get();
         if (m_selectedWindowIndex < 0) return;
         const auto& win = m_windows[m_selectedWindowIndex];
         ImGui::SetClipboardText(win.processName.c_str());
-        m_statusMessage = std::format("Copied '{}' to clipboard. Add it to the 'blacklist' in your global settings.", win.processName);
+        m_statusMessage = loc.format("status.copiedToClipboardGlobalBlacklist", win.processName);
     }
-
+ 
     void ApplicationPickerWindow::addToCurrentConfigBlacklist()
     {
+        auto& loc = Localization::get();
         if (m_selectedWindowIndex < 0) return;
         const auto& win = m_windows[m_selectedWindowIndex];
         ImGui::SetClipboardText(win.processName.c_str());
-        m_statusMessage = std::format("Copied '{}' to clipboard. Add it to the 'blacklist' section of your current config.", win.processName);
+        m_statusMessage = loc.format("status.copiedToClipboardConfigBlacklist", win.processName);
     }
-
+ 
     void ApplicationPickerWindow::copyIdentifier()
     {
+        auto& loc = Localization::get();
         if (m_selectedWindowIndex < 0) return;
         ImGui::SetClipboardText(m_windows[m_selectedWindowIndex].backendId.c_str());
-        m_statusMessage = "Backend identifier copied to clipboard.";
+        m_statusMessage = loc.text("status.backendIdCopied");
     }
-
+ 
     void ApplicationPickerWindow::copyWindowTitle()
     {
+        auto& loc = Localization::get();
         if (m_selectedWindowIndex < 0) return;
         ImGui::SetClipboardText(m_windows[m_selectedWindowIndex].windowTitle.c_str());
-        m_statusMessage = "Window title copied to clipboard.";
+        m_statusMessage = loc.text("status.windowTitleCopied");
     }
-
+ 
     void ApplicationPickerWindow::testMatch()
     {
+        auto& loc = Localization::get();
         if (m_selectedWindowIndex < 0) return;
         const auto& win = m_windows[m_selectedWindowIndex];
         
         // Very basic placeholder match logic
         m_matchSuccess = true;
-        m_matchResult = std::format("App '{}' would match if set as the config target.", win.processName);
+        m_matchResult = loc.format("status.matchResultSuccess", win.processName);
     }
 }

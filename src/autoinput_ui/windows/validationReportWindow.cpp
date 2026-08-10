@@ -149,10 +149,11 @@ namespace autoinput::ui::windows
 
     void ValidationReportWindow::runCurrentConfigValidation()
     {
+        auto& loc = Localization::get();
         std::string current = m_configService.getCurrentConfig();
         if (current.empty())
         {
-            m_statusMessage = "No config currently selected.";
+            m_statusMessage = loc.text("labels.noConfigSelected");
             return;
         }
 
@@ -167,11 +168,12 @@ namespace autoinput::ui::windows
             m_issues.push_back(ValidationIssue{ current, result.configPath, "Config", err });
         }
 
-        m_statusMessage = std::format("Validated current config: {}. {} issues found.", current, result.errors.size());
+        m_statusMessage = loc.format("labels.validatedCurrentConfig", current, result.errors.size());
     }
 
     void ValidationReportWindow::runAllConfigsValidation()
     {
+        auto& loc = Localization::get();
         auto configs = m_configService.listAvailableConfigs();
         
         // Filter out existing config issues
@@ -191,11 +193,12 @@ namespace autoinput::ui::windows
             }
         }
 
-        m_statusMessage = std::format("Validated {} configs. {} issues found.", configs.size(), totalIssues);
+        m_statusMessage = loc.format("labels.validatedAllConfigs", configs.size(), totalIssues);
     }
 
     void ValidationReportWindow::runSettingsValidation()
     {
+        auto& loc = Localization::get();
         m_settings.load();
         
         // Clear previous settings issues
@@ -206,24 +209,25 @@ namespace autoinput::ui::windows
         auto errors = autoinput::validateSettings(m_settings.getDefaults());
         for (const auto& err : errors)
         {
-            m_issues.push_back(ValidationIssue{ "Global Settings", "", "Settings", err });
+            m_issues.push_back(ValidationIssue{ std::string(loc.text("labels.globalSettings")), "", "Settings", err });
         }
 
-        m_statusMessage = std::format("Validated global settings. {} issues found.", errors.size());
+        m_statusMessage = loc.format("labels.validatedSettings", errors.size());
     }
 
     void ValidationReportWindow::clearResults()
     {
         m_issues.clear();
-        m_statusMessage = "Results cleared.";
+        m_statusMessage = Localization::get().text("labels.resultsCleared");
     }
 
     void ValidationReportWindow::copyReport()
     {
-        std::string report = "AutoInput Validation Report\n===========================\n\n";
+        auto& loc = Localization::get();
+        std::string report = std::string(loc.text("labels.reportTitle")) + "\n===========================\n\n";
         if (m_issues.empty())
         {
-            report += "No issues found.\n";
+            report += std::string(loc.text("labels.noIssuesFound")) + "\n";
         }
         else
         {
@@ -236,21 +240,21 @@ namespace autoinput::ui::windows
                 report += std::format("[{}] Source: {} ({})\n", severity, issue.sourceName, issue.type);
                 if (!issue.error.section.empty())
                 {
-                    report += std::format("  Location: {}", issue.error.section);
+                    report += std::format("  {}: {}", loc.text("labels.location").data(), issue.error.section);
                     if (!issue.error.field.empty()) report += std::format(".{}", issue.error.field);
                     report += "\n";
                 }
-                report += std::format("  Message: {}\n", issue.error.message);
+                report += std::format("  {}: {}\n", loc.text("labels.message").data(), issue.error.message);
                 if (!issue.error.suggestedFix.empty())
                 {
-                    report += std::format("  Fix: {}\n", issue.error.suggestedFix);
+                    report += std::format("  {}: {}\n", loc.text("labels.fix").data(), issue.error.suggestedFix);
                 }
                 report += "\n";
             }
         }
 
         ImGui::SetClipboardText(report.c_str());
-        m_statusMessage = "Report copied to clipboard.";
+        m_statusMessage = loc.text("labels.reportCopied");
     }
 
     void ValidationReportWindow::openInEditor(const ValidationIssue& issue)

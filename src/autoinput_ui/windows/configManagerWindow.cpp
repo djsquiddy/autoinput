@@ -78,14 +78,14 @@ namespace autoinput::ui
         {
             validateConfig(entry);
         }
-        m_statusMessage = "Validated all configurations.";
+        m_statusMessage = Localization::get().text("status.validatedAllConfigsMessage");
     }
 
     void ConfigManagerWindow::deleteConfig(const ConfigEntry& entry)
     {
         if (entry.type == ConfigType::Global)
         {
-            m_statusMessage = "Cannot delete built-in configs. Duplicate to User first.";
+            m_statusMessage = Localization::get().text("status.cannotDeleteBuiltin");
             return;
         }
 
@@ -93,17 +93,17 @@ namespace autoinput::ui
         {
             if (std::filesystem::remove(entry.path))
             {
-                m_statusMessage = std::format("Deleted config: {}", entry.name);
+                m_statusMessage = Localization::get().format("status.deletedConfig", entry.name);
                 refreshConfigs();
             }
             else
             {
-                m_statusMessage = std::format("Failed to delete config: {}", entry.name);
+                m_statusMessage = Localization::get().format("status.failedToDeleteConfig", entry.name);
             }
         }
         catch (const std::exception& e)
         {
-            m_statusMessage = std::format("Error deleting config: {}", e.what());
+            m_statusMessage = Localization::get().format("status.errorDeletingConfig", e.what());
         }
     }
 
@@ -121,12 +121,12 @@ namespace autoinput::ui
         
         if (autoinput::duplicateConfig(entry.path.string(), destPath.string(), false))
         {
-            m_statusMessage = std::format("Duplicated {} to {}", entry.name, newName);
+            m_statusMessage = Localization::get().format("status.duplicatedConfig", entry.name, newName);
             refreshConfigs();
         }
         else
         {
-            m_statusMessage = std::format("Failed to duplicate config: {}", entry.name);
+            m_statusMessage = Localization::get().format("status.failedToDuplicateConfig", entry.name);
         }
     }
 
@@ -134,26 +134,26 @@ namespace autoinput::ui
     {
         if (entry.type == ConfigType::Global)
         {
-            m_statusMessage = "Cannot rename built-in configs. Duplicate to User first.";
+            m_statusMessage = Localization::get().text("status.cannotRenameBuiltin");
             return;
         }
-
+ 
         const std::filesystem::path newPath = entry.path.parent_path() / (newName + ".toml");
         if (std::filesystem::exists(newPath))
         {
-            m_statusMessage = std::format("Error: Config '{}' already exists.", newName);
+            m_statusMessage = Localization::get().format("status.configAlreadyExists", newName);
             return;
         }
-
+ 
         try
         {
             std::filesystem::rename(entry.path, newPath);
-            m_statusMessage = std::format("Renamed {} to {}", entry.name, newName);
+            m_statusMessage = Localization::get().format("status.renamedConfig", entry.name, newName);
             refreshConfigs();
         }
         catch (const std::exception& e)
         {
-            m_statusMessage = std::format("Error renaming config: {}", e.what());
+            m_statusMessage = Localization::get().format("status.errorRenamingConfig", e.what());
         }
     }
 
@@ -162,18 +162,18 @@ namespace autoinput::ui
         const std::filesystem::path path = getUserConfigsPath(m_environment) / (name + ".toml");
         if (std::filesystem::exists(path))
         {
-            m_statusMessage = std::format("Config {} already exists.", name);
+            m_statusMessage = Localization::get().format("status.configAlreadyExists", name);
             return;
         }
-
+ 
         if (const ConfigData data; saveConfigData(data, path))
         {
-            m_statusMessage = std::format("Created new config: {}", name);
+            m_statusMessage = Localization::get().format("status.createdNewConfig", name);
             refreshConfigs();
         }
         else
         {
-            m_statusMessage = std::format("Failed to create config: {}", name);
+            m_statusMessage = Localization::get().format("status.failedToCreateConfig", name);
         }
     }
 
@@ -232,9 +232,9 @@ namespace autoinput::ui
         ImGui::SameLine();
         if (ImGui::Button(loc.text("actions.validateAll").data())) validateAll();
         ImGui::SameLine();
-        if (ImGui::Button("Import"))
+        if (ImGui::Button(loc.text("buttons.import").data()))
         {
-             m_statusMessage = "Import: Feature coming soon. Copy files to configs folder manually.";
+             m_statusMessage = loc.text("status.importFeatureSoon");
         }
 
         ImGui::Separator();
@@ -323,7 +323,7 @@ namespace autoinput::ui
                 ImGui::SameLine();
                 ImGui::Button(loc.text("buttons.delete").data());
                 ImGui::EndDisabled();
-                if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cannot modify built-in configs.");
+                if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", loc.text("status.cannotModifyBuiltin").data());
             }
             ImGui::SameLine();
             if (ImGui::Button(loc.text("buttons.openFolder").data()))
@@ -333,7 +333,7 @@ namespace autoinput::ui
             
             if (!selected.validationErrors.empty())
             {
-                ImGui::TextColored(ImVec4(1, 0, 0, 1), "Errors:");
+                ImGui::TextColored(ImVec4(1, 0, 0, 1), "%s", loc.text("labels.errorsColon").data());
                 for (const auto& err : selected.validationErrors)
                 {
                     ImGui::BulletText("%s", err.message.c_str());
@@ -342,7 +342,7 @@ namespace autoinput::ui
         }
         else
         {
-            ImGui::TextDisabled("Select a configuration from the table to see options.");
+            ImGui::TextDisabled("%s", loc.text("status.selectConfigToSeeOptions").data());
         }
 
         if (!m_statusMessage.empty())

@@ -60,6 +60,7 @@ namespace autoinput::ui
 
     void SequenceRecorderWindow::startRecording()
     {
+        auto& loc = Localization::get();
         SequenceConfig config{
             .recordMouseMoves = m_recordMouseMoves,
             .recordMouseClicks = m_recordMouseClicks,
@@ -75,7 +76,7 @@ namespace autoinput::ui
         auto res = m_runtimeClient.startRecording(config);
         if (res.success)
         {
-            m_statusMessage = "Recording started...";
+            m_statusMessage = loc.text("status.recordingStarted");
             m_recordingStartTime = std::chrono::steady_clock::now();
             m_eventCount = 0;
             m_recordedSequence = std::nullopt;
@@ -83,16 +84,17 @@ namespace autoinput::ui
         }
         else
         {
-            m_statusMessage = std::format("Failed to start recording: {}", res.message);
+            m_statusMessage = loc.format("status.failedToStartRecording", res.message);
         }
     }
 
     void SequenceRecorderWindow::stopRecording()
     {
+        auto& loc = Localization::get();
         auto res = m_runtimeClient.stopRecording();
         if (res.success)
         {
-            m_statusMessage = "Recording stopped.";
+            m_statusMessage = loc.text("status.recordingStopped");
             // Fetch final sequence
             auto seq = m_runtimeClient.getRecordedSequence();
             if (seq)
@@ -102,7 +104,7 @@ namespace autoinput::ui
         }
         else
         {
-            m_statusMessage = std::format("Failed to stop recording: {}", res.message);
+            m_statusMessage = loc.format("status.failedToStopRecording", res.message);
         }
     }
 
@@ -111,7 +113,7 @@ namespace autoinput::ui
         auto res = m_runtimeClient.pauseRecording();
         if (res.success)
         {
-            m_statusMessage = "Recording paused.";
+            m_statusMessage = Localization::get().text("status.recordingPaused");
         }
     }
 
@@ -120,7 +122,7 @@ namespace autoinput::ui
         auto res = m_runtimeClient.resumeRecording();
         if (res.success)
         {
-            m_statusMessage = "Recording resumed.";
+            m_statusMessage = Localization::get().text("status.recordingResumed");
         }
     }
 
@@ -129,7 +131,7 @@ namespace autoinput::ui
         auto res = m_runtimeClient.discardRecording();
         if (res.success)
         {
-            m_statusMessage = "Recording discarded.";
+            m_statusMessage = Localization::get().text("status.recordingDiscarded");
             m_recordedSequence = std::nullopt;
             m_eventCount = 0;
             clearDirty();
@@ -149,18 +151,19 @@ namespace autoinput::ui
 
     void SequenceRecorderWindow::saveSequence()
     {
+        auto& loc = Localization::get();
         if (!m_recordedSequence)
         {
-            m_statusMessage = "No sequence to save.";
+            m_statusMessage = loc.text("status.noSequenceToSave");
             return;
         }
-
+ 
         if (m_selectedConfigIndex >= static_cast<int>(m_availableConfigs.size()))
         {
-            m_statusMessage = "Invalid config selected.";
+            m_statusMessage = loc.text("status.invalidConfigSelected");
             return;
         }
-
+ 
         std::string configName = m_availableConfigs[m_selectedConfigIndex];
         const auto configPath = getConfigFilePath(configName, m_environment);
         
@@ -170,7 +173,7 @@ namespace autoinput::ui
         {
             configData = *configDataOpt;
         }
-
+ 
         // Add or update sequence
         bool found = false;
         for (auto& seq : configData.sequences)
@@ -187,15 +190,15 @@ namespace autoinput::ui
         {
             configData.sequences.push_back(*m_recordedSequence);
         }
-
+ 
         if (saveConfigData(configData, configPath))
         {
-            m_statusMessage = std::format("Sequence '{}' saved to config '{}'.", m_recordedSequence->name, configName);
+            m_statusMessage = loc.format("status.sequenceSaved", m_recordedSequence->name, configName);
             clearDirty();
         }
         else
         {
-            m_statusMessage = std::format("Failed to save sequence to config '{}'.", configName);
+            m_statusMessage = loc.format("status.failedToSaveSequence", configName);
         }
     }
 
@@ -292,10 +295,10 @@ namespace autoinput::ui
     void SequenceRecorderWindow::renderSettings()
     {
         auto& loc = Localization::get();
-        ImGui::Text("Recording Settings");
-        ImGui::InputText("Sequence Name", m_sequenceName, sizeof(m_sequenceName));
+        ImGui::Text("%s", loc.text("labels.recordingSettings").data());
+        ImGui::InputText(loc.text("labels.sequenceName").data(), m_sequenceName, sizeof(m_sequenceName));
         
-        if (ImGui::BeginCombo("Save to Config", m_availableConfigs[m_selectedConfigIndex].c_str()))
+        if (ImGui::BeginCombo(loc.text("labels.saveToConfig").data(), m_availableConfigs[m_selectedConfigIndex].c_str()))
         {
             for (int i = 0; i < static_cast<int>(m_availableConfigs.size()); i++)
             {
@@ -312,29 +315,30 @@ namespace autoinput::ui
         {
             refreshConfigs();
         }
-
-        ImGui::Checkbox("Record Mouse Moves", &m_recordMouseMoves);
-        ImGui::Checkbox("Record Mouse Clicks", &m_recordMouseClicks);
-        ImGui::Checkbox("Record Keyboard Events", &m_recordKeyboardEvents);
-        ImGui::Checkbox("Record Delays", &m_recordDelays);
-        ImGui::InputText("Start Key", m_startKey, sizeof(m_startKey));
-        ImGui::InputText("End Key", m_endKey, sizeof(m_endKey));
-        ImGui::InputText("Mouse Sample Delay", m_mouseSampleDelay, sizeof(m_mouseSampleDelay));
+ 
+        ImGui::Checkbox(loc.text("labels.recordMouseMoves").data(), &m_recordMouseMoves);
+        ImGui::Checkbox(loc.text("labels.recordMouseClicks").data(), &m_recordMouseClicks);
+        ImGui::Checkbox(loc.text("labels.recordKeyboardEvents").data(), &m_recordKeyboardEvents);
+        ImGui::Checkbox(loc.text("labels.recordDelays").data(), &m_recordDelays);
+        ImGui::InputText(loc.text("labels.startKey").data(), m_startKey, sizeof(m_startKey));
+        ImGui::InputText(loc.text("labels.endKey").data(), m_endKey, sizeof(m_endKey));
+        ImGui::InputText(loc.text("labels.mouseSampleDelay").data(), m_mouseSampleDelay, sizeof(m_mouseSampleDelay));
     }
 
     void SequenceRecorderWindow::renderEventList()
     {
+        auto& loc = Localization::get();
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - m_recordingStartTime);
         
-        ImGui::Text("Events: %u | Time: %02lld:%02lld", m_eventCount, elapsed.count() / 60, elapsed.count() % 60);
+        ImGui::Text("%s", loc.format("labels.eventsAndTime", m_eventCount, elapsed.count() / 60, elapsed.count() % 60).c_str());
         
         if (isDirty())
         {
             ImGui::SameLine();
-            ImGui::TextColored(ImVec4(1, 1, 0, 1), "[Unsaved]");
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), "%s", loc.text("labels.unsaved").data());
         }
-
+ 
         ImGui::BeginChild("EventList", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), true);
         if (m_recordedSequence)
         {
@@ -347,31 +351,31 @@ namespace autoinput::ui
                 {
                     case RecordedEventType::KeyDown:
                         color = ImVec4(0.4f, 0.8f, 1.0f, 1.0f);
-                        text = std::format("[Key Down]  {} (delay: {})", event.key.value_or("?"), event.delay);
+                        text = loc.format("labels.keyDown", event.key.value_or("?"), event.delay);
                         break;
                     case RecordedEventType::KeyUp:
                         color = ImVec4(0.4f, 0.6f, 0.9f, 1.0f);
-                        text = std::format("[Key Up]    {} (delay: {})", event.key.value_or("?"), event.delay);
+                        text = loc.format("labels.keyUp", event.key.value_or("?"), event.delay);
                         break;
                     case RecordedEventType::MouseDown:
                         color = ImVec4(0.4f, 1.0f, 0.4f, 1.0f);
-                        text = std::format("[Mouse Down] {} at ({}, {}) (delay: {})", event.button.value_or("?"), event.x.value_or(0), event.y.value_or(0), event.delay);
+                        text = loc.format("labels.mouseDown", event.button.value_or("?"), event.x.value_or(0), event.y.value_or(0), event.delay);
                         break;
                     case RecordedEventType::MouseUp:
                         color = ImVec4(0.2f, 0.8f, 0.2f, 1.0f);
-                        text = std::format("[Mouse Up]   {} at ({}, {}) (delay: {})", event.button.value_or("?"), event.x.value_or(0), event.y.value_or(0), event.delay);
+                        text = loc.format("labels.mouseUp", event.button.value_or("?"), event.x.value_or(0), event.y.value_or(0), event.delay);
                         break;
                     case RecordedEventType::MouseMove:
                         color = ImVec4(0.7f, 0.7f, 0.7f, 1.0f);
-                        text = std::format("[Mouse Move] to ({}, {}) (delay: {})", event.x.value_or(0), event.y.value_or(0), event.delay);
+                        text = loc.format("labels.mouseMove", event.x.value_or(0), event.y.value_or(0), event.delay);
                         break;
                     default:
-                        text = "Unknown event";
+                        text = loc.text("labels.unknownEvent");
                         break;
                 }
                 ImGui::TextColored(color, "%s", text.c_str());
             }
-            
+ 
             if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
             {
                 ImGui::SetScrollHereY(1.0f);

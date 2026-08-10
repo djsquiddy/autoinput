@@ -36,7 +36,7 @@ namespace autoinput::ui
         m_editorSettings.logLevel = defaults.logLevel;
 
         clearDirty();
-        m_statusMessage = "Settings loaded.";
+        m_statusMessage = Localization::get().text("status.settingsLoaded");
         m_validationErrors.clear();
     }
 
@@ -57,12 +57,12 @@ namespace autoinput::ui
 
         if (m_settings.save(path))
         {
-            m_statusMessage = "Settings saved to " + path.string();
+            m_statusMessage = Localization::get().format("status.settingsSavedTo", path.string());
             clearDirty();
         }
         else
         {
-            m_statusMessage = "Failed to save settings!";
+            m_statusMessage = Localization::get().text("status.failedToSaveSettings");
         }
     }
 
@@ -77,7 +77,7 @@ namespace autoinput::ui
         m_editorSettings.logLevel = defaults.logLevel;
         
         markDirty();
-        m_statusMessage = "Reset to defaults (not saved yet).";
+        m_statusMessage = Localization::get().text("status.resetToDefaultsNotSaved");
     }
 
     void SettingsEditorWindow::validate()
@@ -93,11 +93,11 @@ namespace autoinput::ui
         m_validationErrors = autoinput::validateConfigData(tempConfig);
         if (m_validationErrors.empty())
         {
-            m_statusMessage = "Settings are valid.";
+            m_statusMessage = Localization::get().text("status.settingsValid");
         }
         else
         {
-            m_statusMessage = "Settings have validation errors.";
+            m_statusMessage = Localization::get().text("status.settingsInvalid");
         }
     }
 

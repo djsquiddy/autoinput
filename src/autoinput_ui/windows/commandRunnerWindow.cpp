@@ -58,18 +58,18 @@ namespace autoinput::ui
                 }
                 
                 m_selectedCommandIndex = -1;
-                m_statusMessage = "Config loaded successfully.";
+                m_statusMessage = Localization::get().text("status.configLoaded");
                 m_isError = false;
             }
             else
             {
-                m_statusMessage = "Failed to load config data.";
+                m_statusMessage = Localization::get().text("status.failedToLoadConfig");
                 m_isError = true;
             }
         }
         catch (const std::exception& e)
         {
-            m_statusMessage = std::format("Failed to load config: {}", e.what());
+            m_statusMessage = Localization::get().format("status.failedToLoadConfigWithReason", e.what());
             m_isError = true;
         }
     }
@@ -155,8 +155,8 @@ namespace autoinput::ui
             if (itCmd != m_loadedConfig.commands.end())
             {
                 ImGui::Text("%s: %s", loc.text("labels.type").data(), loc.text("labels.singleCommand").data());
-                ImGui::Text("Press Wait: %s", itCmd->pressWait.c_str());
-                ImGui::Text("Release Wait: %s", itCmd->releaseWait.c_str());
+                ImGui::Text("%s: %s", loc.text("labels.pressWait").data(), itCmd->pressWait.c_str());
+                ImGui::Text("%s: %s", loc.text("labels.releaseWait").data(), itCmd->releaseWait.c_str());
                 std::string triggers = "";
                 for (const auto& k : itCmd->startKeys) triggers += k + " ";
                 ImGui::Text("%s: %s", loc.text("labels.trigger").data(), triggers.c_str());

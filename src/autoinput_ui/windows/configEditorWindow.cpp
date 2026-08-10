@@ -34,16 +34,17 @@ namespace autoinput::ui
         auto data = autoinput::loadConfigData(path);
         if (data)
         {
+            auto& loc = Localization::get();
             m_draft = std::move(*data);
             m_currentConfigName = nameOrPath;
             m_currentConfigPath = path;
             clearDirty();
-            m_statusMessage = "Loaded " + path.string();
+            m_statusMessage = loc.format("status.configLoadedPath", path.string());
             m_validationErrors.clear();
         }
         else
         {
-            m_statusMessage = "Failed to load " + nameOrPath;
+            m_statusMessage = Localization::get().format("status.configLoadFailedPath", nameOrPath);
         }
     }
 
@@ -63,27 +64,29 @@ namespace autoinput::ui
 
         if (autoinput::saveConfigData(m_draft, path))
         {
+            auto& loc = Localization::get();
             m_currentConfigPath = path;
             clearDirty();
-            m_statusMessage = "Saved to " + path.string();
+            m_statusMessage = loc.format("status.configSavedTo", path.string());
             refreshConfigList();
         }
         else
         {
-            m_statusMessage = "Failed to save to " + path.string();
+            m_statusMessage = Localization::get().format("status.configSaveFailedTo", path.string());
         }
     }
 
     void ConfigEditorWindow::validate()
     {
+        auto& loc = Localization::get();
         m_validationErrors = autoinput::validateConfigData(m_draft);
         if (m_validationErrors.empty())
         {
-            m_statusMessage = "Configuration is valid.";
+            m_statusMessage = loc.text("status.configValid");
         }
         else
         {
-            m_statusMessage = "Configuration has validation errors.";
+            m_statusMessage = loc.text("status.configInvalid");
         }
     }
 
@@ -93,7 +96,7 @@ namespace autoinput::ui
         m_currentConfigName = "new_config";
         m_currentConfigPath = "";
         markDirty();
-        m_statusMessage = "New configuration created.";
+        m_statusMessage = Localization::get().text("status.newConfigCreated");
         m_validationErrors.clear();
     }
 
@@ -102,32 +105,32 @@ namespace autoinput::ui
         m_currentConfigName += "_copy";
         m_currentConfigPath = "";
         markDirty();
-        m_statusMessage = "Configuration duplicated (renamed).";
+        m_statusMessage = Localization::get().text("status.configDuplicated");
     }
 
     void ConfigEditorWindow::renderContent()
     {
+        auto& loc = Localization::get();
         renderToolbar();
         
         ImGui::Separator();
-
+ 
         if (isDirty())
         {
-            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Unsaved changes in [%s]", m_currentConfigName.c_str());
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", loc.format("status.unsavedChangesIn", m_currentConfigName).c_str());
         }
-        else
+        else if (!m_currentConfigName.empty())
         {
-            ImGui::Text("Editing [%s]", m_currentConfigName.c_str());
+            ImGui::Text("%s", loc.format("status.editingConfig", m_currentConfigName).c_str());
         }
-
-        if (widgets::StringInput("Config Name", m_currentConfigName))
+ 
+        if (widgets::StringInput(loc.text("labels.configName").data(), m_currentConfigName))
         {
             markDirty();
         }
 
         renderTabs();
-
-        auto& loc = Localization::get();
+ 
         ImGui::Separator();
         if (ImGui::Button(loc.text("buttons.save").data())) saveConfig(false);
         ImGui::SameLine();
@@ -147,7 +150,7 @@ namespace autoinput::ui
 
         if (!m_statusMessage.empty())
         {
-            widgets::StatusText("Status: " + m_statusMessage);
+            widgets::StatusText(std::string(loc.text("labels.status")) + ": " + m_statusMessage);
         }
 
         widgets::ValidationErrors(m_validationErrors);
@@ -182,19 +185,20 @@ namespace autoinput::ui
 
     void ConfigEditorWindow::renderTabs()
     {
+        auto& loc = Localization::get();
         if (ImGui::BeginTabBar("ConfigTabs"))
         {
-            if (ImGui::BeginTabItem("Global Settings"))
+            if (ImGui::BeginTabItem(loc.text("labels.globalSettings").data()))
             {
                 renderGlobalSettingsTab();
                 ImGui::EndTabItem();
             }
-            if (ImGui::BeginTabItem("Commands"))
+            if (ImGui::BeginTabItem(loc.text("labels.commands").data()))
             {
                 renderCommandsTab();
                 ImGui::EndTabItem();
             }
-            if (ImGui::BeginTabItem("Sequences (Read-only)"))
+            if (ImGui::BeginTabItem(loc.text("labels.sequencesReadOnly").data()))
             {
                 renderSequencesTab();
                 ImGui::EndTabItem();
@@ -239,7 +243,7 @@ namespace autoinput::ui
             auto& cmd = m_draft.commands[i];
             ImGui::PushID(static_cast<int>(i));
 
-            std::string label = "Command " + std::to_string(i) + ": " + cmd.name;
+            std::string label = loc.format("labels.commandLabel", i, cmd.name);
             if (ImGui::CollapsingHeader(label.c_str()))
             {
                 if (editors::renderCommandEditor(cmd))
