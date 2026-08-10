@@ -1,3 +1,5 @@
+enable_testing()
+include(configure_googletest)
 include(GoogleTest)
 
 set(AUTOINPUT_TEST_SOURCES

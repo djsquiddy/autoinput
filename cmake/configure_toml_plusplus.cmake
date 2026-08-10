@@ -10,6 +10,7 @@ FetchContent_Declare(
         tomlplusplus
         GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
         GIT_TAG v3.4.0
+        SYSTEM  # <--- This suppresses warnings for all targets in this fetch
 )
 FetchContent_GetProperties(tomlplusplus)
 if (NOT tomlplusplus_POPULATED) # Have we downloaded tomlplusplus yet?
