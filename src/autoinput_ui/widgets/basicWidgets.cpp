@@ -4,6 +4,7 @@
  * @date August 2026
  */
 #include "basicWidgets.h"
+#include "../core/localization.h"
 #include "autoinput/configValidator.h"
 #include <imgui.h>
 #include <format>
@@ -45,7 +46,7 @@ namespace autoinput::ui::widgets
             if (!error.suggestedFix.empty())
             {
                 ImGui::Indent();
-                ImGui::TextDisabled("Suggestion: %s", error.suggestedFix.c_str());
+                ImGui::TextDisabled("%s: %s", Localization::get().text("labels.suggestion").data(), error.suggestedFix.c_str());
                 ImGui::Unindent();
             }
             ImGui::PopStyleColor();
@@ -55,20 +56,33 @@ namespace autoinput::ui::widgets
     void RuntimeStatusIndicator(const std::string& status)
     {
         ImVec4 color(1.0f, 1.0f, 1.0f, 1.0f); // Default white
+        std::string localizedStatus = status;
+        auto& loc = Localization::get();
 
         if (status == "Running" || status == "Healthy")
         {
             color = ImVec4(0.0f, 1.0f, 0.0f, 1.0f); // Green
+            localizedStatus = (status == "Running") ? loc.text("status.running") : loc.text("status.healthy");
         }
         else if (status == "Idle" || status == "Warning" || status == "Starting" || status == "Paused" || status == "Stopped")
         {
             color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
+            if (status == "Idle") localizedStatus = loc.text("status.idle");
+            else if (status == "Warning") localizedStatus = loc.text("status.warning");
+            else if (status == "Starting") localizedStatus = loc.text("status.starting");
+            else if (status == "Paused") localizedStatus = loc.text("status.paused");
+            else if (status == "Stopped") localizedStatus = loc.text("status.stopped");
         }
         else if (status == "Error")
         {
             color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Red
+            localizedStatus = loc.text("status.error");
+        }
+        else if (status == "Unknown")
+        {
+            localizedStatus = loc.text("status.unknown");
         }
 
-        ImGui::TextColored(color, "%s", status.c_str());
+        ImGui::TextColored(color, "%s", localizedStatus.c_str());
     }
 }

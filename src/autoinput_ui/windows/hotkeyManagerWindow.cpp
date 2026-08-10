@@ -6,6 +6,7 @@
 #include "hotkeyManagerWindow.h"
 #include "../widgets/basicWidgets.h"
 #include "../core/windowIds.h"
+#include "../core/localization.h"
 #include "autoinput/logger.h"
 #include "autoinput/services/configService.h"
 #include "autoinput/configValidator.h"
@@ -274,8 +275,9 @@ namespace autoinput::ui
 
     void HotkeyManagerWindow::renderContent()
     {
+        auto& loc = Localization::get();
         // Toolbar
-        if (ImGui::BeginCombo("Config", m_availableConfigs[m_selectedConfigIndex].c_str()))
+        if (ImGui::BeginCombo(loc.text("labels.configuration").data(), m_availableConfigs[m_selectedConfigIndex].c_str()))
         {
             for (int i = 0; i < static_cast<int>(m_availableConfigs.size()); i++)
             {
@@ -290,20 +292,20 @@ namespace autoinput::ui
         }
         
         ImGui::SameLine();
-        if (ImGui::Button("Reload"))
+        if (ImGui::Button(loc.text("buttons.reload").data()))
         {
             refreshConfigs();
             loadSelectedConfig();
         }
         
         ImGui::SameLine();
-        if (ImGui::Button("Save"))
+        if (ImGui::Button(loc.text("buttons.save").data()))
         {
             save();
         }
         
         ImGui::SameLine();
-        if (ImGui::Button("Validate"))
+        if (ImGui::Button(loc.text("buttons.validate").data()))
         {
             validateHotkeys();
             m_statusMessage = "Validation complete.";
@@ -314,21 +316,21 @@ namespace autoinput::ui
         if (m_isCapturing)
         {
             ImGui::TextColored(ImVec4(1, 1, 0, 1), "Capturing hotkey for '%s'... Press any key.", m_captureTarget ? m_captureTarget->name.c_str() : "");
-            if (ImGui::Button("Cancel Capture"))
+            if (ImGui::Button(loc.text("buttons.cancel").data()))
             {
                 stopCapture();
             }
             ImGui::Separator();
         }
-
+ 
         // Table
         if (ImGui::BeginTable("HotkeyTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY, ImVec2(0, 400)))
         {
-            ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, 80.0f);
-            ImGui::TableSetupColumn("Name");
-            ImGui::TableSetupColumn("Hotkey");
-            ImGui::TableSetupColumn("Status", ImGuiTableColumnFlags_WidthFixed, 100.0f);
-            ImGui::TableSetupColumn("Actions", ImGuiTableColumnFlags_WidthFixed, 150.0f);
+            ImGui::TableSetupColumn(loc.text("labels.type").data(), ImGuiTableColumnFlags_WidthFixed, 80.0f);
+            ImGui::TableSetupColumn(loc.text("labels.name").data());
+            ImGui::TableSetupColumn(loc.text("labels.hotkey").data());
+            ImGui::TableSetupColumn(loc.text("labels.status").data(), ImGuiTableColumnFlags_WidthFixed, 100.0f);
+            ImGui::TableSetupColumn(loc.text("labels.actions").data(), ImGuiTableColumnFlags_WidthFixed, 150.0f);
             ImGui::TableHeadersRow();
             
             for (auto& entry : m_entries)
@@ -339,9 +341,9 @@ namespace autoinput::ui
                 ImGui::TableNextColumn();
                 switch (entry.type)
                 {
-                    case HotkeyEntry::Type::Command: ImGui::Text("Command"); break;
-                    case HotkeyEntry::Type::Sequence: ImGui::Text("Sequence"); break;
-                    case HotkeyEntry::Type::GlobalEnd: ImGui::Text("Global"); break;
+                    case HotkeyEntry::Type::Command: ImGui::Text("%s", loc.text("labels.command").data()); break;
+                    case HotkeyEntry::Type::Sequence: ImGui::Text("%s", loc.text("labels.sequence").data()); break;
+                    case HotkeyEntry::Type::GlobalEnd: ImGui::Text("%s", loc.text("labels.global").data()); break;
                 }
                 
                 // Name
@@ -362,23 +364,23 @@ namespace autoinput::ui
                 ImGui::TableNextColumn();
                 if (entry.hasConflict)
                 {
-                    ImGui::TextColored(ImVec4(1, 0.5f, 0, 1), "Conflict");
+                    ImGui::TextColored(ImVec4(1, 0.5f, 0, 1), "%s", loc.text("labels.conflict").data());
                     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Duplicate hotkey detected.");
                 }
                 else if (!entry.isValid)
                 {
-                    ImGui::TextColored(ImVec4(1, 0, 0, 1), "Invalid");
+                    ImGui::TextColored(ImVec4(1, 0, 0, 1), "%s", loc.text("labels.invalid").data());
                     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Invalid key name.");
                 }
                 else
                 {
-                    ImGui::TextColored(ImVec4(0, 1, 0, 1), "OK");
+                    ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s", loc.text("buttons.ok").data());
                 }
                 
                 // Actions
                 ImGui::TableNextColumn();
                 ImGui::PushID(&entry);
-                if (ImGui::Button("Capture"))
+                if (ImGui::Button(loc.text("labels.capture").data()))
                 {
                     startCapture(entry);
                 }
@@ -386,7 +388,7 @@ namespace autoinput::ui
                 if (entry.type != HotkeyEntry::Type::GlobalEnd)
                 {
                     ImGui::SameLine();
-                    if (ImGui::Button("Edit"))
+                    if (ImGui::Button(loc.text("buttons.edit").data()))
                     {
                         if (auto editor = m_windowManager.findAs<ConfigEditorWindow>(WindowIds::ConfigEditor))
                         {
@@ -407,7 +409,7 @@ namespace autoinput::ui
         
         if (isDirty())
         {
-            ImGui::TextColored(ImVec4(1, 1, 0, 1), "* Unsaved changes");
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), "* %s", loc.text("labels.unsavedChanges").data());
         }
     }
 }

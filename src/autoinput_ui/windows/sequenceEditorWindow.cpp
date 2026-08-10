@@ -6,6 +6,7 @@
 #include "sequenceEditorWindow.h"
 #include "../widgets/basicWidgets.h"
 #include "../widgets/formWidgets.h"
+#include "../core/localization.h"
 #include "autoinput/configValidator.h"
 #include "autoinput/logger.h"
 #include <imgui.h>
@@ -156,16 +157,17 @@ namespace autoinput::ui
         ImGui::Separator();
         renderSequenceEditor();
 
+        auto& loc = Localization::get();
         ImGui::Separator();
-        if (ImGui::Button("Save")) saveConfig(false);
+        if (ImGui::Button(loc.text("buttons.save").data())) saveConfig(false);
         ImGui::SameLine();
-        if (ImGui::Button("Save As")) saveConfig(true);
+        if (ImGui::Button(loc.text("buttons.saveAs").data())) saveConfig(true);
         ImGui::SameLine();
-        if (ImGui::Button("Duplicate")) duplicateConfig();
+        if (ImGui::Button(loc.text("buttons.duplicate").data())) duplicateConfig();
         ImGui::SameLine();
-        if (ImGui::Button("Validate")) validate();
+        if (ImGui::Button(loc.text("buttons.validate").data())) validate();
         ImGui::SameLine();
-        if (ImGui::Button("Reload"))
+        if (ImGui::Button(loc.text("buttons.reload").data()))
         {
             if (!m_currentConfigName.empty())
             {
@@ -183,13 +185,14 @@ namespace autoinput::ui
 
     void SequenceEditorWindow::renderToolbar()
     {
-        if (ImGui::Button("Refresh List"))
+        auto& loc = Localization::get();
+        if (ImGui::Button(loc.text("buttons.refresh").data()))
         {
             refreshConfigList();
         }
         ImGui::SameLine();
         ImGui::SetNextItemWidth(200);
-        if (ImGui::BeginCombo("Load Config", m_currentConfigName.c_str()))
+        if (ImGui::BeginCombo(loc.text("actions.loadConfig").data(), m_currentConfigName.c_str()))
         {
             for (const auto& name : m_availableConfigs)
             {
@@ -240,14 +243,15 @@ namespace autoinput::ui
             ImGui::EndCombo();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Add New"))
+        auto& loc = Localization::get();
+        if (ImGui::Button(loc.text("buttons.addNew").data()))
         {
             m_configData.sequences.push_back({ .name = "new_sequence", .start = "f1" });
             m_selectedSequenceIndex = static_cast<int>(m_configData.sequences.size()) - 1;
             markDirty();
         }
         ImGui::SameLine();
-        if (m_selectedSequenceIndex >= 0 && ImGui::Button("Delete Seq"))
+        if (m_selectedSequenceIndex >= 0 && ImGui::Button(loc.text("buttons.del").data()))
         {
             m_configData.sequences.erase(m_configData.sequences.begin() + m_selectedSequenceIndex);
             m_selectedSequenceIndex = -1;
@@ -257,6 +261,7 @@ namespace autoinput::ui
 
     void SequenceEditorWindow::renderSequenceEditor()
     {
+        auto& loc = Localization::get();
         if (m_selectedSequenceIndex < 0 || m_selectedSequenceIndex >= static_cast<int>(m_configData.sequences.size()))
         {
             return;
@@ -271,28 +276,28 @@ namespace autoinput::ui
         ImGui::Separator();
         ImGui::Text("Sequence Steps (%zu):", seq.events.size());
         
-        if (ImGui::Button("Normalize Delays")) normalizeDelays(false);
+        if (ImGui::Button(loc.text("buttons.normalizeDelays").data())) normalizeDelays(false);
         ImGui::SameLine();
-        if (ImGui::Button("Remove Zero Delays")) normalizeDelays(true);
+        if (ImGui::Button(loc.text("buttons.removeZeroDelays").data())) normalizeDelays(true);
         
-        ImGui::Text("Insert:");
+        ImGui::Text("%s:", loc.text("labels.insert").data());
         ImGui::SameLine();
-        if (ImGui::Button("Delay")) insertEvent(RecordedEventType::Invalid, seq.events.size());
+        if (ImGui::Button(loc.text("buttons.delay").data())) insertEvent(RecordedEventType::Invalid, seq.events.size());
         ImGui::SameLine();
-        if (ImGui::Button("Key")) insertEvent(RecordedEventType::KeyDown, seq.events.size());
+        if (ImGui::Button(loc.text("buttons.key").data())) insertEvent(RecordedEventType::KeyDown, seq.events.size());
         ImGui::SameLine();
-        if (ImGui::Button("Mouse")) insertEvent(RecordedEventType::MouseDown, seq.events.size());
+        if (ImGui::Button(loc.text("buttons.mouse").data())) insertEvent(RecordedEventType::MouseDown, seq.events.size());
         ImGui::SameLine();
-        if (ImGui::Button("Move")) insertEvent(RecordedEventType::MouseMove, seq.events.size());
+        if (ImGui::Button(loc.text("buttons.move").data())) insertEvent(RecordedEventType::MouseMove, seq.events.size());
 
         ImGui::BeginChild("StepsList", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() * 2), true);
         
         if (ImGui::BeginTable("StepsTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable))
         {
-            ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, 100.0f);
-            ImGui::TableSetupColumn("Delay", ImGuiTableColumnFlags_WidthFixed, 100.0f);
-            ImGui::TableSetupColumn("Details", ImGuiTableColumnFlags_WidthStretch);
-            ImGui::TableSetupColumn("Actions", ImGuiTableColumnFlags_WidthFixed, 220.0f);
+            ImGui::TableSetupColumn(loc.text("labels.type").data(), ImGuiTableColumnFlags_WidthFixed, 100.0f);
+            ImGui::TableSetupColumn(loc.text("labels.delay").data(), ImGuiTableColumnFlags_WidthFixed, 100.0f);
+            ImGui::TableSetupColumn(loc.text("labels.details").data(), ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn(loc.text("labels.actions").data(), ImGuiTableColumnFlags_WidthFixed, 220.0f);
             ImGui::TableHeadersRow();
 
             for (size_t i = 0; i < seq.events.size(); ++i)
@@ -362,26 +367,27 @@ namespace autoinput::ui
             ImGui::TextDisabled("N/A");
         }
 
+        auto& loc = Localization::get();
         ImGui::TableNextColumn();
-        if (ImGui::Button("Up") && index > 0)
+        if (ImGui::Button(loc.text("buttons.up").data()) && index > 0)
         {
             std::swap(seq.events[index], seq.events[index - 1]);
             markDirty();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Down") && index < seq.events.size() - 1)
+        if (ImGui::Button(loc.text("buttons.down").data()) && index < seq.events.size() - 1)
         {
             std::swap(seq.events[index], seq.events[index + 1]);
             markDirty();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Dup"))
+        if (ImGui::Button(loc.text("buttons.dup").data()))
         {
             seq.events.insert(seq.events.begin() + index + 1, event);
             markDirty();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Del"))
+        if (ImGui::Button(loc.text("buttons.del").data()))
         {
             seq.events.erase(seq.events.begin() + index);
             markDirty();

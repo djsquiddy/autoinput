@@ -5,6 +5,7 @@
  */
 #include "sequenceRecorderWindow.h"
 #include "../widgets/basicWidgets.h"
+#include "../core/localization.h"
 #include "autoinput/services/configService.h"
 #include "autoinput/logger.h"
 #include <imgui.h>
@@ -218,9 +219,10 @@ namespace autoinput::ui
 
     void SequenceRecorderWindow::renderRecorderControls()
     {
+        auto& loc = Localization::get();
         if (!m_isRecording && !m_isPaused)
         {
-            if (ImGui::Button("Start Recording"))
+            if (ImGui::Button(loc.text("buttons.startRecording").data()))
             {
                 startRecording();
             }
@@ -229,31 +231,31 @@ namespace autoinput::ui
         {
             if (m_isPaused)
             {
-                if (ImGui::Button("Resume"))
+                if (ImGui::Button(loc.text("buttons.resume").data()))
                 {
                     resumeRecording();
                 }
             }
             else
             {
-                if (ImGui::Button("Pause"))
+                if (ImGui::Button(loc.text("buttons.pause").data()))
                 {
                     pauseRecording();
                 }
             }
             ImGui::SameLine();
-            if (ImGui::Button("Stop"))
+            if (ImGui::Button(loc.text("buttons.stop").data()))
             {
                 stopRecording();
             }
         }
         
         ImGui::SameLine();
-        if (ImGui::Button("Discard"))
+        if (ImGui::Button(loc.text("buttons.discard").data()))
         {
             if (isDirty())
             {
-                ImGui::OpenPopup("Confirm Discard");
+                ImGui::OpenPopup(loc.text("modals.discardRecordingTitle").data());
             }
             else
             {
@@ -261,17 +263,17 @@ namespace autoinput::ui
             }
         }
 
-        if (ImGui::BeginPopupModal("Confirm Discard", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::BeginPopupModal(loc.text("modals.discardRecordingTitle").data(), nullptr, ImGuiWindowFlags_AlwaysAutoResize))
         {
-            ImGui::Text("Are you sure you want to discard the current recording?\nThis action cannot be undone.");
+            ImGui::Text("%s", loc.text("modals.discardRecordingMessage").data());
             ImGui::Separator();
-            if (ImGui::Button("Yes", ImVec2(120, 0)))
+            if (ImGui::Button(loc.text("buttons.yes").data(), ImVec2(120, 0)))
             {
                 discardRecording();
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();
-            if (ImGui::Button("No"))
+            if (ImGui::Button(loc.text("buttons.no").data()))
             {
                 ImGui::CloseCurrentPopup();
             }
@@ -280,7 +282,7 @@ namespace autoinput::ui
 
         ImGui::SameLine();
         ImGui::BeginDisabled(m_isRecording || !m_recordedSequence || m_recordedSequence->events.empty());
-        if (ImGui::Button("Save Sequence"))
+        if (ImGui::Button(loc.text("buttons.saveSequence").data()))
         {
             saveSequence();
         }
@@ -289,6 +291,7 @@ namespace autoinput::ui
 
     void SequenceRecorderWindow::renderSettings()
     {
+        auto& loc = Localization::get();
         ImGui::Text("Recording Settings");
         ImGui::InputText("Sequence Name", m_sequenceName, sizeof(m_sequenceName));
         
@@ -305,7 +308,7 @@ namespace autoinput::ui
             ImGui::EndCombo();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Refresh"))
+        if (ImGui::Button(loc.text("buttons.refresh").data()))
         {
             refreshConfigs();
         }

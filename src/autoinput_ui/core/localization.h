@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <map>
 #include <memory>
+#include <format>
 
 namespace autoinput::ui
 {
@@ -52,6 +53,18 @@ namespace autoinput::ui
          * @return true if the key exists.
          */
         bool has(std::string_view key) const;
+
+        /**
+         * @brief Get localized text for a key with formatting.
+         * @param key The key.
+         * @param args The formatting arguments.
+         * @return The formatted localized string.
+         */
+        template<typename... Args>
+        std::string format(std::string_view key, Args&&... args) const
+        {
+            return std::vformat(text(key), std::make_format_args(args...));
+        }
 
         /**
          * @brief Get the global localization instance.

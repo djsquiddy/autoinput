@@ -5,6 +5,7 @@
  */
 #include "runtimeDashboardWindow.h"
 #include "../widgets/basicWidgets.h"
+#include "../core/localization.h"
 #include <imgui.h>
 #include <string>
 
@@ -25,8 +26,9 @@ namespace autoinput::ui
         const std::string lastMessage = m_runtimeClient.getLastMessage();
         const bool backendAvailable = m_runtimeClient.isBackendAvailable();
 
+        auto& loc = Localization::get();
         // Status Section
-        ImGui::Text("Runtime Status:");
+        ImGui::Text("%s:", loc.text("labels.status").data());
         ImGui::SameLine();
         
         std::string displayStatus;
@@ -41,18 +43,18 @@ namespace autoinput::ui
         ImGui::Columns(2, "RuntimeInfoColumns", false);
         ImGui::SetColumnWidth(0, 150.0f);
         
-        ImGui::Text("Active Config:");
+        ImGui::Text("%s:", loc.text("labels.activeConfig").data());
         ImGui::NextColumn();
         if (activeConfig.empty())
-            ImGui::TextDisabled("None");
+            ImGui::TextDisabled("%s", loc.text("labels.none").data());
         else
             ImGui::Text("%s", activeConfig.c_str());
         ImGui::NextColumn();
-
-        ImGui::Text("Active Command:");
+ 
+        ImGui::Text("%s:", loc.text("labels.activeCommand").data());
         ImGui::NextColumn();
         if (activeCommand.empty())
-            ImGui::TextDisabled("None");
+            ImGui::TextDisabled("%s", loc.text("labels.none").data());
         else
             ImGui::Text("%s", activeCommand.c_str());
         ImGui::NextColumn();
@@ -61,9 +63,9 @@ namespace autoinput::ui
         ImGui::Separator();
 
         // Last Message Section
-        ImGui::Text("Last Runtime Message:");
+        ImGui::Text("%s:", loc.text("labels.lastMessage").data());
         if (lastMessage.empty())
-            ImGui::TextDisabled("No messages yet.");
+            ImGui::TextDisabled("%s", loc.text("labels.noMessages").data());
         else
             ImGui::TextWrapped("%s", lastMessage.c_str());
 
@@ -73,58 +75,58 @@ namespace autoinput::ui
         bool canStart = (status == RuntimeStatus::Stopped || status == RuntimeStatus::Error);
         bool canStop = (status == RuntimeStatus::Running || status == RuntimeStatus::Starting || status == RuntimeStatus::Paused);
 
-        ImGui::Text("Controls:");
+        ImGui::Text("%s:", loc.text("labels.actions").data());
         
         ImGui::PushItemWidth(200.0f);
         ImGui::InputText("##ConfigInput", m_configInput, sizeof(m_configInput));
         ImGui::PopItemWidth();
         ImGui::SameLine();
-        ImGui::TextDisabled("(Config Name)");
+        ImGui::TextDisabled("(%s)", loc.text("labels.name").data());
         
         if (!canStart) ImGui::BeginDisabled();
-        if (ImGui::Button("Start"))
+        if (ImGui::Button(loc.text("buttons.start").data()))
         {
             const auto result = m_runtimeClient.start(m_configInput);
             m_lastOperationMessage = result.message;
         }
         if (!canStart) ImGui::EndDisabled();
-
+ 
         ImGui::SameLine();
         if (!canStop) ImGui::BeginDisabled();
-        if (ImGui::Button("Stop"))
+        if (ImGui::Button(loc.text("buttons.stop").data()))
         {
             auto result = m_runtimeClient.stop();
             m_lastOperationMessage = result.message;
         }
         if (!canStop) ImGui::EndDisabled();
-
+ 
         ImGui::SameLine();
         if (!canStop) ImGui::BeginDisabled(); 
-        if (ImGui::Button("Restart"))
+        if (ImGui::Button(loc.text("buttons.restart").data()))
         {
             AUTOINPUT_UNUSED(m_runtimeClient.stop());
             const auto result = m_runtimeClient.start(activeConfig.empty() ? m_configInput : activeConfig);
             m_lastOperationMessage = result.message;
         }
         if (!canStop) ImGui::EndDisabled();
-
+ 
         ImGui::SameLine();
-        if (ImGui::Button("Refresh"))
+        if (ImGui::Button(loc.text("buttons.refresh").data()))
         {
             m_lastOperationMessage.clear();
         }
-
+ 
         if (!m_lastOperationMessage.empty())
         {
-            ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f), "Status: %s", m_lastOperationMessage.c_str());
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f), "%s: %s", loc.text("labels.status").data(), m_lastOperationMessage.c_str());
         }
 
         ImGui::Separator();
 
         // Health Section
-        ImGui::Text("Runtime Health:");
+        ImGui::Text("%s:", loc.text("labels.health").data());
         ImGui::Indent();
-        ImGui::Text("Backend Availability: ");
+        ImGui::Text("%s: ", loc.text("labels.backendAvailability").data());
         ImGui::SameLine();
         widgets::RuntimeStatusIndicator(backendAvailable ? "Healthy" : "Error");
         ImGui::Unindent();

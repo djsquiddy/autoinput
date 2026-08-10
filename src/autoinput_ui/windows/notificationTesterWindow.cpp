@@ -5,6 +5,7 @@
  */
 #include "notificationTesterWindow.h"
 #include "../widgets/basicWidgets.h"
+#include "../core/localization.h"
 #include "autoinput/logger.h"
 #include <imgui.h>
 #include <imgui_stdlib.h>
@@ -28,13 +29,14 @@ namespace autoinput::ui
 
     void NotificationTesterWindow::renderContent()
     {
-        ImGui::Text("Current Settings");
-        ImGui::Text("Notification Mode: %s", m_settings.getDefaults().statusNotificationMode.c_str());
+        auto& loc = Localization::get();
+        ImGui::Text("%s", loc.text("labels.currentSettings").data());
+        ImGui::Text("%s: %s", loc.text("labels.notificationMode").data(), m_settings.getDefaults().statusNotificationMode.c_str());
         
         ImGui::Separator();
         ImGui::Spacing();
-
-        ImGui::Checkbox("Override Mode for Testing", &m_useTempMode);
+ 
+        ImGui::Checkbox(loc.text("labels.overrideMode").data(), &m_useTempMode);
         if (m_useTempMode)
         {
             const char* modes[] = { "Off", "Console", "Desktop", "Both" };
@@ -42,8 +44,8 @@ namespace autoinput::ui
             if (m_tempMode == StatusNotificationMode::Console) currentMode = 1;
             else if (m_tempMode == StatusNotificationMode::Desktop) currentMode = 2;
             else if (m_tempMode == StatusNotificationMode::Both) currentMode = 3;
-
-            if (ImGui::Combo("Test Mode", &currentMode, modes, IM_ARRAYSIZE(modes)))
+ 
+            if (ImGui::Combo(loc.text("labels.testMode").data(), &currentMode, modes, IM_ARRAYSIZE(modes)))
             {
                 if (currentMode == 0) m_tempMode = StatusNotificationMode::Off;
                 else if (currentMode == 1) m_tempMode = StatusNotificationMode::Console;
@@ -51,41 +53,40 @@ namespace autoinput::ui
                 else if (currentMode == 3) m_tempMode = StatusNotificationMode::Both;
             }
         }
-
+ 
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
-
-        ImGui::InputText("Title", &m_testTitle);
-        ImGui::InputTextMultiline("Message", &m_testMessage, ImVec2(0, 60));
-
+ 
+        ImGui::InputText(loc.text("labels.title").data(), &m_testTitle);
+        ImGui::InputTextMultiline(loc.text("labels.message").data(), &m_testMessage, ImVec2(0, 60));
+ 
         ImGui::Spacing();
-
-        if (ImGui::Button("Send Info")) sendNotification(NotificationSeverity::Info);
+ 
+        if (ImGui::Button(loc.text("buttons.sendInfo").data())) sendNotification(NotificationSeverity::Info);
         ImGui::SameLine();
-        if (ImGui::Button("Send Success")) sendNotification(NotificationSeverity::Success);
+        if (ImGui::Button(loc.text("buttons.sendSuccess").data())) sendNotification(NotificationSeverity::Success);
         ImGui::SameLine();
-        if (ImGui::Button("Send Warning")) sendNotification(NotificationSeverity::Warning);
+        if (ImGui::Button(loc.text("buttons.sendWarning").data())) sendNotification(NotificationSeverity::Warning);
         ImGui::SameLine();
-        if (ImGui::Button("Send Error")) sendNotification(NotificationSeverity::Error);
-
+        if (ImGui::Button(loc.text("buttons.sendError").data())) sendNotification(NotificationSeverity::Error);
+ 
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
-
+ 
         if (!m_lastResult.empty())
         {
             if (m_lastSuccess)
-                ImGui::TextColored(ImVec4(0, 1, 0, 1), "Last Result: %s", m_lastResult.c_str());
+                ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s: %s", loc.text("labels.lastResult").data(), m_lastResult.c_str());
             else
-                ImGui::TextColored(ImVec4(1, 0, 0, 1), "Last Result: %s", m_lastResult.c_str());
+                ImGui::TextColored(ImVec4(1, 0, 0, 1), "%s: %s", loc.text("labels.lastResult").data(), m_lastResult.c_str());
         }
-
+ 
         ImGui::Spacing();
         
-        auto caps = m_runtimeClient.getBackendCapabilities();
-        ImGui::Text("Backend: %s", m_runtimeClient.getBackendName().c_str());
-        ImGui::Text("Notifications Supported: %s", "Desktop (Win32/Linux)"); // We know we have sinks for these
+        ImGui::Text("%s: %s", loc.text("labels.supportedByBackend").data(), m_runtimeClient.getBackendName().c_str());
+        ImGui::Text("%s: %s", loc.text("labels.supportedNotifications").data(), loc.text("labels.supportedPlatforms").data());
     }
 
     void NotificationTesterWindow::sendNotification(NotificationSeverity severity)

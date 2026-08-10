@@ -5,6 +5,7 @@
  */
 
 #include "aboutWindow.h"
+#include "../core/localization.h"
 #include "autoinput/logger.h"
 #include "autoinput/config.h"
 #include "autoinput/defaults.h"
@@ -41,12 +42,13 @@ namespace autoinput::ui
 
     void AboutWindow::renderContent()
     {
-        ImGui::Text("AutoInput");
-        ImGui::Text("Version: %s", AUTOINPUT_VERSION);
-        ImGui::Text("License: MIT");
+        auto& loc = Localization::get();
+        ImGui::Text("%s", loc.text("app.name").data());
+        ImGui::Text("%s: %s", loc.text("labels.version").data(), AUTOINPUT_VERSION);
+        ImGui::Text("%s: MIT", loc.text("labels.license").data());
         ImGui::Spacing();
-
-        if (ImGui::CollapsingHeader("Diagnostics", ImGuiTreeNodeFlags_DefaultOpen))
+ 
+        if (ImGui::CollapsingHeader(loc.text("labels.diagnostics").data(), ImGuiTreeNodeFlags_DefaultOpen))
         {
             const auto platform = m_environment.platformName();
             const auto buildConfig = getBuildConfig();
@@ -57,79 +59,86 @@ namespace autoinput::ui
             const auto logPath = autoinput::Logger::getFileName();
             const auto backend = m_runtimeClient.getBackendName();
             const auto status = services::statusToString(m_runtimeClient.getStatus());
-
+ 
             if (ImGui::BeginTable("DiagnosticsTable", 2, ImGuiTableFlags_BordersInnerV))
             {
                 ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0); ImGui::Text("Platform:");
+                ImGui::TableSetColumnIndex(0); ImGui::Text("%s:", loc.text("labels.platform").data());
                 ImGui::TableSetColumnIndex(1); ImGui::Text("%s", platform.c_str());
-
+ 
                 ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0); ImGui::Text("Build Config:");
+                ImGui::TableSetColumnIndex(0); ImGui::Text("%s:", loc.text("labels.buildConfig").data());
                 ImGui::TableSetColumnIndex(1); ImGui::Text("%s", buildConfig.c_str());
-
+ 
                 ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0); ImGui::Text("Compiler:");
+                ImGui::TableSetColumnIndex(0); ImGui::Text("%s:", loc.text("labels.compiler").data());
                 ImGui::TableSetColumnIndex(1); ImGui::Text("%s", compiler.c_str());
-
+ 
                 ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0); ImGui::Text("Active Backend:");
-                ImGui::TableSetColumnIndex(1); ImGui::Text("%s", backend.empty() ? "None" : backend.c_str());
-
+                ImGui::TableSetColumnIndex(0); ImGui::Text("%s:", loc.text("labels.activeBackend").data());
+                ImGui::TableSetColumnIndex(1); ImGui::Text("%s", backend.empty() ? loc.text("labels.none").data() : backend.c_str());
+ 
                 ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0); ImGui::Text("Runtime Status:");
+                ImGui::TableSetColumnIndex(0); ImGui::Text("%s:", loc.text("labels.runtimeStatus").data());
                 ImGui::TableSetColumnIndex(1); ImGui::Text("%s", status);
-
+ 
                 ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0); ImGui::Text("Global Config Dir:");
+                ImGui::TableSetColumnIndex(0); ImGui::Text("%s:", loc.text("labels.globalConfigDir").data());
                 ImGui::TableSetColumnIndex(1); ImGui::TextWrapped("%s", configDir.c_str());
-
+ 
                 ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0); ImGui::Text("User Config Dir:");
+                ImGui::TableSetColumnIndex(0); ImGui::Text("%s:", loc.text("labels.userConfigDir").data());
                 ImGui::TableSetColumnIndex(1); ImGui::TextWrapped("%s", userConfigDir.c_str());
-
+ 
                 ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0); ImGui::Text("Settings File:");
+                ImGui::TableSetColumnIndex(0); ImGui::Text("%s:", loc.text("labels.settingsFile").data());
                 ImGui::TableSetColumnIndex(1); ImGui::TextWrapped("%s", settingsPath.c_str());
-
+ 
                 ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0); ImGui::Text("Log File:");
+                ImGui::TableSetColumnIndex(0); ImGui::Text("%s:", loc.text("labels.logFile").data());
                 ImGui::TableSetColumnIndex(1); ImGui::TextWrapped("%s", logPath.c_str());
-
+ 
                 ImGui::EndTable();
             }
-
+ 
             ImGui::Spacing();
-            if (ImGui::Button("Copy Diagnostics"))
+            if (ImGui::Button(loc.text("buttons.copyDiagnostics").data()))
             {
                 std::string report = std::format(
                     "AutoInput Diagnostic Report\n"
                     "===========================\n"
-                    "Version: {}\n"
-                    "Platform: {}\n"
-                    "Build Config: {}\n"
-                    "Compiler: {}\n"
-                    "Backend: {}\n"
-                    "Status: {}\n"
-                    "Global Config Dir: {}\n"
-                    "User Config Dir: {}\n"
-                    "Settings File: {}\n"
-                    "Log File: {}\n",
-                    AUTOINPUT_VERSION, platform, buildConfig, compiler, 
-                    backend.empty() ? "None" : backend, status,
-                    configDir, userConfigDir, settingsPath, logPath
+                    "{}: {}\n"
+                    "{}: {}\n"
+                    "{}: {}\n"
+                    "{}: {}\n"
+                    "{}: {}\n"
+                    "{}: {}\n"
+                    "{}: {}\n"
+                    "{}: {}\n"
+                    "{}: {}\n"
+                    "{}: {}\n",
+                    loc.text("labels.version"), AUTOINPUT_VERSION,
+                    loc.text("labels.platform"), platform,
+                    loc.text("labels.buildConfig"), buildConfig,
+                    loc.text("labels.compiler"), compiler,
+                    loc.text("labels.activeBackend"), backend.empty() ? loc.text("labels.none").data() : backend,
+                    loc.text("labels.runtimeStatus"), status,
+                    loc.text("labels.globalConfigDir"), configDir,
+                    loc.text("labels.userConfigDir"), userConfigDir,
+                    loc.text("labels.settingsFile"), settingsPath,
+                    loc.text("labels.logFile"), logPath
                 );
                 ImGui::SetClipboardText(report.c_str());
             }
-
+ 
             ImGui::SameLine();
-            if (ImGui::Button("Open Config Folder"))
+            if (ImGui::Button(loc.text("buttons.openConfigFolder").data()))
             {
                 m_environment.openPath(autoinput::getUserConfigsPath(m_environment));
             }
-
+ 
             ImGui::SameLine();
-            if (ImGui::Button("Open Log Folder"))
+            if (ImGui::Button(loc.text("buttons.openLogFolder").data()))
             {
                 std::filesystem::path logFile(logPath);
                 if (logFile.has_parent_path())
@@ -138,10 +147,10 @@ namespace autoinput::ui
                 }
             }
         }
-
+ 
         ImGui::Separator();
-
-        if (ImGui::Button("Close"))
+ 
+        if (ImGui::Button(loc.text("buttons.close").data()))
         {
             requestClose();
         }

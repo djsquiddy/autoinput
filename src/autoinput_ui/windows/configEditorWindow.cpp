@@ -8,6 +8,7 @@
 #include "../widgets/formWidgets.h"
 #include "../editors/commandEditor.h"
 #include "../editors/sequenceViewer.h"
+#include "../core/localization.h"
 #include "autoinput/configValidator.h"
 #include "autoinput/logger.h"
 #include <imgui.h>
@@ -126,16 +127,17 @@ namespace autoinput::ui
 
         renderTabs();
 
+        auto& loc = Localization::get();
         ImGui::Separator();
-        if (ImGui::Button("Save")) saveConfig(false);
+        if (ImGui::Button(loc.text("buttons.save").data())) saveConfig(false);
         ImGui::SameLine();
-        if (ImGui::Button("Save As User")) saveConfig(true);
+        if (ImGui::Button(loc.text("buttons.saveAsUser").data())) saveConfig(true);
         ImGui::SameLine();
-        if (ImGui::Button("Duplicate")) duplicateConfig();
+        if (ImGui::Button(loc.text("buttons.duplicate").data())) duplicateConfig();
         ImGui::SameLine();
-        if (ImGui::Button("Validate")) validate();
+        if (ImGui::Button(loc.text("buttons.validate").data())) validate();
         ImGui::SameLine();
-        if (ImGui::Button("Reload"))
+        if (ImGui::Button(loc.text("buttons.reload").data()))
         {
             if (!m_currentConfigName.empty())
             {
@@ -153,18 +155,19 @@ namespace autoinput::ui
 
     void ConfigEditorWindow::renderToolbar()
     {
-        if (ImGui::Button("New"))
+        auto& loc = Localization::get();
+        if (ImGui::Button(loc.text("buttons.new").data()))
         {
             createNewConfig();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Refresh List"))
+        if (ImGui::Button(loc.text("buttons.refresh").data()))
         {
             refreshConfigList();
         }
         ImGui::SameLine();
         ImGui::SetNextItemWidth(200);
-        if (ImGui::BeginCombo("Load Config", m_currentConfigName.c_str()))
+        if (ImGui::BeginCombo(loc.text("actions.loadConfig").data(), m_currentConfigName.c_str()))
         {
             for (const auto& name : m_availableConfigs)
             {
@@ -224,7 +227,8 @@ namespace autoinput::ui
 
     void ConfigEditorWindow::renderCommandsTab()
     {
-        if (ImGui::Button("Add Command"))
+        auto& loc = Localization::get();
+        if (ImGui::Button(loc.text("buttons.add").data()))
         {
             m_draft.commands.emplace_back(autoinput::CommandData{ .name = "new_command" });
             markDirty();
@@ -243,13 +247,13 @@ namespace autoinput::ui
                     markDirty();
                 }
 
-                if (ImGui::Button("Duplicate Command"))
+                if (ImGui::Button(loc.text("buttons.duplicate").data()))
                 {
                     m_draft.commands.insert(m_draft.commands.begin() + i + 1, cmd);
                     markDirty();
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("Remove Command"))
+                if (ImGui::Button(loc.text("buttons.remove").data()))
                 {
                     m_draft.commands.erase(m_draft.commands.begin() + i);
                     markDirty();
@@ -257,13 +261,13 @@ namespace autoinput::ui
                     break;
                 }
                 ImGui::SameLine();
-                if (i > 0 && ImGui::Button("Move Up"))
+                if (i > 0 && ImGui::Button(loc.text("buttons.moveUp").data()))
                 {
                     std::swap(m_draft.commands[i], m_draft.commands[i-1]);
                     markDirty();
                 }
                 ImGui::SameLine();
-                if (i < m_draft.commands.size() - 1 && ImGui::Button("Move Down"))
+                if (i < m_draft.commands.size() - 1 && ImGui::Button(loc.text("buttons.moveDown").data()))
                 {
                     std::swap(m_draft.commands[i], m_draft.commands[i+1]);
                     markDirty();

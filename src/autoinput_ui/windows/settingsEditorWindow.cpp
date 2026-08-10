@@ -5,6 +5,7 @@
  */
 #include "settingsEditorWindow.h"
 #include "../widgets/basicWidgets.h"
+#include "../core/localization.h"
 #include "autoinput/configValidator.h"
 #include "autoinput/config.h"
 #include <imgui.h>
@@ -102,42 +103,43 @@ namespace autoinput::ui
 
     void SettingsEditorWindow::renderContent()
     {
+        auto& loc = Localization::get();
         if (isDirty())
         {
-            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "You have unsaved changes!");
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", loc.text("labels.unsavedChanges").data());
         }
-
+ 
         if (editors::renderGlobalSettingsEditor(m_editorSettings))
         {
             markDirty();
         }
-
+ 
         ImGui::Separator();
-        if (ImGui::Button("Reload"))
+        if (ImGui::Button(loc.text("buttons.reload").data()))
         {
             loadSettings();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Save"))
+        if (ImGui::Button(loc.text("buttons.save").data()))
         {
             save();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Reset to Defaults"))
+        if (ImGui::Button(loc.text("buttons.resetToDefaults").data()))
         {
             resetToDefaults();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Validate"))
+        if (ImGui::Button(loc.text("buttons.validate").data()))
         {
             validate();
         }
-
+ 
         if (!m_statusMessage.empty())
         {
-            widgets::StatusText("Status: " + m_statusMessage);
+            widgets::StatusText(std::string(loc.text("labels.status")) + ": " + m_statusMessage);
         }
-
+ 
         widgets::ValidationErrors(m_validationErrors);
     }
 }

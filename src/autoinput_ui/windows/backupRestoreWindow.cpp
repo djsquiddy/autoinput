@@ -5,6 +5,7 @@
  */
 #include "backupRestoreWindow.h"
 #include "../widgets/basicWidgets.h"
+#include "../core/localization.h"
 #include "autoinput/logger.h"
 #include "autoinput/config.h"
 #include "autoinput/defaults.h"
@@ -98,69 +99,69 @@ namespace autoinput::ui
 
     void BackupRestoreWindow::renderContent()
     {
+        auto& loc = Localization::get();
         renderControls();
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
         renderBackupTable();
-
+ 
         if (!m_statusMessage.empty())
         {
             ImVec4 color = m_statusIsError ? ImVec4(1.0f, 0.4f, 0.4f, 1.0f) : ImVec4(0.4f, 1.0f, 0.4f, 1.0f);
             ImGui::TextColored(color, "%s", m_statusMessage.c_str());
         }
-
+ 
         // Modals
         if (m_showRestoreConfirm)
         {
-            ImGui::OpenPopup("Confirm Restore");
+            ImGui::OpenPopup(loc.text("modals.restoreBackupTitle").data());
             m_showRestoreConfirm = false;
         }
-
-        if (ImGui::BeginPopupModal("Confirm Restore", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+ 
+        if (ImGui::BeginPopupModal(loc.text("modals.restoreBackupTitle").data(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
             if (m_pendingBackupIndex >= 0 && m_pendingBackupIndex < static_cast<int>(m_backups.size()))
             {
                 const auto& entry = m_backups[m_pendingBackupIndex];
-                ImGui::Text("Are you sure you want to restore backup '%s'?", entry.name.c_str());
-                ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Warning: This will overwrite current configurations/settings!");
+                ImGui::Text("%s", loc.format("modals.restoreBackupMessage", entry.name).c_str());
                 ImGui::Spacing();
                 
-                if (ImGui::Button("Restore", ImVec2(120, 0)))
+                if (ImGui::Button(loc.text("buttons.restore").data(), ImVec2(120, 0)))
                 {
                     restoreBackup(entry);
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                if (ImGui::Button(loc.text("buttons.cancel").data(), ImVec2(120, 0)))
                 {
                     ImGui::CloseCurrentPopup();
                 }
             }
             ImGui::EndPopup();
         }
-
+ 
         if (m_showDeleteConfirm)
         {
-            ImGui::OpenPopup("Confirm Delete Backup");
+            ImGui::OpenPopup(loc.text("modals.deleteBackupTitle").data());
             m_showDeleteConfirm = false;
         }
-
-        if (ImGui::BeginPopupModal("Confirm Delete Backup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+ 
+        if (ImGui::BeginPopupModal(loc.text("modals.deleteBackupTitle").data(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
             if (m_pendingBackupIndex >= 0 && m_pendingBackupIndex < static_cast<int>(m_backups.size()))
             {
                 const auto& entry = m_backups[m_pendingBackupIndex];
-                ImGui::Text("Are you sure you want to delete backup '%s'?", entry.name.c_str());
+                ImGui::Text("%s", loc.format("modals.deleteBackupMessage", entry.name).c_str());
                 ImGui::Spacing();
                 
-                if (ImGui::Button("Delete", ImVec2(120, 0)))
+                if (ImGui::Button(loc.text("buttons.delete").data(), ImVec2(120, 0)))
                 {
                     deleteBackup(entry);
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                if (ImGui::Button(loc.text("buttons.cancel").data(), ImVec2(120, 0)))
                 {
                     ImGui::CloseCurrentPopup();
                 }
@@ -171,26 +172,27 @@ namespace autoinput::ui
 
     void BackupRestoreWindow::renderControls()
     {
-        ImGui::Text("Backup Path: %s", getBackupDirPath().string().c_str());
+        auto& loc = Localization::get();
+        ImGui::Text("%s: %s", loc.text("labels.backupPath").data(), getBackupDirPath().string().c_str());
         ImGui::Spacing();
-
-        if (ImGui::Button("Backup All User Configs"))
+ 
+        if (ImGui::Button(loc.text("buttons.backupAll").data()))
         {
             backupAllConfigs();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Backup Settings"))
+        if (ImGui::Button(loc.text("buttons.backupSettings").data()))
         {
             backupSettings();
         }
-
+ 
         ImGui::Spacing();
-
+ 
         if (!m_availableConfigs.empty())
         {
             if (m_selectedConfigIndex >= static_cast<int>(m_availableConfigs.size()))
                 m_selectedConfigIndex = 0;
-
+ 
             const char* preview = m_availableConfigs[m_selectedConfigIndex].c_str();
             ImGui::SetNextItemWidth(200);
             if (ImGui::BeginCombo("##config_select", preview))
@@ -206,19 +208,19 @@ namespace autoinput::ui
                 ImGui::EndCombo();
             }
             ImGui::SameLine();
-            if (ImGui::Button("Backup Selected Config"))
+            if (ImGui::Button(loc.text("buttons.backupSelected").data()))
             {
                 backupSelectedConfig(m_availableConfigs[m_selectedConfigIndex]);
             }
         }
-
+ 
         ImGui::Spacing();
-        if (ImGui::Button("Refresh Backups"))
+        if (ImGui::Button(loc.text("buttons.refresh").data()))
         {
             refreshBackups();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Open Backup Folder"))
+        if (ImGui::Button(loc.text("buttons.openFolder").data()))
         {
             SystemEnvironment::instance().openPath(getBackupDirPath());
         }
@@ -226,21 +228,22 @@ namespace autoinput::ui
 
     void BackupRestoreWindow::renderBackupTable()
     {
+        auto& loc = Localization::get();
         if (m_backups.empty())
         {
-            ImGui::Text("No backups found.");
+            ImGui::Text("%s", loc.text("labels.noBackups").data());
             return;
         }
-
+ 
         if (ImGui::BeginTable("BackupsTable", 5, ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Borders | ImGuiTableFlags_ScrollY, ImVec2(0, 300)))
         {
-            ImGui::TableSetupColumn("Name");
-            ImGui::TableSetupColumn("Type");
-            ImGui::TableSetupColumn("Created");
-            ImGui::TableSetupColumn("Size");
-            ImGui::TableSetupColumn("Actions");
+            ImGui::TableSetupColumn(loc.text("labels.name").data());
+            ImGui::TableSetupColumn(loc.text("labels.type").data());
+            ImGui::TableSetupColumn(loc.text("labels.created").data());
+            ImGui::TableSetupColumn(loc.text("labels.size").data());
+            ImGui::TableSetupColumn(loc.text("labels.actions").data());
             ImGui::TableHeadersRow();
-
+ 
             for (int i = 0; i < static_cast<int>(m_backups.size()); ++i)
             {
                 const auto& entry = m_backups[i];
@@ -268,16 +271,16 @@ namespace autoinput::ui
                     ImGui::Text("%.2f KB", entry.size / 1024.0);
                 else
                     ImGui::Text("%.2f MB", entry.size / (1024.0 * 1024.0));
-
+ 
                 ImGui::TableSetColumnIndex(4);
                 ImGui::PushID(i);
-                if (ImGui::SmallButton("Restore"))
+                if (ImGui::SmallButton(loc.text("buttons.restore").data()))
                 {
                     m_pendingBackupIndex = i;
                     m_showRestoreConfirm = true;
                 }
                 ImGui::SameLine();
-                if (ImGui::SmallButton("Delete"))
+                if (ImGui::SmallButton(loc.text("buttons.delete").data()))
                 {
                     m_pendingBackupIndex = i;
                     m_showDeleteConfirm = true;

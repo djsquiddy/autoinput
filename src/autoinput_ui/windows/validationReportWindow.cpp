@@ -7,6 +7,7 @@
 #include "../widgets/basicWidgets.h"
 #include "../core/windowManager.h"
 #include "../core/windowIds.h"
+#include "../core/localization.h"
 #include "configEditorWindow.h"
 #include "autoinput/logger.h"
 #include <imgui.h>
@@ -27,28 +28,29 @@ namespace autoinput::ui::windows
 
     void ValidationReportWindow::renderContent()
     {
+        auto& loc = Localization::get();
         // Toolbar
-        if (ImGui::Button("Validate Current Config"))
+        if (ImGui::Button(loc.text("buttons.validateCurrent").data()))
         {
             runCurrentConfigValidation();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Validate All Configs"))
+        if (ImGui::Button(loc.text("buttons.validateAllConfigs").data()))
         {
             runAllConfigsValidation();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Validate Settings"))
+        if (ImGui::Button(loc.text("buttons.validateSettings").data()))
         {
             runSettingsValidation();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Clear Results"))
+        if (ImGui::Button(loc.text("buttons.clearResults").data()))
         {
             clearResults();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Copy Report"))
+        if (ImGui::Button(loc.text("buttons.copyReport").data()))
         {
             copyReport();
         }
@@ -62,7 +64,7 @@ namespace autoinput::ui::windows
 
         if (m_issues.empty())
         {
-            ImGui::Text("No validation issues found or validation not run yet.");
+            ImGui::Text("%s", loc.text("labels.noIssues").data());
         }
         else
         {
@@ -85,7 +87,7 @@ namespace autoinput::ui::windows
                     if (!isSettings && !m_issues[indices[0]].sourcePath.empty())
                     {
                         ImGui::SameLine(ImGui::GetWindowWidth() - 120);
-                        if (ImGui::SmallButton("Open in Editor"))
+                        if (ImGui::SmallButton(loc.text("buttons.openInEditor").data()))
                         {
                             openInEditor(m_issues[indices[0]]);
                         }
@@ -133,7 +135,7 @@ namespace autoinput::ui::windows
                             if (!err.suggestedFix.empty())
                             {
                                 ImGui::Indent();
-                                ImGui::TextDisabled("Suggested Fix: %s", err.suggestedFix.c_str());
+                                ImGui::TextDisabled("%s: %s", loc.text("labels.suggestedFix").data(), err.suggestedFix.c_str());
                                 ImGui::Unindent();
                             }
                         }

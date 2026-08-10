@@ -4,6 +4,7 @@
  * @date August 2026
  */
 #include "logViewerWindow.h"
+#include "../core/localization.h"
 #include <imgui.h>
 #include <algorithm>
 #include <format>
@@ -123,33 +124,37 @@ namespace autoinput::ui
 
     void LogViewerWindow::renderContent()
     {
+        auto& loc = Localization::get();
         // Toolbar
-        if (ImGui::Button("Refresh"))
+        if (ImGui::Button(loc.text("buttons.refresh").data()))
         {
             refreshLogs();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Clear View"))
+        if (ImGui::Button(loc.text("buttons.clearView").data()))
         {
             clearLogs();
         }
         ImGui::SameLine();
-        if (ImGui::Checkbox("Auto-scroll", &m_autoScroll))
+        if (ImGui::Checkbox(loc.text("buttons.autoScroll").data(), &m_autoScroll))
         {
             if (m_autoScroll) m_scrollToBottom = true;
         }
         
         ImGui::SameLine();
         ImGui::SetNextItemWidth(120);
-        const char* levels[] = { "All", "Trace+", "Debug+", "Info+", "Warning+", "Error+" };
-        if (ImGui::Combo("Filter", &m_selectedLogLevel, levels, IM_ARRAYSIZE(levels)))
+        // We still need the raw strings for the combo for now, or localize them individually.
+        // For simplicity I'll keep the array but prefix with localized "All".
+        const std::string allText = std::string(loc.text("labels.all"));
+        const char* levels[] = { allText.c_str(), "Trace+", "Debug+", "Info+", "Warning+", "Error+" };
+        if (ImGui::Combo(loc.text("labels.filter").data(), &m_selectedLogLevel, levels, IM_ARRAYSIZE(levels)))
         {
             applyFilters();
         }
-
+ 
         ImGui::SameLine();
         ImGui::SetNextItemWidth(200);
-        if (ImGui::InputText("Search", m_searchBuffer, sizeof(m_searchBuffer)))
+        if (ImGui::InputText(loc.text("labels.search").data(), m_searchBuffer, sizeof(m_searchBuffer)))
         {
             applyFilters();
         }
@@ -160,14 +165,14 @@ namespace autoinput::ui
         const std::string& logFile = Logger::getFileName();
         if (!logFile.empty())
         {
-            ImGui::Text("Log File: %s", logFile.c_str());
+            ImGui::Text("%s: %s", loc.text("labels.logFile").data(), logFile.c_str());
             ImGui::SameLine();
-            if (ImGui::SmallButton("Open File"))
+            if (ImGui::SmallButton(loc.text("buttons.openFile").data()))
             {
                 openLogFile();
             }
             ImGui::SameLine();
-            if (ImGui::SmallButton("Open Folder"))
+            if (ImGui::SmallButton(loc.text("buttons.openFolder").data()))
             {
                 openLogFolder();
             }
@@ -175,11 +180,11 @@ namespace autoinput::ui
         }
         else
         {
-            ImGui::Text("Log File: Not configured");
+            ImGui::Text("%s: %s", loc.text("labels.logFile").data(), loc.text("labels.notConfigured").data());
             ImGui::SameLine();
         }
         
-        if (ImGui::SmallButton("Copy All"))
+        if (ImGui::SmallButton(loc.text("buttons.copyAll").data()))
         {
             copyToClipboard();
         }
@@ -192,8 +197,8 @@ namespace autoinput::ui
         
         if (ImGui::BeginTable("LogTable", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg))
         {
-            ImGui::TableSetupColumn("Time/Level", ImGuiTableColumnFlags_WidthFixed, 180.0f);
-            ImGui::TableSetupColumn("Message", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn(loc.text("labels.timeLevel").data(), ImGuiTableColumnFlags_WidthFixed, 180.0f);
+            ImGui::TableSetupColumn(loc.text("labels.message").data(), ImGuiTableColumnFlags_WidthStretch);
             // ImGui::TableHeadersRow();
 
             for (const auto& entry : m_filteredLogs)

@@ -5,6 +5,7 @@
  */
 #include "commandRunnerWindow.h"
 #include "../widgets/basicWidgets.h"
+#include "../core/localization.h"
 #include <imgui.h>
 #include <algorithm>
 
@@ -75,22 +76,23 @@ namespace autoinput::ui
 
     void CommandRunnerWindow::renderContent()
     {
+        auto& loc = Localization::get();
         // Config Selection
-        ImGui::Text("Configuration:");
+        ImGui::Text("%s:", loc.text("labels.configuration").data());
         
-        if (ImGui::Button("Reload Configs"))
+        if (ImGui::Button(loc.text("buttons.reloadConfigs").data()))
         {
             refreshConfigs();
         }
         
         ImGui::SameLine();
         
-        if (ImGui::Button("Load Config"))
+        if (ImGui::Button(loc.text("buttons.loadConfig").data()))
         {
             loadSelectedConfig();
         }
-
-        const char* currentConfig = (m_selectedConfigIndex >= 0) ? m_availableConfigs[m_selectedConfigIndex].c_str() : "Select a config...";
+ 
+        const char* currentConfig = (m_selectedConfigIndex >= 0) ? m_availableConfigs[m_selectedConfigIndex].c_str() : loc.text("labels.selectConfig").data();
         if (ImGui::BeginCombo("##ConfigCombo", currentConfig))
         {
             for (int i = 0; i < static_cast<int>(m_availableConfigs.size()); ++i)
@@ -112,9 +114,9 @@ namespace autoinput::ui
         ImGui::Separator();
 
         // Command Selection
-        ImGui::Text("Command:");
+        ImGui::Text("%s:", loc.text("labels.command").data());
         
-        const char* currentCommand = (m_selectedCommandIndex >= 0) ? m_availableCommands[m_selectedCommandIndex].c_str() : "Select a command...";
+        const char* currentCommand = (m_selectedCommandIndex >= 0) ? m_availableCommands[m_selectedCommandIndex].c_str() : loc.text("labels.selectCommand").data();
         bool hasCommands = !m_availableCommands.empty();
         
         if (!hasCommands) ImGui::BeginDisabled();
@@ -139,12 +141,12 @@ namespace autoinput::ui
         ImGui::Separator();
 
         // Details Panel
-        ImGui::Text("Selected Command Details:");
+        ImGui::Text("%s %s:", loc.text("labels.selected").data(), loc.text("labels.details").data());
         ImGui::BeginChild("DetailsPanel", ImVec2(0, 150), true);
         if (m_selectedCommandIndex >= 0)
         {
             std::string cmdName = m_availableCommands[m_selectedCommandIndex];
-            ImGui::Text("Name: %s", cmdName.c_str());
+            ImGui::Text("%s: %s", loc.text("labels.name").data(), cmdName.c_str());
             
             // Find in commands or sequences
             auto itCmd = std::find_if(m_loadedConfig.commands.begin(), m_loadedConfig.commands.end(), 
@@ -152,12 +154,12 @@ namespace autoinput::ui
             
             if (itCmd != m_loadedConfig.commands.end())
             {
-                ImGui::Text("Type: Single Command");
+                ImGui::Text("%s: %s", loc.text("labels.type").data(), loc.text("labels.singleCommand").data());
                 ImGui::Text("Press Wait: %s", itCmd->pressWait.c_str());
                 ImGui::Text("Release Wait: %s", itCmd->releaseWait.c_str());
                 std::string triggers = "";
                 for (const auto& k : itCmd->startKeys) triggers += k + " ";
-                ImGui::Text("Trigger: %s", triggers.c_str());
+                ImGui::Text("%s: %s", loc.text("labels.trigger").data(), triggers.c_str());
             }
             else
             {
@@ -165,29 +167,29 @@ namespace autoinput::ui
                     [&](const auto& s) { return s.name == cmdName; });
                 if (itSeq != m_loadedConfig.sequences.end())
                 {
-                    ImGui::Text("Type: Sequence");
-                    ImGui::Text("Events: %zu", itSeq->events.size());
-                    ImGui::Text("Trigger: %s", itSeq->start.c_str());
+                    ImGui::Text("%s: %s", loc.text("labels.type").data(), loc.text("labels.sequence").data());
+                    ImGui::Text("%s: %zu", loc.text("labels.events").data(), itSeq->events.size());
+                    ImGui::Text("%s: %s", loc.text("labels.trigger").data(), itSeq->start.c_str());
                 }
             }
         }
         else
         {
-            ImGui::TextDisabled("No command selected.");
+            ImGui::TextDisabled("%s", loc.text("labels.noCommandSelected").data());
         }
         ImGui::EndChild();
-
+ 
         // Preview Section
-        if (ImGui::CollapsingHeader("Preview"))
+        if (ImGui::CollapsingHeader(loc.text("labels.preview").data()))
         {
             if (m_selectedCommandIndex >= 0 && m_selectedConfigIndex >= 0)
             {
-                ImGui::Text("Will execute command '%s'", m_availableCommands[m_selectedCommandIndex].c_str());
-                ImGui::Text("from configuration '%s'.", m_availableConfigs[m_selectedConfigIndex].c_str());
+                ImGui::Text("%s", loc.format("labels.willExecuteCommand", m_availableCommands[m_selectedCommandIndex]).c_str());
+                ImGui::Text("%s", loc.format("labels.fromConfiguration", m_availableConfigs[m_selectedConfigIndex]).c_str());
             }
             else
             {
-                ImGui::TextDisabled("Select config and command to see preview.");
+                ImGui::TextDisabled("%s", loc.text("labels.selectConfigAndCommandForPreview").data());
             }
         }
 
@@ -197,7 +199,7 @@ namespace autoinput::ui
         bool canRun = (m_selectedConfigIndex >= 0 && m_selectedCommandIndex >= 0);
         
         if (!canRun) ImGui::BeginDisabled();
-        if (ImGui::Button("Run Command", ImVec2(120, 0)))
+        if (ImGui::Button(loc.text("buttons.runCommand").data(), ImVec2(120, 0)))
         {
             std::string configName = m_availableConfigs[m_selectedConfigIndex];
             std::string commandName = m_availableCommands[m_selectedCommandIndex];
@@ -207,24 +209,24 @@ namespace autoinput::ui
             m_isError = !result.success;
         }
         if (!canRun) ImGui::EndDisabled();
-
+ 
         ImGui::SameLine();
         
-        if (ImGui::Button("Stop / Emergency Stop", ImVec2(180, 0)))
+        if (ImGui::Button(loc.text("buttons.emergencyStop").data(), ImVec2(180, 0)))
         {
             auto result = m_runtimeClient.stop();
             m_statusMessage = result.message;
             m_isError = !result.success;
         }
-
+ 
         // Status
         if (!m_statusMessage.empty())
         {
             ImGui::Spacing();
             if (m_isError)
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Status: %s", m_statusMessage.c_str());
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s: %s", loc.text("labels.status").data(), m_statusMessage.c_str());
             else
-                ImGui::Text("Status: %s", m_statusMessage.c_str());
+                ImGui::Text("%s: %s", loc.text("labels.status").data(), m_statusMessage.c_str());
         }
     }
 }

@@ -5,6 +5,7 @@
  */
 #include "backendDiagnosticsWindow.h"
 #include "../widgets/basicWidgets.h"
+#include "../core/localization.h"
 #include <imgui.h>
 #include <thread>
 #include <format>
@@ -65,17 +66,18 @@ namespace autoinput::ui
 
     void BackendDiagnosticsWindow::renderContent()
     {
-        if (ImGui::Button("Refresh"))
+        auto& loc = Localization::get();
+        if (ImGui::Button(loc.text("buttons.refresh").data()))
         {
             refreshDiagnostics();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Ping Runtime") && !m_pingPending)
+        if (ImGui::Button(loc.text("buttons.pingRuntime").data()) && !m_pingPending)
         {
             pingRuntime();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Test Notification") && !m_notificationPending)
+        if (ImGui::Button(loc.text("buttons.testNotification").data()) && !m_notificationPending)
         {
             sendTestNotification();
         }
@@ -97,57 +99,57 @@ namespace autoinput::ui
         {
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            ImGui::Text("Platform:");
+            ImGui::Text("%s:", loc.text("labels.platform").data());
             ImGui::TableNextColumn();
             ImGui::TextUnformatted(m_platformName.c_str());
-
+ 
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            ImGui::Text("Backend:");
+            ImGui::Text("%s:", loc.text("labels.backend").data());
             ImGui::TableNextColumn();
             ImGui::TextUnformatted(m_backendName.c_str());
-
+ 
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            ImGui::Text("Transport Connected:");
+            ImGui::Text("%s:", loc.text("labels.transportConnected").data());
             ImGui::TableNextColumn();
             if (m_transportConnected)
-                ImGui::TextColored(ImVec4(0, 1, 0, 1), "Yes");
+                ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s", loc.text("buttons.yes").data());
             else
-                ImGui::TextColored(ImVec4(1, 0, 0, 1), "No");
-
+                ImGui::TextColored(ImVec4(1, 0, 0, 1), "%s", loc.text("buttons.no").data());
+ 
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            ImGui::Text("Last Message/Error:");
+            ImGui::Text("%s:", loc.text("labels.lastMessageError").data());
             ImGui::TableNextColumn();
-            ImGui::TextWrapped("%s", m_lastError.empty() ? "None" : m_lastError.c_str());
-
+            ImGui::TextWrapped("%s", m_lastError.empty() ? loc.text("labels.none").data() : m_lastError.c_str());
+ 
             ImGui::EndTable();
         }
-
+ 
         ImGui::Spacing();
-        ImGui::Text("Backend Capabilities:");
+        ImGui::Text("%s:", loc.text("labels.backendCapabilities").data());
         ImGui::Separator();
-
-        auto renderCapability = [](const char* name, bool supported) {
+ 
+        auto renderCapability = [&loc](const char* name, bool supported) {
             ImGui::Text("%s:", name);
             ImGui::SameLine(ImGui::GetWindowWidth() * 0.6f);
             if (supported)
-                ImGui::TextColored(ImVec4(0, 1, 0, 1), "Supported");
+                ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s", loc.text("labels.supported").data());
             else
-                ImGui::TextColored(ImVec4(1, 1, 0, 1), "Not Supported");
+                ImGui::TextColored(ImVec4(1, 1, 0, 1), "%s", loc.text("labels.notSupported").data());
         };
 
-        renderCapability("Keyboard Input Support", m_capabilities.syntheticKeyboardInput);
-        renderCapability("Mouse Input Support", m_capabilities.syntheticMouseInput);
-        renderCapability("Keyboard Hooks (Recording)", m_capabilities.keyboardHooks);
-        renderCapability("Mouse Hooks (Recording)", m_capabilities.mouseHooks);
-        renderCapability("Focus Detection", m_capabilities.focusDetection);
-        renderCapability("Absolute Mouse Movement", m_capabilities.absoluteMouseMovement);
-        renderCapability("Get Cursor Position", m_capabilities.getCursorPosition);
-        renderCapability("List Applications", m_capabilities.listApplications);
+        renderCapability(loc.text("labels.keyboardInputSupport").data(), m_capabilities.syntheticKeyboardInput);
+        renderCapability(loc.text("labels.mouseInputSupport").data(), m_capabilities.syntheticMouseInput);
+        renderCapability(loc.text("labels.keyboardHooks").data(), m_capabilities.keyboardHooks);
+        renderCapability(loc.text("labels.mouseHooks").data(), m_capabilities.mouseHooks);
+        renderCapability(loc.text("labels.focusDetection").data(), m_capabilities.focusDetection);
+        renderCapability(loc.text("labels.absoluteMouseMove").data(), m_capabilities.absoluteMouseMovement);
+        renderCapability(loc.text("labels.getCursorPos").data(), m_capabilities.getCursorPosition);
+        renderCapability(loc.text("labels.listApplications").data(), m_capabilities.listApplications);
         
-        renderCapability("Notifications Support", true);
-        renderCapability("Runtime Command Execution Support", true);
+        renderCapability(loc.text("labels.notificationsSupport").data(), true);
+        renderCapability(loc.text("labels.runtimeCommandSupport").data(), true);
     }
 }

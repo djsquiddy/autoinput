@@ -5,6 +5,7 @@
  */
 #include "importExportWindow.h"
 #include "../widgets/basicWidgets.h"
+#include "../core/localization.h"
 #include "autoinput/configValidator.h"
 #include "autoinput/logger.h"
 #include <imgui.h>
@@ -48,22 +49,23 @@ namespace autoinput::ui
 
     void ImportExportWindow::renderExportSection()
     {
-        ImGui::TextDisabled("EXPORT CONFIGURATION");
+        auto& loc = Localization::get();
+        ImGui::TextDisabled("%s", loc.text("labels.exportConfiguration").data());
         ImGui::Spacing();
-
+ 
         if (m_availableConfigs.empty())
         {
-            ImGui::Text("No configurations available to export.");
+            ImGui::Text("%s", loc.text("labels.noConfigsToExport").data());
             return;
         }
-
+ 
         if (m_selectedExportIndex >= static_cast<int>(m_availableConfigs.size()))
         {
             m_selectedExportIndex = 0;
         }
-
+ 
         const char* preview = m_availableConfigs[m_selectedExportIndex].c_str();
-        if (ImGui::BeginCombo("Select Config", preview))
+        if (ImGui::BeginCombo(loc.text("labels.selectConfig").data(), preview))
         {
             for (int i = 0; i < static_cast<int>(m_availableConfigs.size()); ++i)
             {
@@ -81,11 +83,11 @@ namespace autoinput::ui
         }
 
         std::string sourcePath = autoinput::getConfigFilePath(m_availableConfigs[m_selectedExportIndex]).string();
-        ImGui::LabelText("Source Path", "%s", sourcePath.c_str());
-
-        ImGui::InputText("Destination Path", &m_exportDestPath);
+        ImGui::LabelText(loc.text("labels.sourcePath").data(), "%s", sourcePath.c_str());
+ 
+        ImGui::InputText(loc.text("labels.destinationPath").data(), &m_exportDestPath);
         ImGui::SameLine();
-        if (ImGui::Button("Export"))
+        if (ImGui::Button(loc.text("buttons.export").data()))
         {
             handleExport();
         }
@@ -101,50 +103,51 @@ namespace autoinput::ui
 
     void ImportExportWindow::renderImportSection()
     {
-        ImGui::TextDisabled("IMPORT CONFIGURATION");
+        auto& loc = Localization::get();
+        ImGui::TextDisabled("%s", loc.text("labels.importConfiguration").data());
         ImGui::Spacing();
-
-        ImGui::InputText("Source File", &m_importSourcePath);
+ 
+        ImGui::InputText(loc.text("labels.sourceFile").data(), &m_importSourcePath);
         ImGui::SameLine();
-        if (ImGui::Button("Preview"))
+        if (ImGui::Button(loc.text("buttons.preview").data()))
         {
             previewImport();
         }
-
+ 
         if (m_importPreview)
         {
             ImGui::BeginChild("Preview", ImVec2(0, 150), true);
-            ImGui::Text("Previewing: %s", m_importSourcePath.c_str());
-            ImGui::BulletText("Commands: %zu", m_importPreview->commands.size());
-            ImGui::BulletText("Sequences: %zu", m_importPreview->sequences.size());
+            ImGui::Text("%s: %s", loc.text("labels.previewing").data(), m_importSourcePath.c_str());
+            ImGui::BulletText("%s: %zu", loc.text("labels.commands").data(), m_importPreview->commands.size());
+            ImGui::BulletText("%s: %zu", loc.text("labels.sequences").data(), m_importPreview->sequences.size());
             
             if (m_importValidation.empty())
             {
-                ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Validation: OK");
+                ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s: %s", loc.text("labels.validation").data(), loc.text("buttons.ok").data());
             }
             else
             {
-                ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Validation: %zu issue(s) found", m_importValidation.size());
-                if (ImGui::TreeNode("View Errors"))
+                ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s: %zu %s", loc.text("labels.validation").data(), m_importValidation.size(), loc.text("labels.issuesFound").data());
+                if (ImGui::TreeNode(loc.text("labels.viewErrors").data()))
                 {
                     widgets::ValidationErrors(m_importValidation);
                     ImGui::TreePop();
                 }
             }
             ImGui::EndChild();
-
+ 
             if (m_hasConflict)
             {
-                ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Warning: A configuration named '%s' already exists in your user directory.", m_conflictingConfigName.c_str());
+                ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", loc.format("labels.importConflictWarning", m_conflictingConfigName).c_str());
                 
-                ImGui::RadioButton("Rename imported config", reinterpret_cast<int*>(&m_conflictResolution), static_cast<int>(ConflictResolution::Rename));
-                ImGui::RadioButton("Overwrite existing user config", reinterpret_cast<int*>(&m_conflictResolution), static_cast<int>(ConflictResolution::Overwrite));
-                ImGui::RadioButton("Cancel", reinterpret_cast<int*>(&m_conflictResolution), static_cast<int>(ConflictResolution::Cancel));
+                ImGui::RadioButton(loc.text("labels.renameImported").data(), reinterpret_cast<int*>(&m_conflictResolution), static_cast<int>(ConflictResolution::Rename));
+                ImGui::RadioButton(loc.text("labels.overwriteExisting").data(), reinterpret_cast<int*>(&m_conflictResolution), static_cast<int>(ConflictResolution::Overwrite));
+                ImGui::RadioButton(loc.text("buttons.cancel").data(), reinterpret_cast<int*>(&m_conflictResolution), static_cast<int>(ConflictResolution::Cancel));
             }
-
-            ImGui::Checkbox("Validate after import", &m_validateAfterImport);
-
-            if (ImGui::Button("Import"))
+ 
+            ImGui::Checkbox(loc.text("labels.validateAfterImport").data(), &m_validateAfterImport);
+ 
+            if (ImGui::Button(loc.text("buttons.import").data()))
             {
                 handleImport();
             }

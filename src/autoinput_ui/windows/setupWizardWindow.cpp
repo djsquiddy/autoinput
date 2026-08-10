@@ -6,6 +6,7 @@
 #include "setupWizardWindow.h"
 #include "../core/windowManager.h"
 #include "../widgets/basicWidgets.h"
+#include "../core/localization.h"
 #include "autoinput/logger.h"
 #include "autoinput/defaults.h"
 #include <imgui.h>
@@ -26,6 +27,7 @@ namespace autoinput::ui
 
     void SetupWizardWindow::onOpen()
     {
+        auto& loc = Localization::get();
         m_currentStep = Step::Welcome;
         m_settings.load();
         
@@ -42,7 +44,7 @@ namespace autoinput::ui
         m_newConfig.statusNotificationMode = m_notificationMode;
         
         m_isDiagnosticsPassed = false;
-        m_diagnosticsMessage = "Click 'Test Connection' to run diagnostics.";
+        m_diagnosticsMessage = loc.text("labels.diagnosticsClickTest");
     }
 
     int SetupWizardWindow::getFlags() const
@@ -52,10 +54,11 @@ namespace autoinput::ui
 
     void SetupWizardWindow::renderContent()
     {
-        ImGui::Text("Step %d of 6", static_cast<int>(m_currentStep) + 1);
+        auto& loc = Localization::get();
+        ImGui::Text("%s", loc.format("labels.stepOf", static_cast<int>(m_currentStep) + 1, 6).c_str());
         ImGui::Separator();
         ImGui::Spacing();
-
+ 
         switch (m_currentStep)
         {
             case Step::Welcome: renderWelcome(); break;
@@ -75,44 +78,42 @@ namespace autoinput::ui
 
     void SetupWizardWindow::renderWelcome()
     {
-        ImGui::Text("Welcome to AutoInput!");
+        auto& loc = Localization::get();
+        ImGui::Text("%s", loc.text("labels.welcomeTitle").data());
         ImGui::Spacing();
-        ImGui::TextWrapped("This wizard will help you configure the initial settings for AutoInput "
-                           "so you can start automating your workflow quickly.");
-        ImGui::Spacing();
-        ImGui::TextWrapped("We'll guide you through setting up file locations, hotkeys, and testing "
-                           "your backend compatibility.");
+        ImGui::TextWrapped("%s", loc.text("labels.welcomeMessage").data());
     }
-
+ 
     void SetupWizardWindow::renderLocations()
     {
-        ImGui::Text("Config & Settings Locations");
+        auto& loc = Localization::get();
+        ImGui::Text("%s", loc.text("labels.locationsTitle").data());
         ImGui::Spacing();
         
-        ImGui::Text("User Configs Path:");
+        ImGui::Text("%s:", loc.text("labels.userConfigsPath").data());
         ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f), "%s", getUserConfigsPath(m_environment).string().c_str());
         
         ImGui::Spacing();
         
-        ImGui::Text("Built-in Configs Path:");
+        ImGui::Text("%s:", loc.text("labels.builtinConfigsPath").data());
         ImGui::TextColored(ImVec4(0.7f, 0.7f, 1.0f, 1.0f), "%s", getConfigsPath(m_environment).string().c_str());
         
         ImGui::Spacing();
-        ImGui::TextWrapped("Configurations created by you will be stored in the User Configs Path.");
+        ImGui::TextWrapped("%s", loc.text("labels.locationsMessage").data());
     }
-
+ 
     void SetupWizardWindow::renderEndKeyAndNotification()
     {
-        ImGui::Text("Global Defaults");
+        auto& loc = Localization::get();
+        ImGui::Text("%s", loc.text("labels.globalDefaultsTitle").data());
         ImGui::Spacing();
         
-        ImGui::TextWrapped("Choose a global 'End Key' that will stop any running automation. "
-                           "This acts as an emergency stop.");
-        ImGui::InputText("End Key", &m_endKey);
+        ImGui::TextWrapped("%s", loc.text("labels.endKeyDescription").data());
+        ImGui::InputText(loc.text("labels.hotkey").data(), &m_endKey);
         
         ImGui::Spacing();
         
-        ImGui::Text("Status Notification Mode:");
+        ImGui::Text("%s:", loc.text("labels.notificationMode").data());
         const char* modes[] = { "console", "toast", "none" };
         int currentMode = 0;
         for (int i = 0; i < 3; ++i)
@@ -124,33 +125,33 @@ namespace autoinput::ui
             }
         }
         
-        if (ImGui::Combo("Notification Mode", &currentMode, modes, IM_ARRAYSIZE(modes)))
+        if (ImGui::Combo("##NotificationMode", &currentMode, modes, IM_ARRAYSIZE(modes)))
         {
             m_notificationMode = modes[currentMode];
         }
     }
-
+ 
     void SetupWizardWindow::renderDiagnostics()
     {
-        ImGui::Text("Backend & Permission Diagnostics");
+        auto& loc = Localization::get();
+        ImGui::Text("%s", loc.text("labels.diagnosticsTitle").data());
         ImGui::Spacing();
         
-        ImGui::TextWrapped("AutoInput needs appropriate permissions to simulate input. "
-                           "Let's test if the runtime and backend are working correctly.");
+        ImGui::TextWrapped("%s", loc.text("labels.diagnosticsDescription").data());
         
         ImGui::Spacing();
         
-        if (ImGui::Button("Run Diagnostics"))
+        if (ImGui::Button(loc.text("buttons.runDiagnostics").data()))
         {
             if (m_runtimeClient.ping().success)
             {
                 m_isDiagnosticsPassed = true;
-                m_diagnosticsMessage = "Diagnostics passed! Backend is reachable and responsive.";
+                m_diagnosticsMessage = loc.text("labels.diagnosticsPassed");
             }
             else
             {
                 m_isDiagnosticsPassed = false;
-                m_diagnosticsMessage = "Diagnostics failed. Please ensure the runtime is running and has permissions.";
+                m_diagnosticsMessage = loc.text("labels.diagnosticsFailed");
             }
         }
         
@@ -162,46 +163,47 @@ namespace autoinput::ui
             ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", m_diagnosticsMessage.c_str());
             
         ImGui::Spacing();
-        ImGui::Text("Detected Backend: %s", m_runtimeClient.getBackendName().c_str());
+        ImGui::Text("%s: %s", loc.text("labels.detectedBackend").data(), m_runtimeClient.getBackendName().c_str());
     }
-
+ 
     void SetupWizardWindow::renderFirstConfig()
     {
-        ImGui::Text("Create Your First Config");
+        auto& loc = Localization::get();
+        ImGui::Text("%s", loc.text("labels.firstConfigTitle").data());
         ImGui::Spacing();
         
-        ImGui::TextWrapped("Enter a name for your first configuration file. "
-                           "You can add commands and sequences to it later.");
+        ImGui::TextWrapped("%s", loc.text("labels.firstConfigDescription").data());
         
-        ImGui::InputText("Config Name", &m_newConfigName);
+        ImGui::InputText(loc.text("labels.name").data(), &m_newConfigName);
         
         ImGui::Spacing();
         
-        ImGui::Text("Target Application (Optional):");
-        ImGui::InputText("Application", &m_newConfig.application);
-        ImGui::TextDisabled("If set, this config will only active when this app is in focus.");
+        ImGui::Text("%s:", loc.text("labels.targetApplicationOptional").data());
+        ImGui::InputText(loc.text("labels.process").data(), &m_newConfig.application);
+        ImGui::TextDisabled("%s", loc.text("labels.targetApplicationDescription").data());
     }
-
+ 
     void SetupWizardWindow::renderSummary()
     {
-        ImGui::Text("Setup Complete!");
+        auto& loc = Localization::get();
+        ImGui::Text("%s", loc.text("labels.setupCompleteTitle").data());
         ImGui::Spacing();
         
-        ImGui::TextWrapped("You have successfully configured AutoInput. Click 'Finish' to save "
-                           "your settings and start using the application.");
+        ImGui::TextWrapped("%s", loc.text("labels.setupCompleteMessage").data());
         
         ImGui::Spacing();
-        ImGui::Text("Suggested next steps:");
-        ImGui::BulletText("Open 'Sequence Recorder' to record your first automation.");
-        ImGui::BulletText("Use 'Command Runner' to execute specific commands.");
-        ImGui::BulletText("Manage your files in 'Config Manager'.");
+        ImGui::Text("%s:", loc.text("labels.suggestedNextSteps").data());
+        ImGui::BulletText("%s", loc.text("labels.stepRecordFirst").data());
+        ImGui::BulletText("%s", loc.text("labels.stepExecuteCommands").data());
+        ImGui::BulletText("%s", loc.text("labels.stepManageFiles").data());
     }
 
     void SetupWizardWindow::renderButtons()
     {
+        auto& loc = Localization::get();
         if (m_currentStep != Step::Welcome)
         {
-            if (ImGui::Button("Back"))
+            if (ImGui::Button(loc.text("buttons.back").data()))
             {
                 m_currentStep = static_cast<Step>(static_cast<int>(m_currentStep) - 1);
             }
@@ -210,21 +212,21 @@ namespace autoinput::ui
         
         if (m_currentStep != Step::Summary)
         {
-            if (ImGui::Button("Next") && validateCurrentStep())
+            if (ImGui::Button(loc.text("buttons.next").data()) && validateCurrentStep())
             {
                 m_currentStep = static_cast<Step>(static_cast<int>(m_currentStep) + 1);
             }
         }
         else
         {
-            if (ImGui::Button("Finish"))
+            if (ImGui::Button(loc.text("buttons.finish").data()))
             {
                 saveAndFinish();
             }
         }
         
         ImGui::SameLine();
-        if (ImGui::Button("Cancel"))
+        if (ImGui::Button(loc.text("buttons.cancel").data()))
         {
             requestClose();
         }

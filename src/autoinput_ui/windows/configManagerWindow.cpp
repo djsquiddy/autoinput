@@ -7,6 +7,7 @@
 #include "../widgets/basicWidgets.h"
 #include "../widgets/formWidgets.h"
 #include "../core/windowIds.h"
+#include "../core/localization.h"
 #include "autoinput/logger.h"
 #include "autoinput/configValidator.h"
 #include "configEditorWindow.h"
@@ -220,15 +221,16 @@ namespace autoinput::ui
 
     void ConfigManagerWindow::renderContent()
     {
-        if (ImGui::Button("Refresh")) refreshConfigs();
+        auto& loc = Localization::get();
+        if (ImGui::Button(loc.text("buttons.refresh").data())) refreshConfigs();
         ImGui::SameLine();
-        if (ImGui::Button("New Config"))
+        if (ImGui::Button(loc.text("buttons.new").data()))
         {
             m_newConfigNameBuffer = "new_config";
             m_showNewConfigModal = true;
         }
         ImGui::SameLine();
-        if (ImGui::Button("Validate All")) validateAll();
+        if (ImGui::Button(loc.text("actions.validateAll").data())) validateAll();
         ImGui::SameLine();
         if (ImGui::Button("Import"))
         {
@@ -239,11 +241,11 @@ namespace autoinput::ui
 
         if (ImGui::BeginTable("ConfigsTable", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_Sortable | ImGuiTableFlags_ScrollY, ImVec2(0, 300)))
         {
-            ImGui::TableSetupColumn("Name");
-            ImGui::TableSetupColumn("Source");
-            ImGui::TableSetupColumn("Status");
-            ImGui::TableSetupColumn("Last Modified");
-            ImGui::TableSetupColumn("Path");
+            ImGui::TableSetupColumn(loc.text("labels.name").data());
+            ImGui::TableSetupColumn(loc.text("labels.source").data());
+            ImGui::TableSetupColumn(loc.text("labels.status").data());
+            ImGui::TableSetupColumn(loc.text("labels.lastModified").data());
+            ImGui::TableSetupColumn(loc.text("labels.path").data());
             ImGui::TableHeadersRow();
 
             for (int i = 0; i < static_cast<int>(m_configs.size()); ++i)
@@ -263,11 +265,11 @@ namespace autoinput::ui
                 
                 ImGui::TableNextColumn();
                 if (entry.validationErrors.empty() && entry.isValid)
-                    ImGui::TextColored(ImVec4(0, 1, 0, 1), "Valid");
+                    ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s", loc.text("labels.valid").data());
                 else if (!entry.validationErrors.empty())
-                    ImGui::TextColored(ImVec4(1, 0, 0, 1), "Invalid");
+                    ImGui::TextColored(ImVec4(1, 0, 0, 1), "%s", loc.text("labels.invalid").data());
                 else
-                    ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1), "Unknown");
+                    ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1), "%s", loc.text("status.unknown").data());
 
                 ImGui::TableNextColumn();
                 ImGui::Text("%s", entry.lastModified.c_str());
@@ -285,7 +287,7 @@ namespace autoinput::ui
             auto& selected = m_configs[m_selectedIndex];
             ImGui::Text("Selected: %s", selected.name.c_str());
             
-            if (ImGui::Button("Open in Editor"))
+            if (ImGui::Button(loc.text("buttons.openInEditor").data()))
             {
                 if (auto editor = m_windowManager.findAs<ConfigEditorWindow>(WindowIds::ConfigEditor))
                 {
@@ -294,21 +296,21 @@ namespace autoinput::ui
                 }
             }
             ImGui::SameLine();
-            if (ImGui::Button("Validate")) validateConfig(selected);
+            if (ImGui::Button(loc.text("buttons.validate").data())) validateConfig(selected);
             ImGui::SameLine();
-            if (ImGui::Button("Duplicate")) duplicateConfig(selected);
+            if (ImGui::Button(loc.text("buttons.duplicate").data())) duplicateConfig(selected);
             
             ImGui::SameLine();
             if (selected.type == ConfigType::User)
             {
-                if (ImGui::Button("Rename"))
+                if (ImGui::Button(loc.text("buttons.rename").data()))
                 {
                     m_newNameBuffer = selected.name;
                     m_configToOperate = selected;
                     m_showRenameModal = true;
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("Delete"))
+                if (ImGui::Button(loc.text("buttons.delete").data()))
                 {
                     m_configToOperate = selected;
                     m_showDeleteConfirm = true;
@@ -317,15 +319,14 @@ namespace autoinput::ui
             else
             {
                 ImGui::BeginDisabled();
-                ImGui::Button("Rename");
+                ImGui::Button(loc.text("buttons.rename").data());
                 ImGui::SameLine();
-                ImGui::Button("Delete");
+                ImGui::Button(loc.text("buttons.delete").data());
                 ImGui::EndDisabled();
                 if (ImGui::IsItemHovered()) ImGui::SetTooltip("Cannot modify built-in configs.");
             }
-
             ImGui::SameLine();
-            if (ImGui::Button("Open Folder"))
+            if (ImGui::Button(loc.text("buttons.openFolder").data()))
             {
                 m_environment.openPath(selected.path.parent_path());
             }
@@ -353,67 +354,67 @@ namespace autoinput::ui
         // Modals
         if (m_showDeleteConfirm)
         {
-            ImGui::OpenPopup("Delete Config?");
+            ImGui::OpenPopup(loc.text("modals.deleteConfigTitle").data());
             m_showDeleteConfirm = false;
         }
 
-        if (ImGui::BeginPopupModal("Delete Config?", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::BeginPopupModal(loc.text("modals.deleteConfigTitle").data(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
-            ImGui::Text("Are you sure you want to delete '%s'?\nThis operation cannot be undone.", m_configToOperate.name.c_str());
+            ImGui::Text("%s", loc.format("modals.deleteConfigMessage", m_configToOperate.name).c_str());
             ImGui::Separator();
 
-            if (ImGui::Button("Delete", ImVec2(120, 0)))
+            if (ImGui::Button(loc.text("buttons.delete").data(), ImVec2(120, 0)))
             {
                 deleteConfig(m_configToOperate);
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SetItemDefaultFocus();
             ImGui::SameLine();
-            if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+            if (ImGui::Button(loc.text("buttons.cancel").data(), ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
             ImGui::EndPopup();
         }
 
         if (m_showRenameModal)
         {
-            ImGui::OpenPopup("Rename Config");
+            ImGui::OpenPopup(loc.text("modals.renameConfigTitle").data());
             m_showRenameModal = false;
         }
 
-        if (ImGui::BeginPopupModal("Rename Config", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::BeginPopupModal(loc.text("modals.renameConfigTitle").data(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
-            ImGui::Text("Enter new name for '%s':", m_configToOperate.name.c_str());
+            ImGui::Text("%s", loc.format("modals.renameConfigMessage", m_configToOperate.name).c_str());
             ImGui::InputText("##newname", &m_newNameBuffer);
             ImGui::Separator();
 
-            if (ImGui::Button("Rename", ImVec2(120, 0)))
+            if (ImGui::Button(loc.text("buttons.rename").data(), ImVec2(120, 0)))
             {
                 renameConfig(m_configToOperate, m_newNameBuffer);
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();
-            if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+            if (ImGui::Button(loc.text("buttons.cancel").data(), ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
             ImGui::EndPopup();
         }
 
         if (m_showNewConfigModal)
         {
-            ImGui::OpenPopup("New Config");
+            ImGui::OpenPopup(loc.text("modals.newConfigTitle").data());
             m_showNewConfigModal = false;
         }
 
-        if (ImGui::BeginPopupModal("New Config", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::BeginPopupModal(loc.text("modals.newConfigTitle").data(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
-            ImGui::Text("Enter name for new config:");
+            ImGui::Text("%s", loc.text("modals.newConfigMessage").data());
             ImGui::InputText("##configname", &m_newConfigNameBuffer);
             ImGui::Separator();
 
-            if (ImGui::Button("Create", ImVec2(120, 0)))
+            if (ImGui::Button(loc.text("buttons.create").data(), ImVec2(120, 0)))
             {
                 createNewConfig(m_newConfigNameBuffer);
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();
-            if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+            if (ImGui::Button(loc.text("buttons.cancel").data(), ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
             ImGui::EndPopup();
         }
     }
