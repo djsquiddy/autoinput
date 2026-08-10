@@ -80,6 +80,7 @@ namespace autoinput
         bool appendBlacklist{ true };
         std::string statusNotificationMode{ defaults::DefaultStatusNotificationMode };
         std::string logLevel{ defaults::DefaultLogLevel };
+        bool setupCompleted{ false };
     };
 
     struct ConfigData

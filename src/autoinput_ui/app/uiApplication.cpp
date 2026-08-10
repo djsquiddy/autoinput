@@ -20,6 +20,7 @@
 #include "../windows/hotkeyManagerWindow.h"
 #include "../windows/applicationPickerWindow.h"
 #include "../windows/validationReportWindow.h"
+#include "../windows/setupWizardWindow.h"
 #include "autoinput/config.h"
 #include "autoinput/logger.h"
 #include "autoinput/services/automationRuntimeClient.h"
@@ -80,8 +81,16 @@ namespace autoinput::ui
         m_windowManager->addWindow<HotkeyManagerWindow>("hotkey-manager", *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
         m_windowManager->addWindow<ApplicationPickerWindow>("application-picker", *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
         m_windowManager->addWindow<windows::ValidationReportWindow>("validation-report", *m_windowManager, SystemEnvironment::instance());
+        m_windowManager->addWindow<SetupWizardWindow>("setup-wizard", *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
         
         m_windowManager->open("main");
+
+        // Open setup wizard if not completed
+        Settings settings;
+        if (settings.load() && !settings.getDefaults().setupCompleted)
+        {
+            m_windowManager->open("setup-wizard");
+        }
     }
 
     void UiApplication::shutdown()

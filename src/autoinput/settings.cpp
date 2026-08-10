@@ -13,7 +13,8 @@ namespace autoinput
         {"blacklist","What applications should the autoinput ignore."},
         {"statusNotificationMode","Mode the status notification should be "},
         {"editor","Editor application to use when editing settings."},
-        {"logLevel","Log level to use."}
+        {"logLevel","Log level to use."},
+        {"setupCompleted", "Whether the setup wizard has been completed."}
     };
 
     bool saveUserSettings(const Settings& settings)
@@ -47,6 +48,7 @@ namespace autoinput
         table.insert("appendBlacklist", m_defaults.appendBlacklist);
         table.insert("statusNotificationMode", m_defaults.statusNotificationMode);
         table.insert("logLevel", m_defaults.logLevel);
+        table.insert("setupCompleted", m_defaults.setupCompleted);
 
         if (!m_defaults.blacklist.empty())
         {
@@ -100,6 +102,7 @@ namespace autoinput
         tryGetTableValue(table, "statusNotificationMode", m_defaults.statusNotificationMode);
         tryGetTableValue(table, "logLevel", m_defaults.logLevel);
         tryGetTableValue(table, "appendBlacklist", m_defaults.appendBlacklist);
+        tryGetTableValue(table, "setupCompleted", m_defaults.setupCompleted);
 
         if (const auto blacklist = table.get("blacklist"); blacklist && blacklist->is_array())
         {

@@ -108,6 +108,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("validation-report");
                 }
+                if (ImGui::MenuItem("Setup Wizard"))
+                {
+                    m_windows.open("setup-wizard");
+                }
                 ImGui::Separator();
                 if (ImGui::MenuItem("ImGui Demo", nullptr, m_showDemoWindow))
                 {
@@ -190,6 +194,11 @@ namespace autoinput::ui
         if (ImGui::Button("Validation"))
         {
             toggleWindowButton(m_windows, "validation-report");
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Setup Wizard"))
+        {
+            toggleWindowButton(m_windows, "setup-wizard");
         }
 
         ImGui::Separator();

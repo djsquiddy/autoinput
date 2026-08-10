@@ -29,7 +29,7 @@ namespace autoinput
 
     void ProgramArguments::applyDefaults()
     {
-        const auto& [start, end, press, release, action, button, application, settingsBlacklist, appendBlacklist, statusNotification, settingsLogLevel] = m_settings.getDefaults();
+        const auto& [start, end, press, release, action, button, application, settingsBlacklist, appendBlacklist, statusNotification, settingsLogLevel, setupCompleted] = m_settings.getDefaults();
 
         if (!settingsBlacklist.empty())
         {
