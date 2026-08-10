@@ -84,6 +84,35 @@ cmake --build build --target format-check
 
 This checks formatting without modifying files, which is useful before committing or in CI.
 
+### Static Analysis
+
+The project uses `.clang-tidy` for optional static analysis. 
+
+Developers should have `clang-tidy` installed and can verify it with:
+
+```bash
+clang-tidy --version
+```
+
+If `clang-tidy` is available when CMake configures the project, you can use the build directory compile database:
+
+```bash
+cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+```
+
+Run the manual target:
+
+```bash
+cmake --build build --target clang-tidy-check
+```
+
+Alternatively, you can enable `clang-tidy` during normal builds. This is opt-in and is not enabled by default:
+
+```bash
+cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DAUTOINPUT_ENABLE_CLANG_TIDY=ON
+cmake --build build
+```
+
 For single-file formatting:
 
 ```bash
