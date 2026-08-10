@@ -25,6 +25,7 @@
 #include "../windows/commandPaletteWindow.h"
 #include "../windows/aboutWindow.h"
 #include "../windows/importExportWindow.h"
+#include "../windows/backupRestoreWindow.h"
 #include "autoinput/config.h"
 #include "autoinput/logger.h"
 #include "autoinput/services/automationRuntimeClient.h"
@@ -90,6 +91,7 @@ namespace autoinput::ui
         m_windowManager->addWindow<CommandPaletteWindow>("command-palette", *m_windowManager);
         m_windowManager->addWindow<AboutWindow>("about");
         m_windowManager->addWindow<ImportExportWindow>("import-export");
+        m_windowManager->addWindow<BackupRestoreWindow>("backup-restore");
         
         m_windowManager->open("main");
 

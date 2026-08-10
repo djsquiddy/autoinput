@@ -83,6 +83,9 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/windows/commandPaletteWindow.cpp
             ${CMAKE_CURRENT_LIST_DIR}/windows/commandPaletteWindow.h
 
+            ${CMAKE_CURRENT_LIST_DIR}/windows/backupRestoreWindow.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/windows/backupRestoreWindow.h
+
             # External sources
             ${IMGUI_SOURCES}
     )

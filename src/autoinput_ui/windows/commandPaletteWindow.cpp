@@ -49,6 +49,7 @@ namespace autoinput::ui
         m_commands.push_back({ "Open Application Picker", "Window", [this] { m_windowManager.open("application-picker"); } });
         m_commands.push_back({ "Open Validation Report", "Window", [this] { m_windowManager.open("validation-report"); } });
         m_commands.push_back({ "Open Setup Wizard", "Window", [this] { m_windowManager.open("setup-wizard"); } });
+        m_commands.push_back({ "Open Backup / Restore", "Window", [this] { m_windowManager.open("backup-restore"); } });
 
         // Runtime commands
         m_commands.push_back({ "Open Runtime Dashboard", "Runtime", [this] { m_windowManager.open("runtime-dashboard"); } });

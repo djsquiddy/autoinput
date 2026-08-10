@@ -81,6 +81,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("hotkey-manager");
                 }
+                if (ImGui::MenuItem("Backup / Restore"))
+                {
+                    m_windows.open("backup-restore");
+                }
                 if (ImGui::MenuItem("Application Picker"))
                 {
                     m_windows.open("application-picker");
@@ -192,6 +196,11 @@ namespace autoinput::ui
         if (ImGui::Button("App Picker"))
         {
             toggleWindowButton(m_windows, "application-picker");
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Backup / Restore"))
+        {
+            toggleWindowButton(m_windows, "backup-restore");
         }
         ImGui::SameLine();
         if (ImGui::Button("Diagnostics"))
