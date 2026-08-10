@@ -46,6 +46,8 @@ set(AUTOINPUT_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/runCommandRefactorTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/configServiceTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/automationControllerTest.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/autoinput/localizationTest.cpp
+        ${CMAKE_SOURCE_DIR}/src/autoinput_ui/core/localization.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/testEnvironment.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/backendTest_linux.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/backendCapabilitiesTest.cpp

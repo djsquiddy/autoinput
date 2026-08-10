@@ -6,6 +6,7 @@
 #include "setupWizardWindow.h"
 #include "../core/windowManager.h"
 #include "../widgets/basicWidgets.h"
+#include "../widgets/formWidgets.h"
 #include "../core/localization.h"
 #include "autoinput/logger.h"
 #include "autoinput/defaults.h"
@@ -38,6 +39,9 @@ namespace autoinput::ui
         m_notificationMode = defaults.statusNotificationMode;
         if (m_notificationMode.empty()) m_notificationMode = defaults::DefaultStatusNotificationMode;
         
+        m_uiLanguage = defaults.uiLanguage;
+        if (m_uiLanguage.empty()) m_uiLanguage = defaults::DefaultUiLanguage.data();
+
         m_newConfigName = "default";
         m_newConfig = {};
         m_newConfig.endKey = m_endKey;
@@ -129,6 +133,15 @@ namespace autoinput::ui
         {
             m_notificationMode = modes[currentMode];
         }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        ImGui::Text("%s:", loc.text("labels.uiLanguage").data());
+        ImGui::TextWrapped("%s", loc.text("labels.restartRequired").data());
+        auto availableLanguages = Localization::getAvailableLanguages();
+        widgets::StringCombo("##UiLanguage", m_uiLanguage, availableLanguages);
     }
  
     void SetupWizardWindow::renderDiagnostics()
@@ -250,6 +263,7 @@ namespace autoinput::ui
         auto defaults = m_settings.getDefaults();
         defaults.end = m_endKey;
         defaults.statusNotificationMode = m_notificationMode;
+        defaults.uiLanguage = m_uiLanguage;
         defaults.setupCompleted = true;
         m_settings.setDefaults(defaults);
         

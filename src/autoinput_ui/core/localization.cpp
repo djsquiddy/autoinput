@@ -5,6 +5,7 @@
  */
 #include "localization.h"
 #include "../../autoinput/logger.h"
+#include "../../autoinput/environment.h"
 
 #ifndef TOML_EXCEPTIONS
 #define TOML_EXCEPTIONS 0
@@ -34,7 +35,7 @@ namespace autoinput::ui
         }
     }
 
-    bool Localization::loadFromFile(const std::filesystem::path& path)
+    bool Localization::loadFromFile(const std::filesystem::path& path, bool clearExisting)
     {
         try
         {
@@ -43,17 +44,20 @@ namespace autoinput::ui
                 Logger::error("Localization: File not found: {}", path.string());
                 return false;
             }
-
+ 
             toml::parse_result result = toml::parse_file(path.string());
             if (!result)
             {
                 Logger::errorStream() << "Localization: Failed to parse " << path.string() << ":\n" << result.error();
                 return false;
             }
-
-            m_strings.clear();
+ 
+            if (clearExisting)
+            {
+                m_strings.clear();
+            }
             flattenTable(m_strings, std::move(result).table(), "");
-            Logger::info("Localization: Loaded {} strings from {}", m_strings.size(), path.string());
+            Logger::info("Localization: Loaded {} strings from {} (Total: {})", m_strings.size(), path.string(), m_strings.size());
             return true;
         }
         catch (const std::exception& e)
@@ -92,5 +96,36 @@ namespace autoinput::ui
     {
         static Localization instance;
         return instance;
+    }
+ 
+    std::vector<std::string> Localization::getAvailableLanguages()
+    {
+        std::vector<std::string> languages;
+        std::filesystem::path resourcesPath = SystemEnvironment::instance().executableDirectoryPath() / "resources" / "localization";
+        if (!std::filesystem::exists(resourcesPath))
+        {
+            resourcesPath = std::filesystem::current_path() / "resources" / "localization";
+        }
+ 
+        if (std::filesystem::exists(resourcesPath))
+        {
+            for (const auto& entry : std::filesystem::directory_iterator(resourcesPath))
+            {
+                if (entry.is_regular_file() && entry.path().extension() == ".toml")
+                {
+                    languages.push_back(entry.path().stem().string());
+                }
+            }
+        }
+        
+        if (languages.empty())
+        {
+            languages.push_back("en-US");
+        }
+        
+        // Sort alphabetically
+        std::sort(languages.begin(), languages.end());
+        
+        return languages;
     }
 }

@@ -67,6 +67,7 @@ namespace autoinput::ui
         // Step 3 values
         std::string m_endKey;
         std::string m_notificationMode;
+        std::string m_uiLanguage;
     };
 }
 

@@ -73,6 +73,14 @@ namespace autoinput::ui::widgets
         const char* label,
         std::string& value,
         std::span<const std::string_view> options);
+ 
+    /**
+     * @brief A combo box for selecting a string from a vector of strings.
+     */
+    bool StringCombo(
+        const char* label,
+        std::string& value,
+        const std::vector<std::string>& options);
 
     /**
      * @brief An editor for a vector of strings with a dedicated input field and add button.

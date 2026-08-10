@@ -77,6 +77,11 @@ namespace autoinput::defaults
      * @brief The default mouse movement sampling rate for recording.
      */
     constexpr std::string_view DefaultRecordMouseSample = "25ms";
+
+    /**
+     * @brief The default UI language.
+     */
+    constexpr std::string_view DefaultUiLanguage = "en-US";
 }
 
 #endif // INCLUDE_AUTOINPUT_DEFAULTS_H

@@ -72,13 +72,33 @@ namespace autoinput::ui
     void UiApplication::initialize()
     {
         Logger::info("Initializing UI Application...");
+ 
+        // Load settings first to get language preference
+        Settings settings;
+        settings.load();
+        std::string uiLanguage = settings.getDefaults().uiLanguage;
+        if (uiLanguage.empty()) uiLanguage = "en-US";
 
         // Load localization
-        std::filesystem::path locPath = SystemEnvironment::instance().executableDirectoryPath() / "resources" / "localization" / "en-US.toml";
-        if (!Localization::get().loadFromFile(locPath))
+        std::filesystem::path resourcesPath = SystemEnvironment::instance().executableDirectoryPath() / "resources" / "localization";
+        if (!std::filesystem::exists(resourcesPath))
         {
-            // Fallback to current directory if not found relative to exe
-            Localization::get().loadFromFile("resources/localization/en-US.toml");
+            // Fallback to current directory
+            resourcesPath = std::filesystem::current_path() / "resources" / "localization";
+        }
+
+        // 1. Load en-US as base fallback
+        std::filesystem::path enUsPath = resourcesPath / "en-US.toml";
+        Localization::get().loadFromFile(enUsPath, true);
+
+        // 2. Load selected language if it's not en-US
+        if (uiLanguage != "en-US")
+        {
+            std::filesystem::path langPath = resourcesPath / (uiLanguage + ".toml");
+            if (!Localization::get().loadFromFile(langPath, false))
+            {
+                Logger::warn("Failed to load selected UI language: {}. Falling back to en-US.", uiLanguage);
+            }
         }
 
         m_uiBackend->init();
@@ -105,10 +125,9 @@ namespace autoinput::ui
         m_windowManager->addWindow<BackupRestoreWindow>(std::string(WindowIds::BackupRestore));
         
         m_windowManager->open(WindowIds::Main);
-
+ 
         // Open setup wizard if not completed
-        Settings settings;
-        if (settings.load() && !settings.getDefaults().setupCompleted)
+        if (!settings.getDefaults().setupCompleted)
         {
             m_windowManager->open(WindowIds::SetupWizard);
         }

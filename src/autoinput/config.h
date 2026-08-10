@@ -81,6 +81,7 @@ namespace autoinput
         std::string statusNotificationMode{ defaults::DefaultStatusNotificationMode };
         std::string logLevel{ defaults::DefaultLogLevel };
         bool setupCompleted{ false };
+        std::string uiLanguage{ defaults::DefaultUiLanguage.data() };
     };
 
     struct ConfigData

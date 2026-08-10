@@ -5,6 +5,7 @@
  */
 #include "globalSettingsEditor.h"
 #include "../widgets/formWidgets.h"
+#include "../core/localization.h"
 #include <imgui.h>
 #include <array>
 
@@ -19,37 +20,46 @@ namespace autoinput::ui::editors
     bool renderGlobalSettingsEditor(GlobalSettings& settings)
     {
         bool changed = false;
-
-        if (widgets::StringInput("End Hotkey", settings.endKey))
+        auto& loc = Localization::get();
+ 
+        if (widgets::StringInput(loc.text("labels.endHotkey").data(), settings.endKey))
         {
             changed = true;
         }
-
-        if (widgets::StringInput("Application", settings.application))
+ 
+        if (widgets::StringInput(loc.text("labels.application").data(), settings.application))
         {
             changed = true;
         }
-
-        if (ImGui::Checkbox("Append Blacklist", &settings.appendBlacklist))
+ 
+        if (ImGui::Checkbox(loc.text("labels.appendBlacklist").data(), &settings.appendBlacklist))
         {
             changed = true;
         }
-
-        if (widgets::StringListEditor("Blacklist (Application names)", settings.blacklist, "Add Application"))
+ 
+        if (widgets::StringListEditor(loc.text("labels.blacklistDescription").data(), settings.blacklist, loc.text("buttons.addApplication").data()))
         {
             changed = true;
         }
-
-        if (widgets::StringCombo("Notification Mode", settings.statusNotificationMode, statusNotificationModes))
+ 
+        if (widgets::StringCombo(loc.text("labels.notificationMode").data(), settings.statusNotificationMode, statusNotificationModes))
         {
             changed = true;
         }
-
-        if (widgets::StringCombo("Log Level", settings.logLevel, logLevels))
+ 
+        if (widgets::StringCombo(loc.text("labels.logLevel").data(), settings.logLevel, logLevels))
         {
             changed = true;
         }
-
+ 
+        // Language selector
+        auto availableLanguages = Localization::getAvailableLanguages();
+        if (widgets::StringCombo(loc.text("labels.uiLanguage").data(), settings.uiLanguage, availableLanguages))
+        {
+            changed = true;
+            ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "%s", loc.text("labels.restartRequired").data());
+        }
+ 
         return changed;
     }
 }

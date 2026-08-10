@@ -34,7 +34,8 @@ namespace autoinput::ui
         m_editorSettings.appendBlacklist = defaults.appendBlacklist;
         m_editorSettings.statusNotificationMode = defaults.statusNotificationMode;
         m_editorSettings.logLevel = defaults.logLevel;
-
+        m_editorSettings.uiLanguage = defaults.uiLanguage;
+ 
         clearDirty();
         m_statusMessage = Localization::get().text("status.settingsLoaded");
         m_validationErrors.clear();
@@ -49,7 +50,8 @@ namespace autoinput::ui
         defaults.appendBlacklist = m_editorSettings.appendBlacklist;
         defaults.statusNotificationMode = m_editorSettings.statusNotificationMode;
         defaults.logLevel = m_editorSettings.logLevel;
-
+        defaults.uiLanguage = m_editorSettings.uiLanguage;
+ 
         m_settings.setDefaults(defaults);
         
         auto path = autoinput::getUserConfigsPath() / defaults::SettingFileName;
@@ -75,7 +77,8 @@ namespace autoinput::ui
         m_editorSettings.appendBlacklist = defaults.appendBlacklist;
         m_editorSettings.statusNotificationMode = defaults.statusNotificationMode;
         m_editorSettings.logLevel = defaults.logLevel;
-        
+        m_editorSettings.uiLanguage = defaults.uiLanguage;
+         
         markDirty();
         m_statusMessage = Localization::get().text("status.resetToDefaultsNotSaved");
     }

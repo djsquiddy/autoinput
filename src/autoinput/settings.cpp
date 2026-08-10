@@ -14,7 +14,8 @@ namespace autoinput
         {"statusNotificationMode","Mode the status notification should be "},
         {"editor","Editor application to use when editing settings."},
         {"logLevel","Log level to use."},
-        {"setupCompleted", "Whether the setup wizard has been completed."}
+        {"setupCompleted", "Whether the setup wizard has been completed."},
+        {"uiLanguage", "The language used for the user interface."}
     };
 
     bool saveUserSettings(const Settings& settings)
@@ -49,6 +50,7 @@ namespace autoinput
         table.insert("statusNotificationMode", m_defaults.statusNotificationMode);
         table.insert("logLevel", m_defaults.logLevel);
         table.insert("setupCompleted", m_defaults.setupCompleted);
+        table.insert("uiLanguage", m_defaults.uiLanguage);
 
         if (!m_defaults.blacklist.empty())
         {
@@ -103,6 +105,7 @@ namespace autoinput
         tryGetTableValue(table, "logLevel", m_defaults.logLevel);
         tryGetTableValue(table, "appendBlacklist", m_defaults.appendBlacklist);
         tryGetTableValue(table, "setupCompleted", m_defaults.setupCompleted);
+        tryGetTableValue(table, "uiLanguage", m_defaults.uiLanguage);
 
         if (const auto blacklist = table.get("blacklist"); blacklist && blacklist->is_array())
         {

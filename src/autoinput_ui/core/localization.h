@@ -28,9 +28,10 @@ namespace autoinput::ui
         /**
          * @brief Load localization strings from a TOML file.
          * @param path Path to the TOML file.
+         * @param clearExisting If true, clear existing strings before loading.
          * @return true if loaded successfully.
          */
-        bool loadFromFile(const std::filesystem::path& path);
+        bool loadFromFile(const std::filesystem::path& path, bool clearExisting = true);
 
         /**
          * @brief Get localized text for a key.
@@ -70,6 +71,12 @@ namespace autoinput::ui
          * @brief Get the global localization instance.
          */
         static Localization& get();
+ 
+        /**
+         * @brief Get a list of available languages (based on TOML files in resources).
+         * @return Vector of language codes (e.g. ["en-US", "de-DE"]).
+         */
+        static std::vector<std::string> getAvailableLanguages();
 
     private:
         std::map<std::string, std::string, std::less<>> m_strings;

@@ -23,6 +23,7 @@ namespace autoinput::ui::editors
         bool appendBlacklist = true;          /**< Whether to append to the global blacklist. */
         std::string statusNotificationMode;   /**< How notifications should be shown. */
         std::string logLevel;                 /**< Logging verbosity level. */
+        std::string uiLanguage;               /**< Language code for UI localization. */
     };
 
     /**

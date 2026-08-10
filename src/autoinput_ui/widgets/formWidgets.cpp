@@ -71,6 +71,29 @@ namespace autoinput::ui::widgets
         }
         return changed;
     }
+ 
+    bool StringCombo(const char* label, std::string& value, const std::vector<std::string>& options)
+    {
+        bool changed = false;
+        if (ImGui::BeginCombo(label, value.c_str()))
+        {
+            for (const auto& option : options)
+            {
+                const bool isSelected = (value == option);
+                if (ImGui::Selectable(option.c_str(), isSelected))
+                {
+                    value = option;
+                    changed = true;
+                }
+                if (isSelected)
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndCombo();
+        }
+        return changed;
+    }
 
     bool StringVectorEditor(const char* label, std::vector<std::string>& items, const char* inputLabel, const char* addLabel)
     {
