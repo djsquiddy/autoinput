@@ -1,7 +1,7 @@
 #==========================================================
 # Configure Raylib
 # Project URL: https://github.com/microsoft/GSL
-# License MIT: https://github.com/microsoft/GSL/blob/v4.2.2/LICENS
+# License MIT: https://github.com/microsoft/GSL/blob/v4.2.2/LICENSE
 #==========================================================
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
@@ -14,6 +14,7 @@ FetchContent_Declare(
     raylib
     DOWNLOAD_EXTRACT_TIMESTAMP OFF
     URL https://github.com/raysan5/raylib/archive/refs/tags/${RAYLIB_VERSION}.tar.gz
+    SYSTEM  # <--- This suppresses warnings for all targets in this fetch
 )
 FetchContent_GetProperties(raylib)
 if (NOT raylib_POPULATED) # Have we downloaded raylib yet?
@@ -27,3 +28,6 @@ FetchContent_GetProperties(raylib
 if (raylib_populated)
     message("raylib_dir=${raylib_dir}")
 endif()
+
+# Disable specific warning for raylib target
+target_compile_options(raylib PRIVATE -Wno-tautological-compare)

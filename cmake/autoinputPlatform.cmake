@@ -1,3 +1,7 @@
+
+# Sets Static Runtime: /MTd for Debug, /MT for Release
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 function(configure_autoinput_platform target_name)
     if(UNIX AND NOT APPLE)
         find_package(X11)

@@ -1,13 +1,6 @@
 cmake_minimum_required(VERSION 4.2)
 project(autoinput VERSION 0.1.0 LANGUAGES CXX)
 
-set(PROJECT_NAME_TEST ${PROJECT_NAME}-tests)
-set(PROJECT_NAME_TRAY ${PROJECT_NAME}-tray)
-set(PROJECT_NAME_UI ${PROJECT_NAME}-ui)
-
-# Sets Static Runtime: /MTd for Debug, /MT for Release
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
@@ -27,13 +20,15 @@ include(autoinputTarget)
 include(autoinputSources)
 include(autoinputPlatform)
 
+set(PROJECT_NAME_TEST "${PROJECT_NAME}-tests")
+set(PROJECT_NAME_TRAY "${PROJECT_NAME}-tray")
+set(PROJECT_NAME_UI "${PROJECT_NAME}-ui")
+
 include(configure_gsl)
 include(configure_toml_plusplus)
-include(configure_googletest)
 
 add_subdirectory(src)
 
 if(AUTOINPUT_BUILD_TESTS)
-    enable_testing()
     add_subdirectory(tests)
 endif()
