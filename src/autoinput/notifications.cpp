@@ -13,7 +13,7 @@ namespace autoinput
     class ConsoleNotificationSink : public INotificationSink
     {
     public:
-        void notify(const std::string& /*title*/, const std::string& body) override
+        void notify(const std::string& /*title*/, const std::string& body, NotificationSeverity /*severity*/) override
         {
             if (body.find("ACTIVE") != std::string::npos)
             {
@@ -89,7 +89,20 @@ namespace autoinput
 
         for (const auto& sink : m_sinks)
         {
-            sink->notify(title, body);
+            sink->notify(title, body, displayActive ? NotificationSeverity::Info : NotificationSeverity::Warning);
+        }
+    }
+
+    void NotificationService::notify(const std::string& title, const std::string& body, NotificationSeverity severity)
+    {
+        if (m_jsonOutput || m_mode == StatusNotificationMode::Off)
+        {
+            return;
+        }
+
+        for (const auto& sink : m_sinks)
+        {
+            sink->notify(title, body, severity);
         }
     }
 }

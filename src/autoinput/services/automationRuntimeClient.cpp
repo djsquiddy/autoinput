@@ -140,9 +140,9 @@ namespace autoinput::services
         return res.backendName;
     }
 
-    RuntimeOperationResult ProcessAutomationRuntimeClient::sendTestNotification(std::string_view title, std::string_view message)
+    RuntimeOperationResult ProcessAutomationRuntimeClient::sendTestNotification(std::string_view title, std::string_view message, NotificationSeverity severity, std::optional<StatusNotificationMode> mode)
     {
-        const std::string request = buildTestNotificationRequest(m_nextRequestId++, title, message);
+        const std::string request = buildTestNotificationRequest(m_nextRequestId++, title, message, severity, mode);
         if (!m_transport->writeLine(request))
         {
             return { false, m_status, "Failed to write to transport." };
@@ -585,14 +585,18 @@ namespace autoinput::services
         return "Unknown";
     }
 
-    RuntimeOperationResult InProcessAutomationRuntimeClient::sendTestNotification(std::string_view title, std::string_view message)
+    RuntimeOperationResult InProcessAutomationRuntimeClient::sendTestNotification(std::string_view title, std::string_view message, NotificationSeverity severity, std::optional<StatusNotificationMode> mode)
     {
-        NotificationService svc(StatusNotificationMode::Desktop, false);
+        StatusNotificationMode finalMode = mode.value_or(StatusNotificationMode::Desktop);
+        NotificationService svc(finalMode, false);
         // Add default sinks
+        if ((finalMode & StatusNotificationMode::Desktop) != StatusNotificationMode::Off)
+        {
 #ifdef _WIN32
-        svc.addSink(platform::createDesktopNotificationSink());
+            svc.addSink(platform::createDesktopNotificationSink());
 #endif
-        svc.notifyStatus(true, std::format("{}: {}", title, message));
+        }
+        svc.notify(std::string(title), std::string(message), severity);
         return { true, m_status, "Notification sent" };
     }
 

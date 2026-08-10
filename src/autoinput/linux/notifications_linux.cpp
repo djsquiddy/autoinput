@@ -19,7 +19,7 @@ namespace autoinput
         class LinuxDesktopNotificationSink : public INotificationSink
         {
         public:
-            void notify(const std::string& title, const std::string& body) override
+            void notify(const std::string& title, const std::string& body, NotificationSeverity severity) override
             {
                 if (std::getenv("DBUS_SESSION_BUS_ADDRESS") == nullptr)
                 {
@@ -31,8 +31,14 @@ namespace autoinput
                 // notify-send -r <id> replaces the notification with that ID.
                 // notify-send -t <ms> sets the timeout.
                 // notify-send -a <appname> sets the application name.
+                // notify-send -u <urgency> sets the urgency level (low, normal, critical).
                 
-                std::string command = "notify-send \"" + title + "\" \"" + body + "\" -t 2000 -a AutoInput";
+                std::string urgency = "normal";
+                if (severity == NotificationSeverity::Error) urgency = "critical";
+                else if (severity == NotificationSeverity::Warning) urgency = "normal";
+                else urgency = "low";
+
+                std::string command = "notify-send \"" + title + "\" \"" + body + "\" -t 2000 -a AutoInput -u " + urgency;
                 if (m_lastId != 0)
                 {
                     command += " -r " + std::to_string(m_lastId);

@@ -160,6 +160,17 @@ namespace autoinput
     };
     AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(StatusNotificationMode);
 
+    enum class NotificationSeverity : uint8_t
+    {
+        Info,
+        Success,
+        Warning,
+        Error
+    };
+
+    [[nodiscard]] NotificationSeverity notificationSeverityFromString(std::string_view str);
+    [[nodiscard]] std::string_view notificationSeverityToString(NotificationSeverity severity);
+
     [[nodiscard]] std::vector<std::string_view> getAllStatusNotificationModes();
     [[nodiscard]] StatusNotificationMode statusNotificationModeFromString(std::string_view str);
     [[nodiscard]] std::string_view statusNotificationModeToString(StatusNotificationMode mode);

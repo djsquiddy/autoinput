@@ -18,7 +18,7 @@ namespace autoinput::testing
     class MockNotificationSink : public INotificationSink
     {
     public:
-        MOCK_METHOD(void, notify, (const std::string& title, const std::string& body), (override));
+        MOCK_METHOD(void, notify, (const std::string& title, const std::string& body, NotificationSeverity severity), (override));
     };
 
     class ReproNotificationTest : public ::testing::Test
@@ -72,12 +72,12 @@ namespace autoinput::testing
 
         {
             ::testing::InSequence s;
-            EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (LeftClick): ACTIVE")).Times(1);
-            EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (RightClick): ACTIVE")).Times(1);
+            EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (LeftClick): ACTIVE", NotificationSeverity::Info)).Times(1);
+            EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (RightClick): ACTIVE", NotificationSeverity::Info)).Times(1);
             // Verify that stopping one command while another is active results in a PAUSED notification for that command
-            EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (LeftClick): PAUSED")).Times(1);
+            EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (LeftClick): PAUSED", NotificationSeverity::Warning)).Times(1);
             // Expect final PAUSED notification from Program::end() in TearDown
-            EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking: PAUSED")).Times(1);
+            EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking: PAUSED", NotificationSeverity::Warning)).Times(1);
         }
 
         // Activate first command via start()

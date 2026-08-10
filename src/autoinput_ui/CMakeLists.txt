@@ -76,6 +76,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/windows/validationReportWindow.h
             ${CMAKE_CURRENT_LIST_DIR}/windows/setupWizardWindow.cpp
             ${CMAKE_CURRENT_LIST_DIR}/windows/setupWizardWindow.h
+            ${CMAKE_CURRENT_LIST_DIR}/windows/notificationTesterWindow.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/windows/notificationTesterWindow.h
 
             # External sources
             ${IMGUI_SOURCES}

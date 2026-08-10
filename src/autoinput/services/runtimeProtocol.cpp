@@ -198,10 +198,16 @@ namespace autoinput::services
             id, jsonEscape(configName), jsonEscape(commandName));
     }
 
-    std::string buildTestNotificationRequest(std::uint64_t id, std::string_view title, std::string_view body)
+    std::string buildTestNotificationRequest(std::uint64_t id, std::string_view title, std::string_view body, NotificationSeverity severity, std::optional<StatusNotificationMode> mode)
     {
-        return std::format("{{\"id\":{},\"method\":\"test_notification\",\"params\":{{\"title\":\"{}\",\"body\":\"{}\"}}}}",
-            id, jsonEscape(title), jsonEscape(body));
+        std::string extra;
+        if (mode)
+        {
+            extra = std::format(",\"mode\":\"{}\"", statusNotificationModeToString(*mode));
+        }
+
+        return std::format("{{\"id\":{},\"method\":\"test_notification\",\"params\":{{\"title\":\"{}\",\"body\":\"{}\",\"severity\":\"{}\"{}}}}}",
+            id, jsonEscape(title), jsonEscape(body), notificationSeverityToString(severity), extra);
     }
 
     std::string buildStartRecordingRequest(std::uint64_t id, const SequenceConfig& config)
@@ -414,6 +420,18 @@ namespace autoinput::services
                 if (!bodyStr.empty())
                 {
                     request.body = isString ? jsonUnescape(bodyStr) : std::string(bodyStr);
+                }
+
+                std::string_view severityStr = findRawValue(paramsSub, "severity", isString);
+                if (!severityStr.empty())
+                {
+                    request.severity = notificationSeverityFromString(isString ? jsonUnescape(severityStr) : severityStr);
+                }
+
+                std::string_view modeStr = findRawValue(paramsSub, "mode", isString);
+                if (!modeStr.empty())
+                {
+                    request.notificationMode = statusNotificationModeFromString(isString ? jsonUnescape(modeStr) : modeStr);
                 }
             }
         }

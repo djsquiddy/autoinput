@@ -134,6 +134,26 @@ namespace autoinput
         }
     }
 
+    NotificationSeverity notificationSeverityFromString(std::string_view str)
+    {
+        if (str == "success") return NotificationSeverity::Success;
+        if (str == "warning") return NotificationSeverity::Warning;
+        if (str == "error")   return NotificationSeverity::Error;
+        return NotificationSeverity::Info;
+    }
+
+    std::string_view notificationSeverityToString(NotificationSeverity severity)
+    {
+        switch (severity)
+        {
+        case NotificationSeverity::Info:    return "info";
+        case NotificationSeverity::Success: return "success";
+        case NotificationSeverity::Warning: return "warning";
+        case NotificationSeverity::Error:   return "error";
+        default:                            return "info";
+        }
+    }
+
     std::string_view recordedEventTypeToString(const RecordedEventType type)
     {
         switch (type)

@@ -24,6 +24,8 @@ namespace autoinput::services
         std::string command;
         std::string title;
         std::string body;
+        NotificationSeverity severity{ NotificationSeverity::Info };
+        std::optional<StatusNotificationMode> notificationMode;
 
         bool recordMouseMoves{ false };
         bool recordMouseClicks{ true };
@@ -45,7 +47,7 @@ namespace autoinput::services
     std::string buildRuntimeRequest(std::uint64_t id, std::string_view method);
     std::string buildStartRuntimeRequest(std::uint64_t id, std::string_view configName);
     std::string buildRunCommandRequest(std::uint64_t id, std::string_view configName, std::string_view commandName);
-    std::string buildTestNotificationRequest(std::uint64_t id, std::string_view title, std::string_view body);
+    std::string buildTestNotificationRequest(std::uint64_t id, std::string_view title, std::string_view body, NotificationSeverity severity = NotificationSeverity::Info, std::optional<StatusNotificationMode> mode = std::nullopt);
     std::string buildStartRecordingRequest(std::uint64_t id, const SequenceConfig& config);
     std::string buildGetRecordedSequenceRequest(std::uint64_t id);
     std::string buildRuntimeResponse(std::uint64_t id, const RuntimeOperationResult& result);

@@ -139,15 +139,15 @@ namespace autoinput::cli
             {
                 result = runtime.ping();
             }
+            else if (request.method == "test_notification")
+            {
+                result = runtime.sendTestNotification(request.title, request.body, request.severity, request.notificationMode);
+            }
             else if (request.method == "get_diagnostics")
             {
                 result = { true, runtime.getStatus(), "Diagnostics retrieved." };
                 result.backendName = runtime.getBackendName();
                 result.capabilities = runtime.getBackendCapabilities();
-            }
-            else if (request.method == "test_notification")
-            {
-                result = runtime.sendTestNotification(request.title, request.body);
             }
             else if (request.method == "start_recording")
             {

@@ -28,8 +28,9 @@ namespace autoinput
          * @brief Sends a notification.
          * @param title The title of the notification.
          * @param body The body text of the notification.
+         * @param severity The severity of the notification.
          */
-        virtual void notify(const std::string& title, const std::string& body) = 0;
+        virtual void notify(const std::string& title, const std::string& body, NotificationSeverity severity = NotificationSeverity::Info) = 0;
     };
 
     class NotificationService
@@ -49,6 +50,14 @@ namespace autoinput
          * @param commandActive Whether the triggered command is active (optional).
          */
         void notifyStatus(bool active, const std::string& commandName = "", std::optional<bool> commandActive = std::nullopt);
+
+        /**
+         * @brief Sends a generic notification.
+         * @param title The title of the notification.
+         * @param body The body of the notification.
+         * @param severity The severity of the notification.
+         */
+        void notify(const std::string& title, const std::string& body, NotificationSeverity severity = NotificationSeverity::Info);
 
         /**
          * @brief Adds a notification sink (primarily for testing).

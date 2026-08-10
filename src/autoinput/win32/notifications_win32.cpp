@@ -61,7 +61,7 @@ namespace autoinput
                 UnregisterClassA(NOTIFICATION_CLASS_NAME, GetModuleHandleA(NULL));
             }
 
-            void notify(const std::string& title, const std::string& body) override
+            void notify(const std::string& title, const std::string& body, NotificationSeverity severity) override
             {
                 if (!m_hwnd)
                 {
@@ -71,8 +71,16 @@ namespace autoinput
                 strncpy_s(m_nid.szInfoTitle, title.c_str(), sizeof(m_nid.szInfoTitle) - 1);
                 strncpy_s(m_nid.szInfo, body.c_str(), sizeof(m_nid.szInfo) - 1);
                 
-                m_nid.dwInfoFlags = NIIF_INFO | NIIF_NOSOUND;
-                m_nid.uTimeout = 2000; // 2 seconds (deprecated in newer Windows, but good to have)
+                m_nid.dwInfoFlags = NIIF_NOSOUND;
+                switch (severity)
+                {
+                    case NotificationSeverity::Info:    m_nid.dwInfoFlags |= NIIF_INFO; break;
+                    case NotificationSeverity::Success: m_nid.dwInfoFlags |= NIIF_INFO; break; // Windows doesn't have NIIF_SUCCESS, using INFO
+                    case NotificationSeverity::Warning: m_nid.dwInfoFlags |= NIIF_WARNING; break;
+                    case NotificationSeverity::Error:   m_nid.dwInfoFlags |= NIIF_ERROR; break;
+                }
+
+                m_nid.uTimeout = 2000;
 
                 if (m_iconAdded)
                 {

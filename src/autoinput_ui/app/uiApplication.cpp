@@ -21,6 +21,7 @@
 #include "../windows/applicationPickerWindow.h"
 #include "../windows/validationReportWindow.h"
 #include "../windows/setupWizardWindow.h"
+#include "../windows/notificationTesterWindow.h"
 #include "autoinput/config.h"
 #include "autoinput/logger.h"
 #include "autoinput/services/automationRuntimeClient.h"
@@ -82,6 +83,7 @@ namespace autoinput::ui
         m_windowManager->addWindow<ApplicationPickerWindow>("application-picker", *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
         m_windowManager->addWindow<windows::ValidationReportWindow>("validation-report", *m_windowManager, SystemEnvironment::instance());
         m_windowManager->addWindow<SetupWizardWindow>("setup-wizard", *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
+        m_windowManager->addWindow<NotificationTesterWindow>("notification-tester", getRuntimeClient());
         
         m_windowManager->open("main");
 

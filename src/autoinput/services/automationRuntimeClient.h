@@ -80,7 +80,7 @@ namespace autoinput::services
 
         [[nodiscard]] virtual BackendCapabilities getBackendCapabilities() const = 0;
         [[nodiscard]] virtual std::string getBackendName() const = 0;
-        [[nodiscard]] virtual RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message) = 0;
+        [[nodiscard]] virtual RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message, NotificationSeverity severity = NotificationSeverity::Info, std::optional<StatusNotificationMode> mode = std::nullopt) = 0;
 
         virtual RuntimeOperationResult startRecording(const SequenceConfig& config) = 0;
         virtual RuntimeOperationResult stopRecording() = 0;
@@ -117,7 +117,7 @@ namespace autoinput::services
         [[nodiscard]] std::optional<AppWindowInfo> getForegroundWindow() override;
         [[nodiscard]] BackendCapabilities getBackendCapabilities() const override;
         [[nodiscard]] std::string getBackendName() const override;
-        [[nodiscard]] RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message) override;
+        [[nodiscard]] RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message, NotificationSeverity severity = NotificationSeverity::Info, std::optional<StatusNotificationMode> mode = std::nullopt) override;
 
         RuntimeOperationResult startRecording(const SequenceConfig& config) override;
         RuntimeOperationResult stopRecording() override;
@@ -165,7 +165,7 @@ namespace autoinput::services
         [[nodiscard]] std::optional<AppWindowInfo> getForegroundWindow() override;
         [[nodiscard]] BackendCapabilities getBackendCapabilities() const override;
         [[nodiscard]] std::string getBackendName() const override;
-        [[nodiscard]] RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message) override;
+        [[nodiscard]] RuntimeOperationResult sendTestNotification(std::string_view title, std::string_view message, NotificationSeverity severity = NotificationSeverity::Info, std::optional<StatusNotificationMode> mode = std::nullopt) override;
 
         RuntimeOperationResult startRecording(const SequenceConfig& config) override;
         RuntimeOperationResult stopRecording() override;

@@ -112,6 +112,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("setup-wizard");
                 }
+                if (ImGui::MenuItem("Notification Tester"))
+                {
+                    m_windows.open("notification-tester");
+                }
                 ImGui::Separator();
                 if (ImGui::MenuItem("ImGui Demo", nullptr, m_showDemoWindow))
                 {
@@ -199,6 +203,11 @@ namespace autoinput::ui
         if (ImGui::Button("Setup Wizard"))
         {
             toggleWindowButton(m_windows, "setup-wizard");
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Notification Tester"))
+        {
+            toggleWindowButton(m_windows, "notification-tester");
         }
 
         ImGui::Separator();
