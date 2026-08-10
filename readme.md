@@ -60,6 +60,40 @@ You can customize the build by passing the following options to `cmake`:
 - `ENABLE_MOUSE_HOOK`: Enable low-level mouse hook support for global hotkeys (defaults to `ON`).
 - `ENABLE_FAKE_HOOK`: Use a dummy hook implementation for development or restricted environments (defaults to `OFF`).
 
+### Code Formatting
+
+The project uses `clang-format` for C++ source formatting. Formatting rules are defined by the root-level `.clang-format` file.
+
+Developers should have `clang-format` installed and can verify it with:
+
+```bash
+clang-format --version
+```
+
+If `clang-format` is available when CMake configures the project, the build provides two helper targets:
+
+```bash
+cmake --build build --target format
+```
+
+This formats project C++ source/header files under `src/` and `tests/`.
+
+```bash
+cmake --build build --target format-check
+```
+
+This checks formatting without modifying files, which is useful before committing or in CI.
+
+For single-file formatting:
+
+```bash
+clang-format -i src/autoinput/autoinput.cpp
+```
+
+Most editors/IDEs can detect the root `.clang-format` file automatically. In CLion, ClangFormat can be enabled under:
+
+`Settings | Editor | Code Style | C/C++`
+
 ### Shell Completion
 
 You can use the provided scripts to automatically install or update shell completions.

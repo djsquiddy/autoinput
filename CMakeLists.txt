@@ -19,6 +19,7 @@ include(autoinputInstall)
 include(autoinputTarget)
 include(autoinputSources)
 include(autoinputPlatform)
+include(autoinputFormat)
 
 set(PROJECT_NAME_TEST "${PROJECT_NAME}-tests")
 set(PROJECT_NAME_TRAY "${PROJECT_NAME}-tray")
