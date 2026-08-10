@@ -24,7 +24,7 @@ pushd build > /dev/null
 
 echo "Running CMake..."
 cmake -G Ninja \
-    -DCMAKE_BUILD_TYPE="${BuildType}" \
+    -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
     -DAUTOINPUT_BUILD_TESTS="${BUILD_TESTS}" \
     -DAUTOINPUT_BUILD_TRAY="${BUILD_TRAY}" \
     -DAUTOINPUT_BUILD_UI="${BUILD_UI}" \
@@ -36,7 +36,15 @@ ninja
 echo "Finished rebuilding."
 
 echo "Running tests..."
-./bin/autoinput-tests
+if [[ "${BUILD_TESTS}" == "ON" ]]; then
+    if [[ -f "./bin/autoinput-tests" ]]; then
+        ./bin/autoinput-tests
+    else
+        echo "Test binary not found, skipping tests."
+    fi
+else
+    echo "Tests are disabled, skipping."
+fi
 echo "Finished running tests."
 popd > /dev/null
 popd > /dev/null

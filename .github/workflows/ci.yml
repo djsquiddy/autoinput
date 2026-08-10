@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up CMake
+      uses: jwlawrence/actions-setup-cmake@v1
+
+    - name: Set up Ninja
+      uses: ashutoshvarma/setup-ninja@master
+
+    - name: Configure CMake
+      run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DAUTOINPUT_BUILD_TESTS=ON -DAUTOINPUT_BUILD_TRAY=OFF -DAUTOINPUT_BUILD_UI=OFF
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Test
+      working-directory: build
+      run: ctest -C Release --output-on-failure

@@ -8,3 +8,13 @@ cmake-build-*/
 *.exe
 *.pdb
 *.ilk
+*.obj
+*.o
+*.lib
+*.a
+*.so
+*.dylib
+*.dll
+.DS_Store
+*.tmp
+*.temp

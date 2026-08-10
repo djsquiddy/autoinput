@@ -1,7 +1,7 @@
 #==========================================================
 # Configure Raylib
-# Project URL: https://github.com/microsoft/GSL
-# License MIT: https://github.com/microsoft/GSL/blob/v4.2.2/LICENSE
+# Project URL: https://github.com/raysan5/raylib
+# License zlib/libpng: https://github.com/raysan5/raylib/blob/master/LICENSE
 #==========================================================
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)

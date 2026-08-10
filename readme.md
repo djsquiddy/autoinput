@@ -49,6 +49,23 @@ cmake ..
 make
 ```
 
+### Building with CMake Presets
+
+If you are using CMake 3.19 or later, you can use CMake Presets:
+
+```bash
+# List available presets
+cmake --list-presets
+
+# Configure and build using a preset (e.g., release)
+cmake --preset release
+cmake --build --preset release
+
+# To build everything (CLI, tests, tray, UI)
+cmake --preset all
+cmake --build --preset all
+```
+
 ### Build Options
 
 You can customize the build by passing the following options to `cmake`:
@@ -631,3 +648,37 @@ or:
 ```bash
 autoinput run -c my-config
 ```
+
+### Testing
+
+If `AUTOINPUT_BUILD_TESTS` is enabled, you can run the tests using `ctest` from the build directory:
+
+```bash
+cd build
+ctest --output-on-failure
+```
+
+Alternatively, you can run the test executable directly:
+
+```bash
+./bin/autoinput-tests
+```
+
+### Scripts
+
+The `scripts/` directory contains helper scripts for building the project:
+- `build.cmd`: Windows build script.
+- `build.sh`: Linux build script.
+
+Usage:
+```bash
+# Build all components in Release mode
+./scripts/build.sh all Release
+
+# Build only CLI and tests in Debug mode
+./scripts/build.sh tests Debug
+```
+
+### License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

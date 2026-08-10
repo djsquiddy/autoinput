@@ -1,5 +1,5 @@
 #==========================================================
-# Configure Raylib
+# Configure Dear ImGui
 # Project URL: https://github.com/ocornut/imgui.git
 # License MIT: https://github.com/ocornut/imgui/blob/v1.92.9/LICENSE.txt
 #==========================================================

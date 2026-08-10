@@ -74,7 +74,15 @@ cmake -G Ninja ^
         ninja || goto :end
         echo Finished rebuilding.
         echo Running tests...
-        .\bin\autoinput-tests.exe || goto :end
+        if "%BUILD_TESTS%"=="ON" (
+            if exist .\bin\autoinput-tests.exe (
+                .\bin\autoinput-tests.exe || goto :end
+            ) else (
+                echo Test binary not found, skipping tests.
+            )
+        ) else (
+            echo Tests are disabled, skipping.
+        )
         echo Finished running tests.
     popd
 popd
