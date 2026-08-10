@@ -89,7 +89,7 @@ namespace autoinput::ui
         m_windowManager->addWindow<SetupWizardWindow>("setup-wizard", *m_windowManager, getRuntimeClient(), SystemEnvironment::instance());
         m_windowManager->addWindow<NotificationTesterWindow>("notification-tester", getRuntimeClient());
         m_windowManager->addWindow<CommandPaletteWindow>("command-palette", *m_windowManager);
-        m_windowManager->addWindow<AboutWindow>("about");
+        m_windowManager->addWindow<AboutWindow>("about", getRuntimeClient(), SystemEnvironment::instance());
         m_windowManager->addWindow<ImportExportWindow>("import-export");
         m_windowManager->addWindow<BackupRestoreWindow>("backup-restore");
         

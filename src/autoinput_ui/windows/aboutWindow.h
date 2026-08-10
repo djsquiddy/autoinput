@@ -8,11 +8,13 @@
 #define INCLUDE_AUTOINPUT_ABOUT_WINDOW_H
 #pragma once
 #include "ui.h"
+#include "autoinput/services/automationRuntimeClient.h"
+#include "autoinput/environment.h"
 
 namespace autoinput::ui
 {
     /**
-     * @brief A simple about window showing application information.
+     * @brief A simple about window showing application information and diagnostics.
      */
     class AboutWindow final : public UiWindow
     {
@@ -20,8 +22,8 @@ namespace autoinput::ui
         /**
          * @brief Constructs a new AboutWindow.
          */
-        AboutWindow()
-            : UiWindow("About AutoInput")
+        AboutWindow(services::IAutomationRuntimeClient& runtimeClient, const IEnvironment& environment)
+            : UiWindow("About / Diagnostics"), m_runtimeClient(runtimeClient), m_environment(environment)
         {
         }
 
@@ -30,6 +32,10 @@ namespace autoinput::ui
          * @brief Renders the about window content (version, author, etc.).
          */
         void renderContent() override;
+
+    private:
+        services::IAutomationRuntimeClient& m_runtimeClient;
+        const IEnvironment& m_environment;
     };
 }
 
