@@ -39,7 +39,7 @@ function(configure_autoinput_target target_name)
         )
         if(MINGW)
             # Contains a compatibility fixes for MinGW static linking issues.
-            target_sources(${target_name} PRIVATE ${CMAKE_SOURCE_DIR}/src/autoinput/mingw/mingw_compat.cpp)
+            target_sources(${target_name} PRIVATE ${CMAKE_SOURCE_DIR}/src/autoinput/platform/mingw/mingw_compat.cpp)
             target_link_options(${target_name} PRIVATE -static)
         endif()
     endif()
