@@ -37,12 +37,12 @@ namespace autoinput::ui
             entry.type = info.type;
             entry.path = info.filepath;
             
-            try {
+            try
+            {
                 auto ftime = std::filesystem::last_write_time(entry.path);
-                auto sctp = std::chrono::file_clock::to_sys(ftime);
+                auto sctp = std::chrono::clock_cast<std::chrono::system_clock>(ftime);
                 auto ctime = std::chrono::system_clock::to_time_t(sctp);
-                std::tm* tm = std::localtime(&ctime);
-                if (tm)
+                if (const std::tm* tm = std::localtime(&ctime); tm)
                 {
                     char buffer[80];
                     std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm);
@@ -52,7 +52,9 @@ namespace autoinput::ui
                 {
                     entry.lastModified = "Unknown";
                 }
-            } catch (...) {
+            }
+            catch (...)
+            {
                 entry.lastModified = "Unknown";
             }
             
@@ -85,7 +87,8 @@ namespace autoinput::ui
             return;
         }
 
-        try {
+        try
+        {
             if (std::filesystem::remove(entry.path))
             {
                 m_statusMessage = std::format("Deleted config: {}", entry.name);
@@ -95,7 +98,9 @@ namespace autoinput::ui
             {
                 m_statusMessage = std::format("Failed to delete config: {}", entry.name);
             }
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e)
+        {
             m_statusMessage = std::format("Error deleting config: {}", e.what());
         }
     }
@@ -124,27 +129,29 @@ namespace autoinput::ui
             return;
         }
 
-        std::filesystem::path newPath = entry.path.parent_path() / (newName + ".toml");
-        try {
+        const std::filesystem::path newPath = entry.path.parent_path() / (newName + ".toml");
+        try
+        {
             std::filesystem::rename(entry.path, newPath);
             m_statusMessage = std::format("Renamed {} to {}", entry.name, newName);
             refreshConfigs();
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e)
+        {
             m_statusMessage = std::format("Error renaming config: {}", e.what());
         }
     }
 
     void ConfigManagerWindow::createNewConfig(const std::string& name)
     {
-        std::filesystem::path path = autoinput::getUserConfigsPath(m_environment) / (name + ".toml");
+        const std::filesystem::path path = getUserConfigsPath(m_environment) / (name + ".toml");
         if (std::filesystem::exists(path))
         {
             m_statusMessage = std::format("Config {} already exists.", name);
             return;
         }
 
-        ConfigData data;
-        if (autoinput::saveConfigData(data, path))
+        if (const ConfigData data; saveConfigData(data, path))
         {
             m_statusMessage = std::format("Created new config: {}", name);
             refreshConfigs();
@@ -158,23 +165,29 @@ namespace autoinput::ui
     void ConfigManagerWindow::importConfig(const std::filesystem::path& sourcePath)
     {
         std::string name = sourcePath.stem().string();
-        std::filesystem::path destPath = autoinput::getUserConfigsPath(m_environment) / (name + ".toml");
+        const std::filesystem::path destPath = getUserConfigsPath(m_environment) / (name + ".toml");
         
-        try {
+        try
+        {
             std::filesystem::copy_file(sourcePath, destPath, std::filesystem::copy_options::overwrite_existing);
             m_statusMessage = std::format("Imported config: {}", name);
             refreshConfigs();
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e)
+        {
             m_statusMessage = std::format("Error importing config: {}", e.what());
         }
     }
 
     void ConfigManagerWindow::exportConfig(const ConfigEntry& entry, const std::filesystem::path& destPath)
     {
-        try {
+        try
+        {
             std::filesystem::copy_file(entry.path, destPath, std::filesystem::copy_options::overwrite_existing);
             m_statusMessage = std::format("Exported {} to {}", entry.name, destPath.string());
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e)
+        {
             m_statusMessage = std::format("Error exporting config: {}", e.what());
         }
     }
