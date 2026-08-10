@@ -44,6 +44,7 @@ namespace autoinput::ui
         m_commands.push_back({ "Open Logs", "Window", [this] { m_windowManager.open("logs"); } });
         m_commands.push_back({ "Open About", "Window", [this] { m_windowManager.open("about"); } });
         m_commands.push_back({ "Open Config Manager", "Window", [this] { m_windowManager.open("config-manager"); } });
+        m_commands.push_back({ "Open Import / Export", "Window", [this] { m_windowManager.open("import-export"); } });
         m_commands.push_back({ "Open Hotkey Manager", "Window", [this] { m_windowManager.open("hotkey-manager"); } });
         m_commands.push_back({ "Open Application Picker", "Window", [this] { m_windowManager.open("application-picker"); } });
         m_commands.push_back({ "Open Validation Report", "Window", [this] { m_windowManager.open("validation-report"); } });

@@ -78,6 +78,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/windows/setupWizardWindow.h
             ${CMAKE_CURRENT_LIST_DIR}/windows/notificationTesterWindow.cpp
             ${CMAKE_CURRENT_LIST_DIR}/windows/notificationTesterWindow.h
+            ${CMAKE_CURRENT_LIST_DIR}/windows/importExportWindow.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/windows/importExportWindow.h
             ${CMAKE_CURRENT_LIST_DIR}/windows/commandPaletteWindow.cpp
             ${CMAKE_CURRENT_LIST_DIR}/windows/commandPaletteWindow.h
 

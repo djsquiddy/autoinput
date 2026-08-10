@@ -73,6 +73,10 @@ namespace autoinput::ui
                 {
                     m_windows.open("config-manager");
                 }
+                if (ImGui::MenuItem("Import / Export"))
+                {
+                    m_windows.open("import-export");
+                }
                 if (ImGui::MenuItem("Hotkey Manager"))
                 {
                     m_windows.open("hotkey-manager");
