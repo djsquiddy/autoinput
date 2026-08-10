@@ -19,7 +19,7 @@
 namespace autoinput::ui
 {
     ConfigManagerWindow::ConfigManagerWindow(WindowManager& windowManager, const IEnvironment& environment)
-        : UiWindow("Config Manager")
+        : UiWindow("Config Manager", "windows.configManager")
         , m_windowManager(windowManager)
         , m_environment(environment)
         , m_configService(environment)

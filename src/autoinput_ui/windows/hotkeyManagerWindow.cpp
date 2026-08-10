@@ -20,7 +20,7 @@
 namespace autoinput::ui
 {
     HotkeyManagerWindow::HotkeyManagerWindow(WindowManager& windowManager, services::IAutomationRuntimeClient& runtimeClient, const IEnvironment& environment)
-        : UiWindow("Hotkey Manager")
+        : UiWindow("Hotkey Manager", "windows.hotkeyManager")
         , m_windowManager(windowManager)
         , m_runtimeClient(runtimeClient)
         , m_environment(environment)

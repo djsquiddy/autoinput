@@ -22,9 +22,10 @@ namespace autoinput::ui
     public:
         /**
          * @brief Constructs a new UiWindow.
-         * @param title The title of the window.
+         * @param title The title of the window (used if titleKey is not provided or not found).
+         * @param titleKey The localization key for the title.
          */
-        explicit UiWindow(std::string title);
+        explicit UiWindow(std::string title, std::string titleKey = "");
         
         virtual ~UiWindow() = default;
 
@@ -141,6 +142,7 @@ namespace autoinput::ui
 
     private:
         std::string m_title;
+        std::string m_titleKey;
         bool m_isOpen{ false };
         bool m_isFullscreen{ false };
         bool m_shouldFocus{ false };

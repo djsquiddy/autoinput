@@ -22,8 +22,8 @@ namespace autoinput::ui
     struct UiAction
     {
         std::string id;
-        std::string label;
-        std::string category;
+        std::string labelKey;
+        std::string categoryKey;
         std::string shortcut;
         std::string targetWindowId;
         std::function<void(WindowManager&)> callback;

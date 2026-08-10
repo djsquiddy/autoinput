@@ -17,7 +17,7 @@
 namespace autoinput::ui
 {
     ApplicationPickerWindow::ApplicationPickerWindow(WindowManager& windowManager, services::IAutomationRuntimeClient& runtimeClient, const IEnvironment& environment)
-        : UiWindow("Application Picker")
+        : UiWindow("Application Picker", "windows.applicationPicker")
         , m_windowManager(windowManager)
         , m_runtimeClient(runtimeClient)
         , m_environment(environment)

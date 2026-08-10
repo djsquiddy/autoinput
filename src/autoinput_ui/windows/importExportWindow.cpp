@@ -16,7 +16,7 @@
 namespace autoinput::ui
 {
     ImportExportWindow::ImportExportWindow()
-        : UiWindow("Import / Export")
+        : UiWindow("Import / Export", "windows.importExport")
     {
         refreshAvailableConfigs();
     }

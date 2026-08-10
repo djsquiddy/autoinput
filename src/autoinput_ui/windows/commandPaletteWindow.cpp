@@ -7,6 +7,7 @@
 #include "../core/windowManager.h"
 #include "../core/windowIds.h"
 #include "../core/uiActions.h"
+#include "../core/localization.h"
 #include "autoinput/logger.h"
 #include <imgui.h>
 #include <algorithm>
@@ -16,7 +17,7 @@
 namespace autoinput::ui
 {
     CommandPaletteWindow::CommandPaletteWindow(WindowManager& windowManager)
-        : UiWindow("Command Palette")
+        : UiWindow("Command Palette", "windows.commandPalette")
         , m_windowManager(windowManager)
     {
         refreshActions();
@@ -39,11 +40,14 @@ namespace autoinput::ui
 
     void CommandPaletteWindow::refreshActions()
     {
+        auto& loc = Localization::get();
         m_commands.clear();
         auto actions = UiActionRegistry::getActions();
         for (const auto& action : actions)
         {
-            m_commands.push_back({ action.label, action.category, [this, id = action.id] { 
+            m_commands.push_back({ std::string(loc.text(action.labelKey)), std::string(loc.text(action.categoryKey)), [this, id = action.id, labelKey = action.labelKey] { 
+                auto& l = Localization::get();
+                Logger::info(std::format("Executing action: {}", l.text(labelKey)));
                 UiActionRegistry::execute(id, m_windowManager); 
             } });
         }
@@ -145,7 +149,6 @@ namespace autoinput::ui
 
     void CommandPaletteWindow::executeCommand(const PaletteCommand& cmd)
     {
-        Logger::info(std::format("Executing command: {}", cmd.label));
         cmd.action();
         requestClose();
     }

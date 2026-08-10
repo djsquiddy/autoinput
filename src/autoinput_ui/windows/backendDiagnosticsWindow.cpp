@@ -18,7 +18,7 @@ namespace autoinput::ui
     }
 
     BackendDiagnosticsWindow::BackendDiagnosticsWindow(services::IAutomationRuntimeClient& runtimeClient, const IEnvironment& environment)
-        : UiWindow("Backend Diagnostics"), m_runtimeClient(runtimeClient), m_environment(environment)
+        : UiWindow("Backend Diagnostics", "windows.backendDiagnostics"), m_runtimeClient(runtimeClient), m_environment(environment)
     {
     }
 

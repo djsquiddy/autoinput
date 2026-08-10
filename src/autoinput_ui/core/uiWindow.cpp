@@ -4,13 +4,14 @@
  * @date August 2026
  */
 #include "uiWindow.h"
+#include "localization.h"
 #include "../widgets/modalWidgets.h"
 #include <imgui.h>
 
 namespace autoinput::ui
 {
-    UiWindow::UiWindow(std::string title)
-        : m_title(std::move(title))
+    UiWindow::UiWindow(std::string title, std::string titleKey)
+        : m_title(std::move(title)), m_titleKey(std::move(titleKey))
     {
     }
 
@@ -57,7 +58,13 @@ namespace autoinput::ui
         bool open = m_isOpen;
         bool* p_open = hasCloseButton() ? &open : nullptr;
 
-        if (ImGui::Begin(m_title.c_str(), p_open, getFlags()))
+        std::string title = m_title;
+        if (!m_titleKey.empty())
+        {
+            title = Localization::get().textOr(m_titleKey, m_title);
+        }
+
+        if (ImGui::Begin(title.c_str(), p_open, getFlags()))
         {
             renderContent();
         }

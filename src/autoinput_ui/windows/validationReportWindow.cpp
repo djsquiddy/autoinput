@@ -17,7 +17,7 @@
 namespace autoinput::ui::windows
 {
     ValidationReportWindow::ValidationReportWindow(WindowManager& windowManager, const IEnvironment& environment)
-        : UiWindow("Validation Report")
+        : UiWindow("Validation Report", "windows.validationReport")
         , m_windowManager(windowManager)
         , m_environment(environment)
         , m_configService(environment)

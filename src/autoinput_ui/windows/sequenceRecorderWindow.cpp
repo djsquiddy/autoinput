@@ -14,7 +14,7 @@
 namespace autoinput::ui
 {
     SequenceRecorderWindow::SequenceRecorderWindow(services::IAutomationRuntimeClient& runtimeClient, const IEnvironment& environment)
-        : UiWindow("Sequence Recorder"), m_runtimeClient(runtimeClient), m_environment(environment)
+        : UiWindow("Sequence Recorder", "windows.sequenceRecorder"), m_runtimeClient(runtimeClient), m_environment(environment)
     {
         refreshConfigs();
     }

@@ -30,7 +30,7 @@ namespace autoinput::ui
     }
 
     RuntimeWindow::RuntimeWindow(services::IAutomationRuntimeClient& runtimeClient)
-        : UiWindow("Advanced Runtime Control")
+        : UiWindow("Advanced Runtime Control", "windows.advancedRuntime")
         , m_runtimeClient(runtimeClient)
     {
     }

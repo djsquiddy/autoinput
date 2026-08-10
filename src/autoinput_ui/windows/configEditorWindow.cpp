@@ -17,7 +17,7 @@
 namespace autoinput::ui
 {
     ConfigEditorWindow::ConfigEditorWindow()
-        : UiWindow("Config Editor")
+        : UiWindow("Config Editor", "windows.configEditor")
     {
         refreshConfigList();
     }

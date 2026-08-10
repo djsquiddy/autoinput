@@ -11,7 +11,7 @@
 namespace autoinput::ui
 {
     RuntimeDashboardWindow::RuntimeDashboardWindow(services::IAutomationRuntimeClient& runtimeClient)
-        : UiWindow("Runtime Dashboard")
+        : UiWindow("Runtime Dashboard", "windows.runtimeDashboard")
         , m_runtimeClient(runtimeClient)
     {
     }

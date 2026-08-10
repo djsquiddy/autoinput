@@ -17,7 +17,7 @@ namespace autoinput::ui
     SetupWizardWindow::SetupWizardWindow(WindowManager& windowManager, 
                                          services::IAutomationRuntimeClient& runtimeClient,
                                          const IEnvironment& environment)
-        : UiWindow("Setup Wizard")
+        : UiWindow("Setup Wizard", "windows.setupWizard")
         , m_windowManager(windowManager)
         , m_runtimeClient(runtimeClient)
         , m_environment(environment)

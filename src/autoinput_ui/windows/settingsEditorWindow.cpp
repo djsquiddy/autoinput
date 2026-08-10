@@ -12,7 +12,7 @@
 namespace autoinput::ui
 {
     SettingsEditorWindow::SettingsEditorWindow()
-        : UiWindow("Settings")
+        : UiWindow("Settings", "windows.settings")
     {
         loadSettings();
     }

@@ -11,7 +11,7 @@
 namespace autoinput::ui
 {
     LogViewerWindow::LogViewerWindow(const IEnvironment& environment)
-        : UiWindow("Logs"), m_environment(environment)
+        : UiWindow("Logs", "windows.logs"), m_environment(environment)
     {
     }
 

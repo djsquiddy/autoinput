@@ -17,7 +17,7 @@
 namespace autoinput::ui
 {
     SequenceEditorWindow::SequenceEditorWindow()
-        : UiWindow("Sequence Editor")
+        : UiWindow("Sequence Editor", "windows.sequenceEditor")
     {
         refreshConfigList();
     }

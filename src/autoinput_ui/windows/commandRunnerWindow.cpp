@@ -11,7 +11,7 @@
 namespace autoinput::ui
 {
     CommandRunnerWindow::CommandRunnerWindow(services::IAutomationRuntimeClient& runtimeClient, const IEnvironment& environment)
-        : UiWindow("Command Runner"), m_runtimeClient(runtimeClient), m_configService(environment)
+        : UiWindow("Command Runner", "windows.commandRunner"), m_runtimeClient(runtimeClient), m_configService(environment)
     {
         refreshConfigs();
     }

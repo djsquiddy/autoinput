@@ -13,7 +13,7 @@
 namespace autoinput::ui
 {
     NotificationTesterWindow::NotificationTesterWindow(services::IAutomationRuntimeClient& runtimeClient)
-        : UiWindow("Notification Tester")
+        : UiWindow("Notification Tester", "windows.notificationTester")
         , m_runtimeClient(runtimeClient)
     {
     }

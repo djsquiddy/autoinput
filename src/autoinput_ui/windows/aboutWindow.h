@@ -23,7 +23,7 @@ namespace autoinput::ui
          * @brief Constructs a new AboutWindow.
          */
         AboutWindow(services::IAutomationRuntimeClient& runtimeClient, const IEnvironment& environment)
-            : UiWindow("About / Diagnostics"), m_runtimeClient(runtimeClient), m_environment(environment)
+            : UiWindow("About / Diagnostics", "windows.about"), m_runtimeClient(runtimeClient), m_environment(environment)
         {
         }
 

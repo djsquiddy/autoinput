@@ -7,12 +7,13 @@
 #include "../core/windowManager.h"
 #include "../core/windowIds.h"
 #include "../core/uiActions.h"
+#include "../core/localization.h"
 #include <imgui.h>
 
 namespace autoinput::ui
 {
     MainWindow::MainWindow(WindowManager& windows)
-        : UiWindow("AutoInput Main"), m_windows(windows)
+        : UiWindow("AutoInput Main", "windows.main"), m_windows(windows)
     {
         setFullscreen(true);
     }
@@ -26,19 +27,21 @@ namespace autoinput::ui
 
     void MainWindow::renderContent()
     {
+        auto& loc = Localization::get();
+
         if (ImGui::BeginMenuBar())
         {
-            if (ImGui::BeginMenu("File"))
+            if (ImGui::BeginMenu(loc.text("menus.file").data()))
             {
-                if (ImGui::MenuItem("Exit", "Alt+F4"))
+                if (ImGui::MenuItem(loc.text("buttons.exit").data(), "Alt+F4"))
                 {
                     m_shouldExit = true;
                 }
                 ImGui::EndMenu();
             }
-            if (ImGui::BeginMenu("Edit"))
+            if (ImGui::BeginMenu(loc.text("menus.edit").data()))
             {
-                if (ImGui::MenuItem("Command Palette", "Ctrl+P"))
+                if (ImGui::MenuItem(loc.text("actions.openCommandPalette").data(), "Ctrl+P"))
                 {
                     m_windows.open(WindowIds::CommandPalette);
                 }
@@ -47,7 +50,7 @@ namespace autoinput::ui
                 auto actions = UiActionRegistry::getActions();
                 for (const auto& action : actions)
                 {
-                    if (ImGui::MenuItem(action.label.c_str()))
+                    if (ImGui::MenuItem(loc.text(action.labelKey).data()))
                     {
                         UiActionRegistry::execute(action.id, m_windows);
                     }
@@ -63,40 +66,40 @@ namespace autoinput::ui
             ImGui::EndMenuBar();
         }
 
-        ImGui::Text("AutoInput UI");
+        ImGui::Text(loc.text("app.name").data());
         ImGui::Separator();
 
         // Quick Actions
-        if (ImGui::Button("Run Command", ImVec2(150, 40)))
+        if (ImGui::Button(loc.text("windows.commandRunner").data(), ImVec2(150, 40)))
         {
             m_windows.open(WindowIds::CommandRunner);
         }
         ImGui::SameLine();
-        if (ImGui::Button("Runtime Status", ImVec2(150, 40)))
+        if (ImGui::Button(loc.text("windows.runtimeDashboard").data(), ImVec2(150, 40)))
         {
             m_windows.open(WindowIds::RuntimeDashboard);
         }
         ImGui::SameLine();
-        if (ImGui::Button("Record Sequence", ImVec2(150, 40)))
+        if (ImGui::Button(loc.text("windows.sequenceRecorder").data(), ImVec2(150, 40)))
         {
             m_windows.open(WindowIds::SequenceRecorder);
         }
 
         ImGui::Spacing();
-        ImGui::Text("Shortcuts");
-        if (ImGui::Button("Config Manager")) m_windows.open(WindowIds::ConfigManager);
+        ImGui::Text(loc.text("actionCategories.tools").data());
+        if (ImGui::Button(loc.text("windows.configManager").data())) m_windows.open(WindowIds::ConfigManager);
         ImGui::SameLine();
-        if (ImGui::Button("Settings")) m_windows.open(WindowIds::Settings);
+        if (ImGui::Button(loc.text("windows.settings").data())) m_windows.open(WindowIds::Settings);
         ImGui::SameLine();
-        if (ImGui::Button("Logs")) m_windows.open(WindowIds::Logs);
+        if (ImGui::Button(loc.text("windows.logs").data())) m_windows.open(WindowIds::Logs);
         ImGui::SameLine();
-        if (ImGui::Button("Diagnostics")) m_windows.open(WindowIds::BackendDiagnostics);
+        if (ImGui::Button(loc.text("windows.backendDiagnostics").data())) m_windows.open(WindowIds::BackendDiagnostics);
 
         ImGui::Separator();
-        ImGui::Text("Information:");
+        ImGui::Text("%s:", loc.text("status.ready").data());
         ImGui::BeginChild("StatusRegion", ImVec2(0, 0), true);
         ImGui::TextUnformatted("Application initialized.");
-        ImGui::TextUnformatted("Press Ctrl+P to open the Command Palette.");
+        ImGui::Text("Press Ctrl+P to open the %s.", loc.text("actions.openCommandPalette").data());
         ImGui::EndChild();
 
         if (m_showDemoWindow)

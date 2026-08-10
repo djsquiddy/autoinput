@@ -21,6 +21,7 @@ notificationTester = "Notification Tester"
 importExport = "Import / Export"
 backupRestore = "Backup / Restore"
 about = "About AutoInput"
+commandPalette = "Command Palette"
 
 [menus]
 file = "File"
@@ -56,6 +57,7 @@ unknown = "Unknown"
 ready = "Ready"
 
 [actions]
+openCommandPalette = "Command Palette"
 openSettings = "Open Settings"
 openConfigEditor = "Open Config Editor"
 openConfigManager = "Open Config Manager"

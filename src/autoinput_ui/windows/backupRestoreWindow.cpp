@@ -22,7 +22,7 @@ namespace autoinput::ui
     namespace fs = std::filesystem;
 
     BackupRestoreWindow::BackupRestoreWindow()
-        : UiWindow("Backup / Restore")
+        : UiWindow("Backup / Restore", "windows.backupRestore")
     {
         refreshBackups();
     }
