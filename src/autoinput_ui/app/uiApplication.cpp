@@ -4,6 +4,7 @@
  * @date August 2026
  */
 #include "uiApplication.h"
+#include "../core/localization.h"
 #include "../core/windowIds.h"
 #include "../core/uibackend.h"
 #include "../core/windowManager.h"
@@ -71,6 +72,15 @@ namespace autoinput::ui
     void UiApplication::initialize()
     {
         Logger::info("Initializing UI Application...");
+
+        // Load localization
+        std::filesystem::path locPath = SystemEnvironment::instance().executableDirectoryPath() / "resources" / "localization" / "en-US.toml";
+        if (!Localization::get().loadFromFile(locPath))
+        {
+            // Fallback to current directory if not found relative to exe
+            Localization::get().loadFromFile("resources/localization/en-US.toml");
+        }
+
         m_uiBackend->init();
 
         m_windowManager->addWindow<MainWindow>(std::string(WindowIds::Main), *m_windowManager);

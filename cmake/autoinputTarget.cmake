@@ -54,4 +54,21 @@ function(configure_autoinput_target target_name)
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
+
+    get_target_property(TARGET_TYPE ${target_name} TYPE)
+    if(TARGET_TYPE STREQUAL "EXECUTABLE")
+        add_custom_command(TARGET ${target_name} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_SOURCE_DIR}/resources"
+                "$<TARGET_FILE_DIR:${target_name}>/resources"
+                COMMENT "Copying resources to output directory for ${target_name}"
+        )
+
+        add_custom_command(TARGET ${target_name} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_SOURCE_DIR}/configs"
+                "$<TARGET_FILE_DIR:${target_name}>/configs"
+                COMMENT "Copying configs to output directory for ${target_name}"
+        )
+    endif()
 endfunction()
