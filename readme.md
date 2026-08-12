@@ -24,6 +24,16 @@ A versatile C++ utility for automating mouse and keyboard input on Windows and L
 - Configurable build options for optional components.
 - No telemetry / no analytics.
 
+## Responsible Use Disclaimer
+
+> AutoInput is intended for legitimate automation use cases such as accessibility, productivity, software testing, and user-authorized workflows. It is not designed or intended for cheating, gaining unfair advantages in games, bypassing anti-cheat systems, violating terms of service, or automating applications without permission.
+>
+> AutoInput uses standard operating-system input APIs and does not attempt to hide itself, evade detection, inject into games, modify game memory, defeat anti-cheat systems, or bypass application protections. Users are solely responsible for ensuring their use of AutoInput complies with applicable laws, policies, and the rules of any software or game they interact with.
+>
+> Online, multiplayer, competitive, or anti-cheat-protected games may prohibit macros, auto-clickers, or synthetic input. Do not use AutoInput with any game or application unless automation is explicitly allowed.
+>
+> For more information, see the [Responsible Use Policy](docs/responsible-use.md).
+
 ### Requirements
 
 - **OS**: Windows or Linux (X11 and Wayland)
