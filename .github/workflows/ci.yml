@@ -2,29 +2,33 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "resources/**"
   pull_request:
-    branches: [ main, master ]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "resources/**"
 
 jobs:
   build:
+    name: Build and Test
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up CMake
-      uses: jwlawrence/actions-setup-cmake@v1
+      - name: Set up Ninja
+        uses: ashutoshvarma/setup-ninja@master
 
-    - name: Set up Ninja
-      uses: ashutoshvarma/setup-ninja@master
+      - name: Configure CMake
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DAUTOINPUT_BUILD_TESTS=ON -DAUTOINPUT_BUILD_TRAY=ON -DAUTOINPUT_BUILD_UI=ON
 
-    - name: Configure CMake
-      run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DAUTOINPUT_BUILD_TESTS=ON -DAUTOINPUT_BUILD_TRAY=OFF -DAUTOINPUT_BUILD_UI=OFF
+      - name: Build
+        run: cmake --build build --config Release
 
-    - name: Build
-      run: cmake --build build --config Release
-
-    - name: Test
-      working-directory: build
-      run: ctest -C Release --output-on-failure
+      - name: Test
+        run: ctest --test-dir build --output-on-failure -C Release
