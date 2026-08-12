@@ -51,7 +51,7 @@ namespace autoinput::ui
             toml::parse_result result = toml::parse_file(path.string());
             if (!result)
             {
-                Logger::errorStream() << "Localization: Failed to parse " << path.string() << ":\n" << result.error();
+                LogStream::error() << "Localization: Failed to parse " << path.string() << ":\n" << result.error();
                 return false;
             }
  

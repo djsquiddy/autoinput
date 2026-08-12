@@ -145,12 +145,12 @@ namespace autoinput
                 // For backward compatibility, check for global fields inside the single command table
                 tryGetTableValue(cmdNode, "end", configData.endKey);
                 tryGetTableValue(cmdNode, "application", configData.application);
-                tryGetTableValue(cmdNode, "appendBlacklist", configData.appendBlacklist);
                 tryGetTableValue(cmdNode, "statusNotificationMode", configData.statusNotificationMode);
                 tryGetTableValue(cmdNode, "logLevel", configData.logLevel);
 
                 if (const auto blacklistCfg = cmdNode["blacklist"])
                 {
+                    configData.blacklist.clear();
                     if (blacklistCfg.is_string())
                     {
                         std::string app;
@@ -179,11 +179,11 @@ namespace autoinput
             // Also allow global fields at the top level
             tryGetTableValue(table, "end", configData.endKey);
             tryGetTableValue(table, "application", configData.application);
-            tryGetTableValue(table, "appendBlacklist", configData.appendBlacklist);
             tryGetTableValue(table, "statusNotificationMode", configData.statusNotificationMode);
             tryGetTableValue(table, "logLevel", configData.logLevel);
             if (const auto blacklistCfg = table["blacklist"])
             {
+                configData.blacklist.clear();
                 if (blacklistCfg.is_string())
                 {
                     std::string app;
@@ -276,7 +276,7 @@ namespace autoinput
         toml::parse_result result = toml::parse_file(configPath.string());
         if (!result)
         {
-            Logger::errorStream() << "Parsing failed:\n" << result.error();
+            LogStream::error() << "Parsing failed:\n" << result.error();
             return std::nullopt;
         }
 
@@ -448,11 +448,6 @@ namespace autoinput
                 command.insert("application", configData.application);
             }
             
-            if (!configData.appendBlacklist)
-            {
-                command.insert("appendBlacklist", false);
-            }
-            
             auto insertStringOrArrayToTable = [&](toml::table& target, const std::string_view key, const std::vector<std::string>& values) {
                 if (values.size() == 1)
                 {
@@ -492,11 +487,6 @@ namespace autoinput
             if (!configData.application.empty())
             {
                 table.insert("application", configData.application);
-            }
-            
-            if (!configData.appendBlacklist)
-            {
-                table.insert("appendBlacklist", false);
             }
 
             auto insertStringOrArrayToTable = [&](toml::table& target, const std::string_view key, const std::vector<std::string>& values) {

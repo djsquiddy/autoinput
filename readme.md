@@ -475,7 +475,6 @@ Global settings can be placed at the top level of the file:
     end = "f3"
     application = "MyGame.exe"
     blacklist = ["overlay.exe"]
-    appendBlacklist = true
     statusNotificationMode = "both"
     logLevel = "info"
 
@@ -496,8 +495,7 @@ Supported global settings:
 
 - `end`: Hotkey or mouse button used to stop automation.
 - `application`: Only allow automation while this application is focused.
-- `blacklist`: Applications where automation should not run.
-- `appendBlacklist`: When `true`, append this config's blacklist to the default blacklist. When `false`, replace the default blacklist.
+- `blacklist`: Applications where automation should not run. If a user settings file defines `blacklist`, it replaces the built-in blacklist.
 - `statusNotificationMode`: Set status notification mode (`off`, `console`, `desktop`, `both`).
 - `logLevel`: Set logging level (`debug`, `info`, `warning`, `error`).
 
@@ -616,7 +614,6 @@ However, saved configs prefer the inline style:
     end = "f3"
     application = "Core Keeper"
     blacklist = ["Discord.exe", "Steam Overlay"]
-    appendBlacklist = true
     logLevel = "info"
 
     [[command]]

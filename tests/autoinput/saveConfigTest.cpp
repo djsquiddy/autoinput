@@ -100,7 +100,6 @@ namespace autoinput
         ASSERT_EQ(loaded->blacklist.size(), 2);
         EXPECT_EQ(loaded->blacklist[0], "app1.exe");
         EXPECT_EQ(loaded->blacklist[1], "app2.exe");
-        EXPECT_TRUE(loaded->appendBlacklist);
     }
 
     TEST_F(DumpTest, SaveConfigHandlesMultipleCommands)

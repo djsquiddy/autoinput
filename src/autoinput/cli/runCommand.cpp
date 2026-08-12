@@ -109,16 +109,7 @@ namespace autoinput::cli
 
             if (!configData.blacklist.empty())
             {
-                if (!configData.appendBlacklist)
-                {
-                    arguments.blacklist.clear();
-                }
-
-                arguments.blacklist.insert(
-                    arguments.blacklist.end(),
-                    configData.blacklist.begin(),
-                    configData.blacklist.end()
-                );
+                arguments.blacklist = configData.blacklist;
             }
 
             if (!configData.statusNotificationMode.empty())

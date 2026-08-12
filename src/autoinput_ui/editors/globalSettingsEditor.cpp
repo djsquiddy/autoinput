@@ -32,11 +32,6 @@ namespace autoinput::ui::editors
             changed = true;
         }
  
-        if (ImGui::Checkbox(loc.text("labels.appendBlacklist").data(), &settings.appendBlacklist))
-        {
-            changed = true;
-        }
- 
         if (widgets::StringListEditor(loc.text("labels.blacklistDescription").data(), settings.blacklist, loc.text("buttons.addApplication").data()))
         {
             changed = true;

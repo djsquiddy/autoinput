@@ -31,7 +31,6 @@ namespace autoinput::ui
         m_editorSettings.endKey = defaults.end;
         m_editorSettings.application = defaults.application;
         m_editorSettings.blacklist = defaults.blacklist;
-        m_editorSettings.appendBlacklist = defaults.appendBlacklist;
         m_editorSettings.statusNotificationMode = defaults.statusNotificationMode;
         m_editorSettings.logLevel = defaults.logLevel;
         m_editorSettings.uiLanguage = defaults.uiLanguage;
@@ -47,7 +46,6 @@ namespace autoinput::ui
         defaults.end = m_editorSettings.endKey;
         defaults.application = m_editorSettings.application;
         defaults.blacklist = m_editorSettings.blacklist;
-        defaults.appendBlacklist = m_editorSettings.appendBlacklist;
         defaults.statusNotificationMode = m_editorSettings.statusNotificationMode;
         defaults.logLevel = m_editorSettings.logLevel;
         defaults.uiLanguage = m_editorSettings.uiLanguage;
@@ -74,7 +72,6 @@ namespace autoinput::ui
         m_editorSettings.endKey = defaults.end;
         m_editorSettings.application = defaults.application;
         m_editorSettings.blacklist = defaults.blacklist;
-        m_editorSettings.appendBlacklist = defaults.appendBlacklist;
         m_editorSettings.statusNotificationMode = defaults.statusNotificationMode;
         m_editorSettings.logLevel = defaults.logLevel;
         m_editorSettings.uiLanguage = defaults.uiLanguage;
@@ -89,7 +86,6 @@ namespace autoinput::ui
         tempConfig.endKey = m_editorSettings.endKey;
         tempConfig.application = m_editorSettings.application;
         tempConfig.blacklist = m_editorSettings.blacklist;
-        tempConfig.appendBlacklist = m_editorSettings.appendBlacklist;
         tempConfig.statusNotificationMode = m_editorSettings.statusNotificationMode;
         tempConfig.logLevel = m_editorSettings.logLevel;
 

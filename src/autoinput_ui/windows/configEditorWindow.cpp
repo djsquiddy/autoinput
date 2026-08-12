@@ -213,7 +213,6 @@ namespace autoinput::ui
         settings.endKey = m_draft.endKey;
         settings.application = m_draft.application;
         settings.blacklist = m_draft.blacklist;
-        settings.appendBlacklist = m_draft.appendBlacklist;
         settings.statusNotificationMode = m_draft.statusNotificationMode;
         settings.logLevel = m_draft.logLevel;
 
@@ -222,7 +221,6 @@ namespace autoinput::ui
             m_draft.endKey = settings.endKey;
             m_draft.application = settings.application;
             m_draft.blacklist = settings.blacklist;
-            m_draft.appendBlacklist = settings.appendBlacklist;
             m_draft.statusNotificationMode = settings.statusNotificationMode;
             m_draft.logLevel = settings.logLevel;
             markDirty();

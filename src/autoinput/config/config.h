@@ -77,7 +77,6 @@ namespace autoinput
         std::string button{ defaults::DefaultMouseButtonName };
         std::string application{};
         std::vector<std::string> blacklist{};
-        bool appendBlacklist{ true };
         std::string statusNotificationMode{ defaults::DefaultStatusNotificationMode };
         std::string logLevel{ defaults::DefaultLogLevel };
         bool setupCompleted{ false };
@@ -91,7 +90,6 @@ namespace autoinput
         std::string endKey;
         std::string application;
         std::vector<std::string> blacklist;
-        bool appendBlacklist = true;
         std::string statusNotificationMode;
         std::string logLevel;
     };

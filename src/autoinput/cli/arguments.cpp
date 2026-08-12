@@ -29,7 +29,7 @@ namespace autoinput
 
     void ProgramArguments::applyDefaults()
     {
-        const auto& [start, end, press, release, action, button, application, settingsBlacklist, appendBlacklist, statusNotification, settingsLogLevel, setupCompleted, uiLanguage] = m_settings.getDefaults();
+        const auto& [start, end, press, release, action, button, application, settingsBlacklist, statusNotification, settingsLogLevel, setupCompleted, uiLanguage] = m_settings.getDefaults();
 
         if (!settingsBlacklist.empty())
         {
@@ -141,12 +141,9 @@ namespace autoinput
         data.endKey = endKey;
         data.application = applicationName;
         data.blacklist = blacklist;
-        data.appendBlacklist = true; // CLI arguments always append or we don't have enough info to know if they intended to replace.
         data.statusNotificationMode = statusNotificationModeToString(statusNotificationMode);
         data.logLevel = logLevelToString(Logger::getLogLevel());
-        // Actually, we don't store appendBlacklist in ProgramArguments itself.
-        // For now, let's just keep the default true.
-
+ 
         const size_t buttonCount = buttons.size();
         const size_t keyCount = keys.size();
         const size_t targetCount = buttonCount + keyCount;

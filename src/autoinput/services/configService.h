@@ -10,6 +10,7 @@
 #pragma once
 
 #include "autoinput/config/config.h"
+#include "autoinput/config/configValidator.h"
 
 namespace autoinput
 {

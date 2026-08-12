@@ -21,7 +21,6 @@ namespace autoinput::ui::editors
         std::string endKey;                   /**< Hotkey to end the current automation. */
         std::string application;               /**< Target application name. */
         std::vector<std::string> blacklist;   /**< List of processes where automation should not run. */
-        bool appendBlacklist = true;          /**< Whether to append to the global blacklist. */
         std::string statusNotificationMode;   /**< How notifications should be shown. */
         std::string logLevel;                 /**< Logging verbosity level. */
         std::string uiLanguage;               /**< Language code for UI localization. */

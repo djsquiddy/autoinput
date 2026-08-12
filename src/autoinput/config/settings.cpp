@@ -46,7 +46,6 @@ namespace autoinput
         {
             table.insert("application", m_defaults.application);
         }
-        table.insert("appendBlacklist", m_defaults.appendBlacklist);
         table.insert("statusNotificationMode", m_defaults.statusNotificationMode);
         table.insert("logLevel", m_defaults.logLevel);
         table.insert("setupCompleted", m_defaults.setupCompleted);
@@ -103,16 +102,12 @@ namespace autoinput
         tryGetTableValue(table, "application", m_defaults.application);
         tryGetTableValue(table, "statusNotificationMode", m_defaults.statusNotificationMode);
         tryGetTableValue(table, "logLevel", m_defaults.logLevel);
-        tryGetTableValue(table, "appendBlacklist", m_defaults.appendBlacklist);
         tryGetTableValue(table, "setupCompleted", m_defaults.setupCompleted);
         tryGetTableValue(table, "uiLanguage", m_defaults.uiLanguage);
 
         if (auto *const blacklist = table.get("blacklist"); (blacklist != nullptr) && blacklist->is_array())
         {
-            if (!m_defaults.appendBlacklist)
-            {
-                m_defaults.blacklist.clear();
-            }
+            m_defaults.blacklist.clear();
             for (auto& item : *blacklist->as_array())
             {
                 if (item.is_string())

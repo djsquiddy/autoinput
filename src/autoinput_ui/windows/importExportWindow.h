@@ -10,6 +10,7 @@
 
 #include "../core/uiWindow.h"
 #include "autoinput/config/config.h"
+#include "autoinput/config/configValidator.h"
 #include <string>
 #include <vector>
 #include <optional>
