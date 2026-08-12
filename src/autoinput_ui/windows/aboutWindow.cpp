@@ -60,14 +60,17 @@ namespace autoinput::ui
             const auto settingsPath = (autoinput::getUserConfigsPath(m_environment) / autoinput::defaults::SettingFileName).string();
             const auto logPath = autoinput::Logger::getFileName();
             const auto backend = m_runtimeClient.getBackendName();
-            const auto rawStatus = services::statusToString(m_runtimeClient.getStatus());
-            std::string status = rawStatus;
-            if (rawStatus == "Running") status = loc.text("status.running");
-            else if (rawStatus == "Stopped") status = loc.text("status.stopped");
-            else if (rawStatus == "Starting") status = loc.text("status.starting");
-            else if (rawStatus == "Paused") status = loc.text("status.paused");
-            else if (rawStatus == "Error") status = loc.text("status.error");
-            else if (rawStatus == "Unknown") status = loc.text("status.unknown");
+            const auto currentStatus = m_runtimeClient.getStatus();
+            std::string status;
+            switch (currentStatus)
+            {
+            case services::RuntimeStatus::Running:  status = loc.text("status.running"); break;
+            case services::RuntimeStatus::Stopped:  status = loc.text("status.stopped"); break;
+            case services::RuntimeStatus::Starting: status = loc.text("status.starting"); break;
+            case services::RuntimeStatus::Paused:   status = loc.text("status.paused"); break;
+            case services::RuntimeStatus::Error:    status = loc.text("status.error"); break;
+            default:                                status = loc.text("status.unknown"); break;
+            }
  
             if (ImGui::BeginTable("DiagnosticsTable", 2, ImGuiTableFlags_BordersInnerV))
             {

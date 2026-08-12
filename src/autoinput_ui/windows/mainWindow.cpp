@@ -66,7 +66,7 @@ namespace autoinput::ui
             ImGui::EndMenuBar();
         }
 
-        ImGui::Text(loc.text("app.name").data());
+        ImGui::Text("%s", loc.text("app.name").data());
         ImGui::Separator();
 
         // Quick Actions
@@ -86,7 +86,7 @@ namespace autoinput::ui
         }
 
         ImGui::Spacing();
-        ImGui::Text(loc.text("actionCategories.tools").data());
+        ImGui::Text("%s", loc.text("actionCategories.tools").data());
         if (ImGui::Button(loc.text("windows.configManager").data())) m_windows.open(WindowIds::ConfigManager);
         ImGui::SameLine();
         if (ImGui::Button(loc.text("windows.settings").data())) m_windows.open(WindowIds::Settings);
