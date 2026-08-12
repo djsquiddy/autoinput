@@ -124,16 +124,50 @@ namespace autoinput
         }
     }
 
-    LogStream::LogStream(Logger& logger, LogLevel level, std::source_location loc)
-        : m_logger{ logger }
-        , m_level{ level }
+    LogStream::LogStream(const LogLevel level, const std::source_location loc)
+        : m_level{ level }
         , m_loc{ loc }
     {
     }
 
     LogStream::~LogStream()
     {
-        m_logger.log_impl(m_level, m_buffer.str(), m_loc);
+        Logger::log(m_level, m_buffer.str(), m_loc);
+    }
+
+    LogStream LogStream::trace(const std::source_location loc)
+    {
+        return LogStream{ LogLevel::Trace, loc };
+    }
+
+    LogStream LogStream::debug(const std::source_location loc)
+    {
+        return LogStream{ LogLevel::Debug, loc };
+    }
+
+    LogStream LogStream::info(const std::source_location loc)
+    {
+        return LogStream{ LogLevel::Info, loc };
+    }
+
+    LogStream LogStream::print(const std::source_location loc)
+    {
+        return LogStream{ LogLevel::Print, loc };
+    }
+
+    LogStream LogStream::warn(const std::source_location loc)
+    {
+        return LogStream{ LogLevel::Warning, loc };
+    }
+
+    LogStream LogStream::error(const std::source_location loc)
+    {
+        return LogStream{ LogLevel::Error, loc };
+    }
+
+    LogStream LogStream::fatal(const std::source_location loc)
+    {
+        return LogStream{ LogLevel::Fatal, loc };
     }
 
     // Default to console only, or call setFile()
@@ -173,16 +207,6 @@ namespace autoinput
         printErrorJson(errors);
     }
 
-    LogStream Logger::debugStream(std::source_location loc)
-    {
-        return {instance(), LogLevel::Debug, loc};
-    }
-
-    LogStream Logger::traceStream(std::source_location loc)
-    {
-        return {instance(), LogLevel::Trace, loc};
-    }
-
     void Logger::trace(const std::string_view msg, const std::source_location loc)
     {
         instance().log_impl(LogLevel::Trace, msg, loc);
@@ -193,19 +217,9 @@ namespace autoinput
         instance().log_impl(LogLevel::Debug, msg, loc);
     }
 
-    LogStream Logger::infoStream(std::source_location loc)
-    {
-        return {instance(), LogLevel::Info, loc};
-    }
-
     void Logger::info(const std::string_view msg, const std::source_location loc)
     {
         instance().log_impl(LogLevel::Info, msg, loc);
-    }
-
-    LogStream Logger::printStream(const std::source_location loc)
-    {
-        return {instance(), LogLevel::Print, loc};
     }
 
     Logger& Logger::instance()
@@ -224,29 +238,14 @@ namespace autoinput
         instance().log_impl(LogLevel::Print, msg, loc);
     }
 
-    LogStream Logger::warnStream(std::source_location loc)
-    {
-        return {instance(), LogLevel::Warning, loc};
-    }
-
     void Logger::warn(const std::string_view msg, const std::source_location loc)
     {
         instance().log_impl(LogLevel::Warning, msg, loc);
     }
 
-    LogStream Logger::errorStream(std::source_location loc)
-    {
-        return {instance(), LogLevel::Error, loc};
-    }
-
     void Logger::error(const std::string_view msg, const std::source_location loc)
     {
         instance().log_impl(LogLevel::Error, msg, loc);
-    }
-
-    LogStream Logger::fatalStream(std::source_location loc)
-    {
-        return {instance(), LogLevel::Fatal, loc};
     }
 
     bool Logger::isDebugModeEnabled()
@@ -285,7 +284,7 @@ namespace autoinput
                 const auto now = std::chrono::system_clock::now();
                 const auto timeNow = std::chrono::system_clock::to_time_t(now);
                 const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-                
+
                 std::tm tm_now;
 #ifdef _WIN32
                 localtime_s(&tm_now, &timeNow);

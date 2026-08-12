@@ -26,7 +26,7 @@
 namespace autoinput
 {
     struct ErrorMessage;
-    enum class ErrorCode : i32;
+    enum class ErrorCode : int32_t;
     class Logger;
 
     enum class LogLevel : uint8_t
@@ -38,7 +38,7 @@ namespace autoinput
         Warning = 4,
         Error = 5,
         Fatal = 6,
-        Unknown = 7
+        Unknown = 7,
     };
 
     /**
@@ -93,16 +93,57 @@ namespace autoinput
     public:
         /**
          * @brief Constructs a LogStream.
-         * @param logger Reference to the Logger.
          * @param level The log level for this stream.
          * @param loc The source location where the stream was created.
          */
-        LogStream(Logger& logger, LogLevel level, std::source_location loc);
-
+        explicit LogStream(LogLevel level, std::source_location loc = std::source_location::current());
         /**
          * @brief Destructor that flushes the buffered log message to the logger.
          */
         ~LogStream();
+
+        /**
+         * @brief Creates a LogStream for Trace level.
+         * @param loc The source location.
+         * @return The LogStream.
+         */
+        static LogStream trace(std::source_location loc = std::source_location::current());
+        /**
+         * @brief Creates a LogStream for Debug level.
+         * @param loc The source location.
+         * @return The LogStream.
+         */
+        static LogStream debug(std::source_location loc = std::source_location::current());
+        /**
+         * @brief Creates a LogStream for Print level.
+         * @param loc The source location.
+         * @return The LogStream.
+         */
+        static LogStream print(std::source_location loc = std::source_location::current());
+        /**
+         * @brief Creates a LogStream for Info level.
+         * @param loc The source location.
+         * @return The LogStream.
+         */
+        static LogStream info(std::source_location loc = std::source_location::current());
+        /**
+         * @brief Creates a LogStream for Warning level.
+         * @param loc The source location.
+         * @return The LogStream.
+         */
+        static LogStream warn(std::source_location loc = std::source_location::current());
+        /**
+         * @brief Creates a LogStream for Error level.
+         * @param loc The source location.
+         * @return The LogStream.
+         */
+        static LogStream error(std::source_location loc = std::source_location::current());
+        /**
+         * @brief Creates a LogStream for Fatal level.
+         * @param loc The source location.
+         * @return The LogStream.
+         */
+        static LogStream fatal(std::source_location loc = std::source_location::current());
 
         /**
          * @brief Template operator<< to accept any streamable type.
@@ -118,7 +159,6 @@ namespace autoinput
         }
 
     private:
-        Logger& m_logger;
         LogLevel m_level;
         std::source_location m_loc;
         std::ostringstream m_buffer;
@@ -265,49 +305,6 @@ namespace autoinput
          * @param errors The vector of error messages.
          */
         static void fatalError(const std::vector<ErrorMessage>& errors);
-
-        /**
-         * @brief Creates a LogStream for Trace level.
-         * @param loc The source location.
-         * @return The LogStream.
-         */
-        static LogStream traceStream(std::source_location loc = std::source_location::current());
-        /**
-         * @brief Creates a LogStream for Debug level.
-         * @param loc The source location.
-         * @return The LogStream.
-         */
-        static LogStream debugStream(std::source_location loc = std::source_location::current());
-        /**
-         * @brief Creates a LogStream for Print level.
-         * @param loc The source location.
-         * @return The LogStream.
-         */
-        static LogStream printStream(std::source_location loc = std::source_location::current());
-        /**
-         * @brief Creates a LogStream for Info level.
-         * @param loc The source location.
-         * @return The LogStream.
-         */
-        static LogStream infoStream(std::source_location loc = std::source_location::current());
-        /**
-         * @brief Creates a LogStream for Warning level.
-         * @param loc The source location.
-         * @return The LogStream.
-         */
-        static LogStream warnStream(std::source_location loc = std::source_location::current());
-        /**
-         * @brief Creates a LogStream for Error level.
-         * @param loc The source location.
-         * @return The LogStream.
-         */
-        static LogStream errorStream(std::source_location loc = std::source_location::current());
-        /**
-         * @brief Creates a LogStream for Fatal level.
-         * @param loc The source location.
-         * @return The LogStream.
-         */
-        static LogStream fatalStream(std::source_location loc = std::source_location::current());
 
         /**
          * @brief Checks if debug mode is enabled.

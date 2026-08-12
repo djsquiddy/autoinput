@@ -41,11 +41,20 @@ namespace autoinput
         toml::table table;
         table.insert("start", m_defaults.start);
         table.insert("end", m_defaults.end);
-        if (!m_defaults.press.empty()) table.insert("press", m_defaults.press);
-        if (!m_defaults.release.empty()) table.insert("release", m_defaults.release);
+        if (!m_defaults.press.empty())
+        {
+            table.insert("press", m_defaults.press);
+        }
+        if (!m_defaults.release.empty())
+        {
+            table.insert("release", m_defaults.release);
+        }
         table.insert("action", m_defaults.action);
         table.insert("button", m_defaults.button);
-        if (!m_defaults.application.empty()) table.insert("application", m_defaults.application);
+        if (!m_defaults.application.empty())
+        {
+            table.insert("application", m_defaults.application);
+        }
         table.insert("appendBlacklist", m_defaults.appendBlacklist);
         table.insert("statusNotificationMode", m_defaults.statusNotificationMode);
         table.insert("logLevel", m_defaults.logLevel);
@@ -87,7 +96,7 @@ namespace autoinput
         toml::parse_result result = toml::parse_file(path.string());
         if (!result)
         {
-            Logger::errorStream() << "Parsing settings failed for " << path << ":\n" << result.error();
+            LogStream::error() << "Parsing settings failed for " << path << ":\n" << result.error();
             return false;
         }
 
