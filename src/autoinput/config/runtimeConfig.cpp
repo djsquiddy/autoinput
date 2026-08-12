@@ -8,7 +8,6 @@
 #include "autoinput/cli/arguments.h"
 #include "autoinput/config/configValidator.h"
 #include <format>
-#include <algorithm>
 
 namespace autoinput
 {

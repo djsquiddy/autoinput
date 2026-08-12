@@ -12,7 +12,6 @@
 #include "autoinput/config/defaults.h"
 #include "autoinput/platform/environment.h"
 #include "autoinput/support/types.h"
-#include "autoinput/config/configValidator.h"
 
 #include <string>
 #include <vector>

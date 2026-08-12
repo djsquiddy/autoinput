@@ -9,15 +9,6 @@
 
 namespace autoinput
 {
-    const std::vector<SettingKey> Settings::s_keys = {
-        {"blacklist","What applications should the autoinput ignore."},
-        {"statusNotificationMode","Mode the status notification should be "},
-        {"editor","Editor application to use when editing settings."},
-        {"logLevel","Log level to use."},
-        {"setupCompleted", "Whether the setup wizard has been completed."},
-        {"uiLanguage", "The language used for the user interface."}
-    };
-
     bool saveUserSettings(const Settings& settings)
     {
         return settings.save(getUserConfigsPath() / defaults::SettingFileName);
@@ -116,7 +107,7 @@ namespace autoinput
         tryGetTableValue(table, "setupCompleted", m_defaults.setupCompleted);
         tryGetTableValue(table, "uiLanguage", m_defaults.uiLanguage);
 
-        if (const auto blacklist = table.get("blacklist"); blacklist && blacklist->is_array())
+        if (auto *const blacklist = table.get("blacklist"); (blacklist != nullptr) && blacklist->is_array())
         {
             if (!m_defaults.appendBlacklist)
             {

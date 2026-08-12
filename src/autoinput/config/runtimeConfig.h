@@ -5,13 +5,12 @@
  * @date August 2026
  */
 
-#ifndef INCLUDE_AUTOINPUT_CONFIG_RUNTIMECONFIG_H
-#define INCLUDE_AUTOINPUT_CONFIG_RUNTIMECONFIG_H
+#ifndef INCLUDE_AUTOINPUT_CONFIG_RUNTIME_CONFIG_H
+#define INCLUDE_AUTOINPUT_CONFIG_RUNTIME_CONFIG_H
 #pragma once
 
 #include <string>
 #include <vector>
-#include <optional>
 #include <variant>
 #include "autoinput/support/types.h"
 #include "autoinput/input/waitDelay.h"
@@ -62,4 +61,4 @@ namespace autoinput
     std::variant<RuntimeConfig, ValidationError> convertArgumentsToRuntime(const ProgramArguments& arguments);
 }
 
-#endif // INCLUDE_AUTOINPUT_CONFIG_RUNTIMECONFIG_H
+#endif // INCLUDE_AUTOINPUT_CONFIG_RUNTIME_CONFIG_H

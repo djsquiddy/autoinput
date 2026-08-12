@@ -7,11 +7,8 @@
 #include "autoinput/config/config.h"
 
 #include "autoinput/support/errorCode.h"
-#include "autoinput/cli/arguments.h"
-#include "autoinput/config/configMetadata.h"
 #include "autoinput/support/utils.h"
 #include "autoinput/support/logger.h"
-#include "autoinput/platform/platform.h"
 #include "autoinput/platform/environment.h"
 
 

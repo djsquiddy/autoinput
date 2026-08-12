@@ -9,24 +9,13 @@
 #define INCLUDE_AUTOINPUT_CONFIG_SETTINGS_H
 #pragma once
 
-#include <string>
-#include <string_view>
-#include <vector>
-#include <cstdint>
 #include <optional>
 #include <filesystem>
-#include <gsl/gsl>
 
 #include "autoinput/config/config.h"
 
 namespace autoinput
 {
-    struct SettingKey
-    {
-        std::string key{};
-        std::string description{};
-    };
-
     class Settings
     {
     public:
@@ -54,12 +43,10 @@ namespace autoinput
          * @param path The destination path.
          * @return True if successful.
          */
-        bool save(const std::filesystem::path& path) const;
-
+        [[nodiscard]] bool save(const std::filesystem::path& path) const;
 
     private:
         bool loadFromFile(const std::filesystem::path& path);
-        static const std::vector<SettingKey> s_keys;
         DefaultSettings m_defaults;
     };
 
