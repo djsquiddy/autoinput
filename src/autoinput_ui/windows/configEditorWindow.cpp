@@ -23,6 +23,11 @@ namespace autoinput::ui
         refreshConfigList();
     }
 
+    void ConfigEditorWindow::onOpen()
+    {
+        refreshConfigList();
+    }
+
     void ConfigEditorWindow::refreshConfigList()
     {
         m_availableConfigs = autoinput::listAvailableConfigs();

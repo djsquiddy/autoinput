@@ -20,6 +20,11 @@ namespace autoinput::ui
         refreshConfigs();
     }
 
+    void SequenceRecorderWindow::onOpen()
+    {
+        refreshConfigs();
+    }
+
     void SequenceRecorderWindow::refreshConfigs()
     {
         m_availableConfigs = listAvailableConfigs();

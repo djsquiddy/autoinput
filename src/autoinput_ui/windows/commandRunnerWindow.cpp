@@ -17,6 +17,11 @@ namespace autoinput::ui
         refreshConfigs();
     }
 
+    void CommandRunnerWindow::onOpen()
+    {
+        refreshConfigs();
+    }
+
     void CommandRunnerWindow::refreshConfigs()
     {
         m_availableConfigs.clear();

@@ -34,6 +34,7 @@ namespace autoinput::ui
         ConfigManagerWindow(WindowManager& windowManager, const IEnvironment& environment);
 
     protected:
+        void onOpen() override;
         void renderContent() override;
 
     private:

@@ -25,7 +25,7 @@ namespace autoinput::ui
     public:
         explicit CommandRunnerWindow(services::IAutomationRuntimeClient& runtimeClient, const IEnvironment& environment);
 
-    protected:
+        void onOpen() override;
         void renderContent() override;
 
     private:

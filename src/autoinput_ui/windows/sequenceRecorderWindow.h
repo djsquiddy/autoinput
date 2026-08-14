@@ -22,6 +22,7 @@ namespace autoinput::ui
     public:
         explicit SequenceRecorderWindow(services::IAutomationRuntimeClient& runtimeClient, const IEnvironment& environment);
 
+        void onOpen() override;
         void renderContent() override;
         void update() override;
 

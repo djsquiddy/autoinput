@@ -28,6 +28,11 @@ namespace autoinput::ui
         refreshConfigs();
     }
 
+    void ConfigManagerWindow::onOpen()
+    {
+        refreshConfigs();
+    }
+
     void ConfigManagerWindow::refreshConfigs()
     {
         m_configs.clear();

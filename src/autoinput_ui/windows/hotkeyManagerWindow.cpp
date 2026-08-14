@@ -33,6 +33,11 @@ namespace autoinput::ui
         }
     }
 
+    void HotkeyManagerWindow::onOpen()
+    {
+        refreshConfigs();
+    }
+
     void HotkeyManagerWindow::refreshConfigs()
     {
         m_availableConfigs = listAvailableConfigs();

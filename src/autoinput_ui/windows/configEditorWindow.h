@@ -33,6 +33,8 @@ namespace autoinput::ui
     public:
         ConfigEditorWindow();
 
+        void onOpen() override;
+
         /**
          * @brief Loads a specific configuration.
          * @param nameOrPath Name of the config or direct path to file.

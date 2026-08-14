@@ -35,6 +35,8 @@ namespace autoinput::ui
     public:
         HotkeyManagerWindow(WindowManager& windowManager, services::IAutomationRuntimeClient& runtimeClient, const IEnvironment& environment);
 
+        void onOpen() override;
+
     protected:
         void renderContent() override;
         void update() override;
