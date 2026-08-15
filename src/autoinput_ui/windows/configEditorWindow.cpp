@@ -24,6 +24,11 @@ namespace autoinput::ui
         refreshConfigList();
     }
 
+    void ConfigEditorWindow::onOpen()
+    {
+        refreshConfigList();
+    }
+
     void ConfigEditorWindow::update()
     {
         if (m_isCapturing)

@@ -12,8 +12,9 @@
 
 namespace autoinput::ui
 {
-    SettingsEditorWindow::SettingsEditorWindow()
+    SettingsEditorWindow::SettingsEditorWindow(services::IAutomationRuntimeClient& runtimeClient)
         : UiWindow("Settings", "windows.settings")
+        , m_runtimeClient(runtimeClient)
     {
         loadSettings();
     }
@@ -21,6 +22,81 @@ namespace autoinput::ui
     void SettingsEditorWindow::onOpen()
     {
         loadSettings();
+    }
+
+    void SettingsEditorWindow::update()
+    {
+        if (m_isCapturing)
+        {
+            uint32_t currentCount = m_runtimeClient.getRecordedEventCount();
+            if (currentCount > m_captureStartEventCount)
+            {
+                auto seq = m_runtimeClient.getRecordedSequence();
+                stopCapture();
+
+                if (seq && !seq->events.empty())
+                {
+                    std::string bestKey;
+                    for (const auto& event : seq->events)
+                    {
+                        if (event.type == RecordedEventType::KeyDown && event.key.has_value())
+                        {
+                            std::string k = *event.key;
+                            if (bestKey.empty()) bestKey = k;
+                            if (k.find('+') != std::string::npos || 
+                                (k.size() >= 2 && k[0] == 'f' && std::isdigit(k[1])) ||
+                                (!k.empty() && std::isprint(static_cast<unsigned char>(k.back()))))
+                            {
+                                bestKey = k;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!bestKey.empty())
+                    {
+                        m_editorSettings.endKey = bestKey;
+                        markDirty();
+                        m_statusMessage = Localization::get().format("status.capturedKey", bestKey);
+                    }
+                }
+            }
+        }
+    }
+
+    void SettingsEditorWindow::startCapture()
+    {
+        if (m_isCapturing) stopCapture();
+
+        m_isCapturing = true;
+        m_captureStartEventCount = m_runtimeClient.getRecordedEventCount();
+
+        SequenceConfig config;
+        config.recordKeyboardEvents = true;
+        config.recordMouseMoves = false;
+        config.recordMouseClicks = false;
+        config.recordDelays = false;
+        config.name = "CaptureHotkey";
+
+        auto res = m_runtimeClient.startRecording(config);
+        if (res.success)
+        {
+            m_statusMessage = Localization::get().text("status.pressAnyKey");
+        }
+        else
+        {
+            m_statusMessage = Localization::get().format("status.failedToStartCapture", res.message);
+            m_isCapturing = false;
+        }
+    }
+
+    void SettingsEditorWindow::stopCapture()
+    {
+        if (m_isCapturing)
+        {
+            m_runtimeClient.stopRecording();
+            m_isCapturing = false;
+        }
     }
 
     void SettingsEditorWindow::loadSettings()
@@ -108,9 +184,19 @@ namespace autoinput::ui
             ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", loc.text("labels.unsavedChanges").data());
         }
  
-        if (editors::renderGlobalSettingsEditor(m_editorSettings))
+        bool wasCapturing = m_isCapturing;
+        if (editors::renderGlobalSettingsEditor(m_editorSettings, m_isCapturing))
         {
             markDirty();
+        }
+
+        if (m_isCapturing && !wasCapturing)
+        {
+            startCapture();
+        }
+        else if (!m_isCapturing && wasCapturing)
+        {
+            stopCapture();
         }
  
         ImGui::Separator();

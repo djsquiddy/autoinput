@@ -11,6 +11,7 @@
 #include "../core/uiWindow.h"
 #include "../editors/globalSettingsEditor.h"
 #include "autoinput/config/settings.h"
+#include "autoinput/services/automationRuntimeClient.h"
 #include <vector>
 #include <string>
 
@@ -29,10 +30,11 @@ namespace autoinput::ui
     class SettingsEditorWindow final : public UiWindow
     {
     public:
-        SettingsEditorWindow();
+        explicit SettingsEditorWindow(services::IAutomationRuntimeClient& runtimeClient);
 
     protected:
         void onOpen() override;
+        void update() override;
         void renderContent() override;
         void save() override;
 
@@ -52,10 +54,26 @@ namespace autoinput::ui
          */
         void validate();
 
+        /**
+         * @brief Starts hotkey capture.
+         */
+        void startCapture();
+
+        /**
+         * @brief Stops hotkey capture.
+         */
+        void stopCapture();
+
+        services::IAutomationRuntimeClient& m_runtimeClient;
+
         autoinput::Settings m_settings;
         editors::GlobalSettings m_editorSettings;
         std::vector<autoinput::ValidationError> m_validationErrors;
         std::string m_statusMessage;
+
+        // Capture state
+        bool m_isCapturing = false;
+        uint32_t m_captureStartEventCount = 0;
     };
 }
 
