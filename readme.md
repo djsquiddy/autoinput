@@ -156,29 +156,29 @@ You can use the provided scripts to automatically install or update shell comple
 
 **Windows:**
 ```cmd
-.\scripts\install.cmd
+.\scripts\autocomplete\install.cmd
 ```
 
-**Linux/Zsh (Bash/Zsh):**
+**Linux/macOS (Bash/Zsh):**
 ```bash
-./scripts/install.sh
+./scripts/autocomplete/install.sh
 ```
 
 #### Clink (Windows)
 
-If you use [Clink](https://chrisant996.github.io/clink/) for `cmd.exe` on Windows, you can also manually enable autocompletion by copying the `scripts/autoinput_completion.lua` file into your Clink scripts directory (usually `%LOCALAPPDATA%\clink`).
+If you use [Clink](https://chrisant996.github.io/clink/) for `cmd.exe` on Windows, you can also manually enable autocompletion by copying the `scripts/autocomplete/autoinput_completion.lua` file into your Clink scripts directory (usually `%LOCALAPPDATA%\clink`).
 
 #### Zsh (Linux/WSL)
 
-To enable autocompletion in Zsh, add the `scripts/` directory to your `$fpath` in your `~/.zshrc` and initialize completion:
+To enable autocompletion in Zsh, add the `scripts/autocomplete` directory to your `$fpath` in your `~/.zshrc` and initialize completion:
 
 ```zsh
-fpath=(/path/to/autoinput/scripts $fpath)
+fpath=(/path/to/autoinput/scripts/autocomplete $fpath)
 autoload -Uz compinit
 compinit
 ```
 
-Alternatively, you can copy the `scripts/_autoinput` file to a directory already in your `$fpath` (e.g., `/usr/local/share/zsh/site-functions`).
+Alternatively, you can copy the `scripts/autocomplete/_autoinput` file to a directory already in your `$fpath` (e.g., `/usr/local/share/zsh/site-functions`).
 
 ### Usage
 
@@ -189,7 +189,6 @@ autoinput [global options] <command> [options]
 #### Global Options
 
 - `-h, --help`: Show help. Can be used after a command for command-specific help (e.g., `autoinput help run` or `autoinput run --help`).
-- `--examples`: Show more detailed examples for the specified command.
 - `-l, --log LEVEL`: Set logging level (`debug`, `info`, `warning`, `error`).
 - `--json`: Output results as machine-readable JSON. Only applies to specific commands like `config validate`.
 
@@ -319,6 +318,7 @@ Used to manage, list, and validate configurations.
 - **validate NAME_OR_PATH**: Validate a configuration file.
 - **duplicate SOURCE DESTINATION**: Duplicate an existing config to a new user config.
 - **copy**: Alias for `duplicate`.
+- **path NAME_OR_PATH**: Print the resolved path to a configuration file.
 
 #### Examples
 
@@ -342,6 +342,11 @@ Used to manage, list, and validate configurations.
     autoinput config duplicate core-keeper-fishing my-fishing-copy
     ```
     Note that the destination is always written to the user config directory and will not overwrite existing configs unless `--force` is used.
+
+5.  **Get the path to a configuration**:
+    ```bash
+    autoinput config path my-config
+    ```
 
 ### The `apps` Command
 
@@ -394,6 +399,7 @@ The graphical UI provides visual management of automation, configurations, runti
 - Sequence recorder.
 - Runtime dashboard.
 - Advanced runtime controls with start/stop/pause/resume.
+- Hotkey manager.
 - Validation report viewer.
 - Log viewer.
 - Import/export tools.
@@ -413,7 +419,7 @@ cmake -DAUTOINPUT_BUILD_UI=ON ..
 cmake --build .
 ```
 
-This will produce an additional executable named `autoinput_ui` (or `autoinput_ui.exe` on Windows) when the required dependencies are available.
+This will produce an additional executable named `autoinput-ui` (or `autoinput-ui.exe` on Windows) when the required dependencies are available.
 
 ### Configuration
 
@@ -673,18 +679,32 @@ Alternatively, you can run the test executable directly:
 
 ### Scripts
 
-The `scripts/` directory contains helper scripts for building the project:
-- `build.cmd`: Windows build script.
-- `build.sh`: Linux build script.
+The `scripts/` directory contains helper scripts for building, testing, maintenance, and shell completion:
 
-Usage:
+- **`build.py` / `build.cmd` / `build.sh`**: Cross-platform Python build runner supporting targets (`ui`, `tray`, `tests`, `all`), build types (`Release`, `Debug`, `RelWithDebInfo`, `MinSizeRel`), clean rebuild flags (`-c, --clean`), and CMake presets (`-p, --preset <name>`, `--list-presets`).
+- **`run.cmd`**: Windows helper script to build and launch the application.
+- **`appendPath.cmd`**: Windows helper script to temporarily append the build output directory to `PATH`.
+- **`gen_localization_ids.py`**: Generates C++ constexpr localization IDs and lookup helper functions from `resources/localization/en-US.toml`.
+- **`audit_localization.py`**: Audits C++ source code and `en-US.toml` for missing and unused localization keys.
+- **`autocomplete/`**: Shell completion scripts and installers for Bash, Zsh, and Clink.
+
+Usage examples:
 ```bash
 # Build all components in Release mode
 ./scripts/build.sh all Release
 
 # Build only CLI and tests in Debug mode
 ./scripts/build.sh tests Debug
+
+# Build using a specific CMake preset
+python scripts/build.py --preset debug-tests
 ```
+
+### Documentation
+
+Additional documentation is available in the [`docs/`](docs/) directory:
+- [Localization Guide](docs/localization.md) — Localization architecture, TOML conventions, and ID generation tooling.
+- [Responsible Use Policy](docs/responsible-use.md) — Ethical guidelines and policies for automated inputs.
 
 ### License
 

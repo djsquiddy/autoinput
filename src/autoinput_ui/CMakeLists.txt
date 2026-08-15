@@ -29,11 +29,14 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/core/windowManager.cpp
             ${CMAKE_CURRENT_LIST_DIR}/core/windowManager.h
             ${CMAKE_CURRENT_LIST_DIR}/core/windowIds.h
-            ${CMAKE_CURRENT_LIST_DIR}/core/localization.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/core/localization.h
             ${CMAKE_CURRENT_LIST_DIR}/core/uiActions.cpp
             ${CMAKE_CURRENT_LIST_DIR}/core/uiActions.h
             ${CMAKE_CURRENT_LIST_DIR}/core/imguiScope.h
+            ${CMAKE_CURRENT_LIST_DIR}/core/localization.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/core/localization.h
+            # Generated localization files
+            ${LOCALIZATION_IDS_HEADER}
+            ${LOCALIZATION_IDS_SOURCE}
             # Widgets
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.cpp
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.h

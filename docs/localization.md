@@ -92,23 +92,71 @@ ImGui::PopID();
 
 ## Localization API
 
-### `text(key)`
-Returns the localized string for the given key. Returns the key itself if not found.
+### `text(key)` / `text(id)`
+Returns the localized string for the given key string or `LocId` ID. Returns the key itself if not found.
 ```cpp
+// String-based lookup
 auto label = Localization::get().text("buttons.save");
+
+// Fast ID-based lookup (O(1))
+auto label = Localization::get().text(LocIds::BUTTONS_SAVE_ID);
 ```
 
-### `format(key, args...)`
+### `format(key, args...)` / `format(id, args...)`
 Returns a formatted localized string using `std::format` syntax.
 ```cpp
-auto msg = Localization::get().format("app.version", "1.0.0");
+// String-based format
+auto msg = Localization::get().format("labels.sequenceStepsCount", 5);
+
+// Fast ID-based format
+auto msg = Localization::get().format(LocIds::LABELS_SEQUENCE_STEPS_COUNT_ID, 5);
 ```
 
-### `textOr(key, fallback)`
+### `textOr(key, fallback)` / `textOr(id, fallback)`
 Returns the localized string or a specific fallback if not found.
 ```cpp
 auto label = Localization::get().textOr("custom.key", "Default Label");
+auto label = Localization::get().textOr(LocIds::BUTTONS_SAVE_ID, "Save");
 ```
+
+### `has(key)` / `has(id)`
+Checks if a localization entry exists for the given key string or `LocId` ID.
+```cpp
+bool exists = Localization::get().has("buttons.save");
+bool existsById = Localization::get().has(LocIds::BUTTONS_SAVE_ID);
+```
+
+## Localization IDs Generation
+
+To eliminate runtime string hash lookups in performance-sensitive UI loops, localization keys are mapped to `inline constexpr LocId {KEY_NAME}_ID` constants in `localizationIds.h`.
+
+### Build Integration
+
+Localization IDs are generated automatically during the CMake configure/build process into the CMake build directory (`${CMAKE_BINARY_DIR}/generated/autoinput_ui/core/localizationIds.h` and `localizationIds.cpp`).
+- Generating inside the build directory rather than the source directory avoids polluting version control and keeps the source tree clean.
+- CMake generates the files during initial configure (prebuild) for immediate IDE indexing and includes a custom build target (`generate_localization_ids`) for incremental updates when `en-US.toml` changes.
+
+### Generation Script
+
+The `scripts/gen_localization_ids.py` script parses `resources/localization/en-US.toml` and generates:
+- `inline constexpr LocId {KEY_NAME}_ID = {index};` constants in `autoinput::ui::LocalizationIds` (aliased as `autoinput::ui::LocIds`).
+- `const char* idToKey(LocId id)` helper function to match an ID to its TOML key string.
+- `LocId keyToId(std::string_view key)` helper function to match a TOML key string to its ID.
+
+**Usage**:
+```bash
+python scripts/gen_localization_ids.py
+```
+
+To verify that the generated files are up to date without modifying them:
+```bash
+python scripts/gen_localization_ids.py --check
+```
+
+Additional options:
+- `--loc PATH`: Path to the source TOML file (defaults to `resources/localization/en-US.toml`).
+- `--header PATH`: Path to the output header file.
+- `--source PATH`: Path to the output C++ source file.
 
 ## Maintenance and Auditing
 

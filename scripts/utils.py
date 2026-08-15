@@ -47,12 +47,21 @@ class LocalizationFile:
             return set()
         return get_toml_keys(self.data, prefix)
 
+    def get_all_sorted_keys(self, prefix: str = None) -> list[str]:
+        if self.data is None:
+            return []
+        return sorted(list(get_toml_keys(self.data, prefix)))
+
     def is_valid(self):
         return self.data is not None
 
     @classmethod
     def load(cls, local: str) -> 'LocalizationFile':
         filepath = LOC_DIR / f'{local}.toml'
+        return cls.load_from_filepath(filepath)
+
+    @classmethod
+    def load_from_filepath(cls, filepath: pathlib.Path) -> 'LocalizationFile':
         if not filepath.exists():
             logger.error(f"Localization file not found at {filepath}")
             return cls(local, None)
@@ -62,7 +71,7 @@ class LocalizationFile:
                 loc_data = tomllib.load(f)
         except Exception as e:
             logger.error(f"Error parsing TOML at {filepath}: {e}")
-            return cls(local, None)
-        return cls(local, loc_data)
+            return cls(filepath.stem, None)
+        return cls(filepath.stem, loc_data)
 
 

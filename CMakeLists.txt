@@ -51,6 +51,7 @@ set(PROJECT_NAME_UI "${PROJECT_NAME}-ui")
 
 include(configure_gsl)
 include(configure_toml_plusplus)
+include(configure_localization)
 
 add_subdirectory(src)
 

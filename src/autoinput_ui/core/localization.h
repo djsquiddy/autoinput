@@ -8,7 +8,9 @@
 #define INCLUDE_AUTOINPUT_UI_CORE_LOCALIZATION_H
 #pragma once
 
+#include "autoinput/support/types.h"
 #include "autoinput/support/logger.h"
+#include "localizationIds.h"
 #include <string>
 #include <string_view>
 #include <filesystem>
@@ -48,12 +50,27 @@ namespace autoinput::ui
         std::string_view text(std::string_view key) const;
 
         /**
+         * @brief Get localized text by ID.
+         * @param id The localization key ID (e.g. LocIds::APP_NAME_ID).
+         * @return The localized string, or the key name if not found.
+         */
+        std::string_view text(LocId id) const;
+
+        /**
          * @brief Get localized text for a key, or a fallback if not found.
          * @param key The key.
          * @param fallback The fallback string.
          * @return The localized string, or the fallback.
          */
         std::string textOr(std::string_view key, std::string_view fallback) const;
+
+        /**
+         * @brief Get localized text by ID, or a fallback if not found.
+         * @param id The localization key ID.
+         * @param fallback The fallback string.
+         * @return The localized string, or the fallback.
+         */
+        std::string textOr(LocId id, std::string_view fallback) const;
 
         /**
          * @brief Check if a key exists.
@@ -63,14 +80,29 @@ namespace autoinput::ui
         bool has(std::string_view key) const;
 
         /**
+         * @brief Check if a key exists by ID.
+         * @param id The localization key ID.
+         * @return true if the key exists.
+         */
+        bool has(LocId id) const;
+
+        /**
          * @brief Get localized text for a key with formatting.
          * @param key The key.
          * @param args The formatting arguments.
          * @return The formatted localized string.
          */
         template<typename... Args>
-        std::string format(std::string_view key, Args&&... args) const
-        ;
+        std::string format(std::string_view key, Args&&... args) const;
+
+        /**
+         * @brief Get localized text by ID with formatting.
+         * @param id The localization key ID.
+         * @param args The formatting arguments.
+         * @return The formatted localized string.
+         */
+        template<typename... Args>
+        std::string format(LocId id, Args&&... args) const;
 
         /**
          * @brief Get the global localization instance.
@@ -85,9 +117,10 @@ namespace autoinput::ui
 
     private:
         std::map<std::string, std::string, std::less<>> m_strings;
+        std::vector<std::string> m_stringsById;
+        std::vector<uint8_t> m_hasStringById;
         mutable std::set<std::string, std::less<>> m_missingKeys;
     };
-
 
     template <typename ... Args>
     std::string Localization::format(std::string_view key, Args&&... args) const
@@ -100,6 +133,20 @@ namespace autoinput::ui
         {
             Logger::warn("Localization format error for key '{}': {}", key, e.what());
             return std::string{ text(key) };
+        }
+    }
+
+    template <typename ... Args>
+    std::string Localization::format(LocId id, Args&&... args) const
+    {
+        try
+        {
+            return std::vformat(text(id), std::make_format_args(args...));
+        }
+        catch (const std::format_error& e)
+        {
+            Logger::warn("Localization format error for ID {}: {}", id, e.what());
+            return std::string{ text(id) };
         }
     }
 }

@@ -18,7 +18,12 @@ namespace autoinput::ui
 {
     namespace
     {
-        size_t flattenTable(std::map<std::string, std::string, std::less<>>& strings, const toml::table& table, const std::string& prefix)
+        size_t flattenTable(
+            std::map<std::string, std::string, std::less<>>& strings,
+            std::vector<std::string>& stringsById,
+            std::vector<uint8_t>& hasStringById,
+            const toml::table& table,
+            const std::string& prefix)
         {
             size_t count = 0;
             for (auto&& [key, value] : table)
@@ -26,11 +31,18 @@ namespace autoinput::ui
                 std::string fullKey = prefix.empty() ? std::string(key.str()) : prefix + "." + std::string(key.str());
                 if (value.is_table())
                 {
-                    count += flattenTable(strings, *value.as_table(), fullKey);
+                    count += flattenTable(strings, stringsById, hasStringById, *value.as_table(), fullKey);
                 }
                 else if (value.is_string())
                 {
-                    strings[fullKey] = value.as_string()->get();
+                    std::string valStr = value.as_string()->get();
+                    if (const i32 id = LocalizationIds::keyToId(fullKey);
+                        id >= 0 && static_cast<size_t>(id) < stringsById.size())
+                    {
+                        stringsById[static_cast<size_t>(id)] = valStr;
+                        hasStringById[static_cast<size_t>(id)] = 1;
+                    }
+                    strings[fullKey] = std::move(valStr);
                     count++;
                 }
             }
@@ -58,9 +70,19 @@ namespace autoinput::ui
             if (clearExisting)
             {
                 m_strings.clear();
+                m_stringsById.assign(LocalizationIds::KEY_COUNT, "");
+                m_hasStringById.assign(LocalizationIds::KEY_COUNT, 0);
+            }
+            else
+            {
+                if (m_stringsById.size() < static_cast<size_t>(LocalizationIds::KEY_COUNT))
+                {
+                    m_stringsById.resize(LocalizationIds::KEY_COUNT, "");
+                    m_hasStringById.resize(LocalizationIds::KEY_COUNT, 0);
+                }
             }
             
-            size_t loaded = flattenTable(m_strings, std::move(result).table(), "");
+            size_t loaded = flattenTable(m_strings, m_stringsById, m_hasStringById, std::move(result).table(), "");
             
             Logger::info("Localization: Loaded {} strings from {} (Total: {}, Mode: {})", 
                 loaded, path.string(), m_strings.size(), clearExisting ? "Clear" : "Overlay");
@@ -75,6 +97,12 @@ namespace autoinput::ui
 
     std::string_view Localization::text(std::string_view key) const
     {
+        const i32 id = LocalizationIds::keyToId(key);
+        if (id >= 0 && static_cast<size_t>(id) < m_stringsById.size() && m_hasStringById[static_cast<size_t>(id)])
+        {
+            return m_stringsById[static_cast<size_t>(id)];
+        }
+
         if (const auto it = m_strings.find(key); it != m_strings.end())
         {
             return it->second;
@@ -89,8 +117,30 @@ namespace autoinput::ui
         return key;
     }
 
+    std::string_view Localization::text(const LocId id) const
+    {
+        if (id >= 0 && static_cast<size_t>(id) < m_stringsById.size() && m_hasStringById[static_cast<size_t>(id)])
+        {
+            return m_stringsById[static_cast<size_t>(id)];
+        }
+
+        if (const std::string_view key = LocalizationIds::idToKey(id); !key.empty())
+        {
+            return text(key);
+        }
+
+        Logger::warn("Localization: Invalid key ID: {}", id);
+        return "";
+    }
+
     std::string Localization::textOr(std::string_view key, std::string_view fallback) const
     {
+        const i32 id = LocalizationIds::keyToId(key);
+        if (id >= 0 && static_cast<size_t>(id) < m_stringsById.size() && m_hasStringById[static_cast<size_t>(id)])
+        {
+            return m_stringsById[static_cast<size_t>(id)];
+        }
+
         if (const auto it = m_strings.find(key); it != m_strings.end())
         {
             return it->second;
@@ -105,9 +155,45 @@ namespace autoinput::ui
         return std::string(fallback);
     }
 
+    std::string Localization::textOr(const LocId id, const std::string_view fallback) const
+    {
+        if (id >= 0 && static_cast<size_t>(id) < m_stringsById.size() && m_hasStringById[static_cast<size_t>(id)])
+        {
+            return m_stringsById[static_cast<size_t>(id)];
+        }
+
+        if (const std::string_view key = LocalizationIds::idToKey(id); !key.empty())
+        {
+            return textOr(key, fallback);
+        }
+
+        return std::string(fallback);
+    }
+
     bool Localization::has(const std::string_view key) const
     {
+        const i32 id = LocalizationIds::keyToId(key);
+        if (id >= 0 && static_cast<size_t>(id) < m_stringsById.size() && m_hasStringById[static_cast<size_t>(id)])
+        {
+            return true;
+        }
         return m_strings.contains(key);
+    }
+
+    bool Localization::has(const LocId id) const
+    {
+        if (id >= 0 && static_cast<size_t>(id) < m_stringsById.size() && m_hasStringById[static_cast<size_t>(id)])
+        {
+            return true;
+        }
+
+        const std::string_view key = LocalizationIds::idToKey(id);
+        if (!key.empty())
+        {
+            return has(key);
+        }
+
+        return false;
     }
 
     Localization& Localization::get()
