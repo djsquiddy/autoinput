@@ -8,7 +8,7 @@
 
 using namespace autoinput;
 
-#include "autoinput/platform/win32/internalData_win32.h"
+#include "autoinput/platform/win32/internalDataWin32.h"
 
 TEST(MousePrioritizationTest, GetButtonStatePrioritization)
 {

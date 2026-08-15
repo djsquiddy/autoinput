@@ -12,7 +12,7 @@
 #ifdef _WIN32
 #include "autoinput/platform/backend.h"
 #else
-#include "autoinput/platform/linux/internalData_linux.h"
+#include "autoinput/platform/linux/internalDataLinux.h"
 #endif
 
 namespace autoinput

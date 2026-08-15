@@ -28,7 +28,7 @@ set(AUTOINPUT_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/handlerTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/mousePrioritizationTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/notificationTest.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/autoinput/mouseTest_win32.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/autoinput/mouseTestWin32.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/win32/notificationWin32Test.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/signalCleanupTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/mouseModifierTest.cpp
@@ -38,7 +38,7 @@ set(AUTOINPUT_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/waitDelayTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/exclusivityTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/focusTest.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/autoinput/stopTriggerTest_win32.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/autoinput/stopTriggerTestWin32.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/configLookupTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/statusIndicatorTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/fixVerificationTest.cpp
@@ -49,14 +49,14 @@ set(AUTOINPUT_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/localizationTest.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/core/localization.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/testEnvironment.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/autoinput/backendTest_linux.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/autoinput/backendTestLinux.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/backendCapabilitiesTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/testUtils.h
 )
 
 if(UNIX AND NOT APPLE)
     list(APPEND AUTOINPUT_TEST_SOURCES
-            ${CMAKE_CURRENT_LIST_DIR}/autoinput/dispatchTest_linux.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/autoinput/dispatchTestLinux.cpp
     )
 endif()
 

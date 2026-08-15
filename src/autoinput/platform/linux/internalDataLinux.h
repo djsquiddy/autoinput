@@ -1,11 +1,11 @@
 /**
- * @file internalData_linux.h
+ * @file internalDataLinux.h
  * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
-#ifndef INCLUDE_AUTOINPUT_PLATFORM_INTERNALDATA_LINUX_H
-#define INCLUDE_AUTOINPUT_PLATFORM_INTERNALDATA_LINUX_H
+#ifndef INCLUDE_AUTOINPUT_PLATFORM_INTERNALDATALINUX_H
+#define INCLUDE_AUTOINPUT_PLATFORM_INTERNALDATALINUX_H
 #pragma once
 
 #include <cstdint>
@@ -255,4 +255,4 @@ namespace autoinput
     }
 }
 
-#endif // INCLUDE_AUTOINPUT_PLATFORM_INTERNALDATA_LINUX_H
+#endif // INCLUDE_AUTOINPUT_PLATFORM_INTERNALDATALINUX_H

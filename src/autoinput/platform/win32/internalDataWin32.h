@@ -1,11 +1,11 @@
 /**
- * @file internalData_win32.h
+ * @file internalDataWin32.h
  * @brief Short description of what this header declares.
  * @author djsquiddy
  * @date August 2026
  */
-#ifndef INCLUDE_AUTOINPUT_PLATFORM_INTERNALDATA_WIN32_H
-#define INCLUDE_AUTOINPUT_PLATFORM_INTERNALDATA_WIN32_H
+#ifndef INCLUDE_AUTOINPUT_PLATFORM_INTERNALDATAWIN32_H
+#define INCLUDE_AUTOINPUT_PLATFORM_INTERNALDATAWIN32_H
 #pragma once
 
 #ifdef _WIN32
@@ -30,4 +30,4 @@ namespace autoinput
 #endif
 
 
-#endif // INCLUDE_AUTOINPUT_PLATFORM_INTERNALDATA_WIN32_H
+#endif // INCLUDE_AUTOINPUT_PLATFORM_INTERNALDATAWIN32_H

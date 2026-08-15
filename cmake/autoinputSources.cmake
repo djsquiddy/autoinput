@@ -84,17 +84,18 @@ function(autoinput_get_common_sources output_var)
 
     if(WIN32)
         list(APPEND sources
-                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/win32/autoInput_win32.cpp
-                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/win32/internalData_win32.h
-                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/win32/notifications_win32.cpp
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/win32/autoInputWin32.cpp
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/win32/internalDataWin32.h
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/win32/notificationsWin32.cpp
+
         )
     elseif(UNIX AND NOT APPLE)
         list(APPEND sources
-                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/autoInput_linux.cpp
-                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/autoInput_x11.cpp
-                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/autoInput_wayland.cpp
-                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/internalData_linux.h
-                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/notifications_linux.cpp
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/autoInputLinux.cpp
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/autoInputX11.cpp
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/autoInputWayland.cpp
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/internalDataLinux.h
+                ${CMAKE_SOURCE_DIR}/src/autoinput/platform/linux/notificationsLinux.cpp
         )
     endif()
 

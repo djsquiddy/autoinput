@@ -1,5 +1,5 @@
 /**
- * @file notifications_linux.cpp
+ * @file notificationsLinux.cpp
  * @author djsquiddy
  * @date August 2026
  */

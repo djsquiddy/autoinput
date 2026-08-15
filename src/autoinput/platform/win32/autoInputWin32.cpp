@@ -1,5 +1,5 @@
 /**
- * @file autoInput_win32.cpp
+ * @file autoInputWin32.cpp
  * @author djsquiddy
  * @date March 2026
  */
@@ -10,7 +10,7 @@
 #include "autoinput/support/types.h"
 #include "autoinput/platform/platform.h"
 #include "autoinput/platform/backend.h"
-#include "autoinput/platform/win32/internalData_win32.h"
+#include "autoinput/platform/win32/internalDataWin32.h"
 #include <set>
 #include <ranges>
 #include <unordered_map>

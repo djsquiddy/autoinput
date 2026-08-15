@@ -1,5 +1,5 @@
 /**
- * @file autoInput_linux.cpp
+ * @file autoInputLinux.cpp
  * @author djsquiddy
  * @date July 2026
  */
@@ -9,7 +9,7 @@
 #include "autoinput/support/types.h"
 #include "autoinput/platform/platform.h"
 #include "autoinput/platform/backend.h"
-#include "autoinput/platform/linux/internalData_linux.h"
+#include "autoinput/platform/linux/internalDataLinux.h"
 #include <any>
 #include <string>
 #include <vector>

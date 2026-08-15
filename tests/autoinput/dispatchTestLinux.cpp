@@ -1,12 +1,12 @@
 /**
- * @file dispatchTest_linux.cpp
+ * @file dispatchTestLinux.cpp
  * @author djsquiddy
  * @date August 2026
  */
 #include <gtest/gtest.h>
 #include "autoinput/input/keyboard.h"
 #include "autoinput/input/mouse.h"
-#include "autoinput/platform/linux/internalData_linux.h"
+#include "autoinput/platform/linux/internalDataLinux.h"
 
 // Mock implementations of platform-specific functions
 namespace autoinput

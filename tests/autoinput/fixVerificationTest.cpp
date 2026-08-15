@@ -3,7 +3,7 @@
  */
 #include <gtest/gtest.h>
 #include "autoinput/app/autoinput.h"
-#include "autoinput/platform/win32/internalData_win32.h"
+#include "autoinput/platform/win32/internalDataWin32.h"
 
 using namespace autoinput;
 

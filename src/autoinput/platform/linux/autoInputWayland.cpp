@@ -1,5 +1,5 @@
 /**
- * @file autoInput_wayland.cpp
+ * @file autoInputWayland.cpp
  * @author djsquiddy
  * @date July 2026
  */
@@ -8,7 +8,7 @@
 #include "autoinput/input/keyboard.h"
 #include "autoinput/support/logger.h"
 #include "autoinput/support/types.h"
-#include "autoinput/platform/linux/internalData_linux.h"
+#include "autoinput/platform/linux/internalDataLinux.h"
 #include <vector>
 #include <filesystem>
 

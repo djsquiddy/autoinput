@@ -1,5 +1,5 @@
 /**
- * @file notifications_win32.cpp
+ * @file notificationsWin32.cpp
  * @author djsquiddy
  * @date August 2026
  */
