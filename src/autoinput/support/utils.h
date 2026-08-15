@@ -102,46 +102,33 @@ namespace autoinput
      */
     std::string capitalize(std::string value);
 
+#ifndef AUTOINPUT_MARK_NON_MOVABLE
     /**
-     * @brief Base class that prevents copying of derived classes.
+     * @brief Disable both copying for the given class.
      */
-    class NonCopyable
-    {
-    protected:
-        NonCopyable() = default;
-    public:
-        virtual ~NonCopyable() = default;
-        NonCopyable(const NonCopyable&) = delete;
-        NonCopyable& operator=(const NonCopyable&) = delete;
-    };
+#define AUTOINPUT_MARK_NON_MOVABLE(obj) \
+    obj(obj&&) = delete; \
+    obj& operator=(obj&&) = delete;
+#endif // AUTOINPUT_MARK_NON_MOVABLE
 
-    /**
-     * @brief Base class that prevents moving of derived classes.
-     */
-    class NonMoveable
-    {
-    protected:
-        NonMoveable() = default;
-    public:
-        virtual ~NonMoveable() = default;
-        NonMoveable(NonMoveable&&) = delete;
-        NonMoveable& operator=(NonMoveable&&) = delete;
-    };
+#ifndef AUTOINPUT_MARK_NON_COPYABLE
+/**
+ * @brief Disable both copying for the given class.
+ */
+#define AUTOINPUT_MARK_NON_COPYABLE(obj) \
+    obj(const obj&) = delete; \
+    obj& operator=(const obj&) = delete;
+#endif // AUTOINPUT_MARK_NON_COPYABLE
 
-    /**
-     * @brief Base class that prevents both copying and moving of derived classes.
-     */
-    class NonCopyableMoveable
-    {
-    protected:
-        NonCopyableMoveable() = default;
-    public:
-        virtual ~NonCopyableMoveable() = default;
-        NonCopyableMoveable(const NonCopyableMoveable&) = delete;
-        NonCopyableMoveable& operator=(const NonCopyableMoveable&) = delete;
-        NonCopyableMoveable(NonCopyableMoveable&&) = delete;
-        NonCopyableMoveable& operator=(NonCopyableMoveable&&) = delete;
-    };
+
+#ifndef AUTOINPUT_MARK_NON_COPYABLE_AND_NON_MOVABLE
+/**
+ * @brief Disable both copying and moving for the given class.
+ */
+#define AUTOINPUT_MARK_NON_COPYABLE_AND_NON_MOVABLE(obj) \
+    AUTOINPUT_MARK_NON_COPYABLE(obj) \
+    AUTOINPUT_MARK_NON_MOVABLE(obj)
+#endif // AUTOINPUT_MARK_NON_COPYABLE_AND_NON_MOVABLE
 
 }
 
