@@ -87,6 +87,8 @@ function(autoinput_get_common_sources output_var)
                 ${CMAKE_SOURCE_DIR}/src/autoinput/platform/win32/autoInputWin32.cpp
                 ${CMAKE_SOURCE_DIR}/src/autoinput/platform/win32/internalDataWin32.h
                 ${CMAKE_SOURCE_DIR}/src/autoinput/platform/win32/notificationsWin32.cpp
+                # Services
+                ${CMAKE_SOURCE_DIR}/src/autoinput/services/platform/processTransportWin32.cpp
 
         )
     elseif(UNIX AND NOT APPLE)
