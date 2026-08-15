@@ -8,6 +8,7 @@
 #define INCLUDE_AUTOINPUT_UI_CORE_IMGUI_SCOPE_H
 #pragma once
 
+#include "autoinput/support/utils.h"
 #include <imgui.h>
 
 namespace autoinput::ui
@@ -25,6 +26,7 @@ namespace autoinput::ui
      */
     struct ImGuiIdScope
     {
+        AUTOINPUT_MARK_NON_COPYABLE_AND_NON_MOVABLE(ImGuiIdScope);
         /**
          * @brief Pushes a string ID.
          */
@@ -49,9 +51,6 @@ namespace autoinput::ui
          * @brief Pops the ID.
          */
         ~ImGuiIdScope() { ImGui::PopID(); }
-
-        ImGuiIdScope(const ImGuiIdScope&) = delete;
-        ImGuiIdScope& operator=(const ImGuiIdScope&) = delete;
     };
 
     /**
@@ -67,6 +66,7 @@ namespace autoinput::ui
      */
     struct ImGuiTreeNodeScope
     {
+        AUTOINPUT_MARK_NON_COPYABLE_AND_NON_MOVABLE(ImGuiTreeNodeScope);
         bool isOpen;
 
         /**
@@ -78,19 +78,36 @@ namespace autoinput::ui
         /**
          * @brief Pops the tree node if it was open.
          */
-        ~ImGuiTreeNodeScope() { if (isOpen) ImGui::TreePop(); }
+        ~ImGuiTreeNodeScope()
+        {
+            if (isOpen)
+            {
+                ImGui::TreePop();
+            }
+        }
 
         /**
          * @brief Checks if the node is open.
          */
         explicit operator bool() const { return isOpen; }
+    };
 
-        ImGuiTreeNodeScope(const ImGuiTreeNodeScope&) = delete;
-        ImGuiTreeNodeScope& operator=(const ImGuiTreeNodeScope&) = delete;
+    struct UiIndentScope
+    {
+        AUTOINPUT_MARK_NON_COPYABLE_AND_NON_MOVABLE(UiIndentScope);
+        UiIndentScope()
+        {
+            ImGui::Indent();
+        }
+        ~UiIndentScope()
+        {
+            ImGui::Unindent();
+        }
     };
 
     struct ImGuiFontScope
     {
+        AUTOINPUT_MARK_NON_COPYABLE_AND_NON_MOVABLE(ImGuiFontScope);
         explicit ImGuiFontScope()
         {
             ImGui::PushFont(ImGui::GetFont());
@@ -103,6 +120,7 @@ namespace autoinput::ui
 
     struct ImGuiFontSizeScope
     {
+        AUTOINPUT_MARK_NON_COPYABLE_AND_NON_MOVABLE(ImGuiFontSizeScope);
         explicit ImGuiFontSizeScope(const float newScale)
         {
             ImGui::SetWindowFontScale(newScale);
