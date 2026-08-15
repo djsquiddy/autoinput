@@ -57,18 +57,17 @@ function(configure_autoinput_target target_name)
 
     get_target_property(TARGET_TYPE ${target_name} TYPE)
     if(TARGET_TYPE STREQUAL "EXECUTABLE")
-        add_custom_command(TARGET ${target_name} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/resources"
-                "$<TARGET_FILE_DIR:${target_name}>/resources"
-                COMMENT "Copying resources to output directory for ${target_name}"
-        )
-
-        add_custom_command(TARGET ${target_name} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_SOURCE_DIR}/configs"
-                "$<TARGET_FILE_DIR:${target_name}>/configs"
-                COMMENT "Copying configs to output directory for ${target_name}"
-        )
+        if(NOT TARGET autoinput_resources)
+            add_custom_target(autoinput_resources
+                    COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    "${CMAKE_SOURCE_DIR}/resources"
+                    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources"
+                    COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    "${CMAKE_SOURCE_DIR}/configs"
+                    "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/configs"
+                    COMMENT "Copying shared resources and configs to output directory"
+            )
+        endif()
+        add_dependencies(${target_name} autoinput_resources)
     endif()
 endfunction()
