@@ -13,7 +13,6 @@
 #include <string_view>
 #include <filesystem>
 #include <map>
-#include <memory>
 #include <format>
 #include <set>
 #include <vector>
@@ -27,7 +26,11 @@ namespace autoinput::ui
     {
     public:
         Localization() = default;
+        Localization(Localization&&) = delete;
+        Localization(const Localization&) = delete;
         ~Localization() = default;
+        Localization& operator=(Localization&&) = delete;
+        Localization& operator=(const Localization&) = delete;
 
         /**
          * @brief Load localization strings from a TOML file.
@@ -67,17 +70,7 @@ namespace autoinput::ui
          */
         template<typename... Args>
         std::string format(std::string_view key, Args&&... args) const
-        {
-            try
-            {
-                return std::vformat(text(key), std::make_format_args(args...));
-            }
-            catch (const std::format_error& e)
-            {
-                Logger::warn("Localization format error for key '{}': {}", key, e.what());
-                return std::string(text(key));
-            }
-        }
+        ;
 
         /**
          * @brief Get the global localization instance.
@@ -94,6 +87,21 @@ namespace autoinput::ui
         std::map<std::string, std::string, std::less<>> m_strings;
         mutable std::set<std::string, std::less<>> m_missingKeys;
     };
+
+
+    template <typename ... Args>
+    std::string Localization::format(std::string_view key, Args&&... args) const
+    {
+        try
+        {
+            return std::vformat(text(key), std::make_format_args(args...));
+        }
+        catch (const std::format_error& e)
+        {
+            Logger::warn("Localization format error for key '{}': {}", key, e.what());
+            return std::string{ text(key) };
+        }
+    }
 }
 
 #endif // INCLUDE_AUTOINPUT_UI_CORE_LOCALIZATION_H
