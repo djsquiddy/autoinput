@@ -39,6 +39,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.h
             ${CMAKE_CURRENT_LIST_DIR}/widgets/formWidgets.cpp
             ${CMAKE_CURRENT_LIST_DIR}/widgets/formWidgets.h
+            ${CMAKE_CURRENT_LIST_DIR}/widgets/inputComboWidgets.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/widgets/inputComboWidgets.h
             ${CMAKE_CURRENT_LIST_DIR}/widgets/modalWidgets.cpp
             ${CMAKE_CURRENT_LIST_DIR}/widgets/modalWidgets.h
             # Editors

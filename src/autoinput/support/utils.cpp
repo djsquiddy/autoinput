@@ -75,3 +75,12 @@ std::string autoinput::escapeJsonString(std::string_view sv)
     }
     return oss.str();
 }
+
+std::string autoinput::capitalize(std::string value)
+{
+    if (!value.empty())
+    {
+        value.at(0) = static_cast<char>(std::toupper(static_cast<unsigned char>(value.at(0))));
+    }
+    return value;
+}

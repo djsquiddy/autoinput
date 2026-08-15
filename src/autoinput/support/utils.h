@@ -94,6 +94,14 @@ namespace autoinput
      */
     std::string escapeJsonString(std::string_view sv);
 
+
+    /**
+     * @brief Converts the first character of a string to upper case.
+     * @param value The string view to capitalize.
+     * @return The string with the first character converted to upper case.
+     */
+    std::string capitalize(std::string value);
+
     /**
      * @brief Base class that prevents copying of derived classes.
      */

@@ -7,6 +7,7 @@
 #include "../widgets/basicWidgets.h"
 #include "../widgets/formWidgets.h"
 #include "../editors/commandEditor.h"
+#include "../editors/globalSettingsEditor.h"
 #include "../editors/sequenceViewer.h"
 #include "../core/localization.h"
 #include "autoinput/config/configValidator.h"
@@ -39,9 +40,10 @@ namespace autoinput::ui
                 auto seq = m_runtimeClient.getRecordedSequence();
                 stopCapture();
 
+                std::string bestKey;
+                std::string bestButton;
                 if (seq && !seq->events.empty())
                 {
-                    std::string bestKey;
                     for (const auto& event : seq->events)
                     {
                         if (event.type == RecordedEventType::KeyDown && event.key.has_value())
@@ -53,37 +55,73 @@ namespace autoinput::ui
                                 (!k.empty() && std::isprint(static_cast<unsigned char>(k.back()))))
                             {
                                 bestKey = k;
-                                break;
                             }
                         }
-                    }
-
-                    if (!bestKey.empty())
-                    {
-                        auto& loc = Localization::get();
-                        if (m_isCapturingEndKey)
+                        else if (event.type == RecordedEventType::MouseDown && event.button.has_value())
                         {
-                            m_draft.endKey = bestKey;
+                            bestButton = *event.button;
                         }
-                        else if (m_captureCommandIndex >= 0 && m_captureCommandIndex < static_cast<int>(m_draft.commands.size()))
-                        {
-                            auto& cmd = m_draft.commands[m_captureCommandIndex];
-                            if (m_captureStartKeyIndex >= 0 && m_captureStartKeyIndex < static_cast<int>(cmd.startKeys.size()))
-                            {
-                                cmd.startKeys[m_captureStartKeyIndex] = bestKey;
-                            }
-                        }
-                        
-                        m_statusMessage = loc.format("status.capturedKey", bestKey);
-                        markDirty();
                     }
                 }
-                
-                m_captureCommandIndex = -1;
-                m_captureStartKeyIndex = -1;
-                m_isCapturingEndKey = false;
+
+                applyCaptureResult(bestKey, bestButton);
             }
         }
+    }
+
+    bool ConfigEditorWindow::applyCaptureResult(const std::string& bestKey, const std::string& bestButton)
+    {
+        bool applied = false;
+        auto& loc = Localization::get();
+
+        if (m_isCapturingEndKey)
+        {
+            if (!bestKey.empty())
+            {
+                m_draft.endKey = bestKey;
+                m_statusMessage = loc.format("status.capturedKey", bestKey);
+                applied = true;
+            }
+        }
+        else if (m_captureCommandIndex >= 0 && m_captureCommandIndex < static_cast<int>(m_draft.commands.size()))
+        {
+            auto& cmd = m_draft.commands[m_captureCommandIndex];
+            if (!bestKey.empty() && m_captureStartKeyIndex >= 0 && m_captureStartKeyIndex < static_cast<int>(cmd.startKeys.size()))
+            {
+                cmd.startKeys[m_captureStartKeyIndex] = bestKey;
+                m_statusMessage = loc.format("status.capturedKey", bestKey);
+                applied = true;
+            }
+            else if (!bestKey.empty() && m_captureKeyIndex >= 0 && m_captureKeyIndex < static_cast<int>(cmd.keys.size()))
+            {
+                cmd.keys[m_captureKeyIndex] = bestKey;
+                m_statusMessage = loc.format("status.capturedKey", bestKey);
+                applied = true;
+            }
+            else if (!bestButton.empty() && m_captureButtonIndex >= 0 && m_captureButtonIndex < static_cast<int>(cmd.buttons.size()))
+            {
+                cmd.buttons[m_captureButtonIndex] = bestButton;
+                m_statusMessage = loc.format("status.capturedKey", bestButton);
+                applied = true;
+            }
+        }
+
+        if (applied)
+        {
+            markDirty();
+        }
+
+        resetCaptureTargets();
+        return applied;
+    }
+
+    void ConfigEditorWindow::resetCaptureTargets()
+    {
+        m_captureCommandIndex = -1;
+        m_captureStartKeyIndex = -1;
+        m_captureKeyIndex = -1;
+        m_captureButtonIndex = -1;
+        m_isCapturingEndKey = false;
     }
 
     void ConfigEditorWindow::startCapture()
@@ -96,8 +134,7 @@ namespace autoinput::ui
         SequenceConfig config;
         config.recordKeyboardEvents = true;
         config.recordMouseMoves = false;
-        config.recordMouseClicks = false;
-        config.recordDelays = false;
+        config.recordMouseClicks = true;
         config.name = "CaptureHotkey";
 
         auto res = m_runtimeClient.startRecording(config);
@@ -373,26 +410,42 @@ namespace autoinput::ui
             label += "###command_" + std::to_string(i);
             if (ImGui::CollapsingHeader(label.c_str()))
             {
-                int captureIndex = (m_captureCommandIndex == static_cast<int>(i)) ? m_captureStartKeyIndex : -1;
-                int originalCaptureIndex = captureIndex;
-                if (editors::renderCommandEditor(cmd, captureIndex))
+                const bool isThisCommandCapturing = (m_captureCommandIndex == static_cast<int>(i));
+                editors::CommandCaptureState captureState;
+                captureState.startKeyIndex = isThisCommandCapturing ? m_captureStartKeyIndex : -1;
+                captureState.inputs.keyIndex = isThisCommandCapturing ? m_captureKeyIndex : -1;
+                captureState.inputs.buttonIndex = isThisCommandCapturing ? m_captureButtonIndex : -1;
+                const editors::CommandCaptureState originalCaptureState = captureState;
+
+                if (editors::renderCommandEditor(cmd, captureState))
                 {
                     markDirty();
                 }
-                
-                if (captureIndex != originalCaptureIndex)
+
+                if (captureState.startKeyIndex != originalCaptureState.startKeyIndex ||
+                    captureState.inputs.keyIndex != originalCaptureState.inputs.keyIndex ||
+                    captureState.inputs.buttonIndex != originalCaptureState.inputs.buttonIndex)
                 {
-                    if (captureIndex != -1)
+                    stopCapture();
+                    resetCaptureTargets();
+
+                    if (captureState.startKeyIndex != -1)
                     {
                         m_captureCommandIndex = static_cast<int>(i);
-                        m_captureStartKeyIndex = captureIndex;
+                        m_captureStartKeyIndex = captureState.startKeyIndex;
                         startCapture();
                     }
-                    else
+                    else if (captureState.inputs.keyIndex != -1)
                     {
-                        stopCapture();
-                        m_captureCommandIndex = -1;
-                        m_captureStartKeyIndex = -1;
+                        m_captureCommandIndex = static_cast<int>(i);
+                        m_captureKeyIndex = captureState.inputs.keyIndex;
+                        startCapture();
+                    }
+                    else if (captureState.inputs.buttonIndex != -1)
+                    {
+                        m_captureCommandIndex = static_cast<int>(i);
+                        m_captureButtonIndex = captureState.inputs.buttonIndex;
+                        startCapture();
                     }
                 }
 

@@ -9,7 +9,6 @@
 #pragma once
 
 #include "../core/uiWindow.h"
-#include "../editors/globalSettingsEditor.h"
 #include "autoinput/config/config.h"
 #include "autoinput/services/automationRuntimeClient.h"
 #include <vector>
@@ -84,6 +83,15 @@ namespace autoinput::ui
          */
         void stopCapture();
 
+        /**
+         * @brief Applies the result of a completed capture to whichever target is currently active
+         * (end key, start key, key, or mouse button) and resets the capture targets.
+         * @param bestKey The best key combo string captured, or empty if none.
+         * @param bestButton The best mouse button combo string captured, or empty if none.
+         * @return true if a target was updated.
+         */
+        bool applyCaptureResult(const std::string& bestKey, const std::string& bestButton);
+
         services::IAutomationRuntimeClient& m_runtimeClient;
 
         autoinput::ConfigData m_draft;
@@ -98,8 +106,15 @@ namespace autoinput::ui
         bool m_isCapturing = false;
         int m_captureCommandIndex = -1;
         int m_captureStartKeyIndex = -1;
+        int m_captureKeyIndex = -1;
+        int m_captureButtonIndex = -1;
         bool m_isCapturingEndKey = false;
         uint32_t m_captureStartEventCount = 0;
+
+        /**
+         * @brief Clears all capture target indices without stopping the recording itself.
+         */
+        void resetCaptureTargets();
 
         /**
          * @brief Renders the top-level toolbar (New, Save, Refresh, etc.).
