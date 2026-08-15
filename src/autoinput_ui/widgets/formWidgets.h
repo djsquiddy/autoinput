@@ -106,6 +106,33 @@ namespace autoinput::ui::widgets
         const char* inputLabel,
         const char* addLabel);
 
+    /**
+     * @brief A hotkey input field with a capture button.
+     *
+     * @param label The label for the input.
+     * @param value The hotkey string value.
+     * @param isCapturing Reference to a boolean tracking if capture is active.
+     * @return true if the value was modified via typing.
+     */
+    bool HotkeyInput(const char* label, std::string& value, bool& isCapturing);
+
+    /**
+     * @brief A vector editor for hotkeys with capture support.
+     *
+     * @param label The label for the editor.
+     * @param items The vector of strings to edit.
+     * @param inputLabel The label for the item input field.
+     * @param addLabel The label for the "add" button.
+     * @param captureIndex The index of the item currently being captured, or -1.
+     * @return true if the items were modified.
+     */
+    bool HotkeyVectorEditor(
+        const char* label,
+        std::vector<std::string>& items,
+        const char* inputLabel,
+        const char* addLabel,
+        int& captureIndex);
+
 
     /**
      * @brief A wait-duration editor that supports either a single value or a range.

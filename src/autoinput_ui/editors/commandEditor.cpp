@@ -16,7 +16,7 @@ namespace autoinput::ui::editors
         constexpr std::array<std::string_view, 2> actionNames = { "click", "hold" };
     }
 
-    bool renderCommandEditor(CommandData& command)
+    bool renderCommandEditor(CommandData& command, int& startKeyCaptureIndex)
     {
         bool changed = false;
 
@@ -45,7 +45,7 @@ namespace autoinput::ui::editors
             changed = true;
         }
 
-        if (widgets::StringVectorEditor("Start Keys", command.startKeys, "##start", "Add Start Key"))
+        if (widgets::HotkeyVectorEditor("Start Keys", command.startKeys, "##start", "Add Start Key", startKeyCaptureIndex))
         {
             changed = true;
         }

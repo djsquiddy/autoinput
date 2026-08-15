@@ -126,6 +126,82 @@ namespace autoinput::ui::widgets
         return changed;
     }
 
+    bool HotkeyInput(const char* label, std::string& value, bool& isCapturing)
+    {
+        bool changed = ImGui::InputText(label, &value);
+        ImGui::SameLine();
+        
+        if (isCapturing)
+        {
+            ImGui::TextColored(ImVec4(1, 1, 0, 1), "Press a key...");
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel"))
+            {
+                isCapturing = false;
+            }
+        }
+        else
+        {
+            if (ImGui::Button("Capture"))
+            {
+                isCapturing = true;
+            }
+        }
+        return changed;
+    }
+
+    bool HotkeyVectorEditor(const char* label, std::vector<std::string>& items, const char* inputLabel, const char* addLabel, int& captureIndex)
+    {
+        bool changed = false;
+        if (ImGui::TreeNode(label))
+        {
+            for (size_t i = 0; i < items.size(); ++i)
+            {
+                ImGuiIdScope scope{ i };
+                if (ImGui::InputText(inputLabel, &items[i]))
+                {
+                    changed = true;
+                }
+                ImGui::SameLine();
+                
+                if (captureIndex == static_cast<int>(i))
+                {
+                    ImGui::TextColored(ImVec4(1, 1, 0, 1), "Press a key...");
+                    ImGui::SameLine();
+                    if (ImGui::Button("Cancel"))
+                    {
+                        captureIndex = -1;
+                    }
+                }
+                else
+                {
+                    if (ImGui::Button("Capture"))
+                    {
+                        captureIndex = static_cast<int>(i);
+                    }
+                }
+                
+                ImGui::SameLine();
+                if (ImGui::Button("Remove"))
+                {
+                    items.erase(items.begin() + static_cast<std::ptrdiff_t>(i));
+                    if (captureIndex == static_cast<int>(i)) captureIndex = -1;
+                    else if (captureIndex > static_cast<int>(i)) captureIndex--;
+                    changed = true;
+                    break;
+                }
+            }
+
+            if (ImGui::Button(addLabel))
+            {
+                items.emplace_back("");
+                changed = true;
+            }
+            ImGui::TreePop();
+        }
+        return changed;
+    }
+
     bool WaitDurationEditor(const char* label, std::string& value)
     {
         bool changed = false;

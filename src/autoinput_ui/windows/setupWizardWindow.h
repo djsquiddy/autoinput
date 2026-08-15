@@ -27,6 +27,7 @@ namespace autoinput::ui
 
     protected:
         void renderContent() override;
+        void update() override;
         void onOpen() override;
         int getFlags() const override;
         bool hasCloseButton() const override { return true; }
@@ -52,6 +53,9 @@ namespace autoinput::ui
         void renderButtons();
         bool validateCurrentStep();
         void saveAndFinish();
+        
+        void startCapture();
+        void stopCapture();
 
         WindowManager& m_windowManager;
         services::IAutomationRuntimeClient& m_runtimeClient;
@@ -69,6 +73,10 @@ namespace autoinput::ui
         std::string m_endKey;
         std::string m_notificationMode;
         std::string m_uiLanguage;
+
+        // Capture state
+        bool m_isCapturing = false;
+        uint32_t m_captureStartEventCount = 0;
     };
 }
 

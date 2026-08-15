@@ -17,12 +17,12 @@ namespace autoinput::ui::editors
         constexpr std::array<std::string_view, 4> logLevels = { "debug", "info", "warning", "error" };
     }
 
-    bool renderGlobalSettingsEditor(GlobalSettings& settings)
+    bool renderGlobalSettingsEditor(GlobalSettings& settings, bool& endKeyCaptureRequested)
     {
         bool changed = false;
         auto& loc = Localization::get();
- 
-        if (widgets::StringInput(loc.text("labels.endHotkey").data(), settings.endKey))
+  
+        if (widgets::HotkeyInput(loc.text("labels.endHotkey").data(), settings.endKey, endKeyCaptureRequested))
         {
             changed = true;
         }

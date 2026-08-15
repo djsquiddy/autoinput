@@ -29,9 +29,10 @@ namespace autoinput::ui::editors
     /**
      * @brief Renders an editor for the global settings structure.
      * @param settings The settings object to edit.
+     * @param endKeyCaptureRequested Set to true if the end key capture button was pressed.
      * @return true if any setting was modified.
      */
-    bool renderGlobalSettingsEditor(GlobalSettings& settings);
+    bool renderGlobalSettingsEditor(GlobalSettings& settings, bool& endKeyCaptureRequested);
 }
 
 #endif // INCLUDE_AUTOINPUT_UI_EDITORS_GLOBAL_SETTINGS_EDITOR_H

@@ -17,15 +17,103 @@
 
 namespace autoinput::ui
 {
-    ConfigEditorWindow::ConfigEditorWindow()
+    ConfigEditorWindow::ConfigEditorWindow(services::IAutomationRuntimeClient& runtimeClient)
         : UiWindow("Config Editor", "windows.configEditor")
+        , m_runtimeClient(runtimeClient)
     {
         refreshConfigList();
     }
 
-    void ConfigEditorWindow::onOpen()
+    void ConfigEditorWindow::update()
     {
-        refreshConfigList();
+        if (m_isCapturing)
+        {
+            uint32_t currentCount = m_runtimeClient.getRecordedEventCount();
+            if (currentCount > m_captureStartEventCount)
+            {
+                auto seq = m_runtimeClient.getRecordedSequence();
+                stopCapture();
+
+                if (seq && !seq->events.empty())
+                {
+                    std::string bestKey;
+                    for (const auto& event : seq->events)
+                    {
+                        if (event.type == RecordedEventType::KeyDown && event.key.has_value())
+                        {
+                            std::string k = *event.key;
+                            if (bestKey.empty()) bestKey = k;
+                            if (k.find('+') != std::string::npos || 
+                                (k.size() >= 2 && k[0] == 'f' && std::isdigit(k[1])) ||
+                                (!k.empty() && std::isprint(static_cast<unsigned char>(k.back()))))
+                            {
+                                bestKey = k;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!bestKey.empty())
+                    {
+                        auto& loc = Localization::get();
+                        if (m_isCapturingEndKey)
+                        {
+                            m_draft.endKey = bestKey;
+                        }
+                        else if (m_captureCommandIndex >= 0 && m_captureCommandIndex < static_cast<int>(m_draft.commands.size()))
+                        {
+                            auto& cmd = m_draft.commands[m_captureCommandIndex];
+                            if (m_captureStartKeyIndex >= 0 && m_captureStartKeyIndex < static_cast<int>(cmd.startKeys.size()))
+                            {
+                                cmd.startKeys[m_captureStartKeyIndex] = bestKey;
+                            }
+                        }
+                        
+                        m_statusMessage = loc.format("status.capturedKey", bestKey);
+                        markDirty();
+                    }
+                }
+                
+                m_captureCommandIndex = -1;
+                m_captureStartKeyIndex = -1;
+                m_isCapturingEndKey = false;
+            }
+        }
+    }
+
+    void ConfigEditorWindow::startCapture()
+    {
+        if (m_isCapturing) stopCapture();
+
+        m_isCapturing = true;
+        m_captureStartEventCount = m_runtimeClient.getRecordedEventCount();
+
+        SequenceConfig config;
+        config.recordKeyboardEvents = true;
+        config.recordMouseMoves = false;
+        config.recordMouseClicks = false;
+        config.recordDelays = false;
+        config.name = "CaptureHotkey";
+
+        auto res = m_runtimeClient.startRecording(config);
+        if (res.success)
+        {
+            m_statusMessage = Localization::get().text("status.pressAnyKey");
+        }
+        else
+        {
+            m_statusMessage = Localization::get().format("status.failedToStartCapture", res.message);
+            m_isCapturing = false;
+        }
+    }
+
+    void ConfigEditorWindow::stopCapture()
+    {
+        if (m_isCapturing)
+        {
+            m_runtimeClient.stopRecording();
+            m_isCapturing = false;
+        }
     }
 
     void ConfigEditorWindow::refreshConfigList()
@@ -137,20 +225,23 @@ namespace autoinput::ui
         renderTabs();
  
         ImGui::Separator();
-        if (ImGui::Button(loc.text("buttons.save").data())) saveConfig(false);
-        ImGui::SameLine();
-        if (ImGui::Button(loc.text("buttons.saveAsUser").data())) saveConfig(true);
-        ImGui::SameLine();
-        if (ImGui::Button(loc.text("buttons.duplicate").data())) duplicateConfig();
-        ImGui::SameLine();
-        if (ImGui::Button(loc.text("buttons.validate").data())) validate();
-        ImGui::SameLine();
-        if (ImGui::Button(loc.text("buttons.reload").data()))
+        if (ImGui::Button(loc.text("labels.actions").data()))
         {
-            if (!m_currentConfigName.empty())
+            ImGui::OpenPopup("ConfigActionsPopup");
+        }
+        
+        if (ImGui::BeginPopup("ConfigActionsPopup"))
+        {
+            if (ImGui::MenuItem(loc.text("buttons.save").data())) saveConfig(false);
+            if (ImGui::MenuItem(loc.text("buttons.saveAsUser").data())) saveConfig(true);
+            if (ImGui::MenuItem(loc.text("buttons.duplicate").data())) duplicateConfig();
+            ImGui::Separator();
+            if (ImGui::MenuItem(loc.text("buttons.validate").data())) validate();
+            if (ImGui::MenuItem(loc.text("buttons.reload").data()))
             {
-                loadConfig(m_currentConfigName);
+                if (!m_currentConfigName.empty()) loadConfig(m_currentConfigName);
             }
+            ImGui::EndPopup();
         }
 
         if (!m_statusMessage.empty())
@@ -221,7 +312,9 @@ namespace autoinput::ui
         settings.statusNotificationMode = m_draft.statusNotificationMode;
         settings.logLevel = m_draft.logLevel;
 
-        if (editors::renderGlobalSettingsEditor(settings))
+        bool captureState = m_isCapturing && m_isCapturingEndKey;
+        bool wasCapturing = captureState;
+        if (editors::renderGlobalSettingsEditor(settings, captureState))
         {
             m_draft.endKey = settings.endKey;
             m_draft.application = settings.application;
@@ -230,6 +323,17 @@ namespace autoinput::ui
             m_draft.logLevel = settings.logLevel;
             markDirty();
         }
+
+        if (captureState && !wasCapturing)
+        {
+            m_isCapturingEndKey = true;
+            startCapture();
+        }
+        else if (!captureState && wasCapturing)
+        {
+            stopCapture();
+            m_isCapturingEndKey = false;
+        }
     }
 
     void ConfigEditorWindow::renderCommandsTab()
@@ -237,8 +341,22 @@ namespace autoinput::ui
         auto& loc = Localization::get();
         if (ImGui::Button(loc.text("buttons.add").data()))
         {
-            m_draft.commands.emplace_back(autoinput::CommandData{ .name = "new_command" });
-            markDirty();
+            ImGui::OpenPopup("AddElementPopup");
+        }
+        
+        if (ImGui::BeginPopup("AddElementPopup"))
+        {
+            if (ImGui::MenuItem(loc.text("labels.command").data()))
+            {
+                m_draft.commands.emplace_back(autoinput::CommandData{ .name = "new_command" });
+                markDirty();
+            }
+            if (ImGui::MenuItem(loc.text("labels.sequence").data()))
+            {
+                m_draft.sequences.emplace_back(autoinput::RecordedSequence{ .name = "new_sequence" });
+                markDirty();
+            }
+            ImGui::EndPopup();
         }
 
         for (size_t i = 0; i < m_draft.commands.size(); ++i)
@@ -247,37 +365,64 @@ namespace autoinput::ui
             ImGui::PushID(static_cast<int>(i));
 
             std::string label = loc.format("labels.commandLabel", i, cmd.name);
+            label += "###command_" + std::to_string(i);
             if (ImGui::CollapsingHeader(label.c_str()))
             {
-                if (editors::renderCommandEditor(cmd))
+                int captureIndex = (m_captureCommandIndex == static_cast<int>(i)) ? m_captureStartKeyIndex : -1;
+                int originalCaptureIndex = captureIndex;
+                if (editors::renderCommandEditor(cmd, captureIndex))
                 {
                     markDirty();
+                }
+                
+                if (captureIndex != originalCaptureIndex)
+                {
+                    if (captureIndex != -1)
+                    {
+                        m_captureCommandIndex = static_cast<int>(i);
+                        m_captureStartKeyIndex = captureIndex;
+                        startCapture();
+                    }
+                    else
+                    {
+                        stopCapture();
+                        m_captureCommandIndex = -1;
+                        m_captureStartKeyIndex = -1;
+                    }
                 }
 
-                if (ImGui::Button(loc.text("buttons.duplicate").data()))
+                if (ImGui::Button(loc.text("labels.actions").data()))
                 {
-                    m_draft.commands.insert(m_draft.commands.begin() + i + 1, cmd);
-                    markDirty();
+                    ImGui::OpenPopup("CommandActionsPopup");
                 }
-                ImGui::SameLine();
-                if (ImGui::Button(loc.text("buttons.remove").data()))
+                
+                if (ImGui::BeginPopup("CommandActionsPopup"))
                 {
-                    m_draft.commands.erase(m_draft.commands.begin() + i);
-                    markDirty();
-                    ImGui::PopID();
-                    break;
-                }
-                ImGui::SameLine();
-                if (i > 0 && ImGui::Button(loc.text("buttons.moveUp").data()))
-                {
-                    std::swap(m_draft.commands[i], m_draft.commands[i-1]);
-                    markDirty();
-                }
-                ImGui::SameLine();
-                if (i < m_draft.commands.size() - 1 && ImGui::Button(loc.text("buttons.moveDown").data()))
-                {
-                    std::swap(m_draft.commands[i], m_draft.commands[i+1]);
-                    markDirty();
+                    if (ImGui::MenuItem(loc.text("buttons.duplicate").data()))
+                    {
+                        m_draft.commands.insert(m_draft.commands.begin() + i + 1, cmd);
+                        markDirty();
+                    }
+                    if (ImGui::MenuItem(loc.text("buttons.remove").data()))
+                    {
+                        m_draft.commands.erase(m_draft.commands.begin() + i);
+                        markDirty();
+                        ImGui::EndPopup();
+                        ImGui::PopID();
+                        break;
+                    }
+                    ImGui::Separator();
+                    if (i > 0 && ImGui::MenuItem(loc.text("buttons.moveUp").data()))
+                    {
+                        std::swap(m_draft.commands[i], m_draft.commands[i-1]);
+                        markDirty();
+                    }
+                    if (i < m_draft.commands.size() - 1 && ImGui::MenuItem(loc.text("buttons.moveDown").data()))
+                    {
+                        std::swap(m_draft.commands[i], m_draft.commands[i+1]);
+                        markDirty();
+                    }
+                    ImGui::EndPopup();
                 }
             }
             ImGui::PopID();

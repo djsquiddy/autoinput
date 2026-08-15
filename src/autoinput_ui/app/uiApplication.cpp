@@ -105,7 +105,7 @@ namespace autoinput::ui
 
         m_windowManager->addWindow<MainWindow>(std::string(WindowIds::Main), *m_windowManager);
         m_windowManager->addWindow<SettingsEditorWindow>(std::string(WindowIds::Settings));
-        m_windowManager->addWindow<ConfigEditorWindow>(std::string(WindowIds::ConfigEditor));
+        m_windowManager->addWindow<ConfigEditorWindow>(std::string(WindowIds::ConfigEditor), getRuntimeClient());
         m_windowManager->addWindow<RuntimeWindow>(std::string(WindowIds::Runtime), getRuntimeClient());
         m_windowManager->addWindow<RuntimeDashboardWindow>(std::string(WindowIds::RuntimeDashboard), getRuntimeClient());
         m_windowManager->addWindow<CommandRunnerWindow>(std::string(WindowIds::CommandRunner), getRuntimeClient(), SystemEnvironment::instance());

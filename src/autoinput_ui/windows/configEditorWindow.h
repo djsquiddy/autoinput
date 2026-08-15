@@ -11,6 +11,7 @@
 #include "../core/uiWindow.h"
 #include "../editors/globalSettingsEditor.h"
 #include "autoinput/config/config.h"
+#include "autoinput/services/automationRuntimeClient.h"
 #include <vector>
 #include <string>
 #include <filesystem>
@@ -31,7 +32,7 @@ namespace autoinput::ui
     class ConfigEditorWindow final : public UiWindow
     {
     public:
-        ConfigEditorWindow();
+        explicit ConfigEditorWindow(services::IAutomationRuntimeClient& runtimeClient);
 
         void onOpen() override;
 
@@ -43,6 +44,7 @@ namespace autoinput::ui
 
     protected:
         void renderContent() override;
+        void update() override;
         void save() override;
 
     private:
@@ -72,6 +74,18 @@ namespace autoinput::ui
          */
         void duplicateConfig();
 
+        /**
+         * @brief Starts hotkey capture for a specific location.
+         */
+        void startCapture();
+        
+        /**
+         * @brief Stops hotkey capture.
+         */
+        void stopCapture();
+
+        services::IAutomationRuntimeClient& m_runtimeClient;
+
         autoinput::ConfigData m_draft;
         std::string m_currentConfigName;
         std::filesystem::path m_currentConfigPath;
@@ -79,6 +93,13 @@ namespace autoinput::ui
         std::vector<std::string> m_availableConfigs;
         std::vector<autoinput::ValidationError> m_validationErrors;
         std::string m_statusMessage;
+
+        // Capture state
+        bool m_isCapturing = false;
+        int m_captureCommandIndex = -1;
+        int m_captureStartKeyIndex = -1;
+        bool m_isCapturingEndKey = false;
+        uint32_t m_captureStartEventCount = 0;
 
         /**
          * @brief Renders the top-level toolbar (New, Save, Refresh, etc.).

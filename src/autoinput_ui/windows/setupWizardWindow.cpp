@@ -26,6 +26,70 @@ namespace autoinput::ui
     {
     }
 
+    void SetupWizardWindow::update()
+    {
+        if (m_isCapturing)
+        {
+            uint32_t currentCount = m_runtimeClient.getRecordedEventCount();
+            if (currentCount > m_captureStartEventCount)
+            {
+                auto seq = m_runtimeClient.getRecordedSequence();
+                stopCapture();
+
+                if (seq && !seq->events.empty())
+                {
+                    std::string bestKey;
+                    for (const auto& event : seq->events)
+                    {
+                        if (event.type == RecordedEventType::KeyDown && event.key.has_value())
+                        {
+                            std::string k = *event.key;
+                            if (bestKey.empty()) bestKey = k;
+                            if (k.find('+') != std::string::npos || 
+                                (k.size() >= 2 && k[0] == 'f' && std::isdigit(k[1])) ||
+                                (!k.empty() && std::isprint(static_cast<unsigned char>(k.back()))))
+                            {
+                                bestKey = k;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!bestKey.empty())
+                    {
+                        m_endKey = bestKey;
+                    }
+                }
+            }
+        }
+    }
+
+    void SetupWizardWindow::startCapture()
+    {
+        if (m_isCapturing) stopCapture();
+
+        m_isCapturing = true;
+        m_captureStartEventCount = m_runtimeClient.getRecordedEventCount();
+
+        SequenceConfig config;
+        config.recordKeyboardEvents = true;
+        config.recordMouseMoves = false;
+        config.recordMouseClicks = false;
+        config.recordDelays = false;
+        config.name = "CaptureHotkey";
+
+        m_runtimeClient.startRecording(config);
+    }
+
+    void SetupWizardWindow::stopCapture()
+    {
+        if (m_isCapturing)
+        {
+            m_runtimeClient.stopRecording();
+            m_isCapturing = false;
+        }
+    }
+
     void SetupWizardWindow::onOpen()
     {
         auto& loc = Localization::get();
@@ -113,7 +177,18 @@ namespace autoinput::ui
         ImGui::Spacing();
         
         ImGui::TextWrapped("%s", loc.text("labels.endKeyDescription").data());
-        ImGui::InputText(loc.text("labels.hotkey").data(), &m_endKey);
+        
+        bool wasCapturing = m_isCapturing;
+        widgets::HotkeyInput(loc.text("labels.hotkey").data(), m_endKey, m_isCapturing);
+        
+        if (m_isCapturing && !wasCapturing)
+        {
+            startCapture();
+        }
+        else if (!m_isCapturing && wasCapturing)
+        {
+            stopCapture();
+        }
         
         ImGui::Spacing();
         
