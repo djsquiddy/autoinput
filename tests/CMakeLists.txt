@@ -66,7 +66,7 @@ add_executable(${PROJECT_NAME_TEST}
 
 target_link_libraries(${PROJECT_NAME_TEST}
         PRIVATE
-        autoinput_core
+        ${PROJECT_NAME_CORE}
         GTest::gtest_main
         GTest::gmock
 )

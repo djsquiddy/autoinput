@@ -35,6 +35,7 @@ end
 local log_levels = {"d", "debug", "i", "info", "w", "warn", "warning", "e", "error", "f", "fatal"}
 local action_types = {"click", "c", "hold", "h"}
 local mouse_buttons = {"left", "l", "right", "r", "middle", "m", "back", "forward"}
+local notification_modes = {"off", "console", "desktop", "both"}
 local modifiers = {"ctrl+", "shift+", "alt+", "meta+"}
 
 local function with_modifiers(base_completions)
@@ -66,7 +67,6 @@ run_parser:set_flags(
     "-t" .. clink.arg.new_parser(action_types),
     "--type" .. clink.arg.new_parser(action_types),
     "-b" .. clink.arg.new_parser(mouse_buttons),
-    "--btn" .. clink.arg.new_parser(mouse_buttons),
     "--button" .. clink.arg.new_parser(mouse_buttons),
     "-k" .. clink.arg.new_parser(keys_with_mods),
     "--key" .. clink.arg.new_parser(keys_with_mods),
@@ -76,14 +76,13 @@ run_parser:set_flags(
     "--end" .. clink.arg.new_parser(keys_with_mods),
     "-a" .. clink.arg.new_parser(),
     "--app" .. clink.arg.new_parser(),
-    "--application" .. clink.arg.new_parser(),
     "-B" .. clink.arg.new_parser(),
     "--blacklist" .. clink.arg.new_parser(),
     "-w" .. clink.arg.new_parser(),
     "--wait" .. clink.arg.new_parser(),
     "--press-wait" .. clink.arg.new_parser(),
     "--release-wait" .. clink.arg.new_parser(),
-    "--status-notification" .. clink.arg.new_parser({"off", "console", "desktop", "both"}),
+    "--status-notification" .. clink.arg.new_parser(notification_modes),
     "-S" .. clink.arg.new_parser({configs_matcher}),
     "--save-config" .. clink.arg.new_parser({configs_matcher})
 )
@@ -107,7 +106,8 @@ config_parser:set_arguments({
         "list",
         "validate" .. clink.arg.new_parser({configs_matcher}),
         "duplicate" .. clink.arg.new_parser({configs_matcher}, clink.arg.new_parser()),
-        "copy" .. clink.arg.new_parser({configs_matcher}, clink.arg.new_parser())
+        "copy" .. clink.arg.new_parser({configs_matcher}, clink.arg.new_parser()),
+        "path" .. clink.arg.new_parser({configs_matcher})
     }
 })
 config_parser:set_flags("--force")
@@ -117,15 +117,31 @@ apps_parser:set_arguments({
     {"list"}
 })
 
+local serve_parser = clink.arg.new_parser()
+serve_parser:set_flags(
+    "--stdio"
+)
+
+local help_config_parser = clink.arg.new_parser()
+help_config_parser:set_arguments({
+    {"list", "validate", "duplicate", "copy", "path"}
+})
+
 local help_parser = clink.arg.new_parser()
 help_parser:set_arguments({
-    {"run", "record", "config", "apps"}
+    {
+        "run",
+        "record",
+        "config" .. help_config_parser,
+        "apps",
+        "serve"
+    }
 })
 
 local autoinput_parser = clink.arg.new_parser()
 autoinput_parser:set_flags(
-    "-h", "--help",
-    "--examples",
+    "-h",
+    "--help",
     "-l" .. clink.arg.new_parser(log_levels),
     "--log" .. clink.arg.new_parser(log_levels),
     "--json"
@@ -137,9 +153,10 @@ autoinput_parser:set_arguments({
         "record" .. record_parser,
         "config" .. config_parser,
         "apps" .. apps_parser,
+        "serve" .. serve_parser,
         "help" .. help_parser
     }
 })
 
 clink.arg.register_parser("autoinput", autoinput_parser)
-clink.arg.register_parser("run.cmd", autoinput_parser)
+clink.arg.register_parser("autoinput.exe", autoinput_parser)

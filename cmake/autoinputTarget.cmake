@@ -1,4 +1,24 @@
+function(autoinput_group_sources_by_directory base_dir)
+    foreach(source_file ${ARGN})
+        get_filename_component(file_ext "${source_file}" EXT)
+        if(file_ext MATCHES "\\.(cpp|cxx|c|cc)$")
+            get_filename_component(file_dir "${source_file}" DIRECTORY)
+            file(RELATIVE_PATH rel_dir "${base_dir}" "${file_dir}")
+            if(rel_dir AND NOT rel_dir STREQUAL "." AND NOT rel_dir MATCHES "^\\.\\.")
+                string(REPLACE "/" "_" group_name "${rel_dir}")
+                string(REPLACE "\\" "_" group_name "${group_name}")
+                set_source_files_properties("${source_file}" PROPERTIES UNITY_GROUP "${group_name}")
+            endif()
+        endif()
+    endforeach()
+endfunction()
+
 function(configure_autoinput_target target_name)
+    set_target_properties(${target_name} PROPERTIES
+            UNITY_BUILD_MODE GROUP
+            CXX_SCAN_FOR_MODULES OFF
+    )
+
     target_compile_definitions(${target_name} PUBLIC AUTOINPUT_VERSION="${PROJECT_VERSION}")
 
     if(ENABLE_KEYBOARD_HOOK)

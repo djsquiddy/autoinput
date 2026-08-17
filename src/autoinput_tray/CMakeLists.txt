@@ -17,24 +17,20 @@ if(AUTOINPUT_BUILD_TRAY)
         )
     endif()
 
-    add_executable(autoinput_tray
-        ${AUTOINPUT_TRAY_SOURCES}
-    )
+    autoinput_group_sources_by_directory("${CMAKE_CURRENT_LIST_DIR}" ${AUTOINPUT_TRAY_SOURCES})
+    add_executable(${PROJECT_NAME_TRAY} ${AUTOINPUT_TRAY_SOURCES})
 
-    target_link_libraries(autoinput_tray
-        PRIVATE
-        autoinput_core
-    )
+    target_link_libraries(${PROJECT_NAME_TRAY} PRIVATE ${PROJECT_NAME_CORE})
 
     if(WIN32)
-        target_link_libraries(autoinput_tray
+        target_link_libraries(${PROJECT_NAME_TRAY}
             PRIVATE
             gdiplus
             ole32
             shell32
             user32
         )
-        set_target_properties(autoinput_tray PROPERTIES
+        set_target_properties(${PROJECT_NAME_TRAY} PROPERTIES
                 WIN32_EXECUTABLE TRUE
         )
     elseif(UNIX AND NOT APPLE)
@@ -42,6 +38,6 @@ if(AUTOINPUT_BUILD_TRAY)
         # Add Linux-specific tray libraries here when implemented (e.g., appindicator)
     endif()
 
-    configure_autoinput_target(autoinput_tray)
-    configure_autoinput_platform(autoinput_tray)
+    configure_autoinput_target(${PROJECT_NAME_TRAY})
+    configure_autoinput_platform(${PROJECT_NAME_TRAY})
 endif(AUTOINPUT_BUILD_TRAY)

@@ -180,6 +180,23 @@ compinit
 
 Alternatively, you can copy the `scripts/autocomplete/_autoinput` file to a directory already in your `$fpath` (e.g., `/usr/local/share/zsh/site-functions`).
 
+#### Updating Autocomplete Scripts
+
+You can update or verify the autocomplete scripts using the Python generator script:
+
+```bash
+# Automatically discover binary or update completions
+python scripts/update_autocomplete.py
+
+# Specify the path to autoinput binary explicitly
+python scripts/update_autocomplete.py --binary build/debug/bin/autoinput.exe
+
+# Verify completion scripts are up-to-date (CI check mode)
+python scripts/update_autocomplete.py --check
+```
+
+The build script (`python scripts/build.py`) also automatically runs `update_autocomplete.py --binary <path>` upon completing a build.
+
 ### Usage
 
 ```bash
@@ -686,6 +703,7 @@ The `scripts/` directory contains helper scripts for building, testing, maintena
 - **`appendPath.cmd`**: Windows helper script to temporarily append the build output directory to `PATH`.
 - **`gen_localization_ids.py`**: Generates C++ constexpr localization IDs and lookup helper functions from `resources/localization/en-US.toml`.
 - **`audit_localization.py`**: Audits C++ source code and `en-US.toml` for missing and unused localization keys.
+- **`update_autocomplete.py`**: Updates shell completion scripts for Zsh, Bash, and Clink/Lua.
 - **`autocomplete/`**: Shell completion scripts and installers for Bash, Zsh, and Clink.
 
 Usage examples:

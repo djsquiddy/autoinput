@@ -3,13 +3,14 @@
  * @author djsquiddy
  * @date August 2026
  */
+#include "autoinput_ui/core/localization.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "../../src/autoinput_ui/core/localization.h"
 #include <filesystem>
 #include <fstream>
 
 using namespace autoinput::ui;
+using namespace autoinput;
 
 class LocalizationTest : public ::testing::Test
 {
@@ -128,7 +129,7 @@ TEST_F(LocalizationTest, LocalizationIdLayeredLoading)
 
 TEST_F(LocalizationTest, MatchingFunctions)
 {
-    EXPECT_EQ(LocalizationIds::idToKey(LocIds::APP_NAME_ID), "app.name");
+    EXPECT_EQ(LocalizationIds::idToKey(LocIds::APP_NAME_KEY.index), "app.name");
     EXPECT_EQ(LocalizationIds::idToKey(LocIds::BUTTONS_SAVE_ID), "buttons.save");
     EXPECT_EQ(LocalizationIds::idToKey(-1), "");
     EXPECT_EQ(LocalizationIds::idToKey(99999), "");

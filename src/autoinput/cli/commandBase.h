@@ -64,7 +64,7 @@ namespace autoinput::cli
 
     struct HelpMessage
     {
-        const CommandContext& context;
+        const CommandContext context;
         std::vector<HelpEntry> commands;
         std::vector<HelpEntry> options;
         std::vector<std::string> examples;
@@ -152,8 +152,12 @@ namespace autoinput::cli
          * @param topics The list of topics (subcommand names).
          */
         void setHelpTopic(const std::vector<std::string>& topics) { m_helpTopics = topics; }
+        [[nodiscard]] std::vector<std::string>& getHelpTopics() { return m_helpTopics; }
+        [[nodiscard]] const std::vector<std::string>& getHelpTopics() const { return m_helpTopics; }
+        [[nodiscard]] size_t getHelpTopicsSize() const { return m_helpTopics.size(); }
+        [[nodiscard]] const std::string& getHelpTopicEntry(size_t index) const { return m_helpTopics[index]; }
 
-    protected:
+    private:
         std::vector<std::string> m_helpTopics;
     };
 

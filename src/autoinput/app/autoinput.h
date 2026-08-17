@@ -8,15 +8,6 @@
 #define INCLUDE_AUTOINPUT_APP_AUTOINPUT_H
 #pragma once
 
-#include <utility>
-#include <vector>
-#include <string>
-#include <unordered_set>
-#include <unordered_map>
-#include <memory>
-#include <thread>
-#include <optional>
-
 #include "autoinput/cli/arguments.h"
 #include "autoinput/platform/backend.h"
 #include "autoinput/input/mouse.h"
@@ -28,6 +19,14 @@
 #include "autoinput/input/sequence.h"
 #include "autoinput/input/sequenceRecorder.h"
 #include "autoinput/input/waitDelay.h"
+
+#include <utility>
+#include <vector>
+#include <string>
+#include <unordered_set>
+#include <unordered_map>
+#include <memory>
+#include <optional>
 
 namespace autoinput
 {

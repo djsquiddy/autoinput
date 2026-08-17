@@ -2,6 +2,7 @@ build/
 build-*/
 cmake-build-*/
 .cache/
+__pycache__
 .vs/
 .idea/
 *.user

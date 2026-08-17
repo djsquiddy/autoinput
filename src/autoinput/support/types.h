@@ -17,10 +17,14 @@
 #include <functional>
 #include <format>
 
+#ifndef AUTOINPUT_UNUSED
 #define AUTOINPUT_UNUSED(...) static_cast<void>(__VA_ARGS__)
+#endif // AUTOINPUT_UNUSED
 
+#ifndef AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS
 // Enable operators only for specific enums (manual or via trait)
-#define AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(E) template<> inline constexpr bool is_flag_enum<E> = true;
+#define AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(E) template<> inline constexpr bool is_flag_enum<E> = true
+#endif // AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS
 
 namespace autoinput
 {
@@ -95,19 +99,19 @@ namespace autoinput
     }
 
     template<FlagEnum E>
-    bool isFlagSet(const E lhs, const E rhs)
+    constexpr bool isFlagSet(const E lhs, const E rhs)
     {
         return (lhs & rhs) == rhs;
     }
 
     template<FlagEnum E>
-    void setFlag(E& lhs, const E rhs)
+    constexpr void setFlag(E& lhs, const E rhs)
     {
         lhs |= rhs;
     }
 
     template<FlagEnum E>
-    void clearFlag(E& lhs, const E rhs)
+    constexpr void clearFlag(E& lhs, const E rhs)
     {
         lhs &= ~rhs;
     }

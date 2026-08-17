@@ -1,48 +1,28 @@
 #!/usr/bin/env python
 import argparse
 import logging
-import os
 import pathlib
-import re
 import sys
-import tomllib
 
-import utils
+from .utils import (
+    LOC_DIR,
+    BUILD_DIR,
+    LocKeySettings,
+    LocalizationId,
+    LocalizationFile,
+    TomlKeyValue,
+    to_loc_id_name,
+    get_localization_ids,
+)
 from typing import LiteralString
 
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_LOC_SOURCE_FILE = utils.LOC_DIR / "en-US.toml"
-DEFAULT_HEADER_OUTPUT_FILE: pathlib.Path = utils.BUILD_DIR / "generated" / "autoinput_ui" / "core" / "localizationIds.h"
+DEFAULT_LOC_SOURCE_FILE = LOC_DIR / "en-US.toml"
+DEFAULT_HEADER_OUTPUT_FILE: pathlib.Path = BUILD_DIR / "generated" / "autoinput" / "support" / "localizationIds.h"
 DEFAULT_SOURCE_OUTPUT_FILE = DEFAULT_HEADER_OUTPUT_FILE.with_suffix('.cpp')
-
-
-def to_id_name(key: str) -> str:
-    """Convert a dotted/camelCase localization key (e.g., 'app.name', 'windows.configEditor')
-    into a C++ identifier constant name (e.g., 'APP_NAME_ID', 'WINDOWS_CONFIG_EDITOR_ID').
-    """
-    parts = key.split(".")
-    processed_parts = []
-    for part in parts:
-        part = part.replace("-", "_")
-        # insert underscore before capital letters (camelCase -> snake_case)
-        part = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", part)
-        processed_parts.append(part)
-    combined = "_".join(processed_parts)
-    combined = re.sub(r"_+", "_", combined).strip("_")
-    return f"{combined.upper()}_ID"
-
-
-
-
-@dataclass(frozen=True)
-class LocalizationId:
-    """Represents a localization key ID."""
-    name: str
-    id_name: str
-    value: int
 
 
 @dataclass
@@ -53,13 +33,23 @@ class LocalizationData:
     @classmethod
     def generate(cls, loc_ids: list[LocalizationId]) -> 'LocalizationData':
         indent_space = 4
-        definitions = []
-        key_array_entries = []
+        definitions: list[str] = []
+        key_array_entries: list[str] = []
         id_prefix = ' ' * indent_space
         key_array_prefix = ' ' * (indent_space * 2)
+        def get_settings_format_str(settings: LocKeySettings) -> str:
+            if settings != LocKeySettings.Empty:
+                results: list[str] = []
+                if settings & LocKeySettings.Format:
+                    results.append("LocKeySettings::Format")
+                return "|".join(results)
+            return "LocKeySettings::None"
+
         for loc_id in loc_ids:
             definitions.append(f"{id_prefix}inline constexpr LocId {loc_id.id_name} = {loc_id.value};")
-            key_array_entries.append(f'{key_array_prefix}"{loc_id.name}",')
+            loc_value_str = f"{{ /*index*/{loc_id.id_name}, /*keyName*/\"{loc_id.name}\", /*settings*/{get_settings_format_str(loc_id.settings)} }}"
+            definitions.append(f"{id_prefix}inline constexpr LocKey {loc_id.key_name}{loc_value_str};")
+            key_array_entries.append(f'{key_array_prefix}{loc_id.key_name},')
 
         return cls(
             definitions=definitions,
@@ -72,18 +62,10 @@ class LocalizationData:
     def gen_key_array_entries_str(self, eol: str = "\n") -> str:
         return eol.join(self.key_array_entries)
 
-def _get_localization_ids(keys: list[str]) -> list[LocalizationId]:
-    loc_ids: list[LocalizationId] = []
-    keys.sort()
-    for idx, key in enumerate(keys):
-        id_name = to_id_name(key)
-        loc_ids.append(LocalizationId(name=key, id_name=id_name, value=idx))
 
-    return loc_ids
-
-def generate_header_source_content(keys: list[str], eol: str = "\n") -> tuple[str, str]:
+def generate_header_source_content(key_values: list[TomlKeyValue], eol: str = "\n") -> tuple[str, str]:
     """Generates the C++ header and source file content for the given list of sorted keys."""
-    loc_ids = _get_localization_ids(keys)
+    loc_ids = get_localization_ids(key_values)
     data = LocalizationData.generate(loc_ids)
 
     header_lines = [
@@ -97,37 +79,76 @@ def generate_header_source_content(keys: list[str], eol: str = "\n") -> tuple[st
         "#pragma once",
         "",
         '#include "autoinput/support/types.h"',
-        "#include <array>",
-        "#include <string_view>",
         "#include <algorithm>",
+        "#include <array>",
+        "#include <optional>",
+        "#include <string_view>",
+        "#include <ranges>",
         "",
-        "namespace autoinput::ui",
+        "namespace autoinput",
         "{",
-        "using LocId = i32;",
+        "    using LocId = i32;",
+        "    enum class LocKeySettings : u8",
+        "    {",
+        "        None = 0,",
+        "        Format = 1 << 0,",
+        "    };",
+        "    AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(LocKeySettings);",
+        "",
+        "    struct LocKey",
+        "    {",
+        "        LocId index;",
+        "        std::string_view keyName;",
+        "        LocKeySettings settings;",
+        "        constexpr LocKey(const LocId index, const std::string_view keyName, const LocKeySettings settings)",
+        "            : index{ index }",
+        "            , keyName{ keyName }",
+        "            , settings{ settings }",
+        "        {",
+        "        }",
+        "",
+        "        constexpr bool operator==(const LocKey&) const = default;",
+        "        constexpr bool operator==(const LocId rhs) const { return index == rhs; }",
+        "        constexpr bool operator==(const std::string_view rhs) const { return keyName == rhs; }",
+        "    };",
         "}",
         "",
-        "namespace autoinput::ui::LocalizationIds",
+        "namespace autoinput::LocalizationIds",
         "{",
         "    inline constexpr LocId INVALID_ID = -1;",
+        "    inline constexpr LocKey INVALID_KEY{ /*index*/INVALID_ID, /*keyName*/\"\", /*settings*/LocKeySettings::None };",
         "",
         *data.definitions,
         "",
-        f"    inline constexpr LocId KEY_COUNT = {len(data.definitions)};",
-        "",
-        "    constexpr std::array<std::string_view, KEY_COUNT> KEYS = {",
+        f"    inline constexpr LocId KEY_COUNT = {len(data.key_array_entries)};",
+        "    constexpr std::array<LocKey, KEY_COUNT> KEYS = {",
         *data.key_array_entries,
-        "};",
+        "    };",
+        "",
+        "    /**",
+        "    * @brief Match a localization ID to its localization key.",
+        "     * @param id The localization ID.",
+        "     * @return The localization key, or an empty optional if invalid ID",
+        "     */",
+        "    [[nodiscard]] constexpr std::optional<LocKey> idToLocKey(const LocId id) noexcept",
+        "    {",
+        "        if (id >= 0 && static_cast<size_t>(id) < KEYS.size())",
+        "        {",
+        "            return KEYS[static_cast<size_t>(id)];",
+        "        }",
+        "        return std::nullopt;",
+        "    }",
         "",
         "    /**",
         "     * @brief Match a localization ID to its TOML key string.",
         "     * @param id The localization ID.",
         "     * @return The key string_view, or empty string_view if invalid ID.",
         "     */",
-        "    [[nodiscard]] inline constexpr std::string_view idToKey(LocId id) noexcept",
+        "    [[nodiscard]] constexpr std::string_view idToKey(const LocId id) noexcept",
         "    {",
         "        if (id >= 0 && static_cast<size_t>(id) < KEYS.size())",
         "        {",
-        '            return KEYS[static_cast<size_t>(id)];',
+        '            return KEYS[static_cast<size_t>(id)].keyName;',
         "        }",
         '        return "";',
         "    }",
@@ -137,10 +158,10 @@ def generate_header_source_content(keys: list[str], eol: str = "\n") -> tuple[st
         "     * @param key The key string.",
         "     * @return The localization ID, or INVALID_ID if not found.",
         "     */",
-        "    [[nodiscard]] inline constexpr LocId keyToId(std::string_view key) noexcept",
+        "    [[nodiscard]] constexpr LocId keyToId(const std::string_view key) noexcept",
         "    {",
-        "        const auto it = std::lower_bound(KEYS.begin(), KEYS.end(), key);",
-        "        if (it != KEYS.end() && *it == key)",
+        "        if (const auto it = std::ranges::lower_bound(KEYS, key, std::less{}, &LocKey::keyName);",
+        "            it != KEYS.end() && *it == key)",
         "        {",
         "            return static_cast<LocId>(std::distance(KEYS.begin(), it));",
         "        }",
@@ -148,9 +169,11 @@ def generate_header_source_content(keys: list[str], eol: str = "\n") -> tuple[st
         "    }",
         "}",
         "",
-        "namespace autoinput::ui",
+        "namespace autoinput",
         "{",
         "    namespace LocIds = LocalizationIds;",
+        "    using LocContainer = std::array<std::string_view, LocalizationIds::KEY_COUNT>;",
+        "    using LocKeyContainer = std::array<LocKey, LocalizationIds::KEY_COUNT>;",
         "}",
         "",
         "#endif // INCLUDE_AUTOINPUT_UI_CORE_LOCALIZATION_IDS_H",
@@ -220,62 +243,66 @@ def generate(
     eol: str = "\n",
 ) -> bool:
     """Generates localizationIds.h from the given TOML file."""
-    loc_file = utils.LocalizationFile.load_from_filepath(loc_file_path)
+    loc_file = LocalizationFile.load_from_filepath(loc_file_path)
     if not loc_file.is_valid():
         logger.error(f"Localization file not found: {loc_file_path}")
         return False
 
-    keys = loc_file.get_all_sorted_keys()
-    if not keys:
+    key_values = loc_file.get_sorted_key_value_pairs()
+    # keys = loc_file.get_all_sorted_keys()
+    if not key_values:
         logger.error(f"No localization keys found in {loc_file_path}")
         return False
 
     # Check for duplicate generated ID names
     seen_ids = {}
-    for key in keys:
-        id_name = to_id_name(key)
+    for key, _ in key_values:
+        id_name = to_loc_id_name(key)
         if id_name in seen_ids:
             logger.error(f"ID name collision: '{key}' and '{seen_ids[id_name]}' both produce '{id_name}'")
             return False
         seen_ids[id_name] = key
 
-    header_content, source_content = generate_header_source_content(keys, eol=eol)
-    key_count = len(keys)
+    header_content, source_content = generate_header_source_content(key_values, eol=eol)
+    key_count = len(key_values)
     if not check_and_update_file_contents(header_path, header_content, 'header', key_count, check_only):
         return False
     return check_and_update_file_contents(source_path, source_content, 'source', key_count, check_only)
 
 
-def main():
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Generate C++ header file with constexpr localization IDs and matching functions.",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--loc",
         type=pathlib.Path,
         default=DEFAULT_LOC_SOURCE_FILE,
         help=f"Path to source TOML file (default: {DEFAULT_LOC_SOURCE_FILE})",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--header",
         type=pathlib.Path,
         default=DEFAULT_HEADER_OUTPUT_FILE,
         help=f"Path to output header file (default: {DEFAULT_HEADER_OUTPUT_FILE})",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--source",
         type=pathlib.Path,
         default=DEFAULT_SOURCE_OUTPUT_FILE,
         help=f"Path to output source file (default: {DEFAULT_SOURCE_OUTPUT_FILE})",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--check",
         action="store_true",
         help="Check if output file is up to date without modifying it.",
     )
+    return parser
 
-    args = parser.parse_args()
+
+def main():
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    args = get_parser().parse_args()
     success = generate(loc_file_path=args.loc, header_path=args.header, source_path=args.source, check_only=args.check)
     if not success:
         sys.exit(1)

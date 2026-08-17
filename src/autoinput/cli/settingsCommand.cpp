@@ -187,9 +187,9 @@ namespace autoinput::cli
 
     HelpEntry SettingsCommand::getHelpEntry() const
     {
-        if (m_helpTopics.size() >= 2)
+        if (getHelpTopicsSize() >= 2)
         {
-            const std::string& topic = m_helpTopics[1];
+            const std::string& topic = getHelpTopicEntry(1);
             if (const SettingsAction action = settingsActionFromString(topic); action != SettingsAction::None)
             {
                 return getActionHelpEntry(action);

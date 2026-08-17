@@ -20,8 +20,8 @@ namespace autoinput::ui
     {
         size_t flattenTable(
             std::map<std::string, std::string, std::less<>>& strings,
-            std::vector<std::string>& stringsById,
-            std::vector<uint8_t>& hasStringById,
+            std::array<std::string, LocalizationIds::KEY_COUNT>& stringsById,
+            std::array<uint8_t, LocalizationIds::KEY_COUNT>& hasStringById,
             const toml::table& table,
             const std::string& prefix)
         {
@@ -36,11 +36,14 @@ namespace autoinput::ui
                 else if (value.is_string())
                 {
                     std::string valStr = value.as_string()->get();
-                    if (const i32 id = LocalizationIds::keyToId(fullKey);
+                    if (const LocId id = LocalizationIds::keyToId(fullKey);
                         id >= 0 && static_cast<size_t>(id) < stringsById.size())
                     {
-                        stringsById[static_cast<size_t>(id)] = valStr;
-                        hasStringById[static_cast<size_t>(id)] = 1;
+                        if (auto locKey = LocIds::idToLocKey(id); locKey.has_value())
+                        {
+                            stringsById.at(static_cast<size_t>(id)) = valStr;
+                        }
+                        hasStringById.at(static_cast<size_t>(id)) = 1;
                     }
                     strings[fullKey] = std::move(valStr);
                     count++;
@@ -70,18 +73,10 @@ namespace autoinput::ui
             if (clearExisting)
             {
                 m_strings.clear();
-                m_stringsById.assign(LocalizationIds::KEY_COUNT, "");
-                m_hasStringById.assign(LocalizationIds::KEY_COUNT, 0);
+                m_stringsById.fill("");
+                m_hasStringById.fill(0);
             }
-            else
-            {
-                if (m_stringsById.size() < static_cast<size_t>(LocalizationIds::KEY_COUNT))
-                {
-                    m_stringsById.resize(LocalizationIds::KEY_COUNT, "");
-                    m_hasStringById.resize(LocalizationIds::KEY_COUNT, 0);
-                }
-            }
-            
+
             size_t loaded = flattenTable(m_strings, m_stringsById, m_hasStringById, std::move(result).table(), "");
             
             Logger::info("Localization: Loaded {} strings from {} (Total: {}, Mode: {})", 
@@ -97,10 +92,9 @@ namespace autoinput::ui
 
     std::string_view Localization::text(std::string_view key) const
     {
-        const i32 id = LocalizationIds::keyToId(key);
-        if (id >= 0 && static_cast<size_t>(id) < m_stringsById.size() && m_hasStringById[static_cast<size_t>(id)])
+        if (const LocId id = LocalizationIds::keyToId(key); has(id))
         {
-            return m_stringsById[static_cast<size_t>(id)];
+            return m_stringsById.at(static_cast<size_t>(id));
         }
 
         if (const auto it = m_strings.find(key); it != m_strings.end())
@@ -119,9 +113,9 @@ namespace autoinput::ui
 
     std::string_view Localization::text(const LocId id) const
     {
-        if (id >= 0 && static_cast<size_t>(id) < m_stringsById.size() && m_hasStringById[static_cast<size_t>(id)])
+        if (has(id))
         {
-            return m_stringsById[static_cast<size_t>(id)];
+            return m_stringsById.at(static_cast<size_t>(id));
         }
 
         if (const std::string_view key = LocalizationIds::idToKey(id); !key.empty())
@@ -133,14 +127,24 @@ namespace autoinput::ui
         return "";
     }
 
-    std::string Localization::textOr(std::string_view key, std::string_view fallback) const
+    std::string_view Localization::text(const LocKey& locKey) const
     {
-        const i32 id = LocalizationIds::keyToId(key);
-        if (id >= 0 && static_cast<size_t>(id) < m_stringsById.size() && m_hasStringById[static_cast<size_t>(id)])
+        if (has(locKey))
         {
-            return m_stringsById[static_cast<size_t>(id)];
+            return m_stringsById.at(static_cast<size_t>(locKey.index));
         }
 
+        if (const std::string_view key = LocalizationIds::idToKey(locKey.index); !key.empty())
+        {
+            return text(key);
+        }
+
+        Logger::warn("Localization: Invalid key ID: {}", locKey.index);
+        return "";
+    }
+
+    std::string Localization::textOr(std::string_view key, std::string_view fallback) const
+    {
         if (const auto it = m_strings.find(key); it != m_strings.end())
         {
             return it->second;
@@ -155,46 +159,37 @@ namespace autoinput::ui
         return std::string(fallback);
     }
 
-    std::string Localization::textOr(const LocId id, const std::string_view fallback) const
+    std::string_view Localization::textOr(const LocId id, const std::string_view fallback) const
     {
-        if (id >= 0 && static_cast<size_t>(id) < m_stringsById.size() && m_hasStringById[static_cast<size_t>(id)])
+        if (has(id))
         {
-            return m_stringsById[static_cast<size_t>(id)];
+            return m_stringsById.at(static_cast<size_t>(id));
         }
 
-        if (const std::string_view key = LocalizationIds::idToKey(id); !key.empty())
-        {
-            return textOr(key, fallback);
-        }
-
-        return std::string(fallback);
+        return fallback;
     }
 
     bool Localization::has(const std::string_view key) const
     {
-        const i32 id = LocalizationIds::keyToId(key);
-        if (id >= 0 && static_cast<size_t>(id) < m_stringsById.size() && m_hasStringById[static_cast<size_t>(id)])
-        {
-            return true;
-        }
         return m_strings.contains(key);
     }
 
     bool Localization::has(const LocId id) const
     {
-        if (id >= 0 && static_cast<size_t>(id) < m_stringsById.size() && m_hasStringById[static_cast<size_t>(id)])
+        if (id >= 0 && static_cast<size_t>(id) < m_stringsById.size()
+            && static_cast<bool>(m_hasStringById.at(static_cast<size_t>(id))))
         {
             return true;
         }
 
-        const std::string_view key = LocalizationIds::idToKey(id);
-        if (!key.empty())
+        if (const std::string_view key = LocalizationIds::idToKey(id); !key.empty())
         {
             return has(key);
         }
 
         return false;
     }
+
 
     Localization& Localization::get()
     {

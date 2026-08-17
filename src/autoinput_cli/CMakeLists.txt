@@ -5,7 +5,7 @@ add_executable(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
         PRIVATE
-        autoinput_core
+        ${PROJECT_NAME_CORE}
 )
 
 configure_autoinput_target(${PROJECT_NAME})

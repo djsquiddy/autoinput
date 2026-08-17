@@ -5,7 +5,14 @@ import os
 import re
 import sys
 
-import utils
+try:
+    from . import utils
+except ImportError:
+    try:
+        import utils
+    except ImportError:
+        sys.path.insert(0, str(os.path.dirname(os.path.abspath(__file__))))
+        import utils
 
 logger = logging.getLogger(__name__)
 

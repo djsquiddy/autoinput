@@ -31,3 +31,8 @@ endif()
 
 # Disable specific warning for raylib target
 target_compile_options(raylib PRIVATE -Wno-tautological-compare)
+
+set_target_properties(raylib PROPERTIES UNITY_BUILD OFF)
+if (TARGET glfw)
+    set_target_properties(glfw PROPERTIES UNITY_BUILD OFF)
+endif()

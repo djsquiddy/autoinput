@@ -100,9 +100,8 @@ if(AUTOINPUT_BUILD_UI)
             ${IMGUI_SOURCES}
     )
 
-    add_executable(${PROJECT_NAME_UI}
-            ${AUTOINPUT_UI_SOURCES}
-    )
+    autoinput_group_sources_by_directory("${CMAKE_CURRENT_LIST_DIR}" ${AUTOINPUT_UI_SOURCES})
+    add_executable(${PROJECT_NAME_UI} ${AUTOINPUT_UI_SOURCES})
 
     target_include_directories(${PROJECT_NAME_UI}
             PRIVATE
@@ -111,11 +110,7 @@ if(AUTOINPUT_BUILD_UI)
             ${imgui_SOURCE_DIR}/misc/cpp
     )
 
-    target_link_libraries(${PROJECT_NAME_UI}
-            PRIVATE
-            autoinput_core
-            raylib
-    )
+    target_link_libraries(${PROJECT_NAME_UI} PRIVATE ${PROJECT_NAME_CORE} raylib)
 
     if(WIN32)
         target_link_libraries(${PROJECT_NAME_UI}
@@ -128,6 +123,7 @@ if(AUTOINPUT_BUILD_UI)
         )
     endif()
 
+    target_include_directories(${PROJECT_NAME_UI} PUBLIC ${CMAKE_SOURCE_DIR}/src/autoinput_ui)
     configure_autoinput_target(${PROJECT_NAME_UI})
     configure_autoinput_platform(${PROJECT_NAME_UI})
 endif(AUTOINPUT_BUILD_UI)

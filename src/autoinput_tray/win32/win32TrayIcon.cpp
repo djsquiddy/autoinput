@@ -7,8 +7,8 @@
 
 #undef NOGDI
 #include <windows.h>
-#include <gdiplus.h>
 #include <objidl.h>
+#include <gdiplus.h>
 #include "win32TrayIcon.h"
 #include "autoinput/support/logger.h"
 #include <stdexcept>

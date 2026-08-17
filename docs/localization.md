@@ -132,14 +132,14 @@ To eliminate runtime string hash lookups in performance-sensitive UI loops, loca
 
 ### Build Integration
 
-Localization IDs are generated automatically during the CMake configure/build process into the CMake build directory (`${CMAKE_BINARY_DIR}/generated/autoinput_ui/core/localizationIds.h` and `localizationIds.cpp`).
+Localization IDs are generated automatically during the CMake configure/build process into the CMake build directory (`${CMAKE_BINARY_DIR}/generated/autoinput/support/localizationIds.h` and `localizationIds.cpp`).
 - Generating inside the build directory rather than the source directory avoids polluting version control and keeps the source tree clean.
 - CMake generates the files during initial configure (prebuild) for immediate IDE indexing and includes a custom build target (`generate_localization_ids`) for incremental updates when `en-US.toml` changes.
 
 ### Generation Script
 
 The `scripts/gen_localization_ids.py` script parses `resources/localization/en-US.toml` and generates:
-- `inline constexpr LocId {KEY_NAME}_ID = {index};` constants in `autoinput::ui::LocalizationIds` (aliased as `autoinput::ui::LocIds`).
+- `inline constexpr LocId {KEY_NAME}_ID = {index};` constants in `autoinput::LocalizationIds` (aliased as `autoinput::LocIds`).
 - `const char* idToKey(LocId id)` helper function to match an ID to its TOML key string.
 - `LocId keyToId(std::string_view key)` helper function to match a TOML key string to its ID.
 
@@ -173,7 +173,7 @@ The `scripts/audit_localization.py` script performs the following checks:
 
 **Usage**:
 ```bash
-python scripts/audit_localization.py
+python -m scripts.audit_localization
 ```
 
 The script will exit with a non-zero status if missing keys are detected, making it suitable for CI/CD pipelines. Unused keys are reported as warnings but do not cause the audit to fail, as some keys might be used dynamically or reserved for future use.

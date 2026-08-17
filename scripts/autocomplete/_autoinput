@@ -2,10 +2,11 @@
 
 _autoinput() {
     local line
-    local -a log_levels action_types mouse_buttons common_keys modifiers all_pos
+    local -a log_levels action_types mouse_buttons notification_modes common_keys modifiers all_pos
     log_levels=(d debug i info w warn warning e error f fatal)
     action_types=(click c hold h)
     mouse_buttons=(left l right r middle m back forward)
+    notification_modes=(off console desktop both)
     modifiers=(ctrl+ shift+ alt+ meta+)
     common_keys=(
         a b c d e f g h i j k l m n o p q r s t u v w x y z
@@ -26,10 +27,9 @@ _autoinput() {
     done
 
     _arguments -C \
-        '(-h --help)'{-h,--help}'[Show help]' \
-        '--examples[Show examples]' \
-        '(-l --log)'{-l,--log}'[Set logging level]:log level:($log_levels)' \
-        '--json[Enable machine-readable JSON output]' \
+        '(-h --help){-h,--help}[Show help]' \
+        '(-l --log){-l,--log}[Set log level: debug, info, warning, error]:log level:($log_levels)' \
+        '--json[Output JSON where supported]' \
         '1: :->command' \
         '*:: :->args'
 
@@ -37,11 +37,12 @@ _autoinput() {
         command)
             local -a subcommands
             subcommands=(
-                'run:Run input automation'
-                'record:Record input events'
-                'config:Manage configuration files'
+                'run:Run input automation from command options or a TOML configuration'
+                'record:Record input events and save them as a replayable configuration'
+                'config:Manage autoinput configuration files'
                 'apps:Inspect running applications'
-                'help:Show help for a command'
+                'serve:Starts the automation runtime server'
+                'help:Show help for autoinput commands'
             )
             _describe 'command' subcommands
             ;;
@@ -49,28 +50,29 @@ _autoinput() {
             case $line[1] in
                 run)
                     _arguments \
-                        '(-c --config)'{-c,--config}'[Load configuration file]:config file:_autoinput_configs' \
-                        '(-t --type)'{-t,--type}'[Set action type]:action type:($action_types)' \
-                        '(-b --btn --button)'{-b,--btn,--button}'[Select mouse button]:mouse button:($mouse_buttons)' \
-                        '(-k --key)'{-k,--key}'[Select keyboard key]:key:($keys_with_mods)' \
-                        '(-s --start)'{-s,--start}'[Hotkey to start automation]:key:($keys_with_mods)' \
-                        '(-e --end)'{-e,--end}'[Hotkey to stop automation]:key:($keys_with_mods)' \
-                        '(-a --app --application)'{-a,--app,--application}'[Focus application]:application:' \
-                        '(-B --blacklist)'{-B,--blacklist}'[Blacklist application]:application:' \
-                        '(-w --wait --press-wait)'{-w,--wait,--press-wait}'[Randomized press delay]:range:' \
-                        '--release-wait[Randomized release delay]:range:' \
-                        '--status-notification[Set notification mode]:mode:(off console desktop both)' \
-                        '(-S --save-config)'{-S,--save-config}'[Save current configuration]:config file:_autoinput_configs'
+                        '(-c --config){-c,--config}[Load a TOML configuration]:config file:_autoinput_configs' \
+                        '(-t --type){-t,--type}[Set action type]:action type:($action_types)' \
+                        '(-b --button){-b,--button}[Mouse button target]:mouse button:($mouse_buttons)' \
+                        '(-k --key){-k,--key}[Keyboard key target]:key:($keys_with_mods)' \
+                        '(-s --start){-s,--start}[Start/toggle trigger]:key:($keys_with_mods)' \
+                        '(-e --end){-e,--end}[Stop trigger]:key:($keys_with_mods)' \
+                        '(-a --app){-a,--app}[Only run while application is focused]:application:' \
+                        '(-B --blacklist){-B,--blacklist}[Pause while application is focused]:application:' \
+                        '(-w --wait){-w,--wait}[Alias for --press-wait]:range:' \
+                        '--press-wait[Delay while target is pressed]:range:' \
+                        '--release-wait[Delay between repeated actions]:range:' \
+                        '--status-notification[off, console, desktop, both]:mode:($notification_modes)' \
+                        '(-S --save-config){-S,--save-config}[Save current options as a user config]:config file:_autoinput_configs'
                     ;;
                 record)
                     _arguments \
                         ':name: ' \
-                        '--start[Hotkey to start recording]:key:($keys_with_mods)' \
-                        '--end[Hotkey to stop recording]:key:($keys_with_mods)' \
-                        '--play-start[Hotkey to play recorded sequence]:key:($keys_with_mods)' \
+                        '--start[Key that starts recording]:key:($keys_with_mods)' \
+                        '--end[Key that stops recording]:key:($keys_with_mods)' \
+                        '--play-start[Key used to play the recorded sequence]:key:($keys_with_mods)' \
                         '--mouse-moves[Record mouse movement events]' \
                         '--mouse-sample[Mouse movement sampling interval]:time:' \
-                        '--force[Allow overwriting existing configuration]'
+                        '--force[Overwrite destination config if it exists]'
                     ;;
                 config)
                     if (( CURRENT == 2 )); then
@@ -78,20 +80,21 @@ _autoinput() {
                         config_subcommands=(
                             'list:List available configurations'
                             'validate:Validate a configuration file'
-                            'duplicate:Duplicate a configuration'
+                            'duplicate:Duplicate a configuration into the user config directory'
                             'copy:Alias for duplicate'
+                            'path:Print the path to the configuration'
                         )
                         _describe 'config command' config_subcommands
                     else
                         case $line[2] in
-                            validate)
+                            validate|path)
                                 _arguments ':config file:_autoinput_configs'
                                 ;;
                             duplicate|copy)
                                 _arguments \
                                     ':source config:_autoinput_configs' \
                                     ':destination name: ' \
-                                    '--force[Allow overwriting destination]'
+                                    '--force[Overwrite destination if it already exists]'
                                 ;;
                         esac
                     fi
@@ -99,12 +102,22 @@ _autoinput() {
                 apps)
                     if (( CURRENT == 2 )); then
                         local -a apps_subcommands
-                        apps_subcommands=('list:List running applications')
+                        apps_subcommands=(
+                            'list:List currently running application names'
+                        )
                         _describe 'apps command' apps_subcommands
                     fi
                     ;;
+                serve)
+                    _arguments \
+                        '--stdio[Use standard input/output for the protocol]'
+                    ;;
                 help)
-                    _arguments ':command:(run record config apps)'
+                    if (( CURRENT == 2 )); then
+                        _arguments ':command:(run record config apps serve)'
+                    elif (( CURRENT == 3 )) && [[ $line[2] == "config" ]]; then
+                        _arguments ':subcommand:(list validate duplicate copy path)'
+                    fi
                     ;;
             esac
             ;;

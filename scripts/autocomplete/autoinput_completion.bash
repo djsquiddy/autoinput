@@ -10,12 +10,13 @@ _autoinput() {
     local cur prev words cword
     _get_comp_words_by_ref -n : cur prev words cword
 
-    local commands="run record config apps help"
-    local global_opts="-h --help --examples -l --log --json"
+    local commands="run record config apps serve help"
+    local global_opts="-h --help -l --log --json"
     
     local log_levels="d debug i info w warn warning e error f fatal"
     local action_types="click c hold h"
     local mouse_buttons="left l right r middle m back forward"
+    local notification_modes="off console desktop both"
     local common_keys="a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 8 9 f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 esc escape space tab enter return backspace ins insert del delete home end pageup pgup pagedown pgdn up down left right capslock numlock scrolllock printscreen prtsc pause"
     
     # Simple check for command
@@ -48,7 +49,7 @@ _autoinput() {
                     COMPREPLY=( $(compgen -W "${action_types}" -- "$cur") )
                     return 0
                     ;;
-                -b|--btn|--button)
+                -b|--button)
                     COMPREPLY=( $(compgen -W "${mouse_buttons}" -- "$cur") )
                     return 0
                     ;;
@@ -57,11 +58,11 @@ _autoinput() {
                     return 0
                     ;;
                 --status-notification)
-                    COMPREPLY=( $(compgen -W "off console desktop both" -- "$cur") )
+                    COMPREPLY=( $(compgen -W "${notification_modes}" -- "$cur") )
                     return 0
                     ;;
             esac
-            COMPREPLY=( $(compgen -W "-c --config -t --type -b --btn --button -k --key -s --start -e --end -a --app --application -B --blacklist -w --wait --press-wait --release-wait --status-notification -S --save-config" -- "$cur") )
+            COMPREPLY=( $(compgen -W "-c --config -t --type -b --button -k --key -s --start -e --end -a --app -B --blacklist -w --wait --press-wait --release-wait --status-notification -S --save-config" -- "$cur") )
             ;;
         record)
             case "$prev" in
@@ -73,7 +74,7 @@ _autoinput() {
             COMPREPLY=( $(compgen -W "--start --end --play-start --mouse-moves --mouse-sample --force" -- "$cur") )
             ;;
         config)
-            local subcommands="list validate duplicate copy"
+            local subcommands="list validate duplicate copy path"
             local subcmd=""
             for ((i=1; i < cword; i++)); do
                 if [[ " ${subcommands} " == *" ${words[i]} "* ]]; then
@@ -86,7 +87,13 @@ _autoinput() {
                 COMPREPLY=( $(compgen -W "${subcommands}" -- "$cur") )
             else
                 case "$subcmd" in
-                    validate|duplicate|copy)
+                    validate|path)
+                        if [[ "$prev" == "$subcmd" ]]; then
+                            _autoinput_configs
+                            return 0
+                        fi
+                        ;;
+                    duplicate|copy)
                         if [[ "$prev" == "$subcmd" ]]; then
                             _autoinput_configs
                             return 0
@@ -101,8 +108,15 @@ _autoinput() {
         apps)
             COMPREPLY=( $(compgen -W "list" -- "$cur") )
             ;;
+        serve)
+            COMPREPLY=( $(compgen -W "--stdio" -- "$cur") )
+            ;;
         help)
-            COMPREPLY=( $(compgen -W "run record config apps" -- "$cur") )
+            if [[ $cword -eq 2 ]]; then
+                COMPREPLY=( $(compgen -W "run record config apps serve" -- "$cur") )
+            elif [[ $cword -eq 3 && "${words[1]}" == "config" ]]; then
+                COMPREPLY=( $(compgen -W "list validate duplicate copy path" -- "$cur") )
+            fi
             ;;
     esac
 }
