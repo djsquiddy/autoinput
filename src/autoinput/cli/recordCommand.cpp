@@ -163,30 +163,19 @@ namespace autoinput::cli
 
     void RecordCommand::printHelp() const
     {
-        logHelpMessage({
-            .context = m_context,
-            .options ={
-                { .usage = "--start KEY", .description = "Key that starts recording" },
-                { .usage = "--end KEY", .description = "Key that stops recording" },
-                { .usage = "--play-start KEY", .description = "Key used to play the recorded sequence" },
-                { .usage = "--mouse-moves", .description = "Record mouse movement events" },
-                { .usage = "--mouse-sample TIME", .description = "Mouse movement sampling interval" },
-                { .usage = "--force", .description = "Overwrite destination config if it exists" },
-            },
-            .examples = {
-                "record my-macro",
-                "record my-macro --start f8 --end f9",
-                "record my-macro --mouse-moves --mouse-sample 25ms",
-            }
+        if (const HelpMetadata::CliCommandMetadata* metadata = HelpMetadata::findCommand(getName()))
+        {
+            const std::vector<std::string> topics{ std::string(getName()) };
+            renderCommandHelp(*metadata, m_context, topics);
         }
-        );
     }
 
     HelpEntry RecordCommand::getHelpEntry() const
     {
-        return {
-            .usage = std::format("{} NAME [options]", getName()),
-            .description = "Record input events and save them as a replayable configuration.",
-        };
+        if (const HelpMetadata::CliCommandMetadata* metadata = HelpMetadata::findCommand(getName()))
+        {
+            return { .usage = std::string(metadata->usage), .description = std::string(metadata->description) };
+        }
+        return {};
     }
 }

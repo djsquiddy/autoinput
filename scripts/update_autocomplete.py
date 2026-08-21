@@ -11,12 +11,15 @@ from dataclasses import dataclass, field
 
 try:
     from . import utils
+    from .cli_help import CliHelpMetadata, CliCommand as ToolCliCommand, CliOption as ToolCliOption, load_cli_help_metadata
 except ImportError:
     try:
         import utils
+        from cli_help import CliHelpMetadata, CliCommand as ToolCliCommand, CliOption as ToolCliOption, load_cli_help_metadata
     except ImportError:
         sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
         import utils
+        from cli_help import CliHelpMetadata, CliCommand as ToolCliCommand, CliOption as ToolCliOption, load_cli_help_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +66,74 @@ class CliMetadata:
     notification_modes: list[str] = field(default_factory=lambda: list(DEFAULT_NOTIFICATION_MODES))
     common_keys: list[str] = field(default_factory=lambda: list(COMMON_KEYS))
     modifiers: list[str] = field(default_factory=lambda: list(MODIFIERS))
+
+
+DEFAULT_METADATA_TOML = utils.RESOURCE_DIR / "cli" / "help.toml"
+
+ALL_SHELL_TARGETS = {"zsh", "bash", "lua"}
+
+
+def detect_default_targets() -> set[str]:
+    """Return the default completion targets to generate/check based on the current platform."""
+    if sys.platform == "win32":
+        return {"lua"}
+
+    shell = os.environ.get("SHELL", "")
+    if shell.endswith("/zsh"):
+        return {"zsh"}
+    if shell.endswith("/bash"):
+        return {"bash"}
+    return {"zsh", "bash"}
+
+
+def _option_info_from_cli_option(opt: ToolCliOption) -> OptionInfo:
+    return OptionInfo(
+        flags=list(opt.names),
+        arg_placeholder=opt.value_name if opt.value else None,
+        description=opt.description,
+    )
+
+
+def _command_info_from_cli_command(cmd: ToolCliCommand) -> CommandInfo:
+    info = CommandInfo(name=cmd.name, description=cmd.description)
+    info.options = [_option_info_from_cli_option(opt) for opt in cmd.options]
+    info.subcommands = {
+        sub.name: _command_info_from_cli_command(sub) for sub in cmd.subcommands
+    }
+    return info
+
+
+def metadata_from_toml(toml_metadata: CliHelpMetadata) -> CliMetadata:
+    """Convert the shared CliHelpMetadata (loaded from TOML) into this script's CliMetadata."""
+    metadata = CliMetadata()
+    metadata.global_options = [_option_info_from_cli_option(opt) for opt in toml_metadata.global_options]
+    metadata.commands = {
+        cmd.name: _command_info_from_cli_command(cmd) for cmd in toml_metadata.commands
+    }
+
+    completions = toml_metadata.completions
+    metadata.log_levels = list(completions.get("log_levels", DEFAULT_LOG_LEVELS))
+    metadata.action_types = list(completions.get("action_types", DEFAULT_ACTION_TYPES))
+    metadata.mouse_buttons = list(completions.get("mouse_buttons", DEFAULT_MOUSE_BUTTONS))
+    metadata.notification_modes = list(completions.get("notification_modes", DEFAULT_NOTIFICATION_MODES))
+    metadata.common_keys = list(COMMON_KEYS)
+    metadata.modifiers = list(MODIFIERS)
+    return metadata
+
+
+def load_metadata_from_toml_file(path: pathlib.Path) -> CliMetadata | None:
+    """Load CliMetadata from the canonical TOML file, or None if it doesn't exist/parse."""
+    if not path.exists():
+        logger.warning(f"CLI metadata TOML not found at {path}; falling back to default metadata.")
+        return None
+
+    try:
+        toml_metadata = load_cli_help_metadata(path)
+    except Exception as e:
+        logger.warning(f"Failed to load/validate CLI metadata TOML at {path}: {e}; falling back to default metadata.")
+        return None
+
+    return metadata_from_toml(toml_metadata)
 
 
 def find_autoinput_binary(binary_arg: str | None = None) -> pathlib.Path | None:
@@ -1013,13 +1084,36 @@ def get_parser() -> argparse.ArgumentParser:
         "--binary",
         "-b",
         default=None,
-        help="Path to autoinput binary for dynamic CLI discovery.",
+        help="Path to autoinput binary for dynamic CLI discovery (only used with --source binary).",
+    )
+    _ = parser.add_argument(
+        "--source",
+        choices=["toml", "binary"],
+        default="toml",
+        help="Where to source CLI metadata from (default: toml).",
+    )
+    _ = parser.add_argument(
+        "--metadata",
+        default=None,
+        help=f"Path to the CLI metadata TOML file (default: {DEFAULT_METADATA_TOML}).",
     )
     _ = parser.add_argument(
         "--check",
         "-c",
         action="store_true",
         help="Check if completion files are up-to-date without modifying them.",
+    )
+    _ = parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Generate/check every completion target (zsh, bash, lua) regardless of platform.",
+    )
+    _ = parser.add_argument(
+        "--shell",
+        choices=["zsh", "bash", "lua", "all"],
+        action="append",
+        default=None,
+        help="Explicitly select one or more completion targets to generate/check (repeatable).",
     )
     _ = parser.add_argument(
         "--zsh",
@@ -1045,6 +1139,33 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _resolve_active_targets(args: argparse.Namespace) -> set[str]:
+    if args.shell:
+        chosen: set[str] = set()
+        for shell in args.shell:
+            if shell == "all":
+                chosen |= ALL_SHELL_TARGETS
+            else:
+                chosen.add(shell)
+        logger.info(f"--shell explicitly set to: {', '.join(sorted(chosen))}")
+        return chosen
+
+    if args.all:
+        logger.info("--all specified, generating all targets")
+        return set(ALL_SHELL_TARGETS)
+
+    detected = detect_default_targets()
+    if sys.platform == "win32":
+        logger.info("Windows detected, generating Clink/Lua only")
+    elif detected == {"zsh"}:
+        logger.info("Detected shell 'zsh' via $SHELL, generating zsh completion only")
+    elif detected == {"bash"}:
+        logger.info("Detected shell 'bash' via $SHELL, generating bash completion only")
+    else:
+        logger.info("Could not determine a specific shell via $SHELL, generating zsh and bash completions")
+    return detected
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = get_parser()
     args = parser.parse_args(argv)
@@ -1058,16 +1179,25 @@ def main(argv: list[str] | None = None) -> int:
     bash_path = pathlib.Path(args.bash).resolve() if args.bash else utils.AUTOCOMPLETE_BASH_FILE
     lua_path = pathlib.Path(args.lua).resolve() if args.lua else utils.AUTOCOMPLETE_LUA_FILE
 
-    binary_path = find_autoinput_binary(args.binary)
-    if binary_path:
-        logger.info(f"Using binary '{binary_path}' for dynamic option discovery.")
-        metadata = extract_metadata_from_binary(binary_path)
+    metadata: CliMetadata | None = None
+    if args.source == "binary":
+        binary_path = find_autoinput_binary(args.binary)
+        if binary_path:
+            logger.info(f"Using binary '{binary_path}' for dynamic option discovery.")
+            metadata = extract_metadata_from_binary(binary_path)
+        else:
+            if args.binary:
+                logger.error(f"Binary not found: {args.binary}")
+                return 1
+            logger.info("No autoinput binary found; using static CLI metadata fallback.")
+            metadata = get_default_metadata()
     else:
-        if args.binary:
-            logger.error(f"Binary not found: {args.binary}")
-            return 1
-        logger.info("No autoinput binary found; using static CLI metadata fallback.")
-        metadata = get_default_metadata()
+        metadata_path = pathlib.Path(args.metadata).resolve() if args.metadata else DEFAULT_METADATA_TOML
+        metadata = load_metadata_from_toml_file(metadata_path)
+        if metadata is None:
+            metadata = get_default_metadata()
+
+    active_targets = _resolve_active_targets(args)
 
     zsh_eol = detect_file_eol(zsh_path)
     bash_eol = detect_file_eol(bash_path)
@@ -1077,15 +1207,16 @@ def main(argv: list[str] | None = None) -> int:
     generated_bash = generate_bash_completion(metadata, eol=bash_eol)
     generated_lua = generate_lua_completion(metadata, eol=lua_eol)
 
-    targets = [
-        ("Zsh", zsh_path, generated_zsh, zsh_eol),
-        ("Bash", bash_path, generated_bash, bash_eol),
-        ("Clink/Lua", lua_path, generated_lua, lua_eol),
+    all_targets = [
+        ("zsh", "Zsh", zsh_path, generated_zsh, zsh_eol),
+        ("bash", "Bash", bash_path, generated_bash, bash_eol),
+        ("lua", "Clink/Lua", lua_path, generated_lua, lua_eol),
     ]
+    targets = [t for t in all_targets if t[0] in active_targets]
 
     if args.check:
         all_up_to_date = True
-        for name, path, content, _ in targets:
+        for _, name, path, content, _eol in targets:
             existing = read_file_normalized(path)
             # Compare normalized content
             if existing.replace("\r\n", "\n") != content.replace("\r\n", "\n"):
@@ -1101,7 +1232,7 @@ def main(argv: list[str] | None = None) -> int:
         logger.info("All autocomplete scripts are up to date.")
         return 0
 
-    for name, path, content, eol in targets:
+    for _, name, path, content, eol in targets:
         write_file(path, content, eol=eol)
         logger.info(f"Updated {name} completion script at {path}")
 

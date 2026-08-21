@@ -11,7 +11,7 @@ _autoinput() {
     _get_comp_words_by_ref -n : cur prev words cword
 
     local commands="run record config apps serve help"
-    local global_opts="-h --help -l --log --json"
+    local global_opts="-h --help --examples -l --log --json"
     
     local log_levels="d debug i info w warn warning e error f fatal"
     local action_types="click c hold h"
@@ -49,7 +49,7 @@ _autoinput() {
                     COMPREPLY=( $(compgen -W "${action_types}" -- "$cur") )
                     return 0
                     ;;
-                -b|--button)
+                -b|--button|--btn)
                     COMPREPLY=( $(compgen -W "${mouse_buttons}" -- "$cur") )
                     return 0
                     ;;
@@ -62,7 +62,7 @@ _autoinput() {
                     return 0
                     ;;
             esac
-            COMPREPLY=( $(compgen -W "-c --config -t --type -b --button -k --key -s --start -e --end -a --app -B --blacklist -w --wait --press-wait --release-wait --status-notification -S --save-config" -- "$cur") )
+            COMPREPLY=( $(compgen -W "-c --config -t --type -b --button --btn -k --key -s --start -e --end -a --app --application -B --blacklist -w --wait --press-wait --release-wait --status-notification -S --save-config" -- "$cur") )
             ;;
         record)
             case "$prev" in

@@ -180,22 +180,41 @@ compinit
 
 Alternatively, you can copy the `scripts/autocomplete/_autoinput` file to a directory already in your `$fpath` (e.g., `/usr/local/share/zsh/site-functions`).
 
-#### Updating Autocomplete Scripts
+#### CLI Help & Autocomplete Metadata
 
-You can update or verify the autocomplete scripts using the Python generator script:
+`resources/cli/help.toml` is the single canonical source of truth for autoinput's CLI help text (usage, descriptions, options, examples, notes) and shell autocomplete metadata (completion lists for log levels, action types, mouse buttons, notification modes, etc.). It is consumed by two independent tools:
+
+- **`scripts/gen_cli_help.py`**: Generates the C++ `cliHelpMetadata.h`/`.cpp` files (via `scripts/cli_help.py`, the shared TOML loader/validator) that the CLI commands render `--help` output from. This runs automatically at CMake configure/build time; you normally don't need to invoke it manually.
+- **`scripts/update_autocomplete.py`**: Generates the Zsh/Bash/Clink-Lua completion scripts in `scripts/autocomplete/` directly from the TOML metadata.
+
+You can regenerate or verify either of these manually:
 
 ```bash
-# Automatically discover binary or update completions
-python scripts/update_autocomplete.py
+# Regenerate the C++ CLI help metadata from resources/cli/help.toml
+python scripts/gen_cli_help.py
 
-# Specify the path to autoinput binary explicitly
-python scripts/update_autocomplete.py --binary build/debug/bin/autoinput.exe
+# Verify the generated C++ metadata is up-to-date (CI check mode)
+python scripts/gen_cli_help.py --check
+
+# Regenerate autocomplete scripts (reads resources/cli/help.toml by default)
+python scripts/update_autocomplete.py
 
 # Verify completion scripts are up-to-date (CI check mode)
 python scripts/update_autocomplete.py --check
+
+# Force generating/checking every target (Zsh, Bash, and Clink/Lua) regardless of platform
+python scripts/update_autocomplete.py --check --all
+
+# Explicitly select one or more targets
+python scripts/update_autocomplete.py --shell zsh --shell bash
+
+# Fall back to extracting metadata from a built binary's --help output instead of the TOML file
+python scripts/update_autocomplete.py --source binary --binary build/debug/bin/autoinput.exe
 ```
 
-The build script (`python scripts/build.py`) also automatically runs `update_autocomplete.py --binary <path>` upon completing a build.
+By default, `update_autocomplete.py` only regenerates the completion script(s) relevant to your platform: on Windows it generates the Clink/Lua script only; on Linux/macOS it inspects `$SHELL` and generates the matching Zsh or Bash script (or both, if `$SHELL` is unset/unrecognized). Use `--all` to force every target, or `--shell {zsh,bash,lua,all}` (repeatable) to select specific targets explicitly.
+
+The build script (`python scripts/build.py`) automatically runs `update_autocomplete.py` upon completing a build, using this same platform-aware default so a build on a given OS only refreshes that OS's own completion script(s).
 
 ### Usage
 
@@ -703,7 +722,10 @@ The `scripts/` directory contains helper scripts for building, testing, maintena
 - **`appendPath.cmd`**: Windows helper script to temporarily append the build output directory to `PATH`.
 - **`gen_localization_ids.py`**: Generates C++ constexpr localization IDs and lookup helper functions from `resources/localization/en-US.toml`.
 - **`audit_localization.py`**: Audits C++ source code and `en-US.toml` for missing and unused localization keys.
-- **`update_autocomplete.py`**: Updates shell completion scripts for Zsh, Bash, and Clink/Lua.
+- **`cli_help.py`**: Shared loader/validator (dataclasses + `load_cli_help_metadata()`) for the canonical CLI metadata in `resources/cli/help.toml`.
+- **`gen_cli_help.py`**: Generates the C++ CLI help metadata (`cliHelpMetadata.h`/`.cpp`) consumed by the CLI's `--help` output, from `resources/cli/help.toml`.
+- **`test_cli_help.py`**: Plain-assert validation tests for `cli_help.py` (run with `python scripts/test_cli_help.py`).
+- **`update_autocomplete.py`**: Updates shell completion scripts for Zsh, Bash, and Clink/Lua from `resources/cli/help.toml`.
 - **`autocomplete/`**: Shell completion scripts and installers for Bash, Zsh, and Clink.
 
 Usage examples:

@@ -10,6 +10,7 @@ set(AUTOINPUT_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/utilsTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/argumentsTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/cliCommandTest.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/autoinput/cliHelpMetadataTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/serveCommandTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/runtimeProtocolTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/processTransportTest.cpp

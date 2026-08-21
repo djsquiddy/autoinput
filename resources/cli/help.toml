@@ -1,0 +1,341 @@
+# autoinput CLI help/autocomplete metadata
+#
+# This is the single canonical source of truth for autoinput's CLI help text and
+# shell autocomplete metadata. It is consumed by:
+#   - scripts/gen_cli_help.py: generates C++ metadata (src is generated into the
+#     CMake build directory) that the CLI commands render `--help` output from.
+#   - scripts/update_autocomplete.py: generates Zsh/Bash/Clink-Lua completion scripts.
+#
+# Schema:
+#   [app]
+#     name    : program name (string)
+#     summary : one-line description of the program (string)
+#
+#   [[global_options]] / [[commands.options]] / [[commands.subcommands.options]]
+#     names        : list of flag/name strings, e.g. ["-h", "--help"] (required, non-empty)
+#     value        : whether the option takes a value (bool, default false)
+#     value_name   : placeholder name for the option's value, e.g. "LEVEL" (only allowed if value = true)
+#     description  : short help text (required, non-empty)
+#     completion   : one of the built-ins "none" | "file" | "path" | "config" | "application",
+#                    or the name of a list defined in [completions] (default "none")
+#     repeatable   : whether the option may be specified multiple times (bool, default false)
+#
+#   [[commands]] / [[commands.subcommands]]
+#     name        : command/subcommand name (required)
+#     usage       : usage string as shown in help output (required)
+#     description : short help text (required, non-empty)
+#     options     : list of options (see above)
+#     subcommands : list of nested subcommands (same schema, recursively)
+#     examples    : list of example invocations (without program name prefix)
+#     notes       : list of free-form note lines
+
+[app]
+name = "autoinput"
+summary = "Cross-platform input automation: simulate and record mouse/keyboard input from the command line."
+
+[[global_options]]
+names = ["-h", "--help"]
+value = false
+description = "Show help"
+completion = "none"
+
+[[global_options]]
+names = ["--examples"]
+value = false
+description = "Show help with additional usage examples"
+completion = "none"
+
+[[global_options]]
+names = ["-l", "--log"]
+value = true
+value_name = "LEVEL"
+description = "Set log level: debug, info, warning, error"
+completion = "log_levels"
+
+[[global_options]]
+names = ["--json"]
+value = false
+description = "Output JSON where supported"
+completion = "none"
+
+# ---------------------------------------------------------------------------
+# run
+# ---------------------------------------------------------------------------
+[[commands]]
+name = "run"
+usage = "run [options]"
+description = "Run input automation from command options or a TOML configuration."
+examples = [
+    "run --button left",
+    "run --type hold --button left --start f2",
+    "run --key space --start f6 --release-wait 1s",
+    "run --config left-click-press",
+]
+
+[[commands.options]]
+names = ["-c", "--config"]
+value = true
+value_name = "NAME_OR_PATH"
+description = "Load a TOML configuration"
+completion = "config"
+
+[[commands.options]]
+names = ["-t", "--type"]
+value = true
+value_name = "click|hold"
+description = "Set action type"
+completion = "action_types"
+
+[[commands.options]]
+names = ["-b", "--button", "--btn"]
+value = true
+value_name = "BUTTON"
+description = "Mouse button target"
+completion = "mouse_buttons"
+
+[[commands.options]]
+names = ["-k", "--key"]
+value = true
+value_name = "KEY"
+description = "Keyboard key target"
+completion = "none"
+
+[[commands.options]]
+names = ["-s", "--start"]
+value = true
+value_name = "KEY"
+description = "Start/toggle trigger"
+completion = "none"
+
+[[commands.options]]
+names = ["-e", "--end"]
+value = true
+value_name = "KEY"
+description = "Stop trigger"
+completion = "none"
+
+[[commands.options]]
+names = ["-a", "--app", "--application"]
+value = true
+value_name = "APPLICATION"
+description = "Only run while application is focused"
+completion = "application"
+
+[[commands.options]]
+names = ["-B", "--blacklist"]
+value = true
+value_name = "APPLICATION"
+description = "Pause while application is focused"
+completion = "application"
+repeatable = true
+
+[[commands.options]]
+names = ["-w", "--wait", "--press-wait"]
+value = true
+value_name = "RANGE"
+description = "Delay while target is pressed"
+completion = "none"
+
+[[commands.options]]
+names = ["--release-wait"]
+value = true
+value_name = "RANGE"
+description = "Delay between repeated actions"
+completion = "none"
+
+[[commands.options]]
+names = ["--status-notification"]
+value = true
+value_name = "MODE"
+description = "off, console, desktop, both"
+completion = "notification_modes"
+
+[[commands.options]]
+names = ["-S", "--save-config"]
+value = true
+value_name = "NAME"
+description = "Save current options as a user config"
+completion = "none"
+
+# ---------------------------------------------------------------------------
+# record
+# ---------------------------------------------------------------------------
+[[commands]]
+name = "record"
+usage = "record NAME [options]"
+description = "Record input events and save them as a replayable configuration."
+examples = [
+    "record my-macro",
+    "record my-macro --start f8 --end f9",
+    "record my-macro --mouse-moves --mouse-sample 25ms",
+]
+
+[[commands.options]]
+names = ["--start"]
+value = true
+value_name = "KEY"
+description = "Key that starts recording"
+completion = "none"
+
+[[commands.options]]
+names = ["--end"]
+value = true
+value_name = "KEY"
+description = "Key that stops recording"
+completion = "none"
+
+[[commands.options]]
+names = ["--play-start"]
+value = true
+value_name = "KEY"
+description = "Key used to play the recorded sequence"
+completion = "none"
+
+[[commands.options]]
+names = ["--mouse-moves"]
+value = false
+description = "Record mouse movement events"
+completion = "none"
+
+[[commands.options]]
+names = ["--mouse-sample"]
+value = true
+value_name = "TIME"
+description = "Mouse movement sampling interval"
+completion = "none"
+
+[[commands.options]]
+names = ["--force"]
+value = false
+description = "Overwrite destination config if it exists"
+completion = "none"
+
+# ---------------------------------------------------------------------------
+# config
+# ---------------------------------------------------------------------------
+[[commands]]
+name = "config"
+usage = "config <command> [options]"
+description = "Manage autoinput configuration files."
+examples = [
+    "config list",
+    "config validate my-config",
+    "config duplicate old-config new-config",
+    "config copy old-config new-config",
+    "config path my-config",
+    "help config validate",
+    "help config duplicate",
+]
+
+[[commands.subcommands]]
+name = "list"
+usage = "list"
+description = "List available configurations"
+examples = ["config list"]
+
+[[commands.subcommands]]
+name = "validate"
+usage = "validate NAME_OR_PATH"
+description = "Validate a configuration file"
+examples = [
+    "config validate my-config",
+    "--json config validate my-config",
+]
+notes = [
+    "Use the global --json option before the command for machine-readable output.",
+]
+
+[[commands.subcommands]]
+name = "duplicate"
+usage = "duplicate SOURCE DESTINATION"
+description = "Duplicate a configuration into the user config directory"
+examples = [
+    "config duplicate old-config my-copy",
+    "config duplicate old-config my-copy --force",
+    "config copy old-config new-config",
+]
+
+[[commands.subcommands.options]]
+names = ["--force"]
+value = false
+description = "Overwrite destination if it already exists"
+completion = "none"
+
+[[commands.subcommands]]
+name = "copy"
+usage = "copy SOURCE DESTINATION"
+description = "Alias for config duplicate."
+examples = [
+    "config duplicate old-config my-copy",
+    "config duplicate old-config my-copy --force",
+    "config copy old-config new-config",
+]
+
+[[commands.subcommands.options]]
+names = ["--force"]
+value = false
+description = "Overwrite destination if it already exists"
+completion = "none"
+
+[[commands.subcommands]]
+name = "path"
+usage = "path NAME_OR_PATH"
+description = "Print the path to the configuration."
+examples = ["config path my-config"]
+
+# ---------------------------------------------------------------------------
+# apps
+# ---------------------------------------------------------------------------
+[[commands]]
+name = "apps"
+usage = "apps <command>"
+description = "Inspect running applications."
+notes = [
+    "Application listing depends on platform support.",
+]
+
+[[commands.subcommands]]
+name = "list"
+usage = "list"
+description = "List currently running application names"
+examples = ["apps list"]
+
+# ---------------------------------------------------------------------------
+# serve
+# ---------------------------------------------------------------------------
+[[commands]]
+name = "serve"
+usage = "serve --stdio"
+description = "Starts the automation runtime server."
+examples = ["serve --stdio"]
+notes = [
+    "The server reads one JSON object per line from stdin and responds with one JSON object per line to stdout.",
+    "Example requests:",
+    "  {\"id\":1,\"method\":\"status\"}",
+    "  {\"id\":2,\"method\":\"start\",\"params\":{\"config\":\"autoinput\"}}",
+    "  {\"id\":3,\"method\":\"stop\"}",
+    "  {\"id\":4,\"method\":\"shutdown\"}",
+]
+
+[[commands.options]]
+names = ["--stdio"]
+value = false
+description = "Use standard input/output for the protocol."
+completion = "none"
+
+# ---------------------------------------------------------------------------
+# help
+# ---------------------------------------------------------------------------
+[[commands]]
+name = "help"
+usage = "help [command]"
+description = "Show help for autoinput commands."
+
+# ---------------------------------------------------------------------------
+# Named completion lists, referenced by option "completion" fields.
+# ---------------------------------------------------------------------------
+[completions]
+log_levels = ["d", "debug", "i", "info", "w", "warn", "warning", "e", "error", "f", "fatal"]
+action_types = ["click", "c", "hold", "h"]
+mouse_buttons = ["left", "l", "right", "r", "middle", "m", "back", "forward"]
+notification_modes = ["off", "console", "desktop", "both"]

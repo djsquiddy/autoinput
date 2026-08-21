@@ -12,6 +12,7 @@ target_include_directories(${PROJECT_NAME_CORE}
 )
 
 add_dependencies(${PROJECT_NAME_CORE} generate_localization_ids)
+add_dependencies(${PROJECT_NAME_CORE} generate_cli_help_metadata)
 
 target_link_libraries(${PROJECT_NAME_CORE}
         PUBLIC

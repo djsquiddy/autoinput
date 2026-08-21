@@ -15,10 +15,11 @@ namespace autoinput::cli
 {
     HelpEntry ServeCommand::getHelpEntry() const
     {
-        return {
-            .usage = "serve --stdio",
-            .description = "Starts the automation runtime server."
-        };
+        if (const HelpMetadata::CliCommandMetadata* metadata = HelpMetadata::findCommand(getName()))
+        {
+            return { .usage = std::string(metadata->usage), .description = std::string(metadata->description) };
+        }
+        return {};
     }
 
     bool ServeCommand::parse(gsl::span<char*> args, i32& index)
@@ -60,25 +61,11 @@ namespace autoinput::cli
 
     void ServeCommand::printHelp() const
     {
-        logHelpMessage({
-            .context = m_context,
-            .commands = {},
-            .options = {
-                { "--stdio", "Use standard input/output for the protocol." }
-            },
-            .examples = {
-                "serve --stdio"
-            }
-        });
-
-        logHelpStrings("Runtime JSON-line protocol", {
-            "The server reads one JSON object per line from stdin and responds with one JSON object per line to stdout.",
-            "\nExample requests:",
-            "  {\"id\":1,\"method\":\"status\"}",
-            "  {\"id\":2,\"method\":\"start\",\"params\":{\"config\":\"autoinput\"}}",
-            "  {\"id\":3,\"method\":\"stop\"}",
-            "  {\"id\":4,\"method\":\"shutdown\"}"
-        });
+        if (const HelpMetadata::CliCommandMetadata* metadata = HelpMetadata::findCommand(getName()))
+        {
+            const std::vector<std::string> topics{ std::string(getName()) };
+            renderCommandHelp(*metadata, m_context, topics);
+        }
     }
 
     ErrorCode ServeCommand::runStdioRuntimeServer()

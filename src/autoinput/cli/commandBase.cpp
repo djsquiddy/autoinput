@@ -100,4 +100,61 @@ namespace autoinput::cli
         logHelpStrings("Note", message.notes);
         Logger::print("\n");
     }
+
+    HelpEntry optionToHelpEntry(const HelpMetadata::CliOptionMetadata& option)
+    {
+        std::string usage;
+        for (size_t i = 0; i < option.names.size(); ++i)
+        {
+            if (i > 0)
+            {
+                usage += ", ";
+            }
+            usage += option.names[i];
+        }
+
+        if (option.value && !option.valueName.empty())
+        {
+            usage += ' ';
+            usage += option.valueName;
+        }
+
+        return { .usage = usage, .description = std::string(option.description) };
+    }
+
+    void renderCommandHelp(const HelpMetadata::CliCommandMetadata& metadata, const CommandContext& context, const std::span<const std::string> topics)
+    {
+        const HelpMetadata::CliCommandMetadata* node = &metadata;
+        for (size_t i = 1; i < topics.size(); ++i)
+        {
+            const HelpMetadata::CliCommandMetadata* sub = HelpMetadata::findSubcommand(*node, topics[i]);
+            if (!sub)
+            {
+                break;
+            }
+            node = sub;
+        }
+
+        std::vector<HelpEntry> commands;
+        commands.reserve(node->subcommands.size());
+        for (const auto& sub : node->subcommands)
+        {
+            commands.push_back({ .usage = std::string(sub.usage), .description = std::string(sub.description) });
+        }
+
+        std::vector<HelpEntry> options;
+        options.reserve(node->options.size());
+        for (const auto& option : node->options)
+        {
+            options.push_back(optionToHelpEntry(option));
+        }
+
+        logHelpMessage({
+            .context = context,
+            .commands = commands,
+            .options = options,
+            .examples = std::vector<std::string>(node->examples.begin(), node->examples.end()),
+            .notes = std::vector<std::string>(node->notes.begin(), node->notes.end()),
+        });
+    }
 }

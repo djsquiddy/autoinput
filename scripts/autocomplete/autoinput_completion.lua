@@ -68,6 +68,7 @@ run_parser:set_flags(
     "--type" .. clink.arg.new_parser(action_types),
     "-b" .. clink.arg.new_parser(mouse_buttons),
     "--button" .. clink.arg.new_parser(mouse_buttons),
+    "--btn" .. clink.arg.new_parser(mouse_buttons),
     "-k" .. clink.arg.new_parser(keys_with_mods),
     "--key" .. clink.arg.new_parser(keys_with_mods),
     "-s" .. clink.arg.new_parser(keys_with_mods),
@@ -76,6 +77,7 @@ run_parser:set_flags(
     "--end" .. clink.arg.new_parser(keys_with_mods),
     "-a" .. clink.arg.new_parser(),
     "--app" .. clink.arg.new_parser(),
+    "--application" .. clink.arg.new_parser(),
     "-B" .. clink.arg.new_parser(),
     "--blacklist" .. clink.arg.new_parser(),
     "-w" .. clink.arg.new_parser(),
@@ -142,6 +144,7 @@ local autoinput_parser = clink.arg.new_parser()
 autoinput_parser:set_flags(
     "-h",
     "--help",
+    "--examples",
     "-l" .. clink.arg.new_parser(log_levels),
     "--log" .. clink.arg.new_parser(log_levels),
     "--json"

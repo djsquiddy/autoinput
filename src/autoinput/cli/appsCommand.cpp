@@ -79,25 +79,19 @@ namespace autoinput::cli
 
     void AppsCommand::printHelp() const
     {
-        logHelpMessage({
-            .context = m_context,
-            .commands = {
-                { .usage = "list", .description = "List currently running application names" },
-            },
-            .examples = {
-                "apps list",
-            },
-            .notes = {
-                "Application listing depends on platform support.",
-            },
-        });
+        if (const HelpMetadata::CliCommandMetadata* metadata = HelpMetadata::findCommand(getName()))
+        {
+            const std::vector<std::string> topics{ std::string(getName()) };
+            renderCommandHelp(*metadata, m_context, topics);
+        }
     }
 
     HelpEntry AppsCommand::getHelpEntry() const
     {
-        return {
-            .usage = "apps <command>",
-            .description = "Inspect running applications.",
-        };
+        if (const HelpMetadata::CliCommandMetadata* metadata = HelpMetadata::findCommand(getName()))
+        {
+            return { .usage = std::string(metadata->usage), .description = std::string(metadata->description) };
+        }
+        return {};
     }
 }

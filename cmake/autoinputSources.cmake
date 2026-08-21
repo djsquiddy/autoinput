@@ -20,8 +20,6 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/cli/arguments.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/input/waitDelay.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/input/waitDelay.h
-            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/cliHelpFormatter.cpp
-            ${CMAKE_SOURCE_DIR}/src/autoinput/cli/cliHelpFormatter.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/support/types.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/support/types.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/input/mouse.h
@@ -80,6 +78,10 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/cli/settingsCommand.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/cli/serveCommand.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/cli/serveCommand.cpp
+
+            # Generated CLI help metadata
+            ${CLI_HELP_METADATA_HEADER}
+            ${CLI_HELP_METADATA_SOURCE}
     )
 
     if(WIN32)

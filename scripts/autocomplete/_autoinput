@@ -28,6 +28,7 @@ _autoinput() {
 
     _arguments -C \
         '(-h --help){-h,--help}[Show help]' \
+        '--examples[Show help with additional usage examples]' \
         '(-l --log){-l,--log}[Set log level: debug, info, warning, error]:log level:($log_levels)' \
         '--json[Output JSON where supported]' \
         '1: :->command' \
@@ -52,14 +53,13 @@ _autoinput() {
                     _arguments \
                         '(-c --config){-c,--config}[Load a TOML configuration]:config file:_autoinput_configs' \
                         '(-t --type){-t,--type}[Set action type]:action type:($action_types)' \
-                        '(-b --button){-b,--button}[Mouse button target]:mouse button:($mouse_buttons)' \
+                        '(-b --button --btn){-b,--button,--btn}[Mouse button target]:mouse button:($mouse_buttons)' \
                         '(-k --key){-k,--key}[Keyboard key target]:key:($keys_with_mods)' \
                         '(-s --start){-s,--start}[Start/toggle trigger]:key:($keys_with_mods)' \
                         '(-e --end){-e,--end}[Stop trigger]:key:($keys_with_mods)' \
-                        '(-a --app){-a,--app}[Only run while application is focused]:application:' \
+                        '(-a --app --application){-a,--app,--application}[Only run while application is focused]:application:' \
                         '(-B --blacklist){-B,--blacklist}[Pause while application is focused]:application:' \
-                        '(-w --wait){-w,--wait}[Alias for --press-wait]:range:' \
-                        '--press-wait[Delay while target is pressed]:range:' \
+                        '(-w --wait --press-wait){-w,--wait,--press-wait}[Delay while target is pressed]:range:' \
                         '--release-wait[Delay between repeated actions]:range:' \
                         '--status-notification[off, console, desktop, both]:mode:($notification_modes)' \
                         '(-S --save-config){-S,--save-config}[Save current options as a user config]:config file:_autoinput_configs'
@@ -81,7 +81,7 @@ _autoinput() {
                             'list:List available configurations'
                             'validate:Validate a configuration file'
                             'duplicate:Duplicate a configuration into the user config directory'
-                            'copy:Alias for duplicate'
+                            'copy:Alias for config duplicate'
                             'path:Print the path to the configuration'
                         )
                         _describe 'config command' config_subcommands

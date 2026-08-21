@@ -12,7 +12,9 @@
 #include "autoinput/support/types.h"
 #include "autoinput/support/logger.h"
 #include "autoinput/config/settings.h"
+#include "autoinput/cli/cliHelpMetadata.h"
 #include <string_view>
+#include <span>
 #include <gsl/gsl>
 
 namespace autoinput
@@ -75,6 +77,27 @@ namespace autoinput::cli
      * @param message The help message data.
      */
     void logHelpMessage(const HelpMessage& message);
+
+    /**
+     * @brief Converts generated CLI option metadata into a HelpEntry (usage + description).
+     * @param option The generated option metadata.
+     * @return The HelpEntry.
+     */
+    [[nodiscard]] HelpEntry optionToHelpEntry(const HelpMetadata::CliOptionMetadata& option);
+
+    /**
+     * @brief Renders help output for a command from generated CLI help metadata.
+     *
+     * Resolves nested subcommand topics the same way MultiCommand help topics do
+     * (topics[0] is expected to be the command's own name; topics[1..] are nested
+     * subcommand names), then prints the resolved node's options, subcommands,
+     * examples, and notes using the existing logHelpMessage() primitives.
+     *
+     * @param metadata The command's generated metadata (top-level node).
+     * @param context The command context (for program name and formatting).
+     * @param topics The help topics.
+     */
+    void renderCommandHelp(const HelpMetadata::CliCommandMetadata& metadata, const CommandContext& context, std::span<const std::string> topics);
 
     class CommandBase
     {

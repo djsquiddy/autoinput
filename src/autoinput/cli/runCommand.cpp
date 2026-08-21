@@ -542,38 +542,19 @@ namespace autoinput::cli
 
     void RunCommand::printHelp() const
     {
-        logHelpMessage({
-            .context = m_context,
-            .options ={
-            { .usage = "-c, --config NAME_OR_PATH", .description = "Load a TOML configuration" },
-            { .usage = "-t, --type click|hold", .description = "Set action type" },
-            { .usage = "-b, --button BUTTON", .description = "Mouse button target" },
-            { .usage = "-k, --key KEY", .description = "Keyboard key target" },
-            { .usage = "-s, --start KEY", .description = "Start/toggle trigger" },
-            { .usage = "-e, --end KEY", .description = "Stop trigger" },
-            { .usage = "-a, --app APPLICATION", .description = "Only run while application is focused" },
-            { .usage = "-B, --blacklist APPLICATION", .description = "Pause while application is focused" },
-            { .usage = "-w, --wait RANGE", .description = "Alias for --press-wait" },
-            { .usage = "--press-wait RANGE", .description = "Delay while target is pressed" },
-            { .usage = "--release-wait RANGE", .description = "Delay between repeated actions" },
-            { .usage = "--status-notification MODE", .description = "off, console, desktop, both" },
-            { .usage = "-S, --save-config NAME", .description = "Save current options as a user config" },
-            },
-            .examples = {
-                "run --button left",
-                "run --type hold --button left --start f2",
-                "run --key space --start f6 --release-wait 1s",
-                "run --config left-click-press",
-            }
+        if (const HelpMetadata::CliCommandMetadata* metadata = HelpMetadata::findCommand(getName()))
+        {
+            const std::vector<std::string> topics{ std::string(getName()) };
+            renderCommandHelp(*metadata, m_context, topics);
         }
-        );
     }
 
     HelpEntry RunCommand::getHelpEntry() const
     {
-        return {
-            .usage = std::format("{} [options]", getName()),
-            .description = "Run input automation from command options or a TOML configuration."
-        };
+        if (const HelpMetadata::CliCommandMetadata* metadata = HelpMetadata::findCommand(getName()))
+        {
+            return { .usage = std::string(metadata->usage), .description = std::string(metadata->description) };
+        }
+        return {};
     }
 }

@@ -132,29 +132,26 @@ namespace autoinput::cli
 
     void HelpCommand::printGlobalOptions()
     {
-        logHelpEntries("Global options", {
-            { .usage = "-h, --help", .description = "Show help" },
-            { .usage = "-l, --log LEVEL", .description = "Set log level: debug, info, warning, error" },
-            { .usage = "--json", .description = "Output JSON where supported" },
-        });
+        std::vector<HelpEntry> entries;
+        entries.reserve(HelpMetadata::GLOBAL_OPTIONS.size());
+        for (const auto& option : HelpMetadata::GLOBAL_OPTIONS)
+        {
+            entries.push_back(optionToHelpEntry(option));
+        }
+
+        logHelpEntries("Global options", entries);
     }
 
     void HelpCommand::printMainHelp() const
     {
-        const RunCommand runCommand{ m_context };
-        const RecordCommand recordCommand{ m_context };
-        const ConfigCommand configCommand{ m_context };
-        const AppsCommand appsCommand{ m_context };
-        const ServeCommand serveCommand{ m_context };
+        std::vector<HelpEntry> entries;
+        entries.reserve(HelpMetadata::ALL_COMMANDS.size());
+        for (const auto& command : HelpMetadata::ALL_COMMANDS)
+        {
+            entries.push_back({ .usage = std::string(command.usage), .description = std::string(command.description) });
+        }
 
-        logHelpEntries("Commands", {
-            runCommand.getHelpEntry(),
-            recordCommand.getHelpEntry(),
-            configCommand.getHelpEntry(),
-            appsCommand.getHelpEntry(),
-            serveCommand.getHelpEntry(),
-            getHelpEntry(),
-        });
+        logHelpEntries("Commands", entries);
 
         logHelpStrings("Examples", {
             std::format("{} help run", m_context.global.programName),
@@ -169,9 +166,10 @@ namespace autoinput::cli
 
     HelpEntry HelpCommand::getHelpEntry() const
     {
-        return {
-            .usage = "help [command]",
-            .description = "Show help for autoinput commands.",
-        };
+        if (const HelpMetadata::CliCommandMetadata* metadata = HelpMetadata::findCommand(getName()))
+        {
+            return { .usage = std::string(metadata->usage), .description = std::string(metadata->description) };
+        }
+        return {};
     }
 }

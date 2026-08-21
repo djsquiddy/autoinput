@@ -156,89 +156,34 @@ namespace autoinput::cli
 
     HelpEntry getActionHelpEntry(const ConfigAction action)
     {
-        switch (action)
+        const HelpMetadata::CliCommandMetadata* configMetadata = HelpMetadata::findCommand("config");
+        if (!configMetadata)
         {
-        case ConfigAction::List:
-            return {
-            .usage = "config list",
-            .description = "List available configurations.",
-        };
-        case ConfigAction::Validate:
-            return {
-            .usage = "config validate NAME_OR_PATH",
-            .description = "Validate a configuration file.",
-        };
-        case ConfigAction::Duplicate:
-            return {
-            .usage = "config duplicate SOURCE DESTINATION [options]",
-            .description = "Duplicate a configuration into the user config directory.",
-        };
-        case ConfigAction::Copy:
-            return {
-            .usage = "config copy SOURCE DESTINATION [options]",
-            .description = "Alias for config duplicate.",
-        };
-        case ConfigAction::Path:
-            return {
-            .usage = "print NAME_OR_PATH",
-            .description = "Print the path to the configuration.",
-        };
-        case ConfigAction::None:
-        default:
             return {};
         }
+
+        const HelpMetadata::CliCommandMetadata* subMetadata = HelpMetadata::findSubcommand(*configMetadata, actionToString(action));
+        if (!subMetadata)
+        {
+            return {};
+        }
+
+        return {
+            .usage = std::format("config {}", subMetadata->usage),
+            .description = std::string(subMetadata->description),
+        };
     }
 
     void printActionHelp(const ConfigAction action, const CommandContext& context)
     {
-        switch (action)
+        const HelpMetadata::CliCommandMetadata* configMetadata = HelpMetadata::findCommand("config");
+        if (!configMetadata)
         {
-        case ConfigAction::List:
-            logHelpMessage({
-                .context = context,
-                .examples = {
-                    "config list",
-                },
-            });
-            break;
-        case ConfigAction::Validate:
-            logHelpMessage({
-                .context = context,
-                .examples = {
-                    "config validate my-config",
-                    "--json config validate my-config",
-                },
-                .notes = {
-                    "Use the global --json option before the command for machine-readable output.",
-                },
-            });
-            break;
-        case ConfigAction::Duplicate:
-        case ConfigAction::Copy:
-            logHelpMessage({
-                .context = context,
-                .options = {
-                    { .usage = "--force", .description = "Overwrite destination if it already exists" },
-                },
-                .examples = {
-                    "config duplicate old-config my-copy",
-                    "config duplicate old-config my-copy --force",
-                    "config copy old-config new-config",
-                },
-            });
-            break;
-        case ConfigAction::Path:
-            logHelpMessage({
-                .context = context,
-                .examples = {
-                    "config path my-config"
-                },
-            });
-            break;
-        case ConfigAction::None:
-        default:
-            break;
+            return;
         }
+
+        const std::vector<std::string> topics{ "config", std::string(actionToString(action)) };
+        renderCommandHelp(*configMetadata, context, topics);
     }
 
     bool ConfigCliData::validate() const
@@ -431,34 +376,16 @@ namespace autoinput::cli
 
     void ConfigCommand::printHelp() const
     {
-        if (getHelpTopicsSize() >= 2)
+        const HelpMetadata::CliCommandMetadata* metadata = HelpMetadata::findCommand(getName());
+        if (!metadata)
         {
-            const std::string& topic = getHelpTopicEntry(1);
-            if (const ConfigAction action = configActionFromString(topic); action != ConfigAction::None)
-            {
-                printActionHelp(action, m_context);
-            }
+            return;
         }
 
-        logHelpMessage({
-            .context = m_context,
-            .commands = {
-                { .usage = "list", .description = "List available configurations" },
-                { .usage = "validate NAME_OR_PATH", .description = "Validate a configuration file" },
-                { .usage = "duplicate SOURCE DESTINATION", .description = "Duplicate a configuration into the user config directory" },
-                { .usage = "copy SOURCE DESTINATION", .description = "Alias for duplicate" },
-                { .usage = "path NAME_OR_PATH", .description = "Print the path to the configuration." },
-            },
-            .examples = {
-                "config list",
-                "config validate my-config",
-                "config duplicate old-config new-config",
-                "config copy old-config new-config",
-                "config path my-config",
-                "help config validate",
-                "help config duplicate",
-            },
-        });
+        const std::vector<std::string> topics = getHelpTopicsSize() > 0
+            ? getHelpTopics()
+            : std::vector<std::string>{ std::string(getName()) };
+        renderCommandHelp(*metadata, m_context, topics);
     }
 
     HelpEntry ConfigCommand::getHelpEntry() const
@@ -472,9 +399,12 @@ namespace autoinput::cli
             }
         }
 
-        return {
-            .usage = "config <command> [options]",
-            .description = "Manage autoinput configuration files.",
-        };
+        const HelpMetadata::CliCommandMetadata* metadata = HelpMetadata::findCommand(getName());
+        if (!metadata)
+        {
+            return {};
+        }
+
+        return { .usage = std::string(metadata->usage), .description = std::string(metadata->description) };
     }
 }

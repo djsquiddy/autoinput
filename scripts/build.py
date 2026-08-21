@@ -625,18 +625,19 @@ class Builder:
         return None
 
     def run_update_autocomplete(self) -> tuple[int, float | None, bool]:
-        autoinput_bin = self._find_autoinput_executable()
-        if not autoinput_bin:
-            logger.info("autoinput binary not found, skipping autocomplete update.")
-            return utils.EXIT_SUCCESSFUL, None, False
-
-        logger.info(f"Updating autocomplete scripts with binary '{autoinput_bin}'...")
+        # The primary metadata source is now resources/cli/help.toml (--source toml, the
+        # default), so a missing binary no longer blocks the update. The binary is only
+        # passed along as a fallback hint in case --source binary is ever used.
+        logger.info("Updating autocomplete scripts from resources/cli/help.toml...")
         start = time.perf_counter()
         update_script = utils.get_python_filepath("update_autocomplete")
-        ret = utils.run_command(
-            [sys.executable, str(update_script), "--binary", str(autoinput_bin)],
-            cwd=utils.ROOT_DIR,
-        )
+        command = [sys.executable, str(update_script)]
+
+        autoinput_bin = self._find_autoinput_executable()
+        if autoinput_bin:
+            command.extend(["--binary", str(autoinput_bin)])
+
+        ret = utils.run_command(command, cwd=utils.ROOT_DIR)
         duration = time.perf_counter() - start
         if ret != 0:
             logger.error(f"Updating autocomplete scripts failed with return code {ret}.")
