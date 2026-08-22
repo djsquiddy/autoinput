@@ -553,7 +553,7 @@ Supported global settings:
 
 #### Command Settings
 
-Each command can define its own action, target, start trigger, and timing.
+Each command can define its own action, target, start trigger, control bindings, and timing.
 
 ```toml
     [[command]]
@@ -567,13 +567,66 @@ Each command can define its own action, target, start trigger, and timing.
 
 Supported command settings:
 
-- `name`: optional command name used for readability/debugging.
+- `name`: optional command name used for readability/debugging and targeted control actions.
 - `exclusiveGroup`: optional group name used to make commands mutually exclusive.
 - `action`: The automation action. Common values are `"click"` and `"hold"`.
 - `button`: Mouse button to automate, such as `"left"`, `"right"`, `"middle"`, `"back"`, or `"forward"`.
 - `key`: Keyboard key to automate, such as `"space"`, `"enter"`, or `"a"`.
-- `start`: Hotkey or mouse button used to toggle this command.
+- `start`: Hotkey or mouse button used to start/toggle this command (legacy mapping for `toggle`).
+- `controls`: List of flexible control bindings for this command (see below).
 - `time`: Timing configuration for the command.
+
+#### Flexible Command Control Bindings
+
+Commands support separate configurable control inputs for granular runtime control:
+
+- `start`: Starts the command if not active (or unpauses if paused).
+- `toggle`: Starts the command if inactive, stops it if active.
+- `stop` / `cancel`: Stops/cancels only the targeted command and releases any pressed keys/buttons. Does **not** exit the application or runtime listener.
+- `pause`: Pauses the command execution and releases pressed keys/buttons while keeping the command active.
+- `resume`: Resumes the paused command (subject to application blacklist / target checks).
+- `toggle-pause`: Toggles between paused and running states for the command.
+- `stop-all`: Stops all currently active commands across the application without terminating the runtime.
+- `exit`: Stops all commands and exits the application/runtime (equivalent to the global end key).
+
+##### Control Action Differences
+
+| Action | Target Scope | Releases Pressed Input | Exits Application? |
+|---|---|---|---|
+| `cancel` / `stop` | Targeted command only | Yes | No (App stays running) |
+| `stop-all` | All active commands | Yes | No (App stays running) |
+| `exit` | All active commands | Yes | Yes (Shuts down runtime) |
+
+##### Synthetic Input Behavior
+Synthetic/generated input injected by AutoInput or other automated tools is ignored for control bindings by default to prevent self-triggering loops.
+
+##### Backward Compatibility
+Legacy `start` keys or buttons are mapped to `ControlAction::Toggle`, and the global `end` key is mapped to `ControlAction::Exit`, preserving existing configurations and behavior.
+
+##### Example: Mouse Back Start / Mouse Right Cancel
+
+A command that starts left auto-clicking with Mouse Back and cancels with Mouse Right:
+
+```toml
+[[command]]
+name = "left-clicker"
+action = "click"
+button = "left"
+
+[[command.controls]]
+action = "toggle"
+input = "mouse.back"
+
+[[command.controls]]
+action = "cancel"
+input = "mouse.right"
+```
+
+You can also run this directly via the CLI:
+
+```bash
+autoinput run --name left-clicker --button left --type click --control toggle:mouse.back --control cancel:mouse.right
+```
 
 #### Mutually Exclusive Command Groups
 

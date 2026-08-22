@@ -77,6 +77,29 @@ namespace autoinput
                     }
                 }
             }
+            if (const auto controlsCfg = (*table)["controls"])
+            {
+                if (const toml::array* ctrlArr = controlsCfg.as_array())
+                {
+                    for (const toml::node& ctrlNode : *ctrlArr)
+                    {
+                        if (const toml::table* ctrlTable = ctrlNode.as_table())
+                        {
+                            CommandControlData ctrl;
+                            tryGetTableValue(*ctrlTable, "action", ctrl.action);
+                            tryGetTableValue(*ctrlTable, "input", ctrl.input);
+                            commandData.controls.emplace_back(std::move(ctrl));
+                        }
+                    }
+                }
+                else if (const toml::table* ctrlTable = controlsCfg.as_table())
+                {
+                    CommandControlData ctrl;
+                    tryGetTableValue(*ctrlTable, "action", ctrl.action);
+                    tryGetTableValue(*ctrlTable, "input", ctrl.input);
+                    commandData.controls.emplace_back(std::move(ctrl));
+                }
+            }
             if (const auto waitTime = (*table)["time"].as_table())
             {
                 tryGetTableValue(*waitTime, "press", commandData.pressWait);
@@ -360,6 +383,19 @@ namespace autoinput
             insertStringOrArrayToTable(t, "button", cmd.buttons, defaults.has_value() ? std::make_optional(defaults->button) : std::nullopt);
             insertStringOrArrayToTable(t, "key", cmd.keys);
             insertStringOrArrayToTable(t, "start", cmd.startKeys, defaults.has_value() ? std::make_optional(defaults->start) : std::nullopt);
+
+            if (!cmd.controls.empty())
+            {
+                toml::array ctrlArr;
+                for (const auto& ctrl : cmd.controls)
+                {
+                    toml::table ctrlTable;
+                    ctrlTable.insert("action", ctrl.action);
+                    ctrlTable.insert("input", ctrl.input);
+                    ctrlArr.push_back(std::move(ctrlTable));
+                }
+                t.insert("controls", std::move(ctrlArr));
+            }
 
             if (!cmd.pressWait.empty() || !cmd.releaseWait.empty())
             {

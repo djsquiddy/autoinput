@@ -46,6 +46,35 @@ namespace autoinput
          * @brief Stops the automation execution.
          */
         void stop();
+
+        /**
+         * @brief Stops a specific named command.
+         * @param name The name of the command.
+         */
+        void stopCommand(std::string_view name);
+
+        /**
+         * @brief Pauses a specific named command.
+         * @param name The name of the command.
+         */
+        void pauseCommand(std::string_view name);
+
+        /**
+         * @brief Resumes a specific named command.
+         * @param name The name of the command.
+         */
+        void resumeCommand(std::string_view name);
+
+        /**
+         * @brief Toggles the pause state of a specific named command.
+         * @param name The name of the command.
+         */
+        void togglePauseCommand(std::string_view name);
+
+        /**
+         * @brief Stops all active commands.
+         */
+        void stopAllCommands();
         
         /**
          * @brief Checks if the automation is currently running.

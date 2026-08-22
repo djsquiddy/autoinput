@@ -38,6 +38,30 @@ namespace autoinput
         [[nodiscard]] static std::string validActionChoices();
 
         /**
+         * @brief Get a list of valid control action names.
+         * @return A vector of valid control action names.
+         */
+        [[nodiscard]] static std::vector<std::string_view> validControlActionNames();
+
+        /**
+         * @brief Get a list of valid control action names including aliases.
+         * @return A vector of valid control action names and aliases.
+         */
+        [[nodiscard]] static std::vector<std::string_view> validControlActionAliases();
+
+        /**
+         * @brief Get a string representing valid control action choices for help text.
+         * @return A string like "{start,toggle,stop,cancel,pause,resume,toggle-pause,stop-all,exit}".
+         */
+        [[nodiscard]] static std::string validControlActionChoices();
+
+        /**
+         * @brief Get the default control action name.
+         * @return The default control action name.
+         */
+        [[nodiscard]] static std::string_view defaultControlActionName();
+
+        /**
          * @brief Get a list of valid mouse button names.
          * @return A vector of valid mouse button names.
          */

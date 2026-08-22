@@ -151,6 +151,7 @@ namespace autoinput
         const size_t startKeyCount = startKeys.size();
         const size_t nameCount = commandNames.size();
         const size_t groupCount = exclusiveGroups.size();
+        const size_t controlCount = commandControls.size();
 
         for (size_t i = 0; i < targetCount; ++i)
         {
@@ -171,6 +172,11 @@ namespace autoinput
             if (i < startKeyCount)
             {
                 cmd.startKeys.push_back(startKeys[i]);
+            }
+
+            if (i < controlCount)
+            {
+                cmd.controls = commandControls[i];
             }
 
             cmd.pressWait = delayData.toString(true);

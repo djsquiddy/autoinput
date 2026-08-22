@@ -125,7 +125,56 @@ namespace autoinput
         void start(const KeyInfo& keyInfo);
 
         /**
-         * @brief Ends the program's main execution.
+         * @brief Applies a control action (e.g. start, toggle, stop, cancel, pause, resume, toggle-pause, stop-all, exit).
+         * @param keyInfo The key information specifying the control action and target.
+         * @return True if the action was applied successfully.
+         */
+        bool applyControlAction(const KeyInfo& keyInfo);
+
+        /**
+         * @brief Applies a control action by action enum and optional target command name.
+         * @param action The control action to execute.
+         * @param name Optional command name to target.
+         * @return True if the action was applied successfully.
+         */
+        bool applyControlAction(ControlAction action, std::string_view name = "");
+
+        /**
+         * @brief Stops a specific named command without exiting the runtime.
+         * @param name The name of the command to stop.
+         */
+        void stopCommand(std::string_view name);
+
+        /**
+         * @brief Pauses a specific named command.
+         * @param name The name of the command to pause.
+         */
+        void pauseCommand(std::string_view name);
+
+        /**
+         * @brief Resumes a specific named command.
+         * @param name The name of the command to resume.
+         */
+        void resumeCommand(std::string_view name);
+
+        /**
+         * @brief Toggles the pause state of a specific named command.
+         * @param name The name of the command.
+         */
+        void togglePauseCommand(std::string_view name);
+
+        /**
+         * @brief Stops all active commands without exiting the runtime.
+         */
+        void stopAllCommands();
+
+        /**
+         * @brief Stops all commands and exits the runtime listener loop.
+         */
+        void exitRuntime();
+
+        /**
+         * @brief Ends the program's main execution (legacy alias for exitRuntime).
          */
         void end();
 
@@ -233,6 +282,14 @@ namespace autoinput
 #endif
 
         void startAutoClicker(InputHandler& handler);
+        [[nodiscard]] InputHandler* findHandlerByName(std::string_view name);
+        [[nodiscard]] InputHandler* getHandlerForKeyInfo(const KeyInfo& keyInfo);
+        void stopHandler(InputHandler& handler);
+        void pauseHandler(InputHandler& handler);
+        void resumeHandler(InputHandler& handler);
+        void togglePauseHandler(InputHandler& handler);
+        void stopExclusiveGroup(const std::string& group);
+        [[nodiscard]] bool isTargetApplicationActive() const;
     };
 
     /**

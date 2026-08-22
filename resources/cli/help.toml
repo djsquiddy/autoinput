@@ -101,6 +101,35 @@ description = "Keyboard key target"
 completion = "none"
 
 [[commands.options]]
+names = ["-n", "--name"]
+value = true
+value_name = "NAME"
+description = "Command name"
+completion = "none"
+
+[[commands.options]]
+names = ["--control"]
+value = true
+value_name = "ACTION:INPUT"
+description = "Per-command control binding (e.g. toggle:mouse.back or cancel:mouse.right)"
+completion = "none"
+repeatable = true
+
+[[commands.options]]
+names = ["--control-action"]
+value = true
+value_name = "ACTION"
+description = "Control action (start, toggle, stop, cancel, pause, resume, toggle-pause, stop-all, exit)"
+completion = "control_actions"
+
+[[commands.options]]
+names = ["--control-input"]
+value = true
+value_name = "INPUT"
+description = "Control trigger input (key or mouse button)"
+completion = "none"
+
+[[commands.options]]
 names = ["-s", "--start"]
 value = true
 value_name = "KEY"
@@ -337,5 +366,6 @@ description = "Show help for autoinput commands."
 [completions]
 log_levels = ["d", "debug", "i", "info", "w", "warn", "warning", "e", "error", "f", "fatal"]
 action_types = ["click", "c", "hold", "h"]
+control_actions = ["start", "toggle", "stop", "cancel", "pause", "resume", "toggle-pause", "stop-all", "exit"]
 mouse_buttons = ["left", "l", "right", "r", "middle", "m", "back", "forward"]
 notification_modes = ["off", "console", "desktop", "both"]

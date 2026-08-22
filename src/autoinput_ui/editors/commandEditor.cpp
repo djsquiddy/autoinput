@@ -16,6 +16,9 @@ namespace autoinput::ui::editors
     namespace
     {
         constexpr std::array<std::string_view, 2> actionNames = { "click", "hold" };
+        constexpr std::array<std::string_view, 9> controlActionNames = {
+            "start", "toggle", "stop", "cancel", "pause", "resume", "toggle-pause", "stop-all", "exit"
+        };
     }
 
     bool renderCommandEditor(CommandData& command, CommandCaptureState& capture)
@@ -45,6 +48,45 @@ namespace autoinput::ui::editors
 
         if (widgets::HotkeyVectorEditor(loc.text("labels.startKeys").data(), command.startKeys, "##start", loc.text("buttons.addStartKey").data(), capture.startKeyIndex))
         {
+            changed = true;
+        }
+
+        ImGui::Text("%s", loc.text("labels.controls").data());
+        int controlToDelete = -1;
+        for (size_t i = 0; i < command.controls.size(); ++i)
+        {
+            ImGui::PushID(static_cast<int>(i));
+            auto& ctrl = command.controls[i];
+            
+            ImGui::SetNextItemWidth(120.0f);
+            if (widgets::StringCombo("##ctrlAction", ctrl.action, controlActionNames))
+            {
+                changed = true;
+            }
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(140.0f);
+            if (widgets::StringInput("##ctrlInput", ctrl.input))
+            {
+                changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("X"))
+            {
+                controlToDelete = static_cast<int>(i);
+                changed = true;
+            }
+            ImGui::PopID();
+        }
+
+        if (controlToDelete >= 0 && controlToDelete < static_cast<int>(command.controls.size()))
+        {
+            command.controls.erase(command.controls.begin() + controlToDelete);
+            changed = true;
+        }
+
+        if (ImGui::Button(loc.text("buttons.addControl").data()))
+        {
+            command.controls.push_back({ .action = "toggle", .input = "" });
             changed = true;
         }
 

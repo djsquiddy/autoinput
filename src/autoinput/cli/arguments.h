@@ -72,6 +72,8 @@ namespace autoinput
         std::vector<std::string> commandNames{};
         /** @brief The exclusive group names for commands that shouldn't run simultaneously. */
         std::vector<std::string> exclusiveGroups{};
+        /** @brief List of control bindings for each command. */
+        std::vector<std::vector<CommandControlData>> commandControls{};
 
         /** @brief The key that stops all automation. */
         std::string endKey{};

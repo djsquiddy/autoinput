@@ -24,6 +24,8 @@ namespace autoinput::cli
         std::optional<Mouse> mouse;
         std::optional<Key> key;
         std::string startKey;
+        std::string name;
+        std::vector<CommandControlData> controls;
     };
 
     struct RunConfig
@@ -31,6 +33,8 @@ namespace autoinput::cli
         std::string configName;
         std::vector<RunTarget> targets;
         ActionState pendingAction{ ActionState::INVALID };
+        std::string pendingName;
+        std::string pendingControlAction;
         std::string endKey;
         std::string applicationName;
         std::vector<std::string> blacklist;

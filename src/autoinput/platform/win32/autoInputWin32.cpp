@@ -745,7 +745,6 @@ namespace autoinput
         return std::make_unique<WindowsBackend>();
     }
 
-
     MouseInput::MouseInput(MouseData& data) : data{ data } {}
 
     bool MouseInput::isLeftButtonDown() const 

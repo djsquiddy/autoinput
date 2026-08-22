@@ -30,6 +30,7 @@ edit = "Edit"
 [buttons]
 save = "Save"
 cancel = "Cancel"
+addControl = "Add Control"
 close = "Close"
 refresh = "Refresh"
 reload = "Reload"
@@ -460,6 +461,10 @@ exclusiveGroup = "Exclusive Group"
 action = "Action"
 inputs = "Inputs"
 startKeys = "Start Keys"
+controls = "Control Bindings"
+controlAction = "Control Action"
+controlInput = "Control Input"
+controlBindings = "Controls"
 timing = "Timing:"
 
 [modals]

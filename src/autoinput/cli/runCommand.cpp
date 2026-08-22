@@ -63,6 +63,7 @@ namespace autoinput::cli
                     arguments.targetActions.push_back(action);
                     arguments.commandNames.push_back(cmd.name);
                     arguments.exclusiveGroups.push_back(cmd.exclusiveGroup);
+                    arguments.commandControls.push_back(cmd.controls);
                 }
 
 #if AUTOINPUT_HOOK_KEYBOARD_ENABLED
@@ -72,6 +73,7 @@ namespace autoinput::cli
                     arguments.targetActions.push_back(action);
                     arguments.commandNames.push_back(cmd.name);
                     arguments.exclusiveGroups.push_back(cmd.exclusiveGroup);
+                    arguments.commandControls.push_back(cmd.controls);
                 }
 #endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
 
@@ -152,17 +154,23 @@ namespace autoinput::cli
                 {
                     arguments.buttons.push_back(*target.mouse);
                     arguments.targetActions.push_back(action);
+                    arguments.commandNames.push_back(target.name);
+                    arguments.commandControls.push_back(target.controls);
                 }
                 else if (target.key.has_value())
                 {
                     arguments.keys.push_back(*target.key);
                     arguments.targetActions.push_back(action);
+                    arguments.commandNames.push_back(target.name);
+                    arguments.commandControls.push_back(target.controls);
                 }
                 else
                 {
                     // Default behavior for start-only target
                     arguments.buttons.emplace_back( MouseButton::Left );
                     arguments.targetActions.push_back(action);
+                    arguments.commandNames.push_back(target.name);
+                    arguments.commandControls.push_back(target.controls);
                 }
 
                 if (!target.startKey.empty())
@@ -284,6 +292,8 @@ namespace autoinput::cli
                 RunTarget target;
                 target.action = m_config.pendingAction != ActionState::INVALID ? m_config.pendingAction : ActionState::CLICK;
                 target.mouse = mouse;
+                target.name = m_config.pendingName;
+                m_config.pendingName.clear();
                 m_config.targets.push_back(target);
 
                 ++index;
@@ -307,12 +317,143 @@ namespace autoinput::cli
                 RunTarget target;
                 target.action = m_config.pendingAction != ActionState::INVALID ? m_config.pendingAction : ActionState::CLICK;
                 target.key = Key::fromString(value);
+                target.name = m_config.pendingName;
+                m_config.pendingName.clear();
                 m_config.targets.push_back(target);
 
                 ++index;
                 continue;
             }
 #endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
+
+            if (arg == "-n" || arg == "--name")
+            {
+                const std::string_view value = safeGetNextArgument(++index, args);
+                if (value.empty())
+                {
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
+                    return false;
+                }
+
+                m_config.pendingName = value;
+                if (!m_config.targets.empty() && m_config.targets.back().name.empty())
+                {
+                    m_config.targets.back().name = value;
+                }
+
+                ++index;
+                continue;
+            }
+
+            if (arg == "--control")
+            {
+                const std::string_view value = safeGetNextArgument(++index, args);
+                if (value.empty())
+                {
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
+                    return false;
+                }
+
+                std::string actionStr;
+                std::string inputStr;
+                if (const auto colonPos = value.find(':'); colonPos != std::string_view::npos)
+                {
+                    actionStr = std::string(value.substr(0, colonPos));
+                    inputStr = std::string(value.substr(colonPos + 1));
+                }
+                else if (const auto eqPos = value.find('='); eqPos != std::string_view::npos)
+                {
+                    actionStr = std::string(value.substr(0, eqPos));
+                    inputStr = std::string(value.substr(eqPos + 1));
+                }
+                else
+                {
+                    actionStr = std::string(value);
+                    const std::string_view nextVal = safeGetNextArgument(++index, args);
+                    if (nextVal.empty())
+                    {
+                        Logger::fatalError({
+                            .code = ErrorCode::MissingCommandLineArgument,
+                            .message = "The --control option requires both action and input."
+                        });
+                        return false;
+                    }
+                    inputStr = std::string(nextVal);
+                }
+
+                CommandControlData ctrl{ .action = actionStr, .input = inputStr };
+                if (!m_config.targets.empty())
+                {
+                    m_config.targets.back().controls.push_back(std::move(ctrl));
+                }
+                else
+                {
+                    RunTarget target;
+                    target.action = m_config.pendingAction != ActionState::INVALID ? m_config.pendingAction : ActionState::CLICK;
+                    target.name = m_config.pendingName;
+                    target.controls.push_back(std::move(ctrl));
+                    m_config.targets.push_back(std::move(target));
+                }
+
+                ++index;
+                continue;
+            }
+
+            if (arg == "--control-action")
+            {
+                const std::string_view value = safeGetNextArgument(++index, args);
+                if (value.empty())
+                {
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
+                    return false;
+                }
+
+                m_config.pendingControlAction = value;
+                ++index;
+                continue;
+            }
+
+            if (arg == "--control-input")
+            {
+                const std::string_view value = safeGetNextArgument(++index, args);
+                if (value.empty())
+                {
+                    Logger::fatalError({
+                        .code = ErrorCode::MissingCommandLineArgument,
+                        .message = std::format("The parameter {} needs an argument.", arg)
+                    });
+                    return false;
+                }
+
+                std::string actionStr = !m_config.pendingControlAction.empty() ? m_config.pendingControlAction : "toggle";
+                m_config.pendingControlAction.clear();
+
+                CommandControlData ctrl{ .action = actionStr, .input = std::string(value) };
+                if (!m_config.targets.empty())
+                {
+                    m_config.targets.back().controls.push_back(std::move(ctrl));
+                }
+                else
+                {
+                    RunTarget target;
+                    target.action = m_config.pendingAction != ActionState::INVALID ? m_config.pendingAction : ActionState::CLICK;
+                    target.name = m_config.pendingName;
+                    target.controls.push_back(std::move(ctrl));
+                    m_config.targets.push_back(std::move(target));
+                }
+
+                ++index;
+                continue;
+            }
 
             if (arg == "-s" || arg == "--start")
             {

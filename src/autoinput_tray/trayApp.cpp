@@ -99,6 +99,46 @@ namespace autoinput::tray
         }
         else
         {
+            if (!m_lastStatus.triggeredCommandName.empty())
+            {
+                const bool isActive = m_lastStatus.triggeredCommandActive.value_or(true);
+                items.push_back({
+                    .text = isActive ? std::format("Pause Command ({})", m_lastStatus.triggeredCommandName) : std::format("Resume Command ({})", m_lastStatus.triggeredCommandName),
+                    .action = [this, name = m_lastStatus.triggeredCommandName]
+                    {
+                        if (m_controller)
+                        {
+                            m_controller->togglePauseCommand(name);
+                        }
+                    },
+                    .state = MenuItemState::Enabled
+                });
+
+                items.push_back({
+                    .text = std::format("Stop Command ({})", m_lastStatus.triggeredCommandName),
+                    .action = [this, name = m_lastStatus.triggeredCommandName]
+                    {
+                        if (m_controller)
+                        {
+                            m_controller->stopCommand(name);
+                        }
+                    },
+                    .state = MenuItemState::Enabled
+                });
+            }
+
+            items.push_back({
+                .text = "Stop All Commands",
+                .action = [this]
+                {
+                    if (m_controller)
+                    {
+                        m_controller->stopAllCommands();
+                    }
+                },
+                .state = MenuItemState::Enabled
+            });
+
             items.push_back({
                 .text = "Stop Automation",
                 .action = [this] { stopAutomation(); },

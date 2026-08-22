@@ -184,6 +184,26 @@ namespace autoinput
     };
 
     /**
+     * @brief Control actions for commands and runtime lifecycle.
+     */
+    enum class ControlAction : uint8_t
+    {
+        Invalid = 0,
+        Start,
+        Toggle,
+        Stop,
+        Cancel,
+        Pause,
+        Resume,
+        TogglePause,
+        StopAll,
+        Exit
+    };
+
+    [[nodiscard]] std::string_view controlActionToString(ControlAction action);
+    [[nodiscard]] ControlAction controlActionFromString(std::string_view str);
+
+    /**
      * @brief The mode for status notifications.
      */
     enum class StatusNotificationMode
@@ -495,6 +515,20 @@ struct std::formatter<autoinput::Key>
     auto format(const autoinput::Key& key, std::format_context& ctx) const
     {
         return std::format_to(ctx.out(), "{}", key.toString());
+    }
+};
+
+template<>
+struct std::formatter<autoinput::ControlAction>
+{
+    constexpr auto parse(const std::format_parse_context& ctx)
+    {
+        return ctx.begin();
+    }
+
+    auto format(const autoinput::ControlAction action, std::format_context& ctx) const
+    {
+        return std::format_to(ctx.out(), "{}", autoinput::controlActionToString(action));
     }
 };
 

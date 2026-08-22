@@ -291,8 +291,65 @@ namespace autoinput
         }
     }
 
-    MouseButton mouseButtonFromArguments(const std::string_view button)
+    std::string_view controlActionToString(const ControlAction action)
     {
+        switch (action)
+        {
+        case ControlAction::Start:
+            return "start";
+        case ControlAction::Toggle:
+            return "toggle";
+        case ControlAction::Stop:
+            return "stop";
+        case ControlAction::Cancel:
+            return "cancel";
+        case ControlAction::Pause:
+            return "pause";
+        case ControlAction::Resume:
+            return "resume";
+        case ControlAction::TogglePause:
+            return "toggle-pause";
+        case ControlAction::StopAll:
+            return "stop-all";
+        case ControlAction::Exit:
+            return "exit";
+        case ControlAction::Invalid:
+        default:
+            return "invalid";
+        }
+    }
+
+    ControlAction controlActionFromString(const std::string_view str)
+    {
+        const std::string s = toLowerCase(str);
+        if (s == "start") return ControlAction::Start;
+        if (s == "toggle") return ControlAction::Toggle;
+        if (s == "stop") return ControlAction::Stop;
+        if (s == "cancel") return ControlAction::Cancel;
+        if (s == "pause") return ControlAction::Pause;
+        if (s == "resume") return ControlAction::Resume;
+        if (s == "toggle-pause" || s == "toggle_pause" || s == "togglepause") return ControlAction::TogglePause;
+        if (s == "stop-all" || s == "stop_all" || s == "stopall") return ControlAction::StopAll;
+        if (s == "exit") return ControlAction::Exit;
+        return ControlAction::Invalid;
+    }
+
+    MouseButton mouseButtonFromArguments(const std::string_view rawButton)
+    {
+        std::string_view button = rawButton;
+        if (button.starts_with("mouse."))
+        {
+            button = button.substr(6);
+        }
+        else if (button.starts_with("mouse_"))
+        {
+            button = button.substr(6);
+        }
+        else if (button.starts_with("mouse-"))
+        {
+            button = button.substr(6);
+        }
+
         if (button == "l" || button == "left")
         {
             return MouseButton::Left;

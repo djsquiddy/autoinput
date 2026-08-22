@@ -123,6 +123,46 @@ namespace autoinput
         m_running = false;
     }
 
+    void AutomationController::stopCommand(std::string_view name)
+    {
+        if (m_program)
+        {
+            m_program->stopCommand(name);
+        }
+    }
+
+    void AutomationController::pauseCommand(std::string_view name)
+    {
+        if (m_program)
+        {
+            m_program->pauseCommand(name);
+        }
+    }
+
+    void AutomationController::resumeCommand(std::string_view name)
+    {
+        if (m_program)
+        {
+            m_program->resumeCommand(name);
+        }
+    }
+
+    void AutomationController::togglePauseCommand(std::string_view name)
+    {
+        if (m_program)
+        {
+            m_program->togglePauseCommand(name);
+        }
+    }
+
+    void AutomationController::stopAllCommands()
+    {
+        if (m_program)
+        {
+            m_program->stopAllCommands();
+        }
+    }
+
     void AutomationController::resume()
     {
         // TODO: implement

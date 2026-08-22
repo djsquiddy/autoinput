@@ -160,6 +160,7 @@ namespace autoinput::services
                 arguments.targetActions.push_back(action);
                 arguments.commandNames.push_back(cmd.name);
                 arguments.exclusiveGroups.push_back(cmd.exclusiveGroup);
+                arguments.commandControls.push_back(cmd.controls);
             }
 
 #if AUTOINPUT_HOOK_KEYBOARD_ENABLED
@@ -169,6 +170,7 @@ namespace autoinput::services
                 arguments.targetActions.push_back(action);
                 arguments.commandNames.push_back(cmd.name);
                 arguments.exclusiveGroups.push_back(cmd.exclusiveGroup);
+                arguments.commandControls.push_back(cmd.controls);
             }
 #endif // AUTOINPUT_HOOK_KEYBOARD_ENABLED
 

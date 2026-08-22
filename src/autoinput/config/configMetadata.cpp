@@ -24,6 +24,26 @@ namespace autoinput
         return "{" + join(validActionAliases(), ",") + "}";
     }
 
+    std::vector<std::string_view> ConfigMetadata::validControlActionNames()
+    {
+        return { "start", "toggle", "stop", "cancel", "pause", "resume", "toggle-pause", "stop-all", "exit" };
+    }
+
+    std::vector<std::string_view> ConfigMetadata::validControlActionAliases()
+    {
+        return { "start", "toggle", "stop", "cancel", "pause", "resume", "toggle-pause", "toggle_pause", "stop-all", "stop_all", "exit" };
+    }
+
+    std::string ConfigMetadata::validControlActionChoices()
+    {
+        return "{" + join(validControlActionAliases(), ",") + "}";
+    }
+
+    std::string_view ConfigMetadata::defaultControlActionName()
+    {
+        return "toggle";
+    }
+
     std::vector<std::string_view> ConfigMetadata::validMouseButtonNames()
     {
         return { "left", "right", "middle", "back", "forward" };

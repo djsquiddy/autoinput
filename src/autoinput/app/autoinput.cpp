@@ -73,13 +73,14 @@ namespace autoinput
         }
 
         bool success = true;
-        auto processKeyString = [this, &success](const std::string& keyStr, const Mouse mouse, Key targetKey, const ActionState action, const bool isStart, const std::string& name = "", const std::string& group = "") {
+        auto processKeyString = [this, &success](const std::string& keyStr, const Mouse mouse, Key targetKey, const ActionState action, const bool isStart, const ControlAction controlAction = ControlAction::Toggle, const std::string& name = "", const std::string& group = "") {
             const auto mouseTrigger = mouseButtonFromArguments(keyStr);
             KeyInfo info{
                 .mouse = mouse,
                 .key = std::move(targetKey),
                 .action = action,
                 .isStartKey = isStart,
+                .controlAction = controlAction,
                 .name = name,
                 .exclusiveGroup = group,
             };
@@ -113,7 +114,7 @@ namespace autoinput
 
         for (const auto& sequence : m_arguments.sequences)
         {
-            processKeyString(sequence.start, {}, {}, ActionState::CLICK, true, sequence.name);
+            processKeyString(sequence.start, {}, {}, ActionState::CLICK, true, ControlAction::Toggle, sequence.name);
         }
 
         const size_t actionCount = m_arguments.targetActions.size();
@@ -128,21 +129,41 @@ namespace autoinput
 
             if (i < buttonCount)
             {
-                processKeyString(m_arguments.startKeys[i], m_arguments.buttons[i], {}, action, true, name, group);
+                processKeyString(m_arguments.startKeys[i], m_arguments.buttons[i], {}, action, true, ControlAction::Toggle, name, group);
             }
             else if (i < buttonCount + keyCount)
             {
-                processKeyString(m_arguments.startKeys[i], Mouse{}, m_arguments.keys[i - buttonCount], action, true, name, group);
+                processKeyString(m_arguments.startKeys[i], Mouse{}, m_arguments.keys[i - buttonCount], action, true, ControlAction::Toggle, name, group);
+            }
+        }
+
+        for (size_t i = 0; i < m_arguments.commandControls.size(); ++i)
+        {
+            const auto& controls = m_arguments.commandControls[i];
+            const auto action = i < actionCount ? m_arguments.targetActions[i] : ActionState::CLICK;
+            const std::string& name = i < nameCount ? m_arguments.commandNames[i] : "";
+            const std::string& group = i < groupCount ? m_arguments.exclusiveGroups[i] : "";
+            const auto targetMouse = i < buttonCount ? m_arguments.buttons[i] : Mouse{};
+            const auto targetKey = (i >= buttonCount && i < buttonCount + keyCount) ? m_arguments.keys[i - buttonCount] : Key{};
+
+            for (const auto& ctrl : controls)
+            {
+                const ControlAction ctrlAction = controlActionFromString(ctrl.action);
+                if (ctrlAction != ControlAction::Invalid && !ctrl.input.empty())
+                {
+                    const bool isStart = (ctrlAction == ControlAction::Start || ctrlAction == ControlAction::Toggle);
+                    processKeyString(ctrl.input, targetMouse, targetKey, action, isStart, ctrlAction, name, group);
+                }
             }
         }
 
         if (m_arguments.endKey.empty())
         {
-            processKeyString("f3", Mouse{}, {}, ActionState::CLICK, false);
+            processKeyString("f3", Mouse{}, {}, ActionState::CLICK, false, ControlAction::Exit);
         }
         else
         {
-            processKeyString(m_arguments.endKey, Mouse{}, {}, ActionState::CLICK, false);
+            processKeyString(m_arguments.endKey, Mouse{}, {}, ActionState::CLICK, false, ControlAction::Exit);
         }
 
         if (!m_arguments.recordName.empty())
@@ -242,7 +263,6 @@ namespace autoinput
             return false;
         }
         bool handled = false;
-        bool started = false;
 
         for (const KeyInfo& keyInfo : m_keyInfo)
         {
@@ -250,42 +270,7 @@ namespace autoinput
                 (keyInfo.functionKey != INVALID_KEY && keyInfo.functionKey == functionKey) ||
                 (keyInfo.virtualKey != 0 && keyInfo.virtualKey == vk))
             {
-                if (keyInfo.isStartKey)
-                {
-                    if (isApplicationBlacklisted())
-                    {
-                        continue;
-                    }
-
-                    if (!m_arguments.applicationName.empty())
-                    {
-                        std::string activeApp;
-#ifdef AUTOINPUT_TESTING
-                        if (!m_testActiveApp.empty())
-                        {
-                            activeApp = toLowerCase(m_testActiveApp);
-                        }
-                        else
-                        {
-                            activeApp = toLowerCase(platform::getActiveApplicationName());
-                        }
-#else
-                        activeApp = toLowerCase(platform::getActiveApplicationName());
-#endif
-                        const std::string targetApp = toLowerCase(m_arguments.applicationName);
-                        if (activeApp.find(targetApp) == std::string::npos)
-                        {
-                            continue;
-                        }
-                    }
-
-                    start(keyInfo);
-                    started = true;
-                }
-                else if (!started)
-                {
-                    end();
-                }
+                applyControlAction(keyInfo);
                 handled = true;
             }
         }
@@ -327,48 +312,12 @@ namespace autoinput
         }
 
         bool handled = false;
-        bool started = false;
 
         for (const KeyInfo& keyInfo : m_keyInfo)
         {
             if (keyInfo.triggerButton == trigger)
             {
-                if (keyInfo.isStartKey)
-                {
-                    if (isApplicationBlacklisted())
-                    {
-                        continue;
-                    }
-
-                    if (!m_arguments.applicationName.empty())
-                    {
-                        std::string activeApp;
-#ifdef AUTOINPUT_TESTING
-                        if (!m_testActiveApp.empty())
-                        {
-                            activeApp = toLowerCase(m_testActiveApp);
-                        }
-                        else
-                        {
-                            activeApp = toLowerCase(platform::getActiveApplicationName());
-                        }
-#else
-                        activeApp = toLowerCase(platform::getActiveApplicationName());
-#endif
-                        const std::string targetApp = toLowerCase(m_arguments.applicationName);
-                        if (activeApp.find(targetApp) == std::string::npos)
-                        {
-                            continue;
-                        }
-                    }
-
-                    start(keyInfo);
-                    started = true;
-                }
-                else if (!started)
-                {
-                    end();
-                }
+                applyControlAction(keyInfo);
                 handled = true;
             }
         }
@@ -376,80 +325,406 @@ namespace autoinput
         return handled;
     }
 
-    void Program::start(const KeyInfo& keyInfo)
+    bool Program::isTargetApplicationActive() const
     {
-        InputHandler* handlerToStart = nullptr;
+        if (m_arguments.applicationName.empty())
+        {
+            return true;
+        }
+
+        std::string activeApp;
+#ifdef AUTOINPUT_TESTING
+        if (!m_testActiveApp.empty())
+        {
+            activeApp = toLowerCase(m_testActiveApp);
+        }
+        else
+        {
+            activeApp = toLowerCase(platform::getActiveApplicationName());
+        }
+#else
+        activeApp = toLowerCase(platform::getActiveApplicationName());
+#endif
+        const std::string targetApp = toLowerCase(m_arguments.applicationName);
+        return activeApp.find(targetApp) != std::string::npos;
+    }
+
+    InputHandler* Program::findHandlerByName(const std::string_view name)
+    {
+        if (name.empty()) return nullptr;
+        for (auto& [mouse, handler] : m_mouseHandlers)
+        {
+            if (handler.getName() == name) return &handler;
+        }
+        for (auto& [key, handler] : m_keyHandlers)
+        {
+            if (handler.getName() == name) return &handler;
+        }
+        for (auto& [key, handler] : m_sequenceHandlers)
+        {
+            if (handler.getName() == name) return &handler;
+        }
+        return nullptr;
+    }
+
+    InputHandler* Program::getHandlerForKeyInfo(const KeyInfo& keyInfo)
+    {
         if (keyInfo.mouse.button != MouseButton::None)
         {
             if (m_mouseHandlers.contains(keyInfo.mouse))
             {
-                handlerToStart = &m_mouseHandlers.at(keyInfo.mouse);
+                return &m_mouseHandlers.at(keyInfo.mouse);
             }
         }
-        else if (!keyInfo.key.character.empty())
+        if (!keyInfo.key.character.empty())
         {
             if (m_keyHandlers.contains(keyInfo.key))
             {
-                handlerToStart = &m_keyHandlers.at(keyInfo.key);
+                return &m_keyHandlers.at(keyInfo.key);
             }
-            else if (m_sequenceHandlers.contains(keyInfo.key))
+            if (m_sequenceHandlers.contains(keyInfo.key))
             {
-                handlerToStart = &m_sequenceHandlers.at(keyInfo.key);
+                return &m_sequenceHandlers.at(keyInfo.key);
             }
         }
-        else if (keyInfo.triggerKey.character.empty() && keyInfo.triggerButton == MouseButton::None)
+        if (!keyInfo.name.empty())
         {
-            // This might be a sequence trigger matched by name or from a config key that didn't populate triggerKey correctly
-            // But usually we match by trigger.
+            return findHandlerByName(keyInfo.name);
         }
+        return nullptr;
+    }
 
-        if (handlerToStart)
+    void Program::stopExclusiveGroup(const std::string& group)
+    {
+        if (group.empty()) return;
+        for (auto& mouseHandler : m_mouseHandlers | std::views::values)
         {
-            if (!keyInfo.exclusiveGroup.empty() && !handlerToStart->getActive())
+            if (mouseHandler.getActive() && mouseHandler.getExclusiveGroup() == group)
             {
-                for (auto& mouseHandler : m_mouseHandlers | std::views::values)
-                {
-                    if (mouseHandler.getActive() && mouseHandler.getExclusiveGroup() == keyInfo.exclusiveGroup)
-                    {
-                        mouseHandler.release();
-                        mouseHandler.setActive(false);
-                        mouseHandler.m_autoclickerThread.request_stop();
-                    }
-                }
-                for (auto& keyHandler : m_keyHandlers | std::views::values)
-                {
-                    if (keyHandler.getActive() && keyHandler.getExclusiveGroup() == keyInfo.exclusiveGroup)
-                    {
-                        keyHandler.release();
-                        keyHandler.setActive(false);
-                        keyHandler.m_autoclickerThread.request_stop();
-                    }
-                }
-                for (auto& seqHandler : m_sequenceHandlers | std::views::values)
-                {
-                    if (seqHandler.getActive() && seqHandler.getExclusiveGroup() == keyInfo.exclusiveGroup)
-                    {
-                        seqHandler.release();
-                        seqHandler.setActive(false);
-                        seqHandler.m_autoclickerThread.request_stop();
-                    }
-                }
+                stopHandler(mouseHandler);
             }
+        }
+        for (auto& keyHandler : m_keyHandlers | std::views::values)
+        {
+            if (keyHandler.getActive() && keyHandler.getExclusiveGroup() == group)
+            {
+                stopHandler(keyHandler);
+            }
+        }
+        for (auto& seqHandler : m_sequenceHandlers | std::views::values)
+        {
+            if (seqHandler.getActive() && seqHandler.getExclusiveGroup() == group)
+            {
+                stopHandler(seqHandler);
+            }
+        }
+    }
 
-            if (keyInfo.action == ActionState::HOLD)
-            {
-                handlerToStart->togglePressState();
-                handlerToStart->setActive(handlerToStart->isPressed());
-            }
-            else
-            {
-                startAutoClicker(*handlerToStart);
-            }
-            updateStatusIndicator(keyInfo.name, handlerToStart->getActive());
+    void Program::stopHandler(InputHandler& handler)
+    {
+        handler.release();
+        if (handler.getActive() || handler.getPaused())
+        {
+            handler.setActive(false);
+            handler.setPaused(false);
+            handler.m_autoclickerThread.request_stop();
+            handler.m_cv.notify_all();
+        }
+        updateStatusIndicator(handler.getName(), false);
+    }
+
+    void Program::pauseHandler(InputHandler& handler)
+    {
+        handler.setPaused(true);
+        if (handler.isPressed())
+        {
+            handler.release();
+        }
+        handler.m_cv.notify_all();
+        updateStatusIndicator(handler.getName(), handler.getActive());
+    }
+
+    void Program::resumeHandler(InputHandler& handler)
+    {
+        if (isApplicationBlacklisted() || !isTargetApplicationActive())
+        {
+            return;
+        }
+        handler.setPaused(false);
+        handler.m_cv.notify_all();
+        updateStatusIndicator(handler.getName(), handler.getActive());
+    }
+
+    void Program::togglePauseHandler(InputHandler& handler)
+    {
+        if (handler.getPaused())
+        {
+            resumeHandler(handler);
         }
         else
         {
-            updateStatusIndicator(keyInfo.name);
+            pauseHandler(handler);
+        }
+    }
+
+    void Program::start(const KeyInfo& keyInfo)
+    {
+        applyControlAction(keyInfo);
+    }
+
+    bool Program::applyControlAction(const KeyInfo& keyInfo)
+    {
+        switch (keyInfo.controlAction)
+        {
+        case ControlAction::Start:
+        {
+            if (isApplicationBlacklisted() || !isTargetApplicationActive())
+            {
+                return false;
+            }
+            InputHandler* handler = getHandlerForKeyInfo(keyInfo);
+            if (handler)
+            {
+                if (!keyInfo.exclusiveGroup.empty() && !handler->getActive())
+                {
+                    stopExclusiveGroup(keyInfo.exclusiveGroup);
+                }
+                if (!handler->getActive())
+                {
+                    if (keyInfo.action == ActionState::HOLD)
+                    {
+                        handler->press();
+                        handler->setActive(true);
+                    }
+                    else
+                    {
+                        startAutoClicker(*handler);
+                    }
+                }
+                else if (handler->getPaused())
+                {
+                    handler->setPaused(false);
+                    handler->m_cv.notify_all();
+                }
+                updateStatusIndicator(keyInfo.name, handler->getActive());
+            }
+            else
+            {
+                updateStatusIndicator(keyInfo.name);
+            }
+            return true;
+        }
+        case ControlAction::Toggle:
+        {
+            InputHandler* handler = getHandlerForKeyInfo(keyInfo);
+            if (handler)
+            {
+                if (!handler->getActive())
+                {
+                    if (isApplicationBlacklisted() || !isTargetApplicationActive())
+                    {
+                        return false;
+                    }
+                    if (!keyInfo.exclusiveGroup.empty())
+                    {
+                        stopExclusiveGroup(keyInfo.exclusiveGroup);
+                    }
+                    if (keyInfo.action == ActionState::HOLD)
+                    {
+                        handler->togglePressState();
+                        handler->setActive(handler->isPressed());
+                    }
+                    else
+                    {
+                        startAutoClicker(*handler);
+                    }
+                }
+                else
+                {
+                    if (keyInfo.action == ActionState::HOLD)
+                    {
+                        handler->togglePressState();
+                        handler->setActive(handler->isPressed());
+                    }
+                    else
+                    {
+                        startAutoClicker(*handler);
+                    }
+                }
+                updateStatusIndicator(keyInfo.name, handler->getActive());
+            }
+            else
+            {
+                updateStatusIndicator(keyInfo.name);
+            }
+            return true;
+        }
+        case ControlAction::Stop:
+        case ControlAction::Cancel:
+        {
+            if (!keyInfo.name.empty())
+            {
+                stopCommand(keyInfo.name);
+            }
+            else if (InputHandler* handler = getHandlerForKeyInfo(keyInfo))
+            {
+                stopHandler(*handler);
+            }
+            return true;
+        }
+        case ControlAction::Pause:
+        {
+            if (!keyInfo.name.empty())
+            {
+                pauseCommand(keyInfo.name);
+            }
+            else if (InputHandler* handler = getHandlerForKeyInfo(keyInfo))
+            {
+                pauseHandler(*handler);
+            }
+            return true;
+        }
+        case ControlAction::Resume:
+        {
+            if (isApplicationBlacklisted() || !isTargetApplicationActive())
+            {
+                return false;
+            }
+            if (!keyInfo.name.empty())
+            {
+                resumeCommand(keyInfo.name);
+            }
+            else if (InputHandler* handler = getHandlerForKeyInfo(keyInfo))
+            {
+                resumeHandler(*handler);
+            }
+            return true;
+        }
+        case ControlAction::TogglePause:
+        {
+            if (!keyInfo.name.empty())
+            {
+                togglePauseCommand(keyInfo.name);
+            }
+            else if (InputHandler* handler = getHandlerForKeyInfo(keyInfo))
+            {
+                togglePauseHandler(*handler);
+            }
+            return true;
+        }
+        case ControlAction::StopAll:
+        {
+            stopAllCommands();
+            return true;
+        }
+        case ControlAction::Exit:
+        {
+            exitRuntime();
+            return true;
+        }
+        default:
+            return false;
+        }
+    }
+
+    bool Program::applyControlAction(const ControlAction action, const std::string_view name)
+    {
+        switch (action)
+        {
+        case ControlAction::Start:
+        case ControlAction::Toggle:
+        {
+            if (isApplicationBlacklisted() || !isTargetApplicationActive())
+            {
+                return false;
+            }
+            if (!name.empty())
+            {
+                for (const auto& keyInfo : m_keyInfo)
+                {
+                    if (keyInfo.name == name)
+                    {
+                        KeyInfo infoCopy = keyInfo;
+                        infoCopy.controlAction = action;
+                        return applyControlAction(infoCopy);
+                    }
+                }
+
+                if (InputHandler* handler = findHandlerByName(name))
+                {
+                    if (!handler->getExclusiveGroup().empty() && !handler->getActive())
+                    {
+                        stopExclusiveGroup(handler->getExclusiveGroup());
+                    }
+                    if (action == ControlAction::Start && handler->getActive())
+                    {
+                        if (handler->getPaused())
+                        {
+                            handler->setPaused(false);
+                            handler->m_cv.notify_all();
+                        }
+                    }
+                    else
+                    {
+                        startAutoClicker(*handler);
+                    }
+                    updateStatusIndicator(handler->getName(), handler->getActive());
+                    return true;
+                }
+                return false;
+            }
+            return false;
+        }
+        case ControlAction::Stop:
+        case ControlAction::Cancel:
+        {
+            if (!name.empty())
+            {
+                stopCommand(name);
+                return true;
+            }
+            stopAllCommands();
+            return true;
+        }
+        case ControlAction::Pause:
+        {
+            if (!name.empty())
+            {
+                pauseCommand(name);
+                return true;
+            }
+            return false;
+        }
+        case ControlAction::Resume:
+        {
+            if (!name.empty())
+            {
+                resumeCommand(name);
+                return true;
+            }
+            return false;
+        }
+        case ControlAction::TogglePause:
+        {
+            if (!name.empty())
+            {
+                togglePauseCommand(name);
+                return true;
+            }
+            return false;
+        }
+        case ControlAction::StopAll:
+        {
+            stopAllCommands();
+            return true;
+        }
+        case ControlAction::Exit:
+        {
+            exitRuntime();
+            return true;
+        }
+        default:
+            return false;
         }
     }
 
@@ -465,41 +740,94 @@ namespace autoinput
         }
     }
 
-    void Program::end()
+    void Program::stopCommand(const std::string_view name)
+    {
+        if (InputHandler* handler = findHandlerByName(name))
+        {
+            stopHandler(*handler);
+        }
+        else
+        {
+            updateStatusIndicator(std::string(name), false);
+        }
+    }
+
+    void Program::pauseCommand(const std::string_view name)
+    {
+        if (InputHandler* handler = findHandlerByName(name))
+        {
+            pauseHandler(*handler);
+        }
+    }
+
+    void Program::resumeCommand(const std::string_view name)
+    {
+        if (InputHandler* handler = findHandlerByName(name))
+        {
+            resumeHandler(*handler);
+        }
+    }
+
+    void Program::togglePauseCommand(const std::string_view name)
+    {
+        if (InputHandler* handler = findHandlerByName(name))
+        {
+            togglePauseHandler(*handler);
+        }
+    }
+
+    void Program::stopAllCommands()
     {
         for (auto& mouseHandler : m_mouseHandlers | std::views::values)
         {
             mouseHandler.release();
-            if (mouseHandler.getActive())
+            if (mouseHandler.getActive() || mouseHandler.getPaused())
             {
                 mouseHandler.setActive(false);
+                mouseHandler.setPaused(false);
                 mouseHandler.m_autoclickerThread.request_stop();
+                mouseHandler.m_cv.notify_all();
             }
         }
 
         for (auto& keyHandler : m_keyHandlers | std::views::values)
         {
             keyHandler.release();
-            if (keyHandler.getActive())
+            if (keyHandler.getActive() || keyHandler.getPaused())
             {
                 keyHandler.setActive(false);
+                keyHandler.setPaused(false);
                 keyHandler.m_autoclickerThread.request_stop();
+                keyHandler.m_cv.notify_all();
             }
         }
 
         for (auto& seqHandler : m_sequenceHandlers | std::views::values)
         {
             seqHandler.release();
-            if (seqHandler.getActive())
+            if (seqHandler.getActive() || seqHandler.getPaused())
             {
                 seqHandler.setActive(false);
+                seqHandler.setPaused(false);
                 seqHandler.m_autoclickerThread.request_stop();
+                seqHandler.m_cv.notify_all();
             }
         }
 
-        platform::signalEnd();
         m_keysPressed.clear();
         updateStatusIndicator();
+    }
+
+    void Program::exitRuntime()
+    {
+        stopAllCommands();
+        platform::signalEnd();
+        updateStatusIndicator();
+    }
+
+    void Program::end()
+    {
+        exitRuntime();
     }
 
     void Program::printProgramInfo() const

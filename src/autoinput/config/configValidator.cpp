@@ -237,6 +237,34 @@ namespace autoinput
             }
         }
 
+        // Controls validation
+        for (size_t cIdx = 0; cIdx < command.controls.size(); ++cIdx)
+        {
+            const auto& ctrl = command.controls[cIdx];
+            const std::string ctrlSection = std::format("{}.controls[{}]", section, cIdx);
+            if (controlActionFromString(ctrl.action) == ControlAction::Invalid)
+            {
+                errors.push_back(ValidationError{
+                    std::format("Invalid control action: '{}'", ctrl.action),
+                    ValidationSeverity::Error,
+                    ctrlSection,
+                    "action",
+                    "Use a valid control action (start, toggle, stop, cancel, pause, resume, toggle-pause, stop-all, exit)."
+                });
+            }
+
+            if (ctrl.input.empty() || !isValidTrigger(ctrl.input))
+            {
+                errors.push_back(ValidationError{
+                    std::format("Invalid control input: '{}'", ctrl.input),
+                    ValidationSeverity::Error,
+                    ctrlSection,
+                    "input",
+                    "Use a valid key or mouse button trigger."
+                });
+            }
+        }
+
         // Wait strings validation
         if (!command.pressWait.empty())
         {

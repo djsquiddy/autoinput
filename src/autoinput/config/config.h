@@ -37,6 +37,12 @@ namespace autoinput
     [[nodiscard]] std::filesystem::path configTypeToPath(ConfigType configType);
     [[nodiscard]] std::filesystem::path configTypeToPath(ConfigType configType, const IEnvironment& environment);
 
+    struct CommandControlData
+    {
+        std::string action;
+        std::string input;
+    };
+
     struct CommandData
     {
         std::string name;
@@ -45,6 +51,7 @@ namespace autoinput
         std::vector<std::string> buttons;
         std::vector<std::string> keys;
         std::vector<std::string> startKeys;
+        std::vector<CommandControlData> controls;
         std::string pressWait;
         std::string releaseWait;
     };
