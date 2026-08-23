@@ -26,6 +26,7 @@ namespace autoinput::ui::editors
     struct CommandCaptureState
     {
         int startKeyIndex = -1;
+        int controlIndex = -1;
         widgets::InputCaptureState inputs;
     };
 

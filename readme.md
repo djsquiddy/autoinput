@@ -600,6 +600,33 @@ Commands support separate configurable control inputs for granular runtime contr
 ##### Synthetic Input Behavior
 Synthetic/generated input injected by AutoInput or other automated tools is ignored for control bindings by default to prevent self-triggering loops.
 
+##### Wildcard Input Triggers (`mouse.all`, `keys.all`, `input.all`)
+
+Control inputs can use wildcards to match any manual input:
+
+- `mouse.all` (or `mouse.*`, `mouse.any`): Matches any physical mouse button press (Left, Right, Middle, Back, Forward).
+- `keys.all` (or `key.all`, `keys.*`, `key.any`): Matches any physical keyboard key press.
+- `input.all` (or `input.*`, `all`, `any`): Matches any physical manual input (mouse button or keyboard key).
+
+When a command has an exact start/toggle input and a wildcard cancel/stop input, exact matches take precedence so starting a command does not immediately cancel itself.
+
+Example: Start left-click hold with Mouse Forward, cancel on any mouse button:
+
+```toml
+[[command]]
+name = "left-hold"
+action = "hold"
+button = "left"
+
+[[command.controls]]
+action = "toggle"
+input = "mouse.forward"
+
+[[command.controls]]
+action = "cancel"
+input = "mouse.all"
+```
+
 ##### Backward Compatibility
 Legacy `start` keys or buttons are mapped to `ControlAction::Toggle`, and the global `end` key is mapped to `ControlAction::Exit`, preserving existing configurations and behavior.
 

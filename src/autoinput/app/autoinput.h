@@ -269,6 +269,7 @@ namespace autoinput
         std::unordered_map<Mouse, MouseHandler, HashFunction<Mouse>> m_mouseHandlers{};
         std::unordered_map<Key, KeyHandler, HashFunction<Key>> m_keyHandlers{};
         std::unordered_map<Key, SequenceHandler, HashFunction<Key>> m_sequenceHandlers{};
+        std::vector<std::unique_ptr<InputHandler>> m_additionalHandlers{};
         std::unique_ptr<SequenceRecorder> m_recorder{ nullptr };
         ProgramArguments m_arguments{};
         std::vector<KeyInfo> m_keyInfo{};
@@ -281,6 +282,8 @@ namespace autoinput
         std::string m_testActiveApp;
 #endif
 
+        [[nodiscard]] std::vector<InputHandler*> getAllHandlers();
+        [[nodiscard]] std::vector<const InputHandler*> getAllHandlers() const;
         void startAutoClicker(InputHandler& handler);
         [[nodiscard]] InputHandler* findHandlerByName(std::string_view name);
         [[nodiscard]] InputHandler* getHandlerForKeyInfo(const KeyInfo& keyInfo);

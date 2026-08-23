@@ -44,6 +44,13 @@ namespace autoinput
     };
 
     /**
+     * @brief Validates whether a string represents a valid trigger (key, mouse button, or wildcard).
+     * @param triggerStr The trigger string to validate.
+     * @return True if valid, false otherwise.
+     */
+    [[nodiscard]] bool isValidTrigger(const std::string& triggerStr);
+
+    /**
      * @brief Validates DefaultSettings (global settings).
      * @param settings The settings to validate.
      * @return A vector of validation errors. Empty if valid.

@@ -31,6 +31,12 @@ namespace autoinput
             return false;
         }
 
+        // Check if it's a wildcard trigger (e.g. "mouse.all", "keys.all", "input.all")
+        if (ConfigMetadata::isWildcardTrigger(triggerStr))
+        {
+            return true;
+        }
+
         // 1. First check whether the trigger string maps to a valid mouse button.
         // We only allow back and forward buttons as triggers by default to avoid accidental triggers 
         // with primary mouse buttons, but the requirement suggests reusing existing parsing logic.

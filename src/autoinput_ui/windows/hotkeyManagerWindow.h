@@ -21,13 +21,14 @@ namespace autoinput::ui
 
     struct HotkeyEntry
     {
-        enum class Type { Command, Sequence, GlobalEnd };
+        enum class Type { Command, CommandControl, Sequence, GlobalEnd };
         Type type;
         std::string name;
         std::string hotkey;
         bool isValid = true;
         bool hasConflict = false;
         size_t index = 0; // Index in the original config vector
+        size_t controlIndex = 0; // Index in cmd.controls if Type == CommandControl
     };
 
     class HotkeyManagerWindow final : public UiWindow

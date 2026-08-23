@@ -102,4 +102,56 @@ namespace autoinput
             "left", "right", "capslock", "numlock", "scrolllock", "printscreen", "prtsc", "pause"
         };
     }
+
+    std::vector<std::string_view> ConfigMetadata::validWildcardInputNames()
+    {
+        return { "mouse.all", "keys.all", "input.all" };
+    }
+
+    std::vector<std::string_view> ConfigMetadata::validWildcardInputAliases()
+    {
+        return {
+            "mouse.all", "mouse.*", "mouse.any", "mouse_all", "mouse_any", "mouse-all", "mouse-any",
+            "keys.all", "key.all", "keys.*", "key.*", "keys.any", "key.any", "keys_all", "key_all",
+            "keys-all", "key-all", "keys_any", "key_any", "keys-any", "key-any", "keyboard.all",
+            "keyboard.*", "keyboard.any",
+            "input.all", "inputs.all", "input.*", "inputs.*", "input.any", "inputs.any",
+            "input_all", "inputs_all", "input-all", "inputs-all", "input_any", "inputs_any",
+            "input-any", "inputs-any", "all", "any"
+        };
+    }
+
+    bool ConfigMetadata::isMouseAllTrigger(const std::string_view str)
+    {
+        const std::string s = toLowerCase(str);
+        return s == "mouse.all" || s == "mouse.*" || s == "mouse.any" ||
+               s == "mouse_all" || s == "mouse_any" || s == "mouse-all" || s == "mouse-any" ||
+               s == "mouse:all" || s == "mouse:any";
+    }
+
+    bool ConfigMetadata::isKeysAllTrigger(const std::string_view str)
+    {
+        const std::string s = toLowerCase(str);
+        return s == "keys.all" || s == "key.all" || s == "keys.*" || s == "key.*" ||
+               s == "keys.any" || s == "key.any" || s == "keys_all" || s == "key_all" ||
+               s == "keys-all" || s == "key-all" || s == "keys_any" || s == "key_any" ||
+               s == "keys-any" || s == "key-any" || s == "keys:all" || s == "key:all" ||
+               s == "keyboard.all" || s == "keyboard.*" || s == "keyboard.any" ||
+               s == "keys" || s == "key";
+    }
+
+    bool ConfigMetadata::isInputAllTrigger(const std::string_view str)
+    {
+        const std::string s = toLowerCase(str);
+        return s == "input.all" || s == "inputs.all" || s == "input.*" || s == "inputs.*" ||
+               s == "input.any" || s == "inputs.any" || s == "input_all" || s == "inputs_all" ||
+               s == "input-all" || s == "inputs-all" || s == "input_any" || s == "inputs_any" ||
+               s == "input-any" || s == "inputs-any" || s == "input:all" || s == "inputs:all" ||
+               s == "all" || s == "any";
+    }
+
+    bool ConfigMetadata::isWildcardTrigger(const std::string_view str)
+    {
+        return isMouseAllTrigger(str) || isKeysAllTrigger(str) || isInputAllTrigger(str);
+    }
 }

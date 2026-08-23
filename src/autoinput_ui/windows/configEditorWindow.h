@@ -106,6 +106,7 @@ namespace autoinput::ui
         bool m_isCapturing = false;
         int m_captureCommandIndex = -1;
         int m_captureStartKeyIndex = -1;
+        int m_captureControlIndex = -1;
         int m_captureKeyIndex = -1;
         int m_captureButtonIndex = -1;
         bool m_isCapturingEndKey = false;

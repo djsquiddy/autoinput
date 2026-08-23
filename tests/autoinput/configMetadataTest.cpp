@@ -117,4 +117,28 @@ namespace autoinput
         EXPECT_NE(std::find(keys.begin(), keys.end(), "enter"), keys.end());
         EXPECT_NE(std::find(keys.begin(), keys.end(), "esc"), keys.end());
     }
+
+    TEST(ConfigMetadataTest, WildcardInputHelpersRecognizeInputs)
+    {
+        EXPECT_TRUE(ConfigMetadata::isMouseAllTrigger("mouse.all"));
+        EXPECT_TRUE(ConfigMetadata::isMouseAllTrigger("mouse.*"));
+        EXPECT_TRUE(ConfigMetadata::isMouseAllTrigger("mouse.any"));
+        EXPECT_FALSE(ConfigMetadata::isMouseAllTrigger("keys.all"));
+
+        EXPECT_TRUE(ConfigMetadata::isKeysAllTrigger("keys.all"));
+        EXPECT_TRUE(ConfigMetadata::isKeysAllTrigger("key.all"));
+        EXPECT_TRUE(ConfigMetadata::isKeysAllTrigger("keys.*"));
+        EXPECT_FALSE(ConfigMetadata::isKeysAllTrigger("mouse.all"));
+
+        EXPECT_TRUE(ConfigMetadata::isInputAllTrigger("input.all"));
+        EXPECT_TRUE(ConfigMetadata::isInputAllTrigger("input.*"));
+        EXPECT_TRUE(ConfigMetadata::isInputAllTrigger("all"));
+        EXPECT_TRUE(ConfigMetadata::isInputAllTrigger("any"));
+        EXPECT_FALSE(ConfigMetadata::isInputAllTrigger("mouse.left"));
+
+        EXPECT_TRUE(ConfigMetadata::isWildcardTrigger("mouse.all"));
+        EXPECT_TRUE(ConfigMetadata::isWildcardTrigger("keys.all"));
+        EXPECT_TRUE(ConfigMetadata::isWildcardTrigger("input.all"));
+        EXPECT_FALSE(ConfigMetadata::isWildcardTrigger("f2"));
+    }
 }

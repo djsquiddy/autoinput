@@ -58,17 +58,120 @@ namespace autoinput::ui::editors
             ImGui::PushID(static_cast<int>(i));
             auto& ctrl = command.controls[i];
             
-            ImGui::SetNextItemWidth(120.0f);
+            ImGui::SetNextItemWidth(110.0f);
             if (widgets::StringCombo("##ctrlAction", ctrl.action, controlActionNames))
             {
                 changed = true;
             }
             ImGui::SameLine();
-            ImGui::SetNextItemWidth(140.0f);
+            ImGui::SetNextItemWidth(120.0f);
             if (widgets::StringInput("##ctrlInput", ctrl.input))
             {
                 changed = true;
             }
+            ImGui::SameLine();
+
+            if (ImGui::Button("Preset..."))
+            {
+                ImGui::OpenPopup("PresetPopup");
+            }
+
+            if (ImGui::BeginPopup("PresetPopup"))
+            {
+                ImGui::TextDisabled("Wildcards");
+                if (ImGui::MenuItem("mouse.all (Any Mouse Button)"))
+                {
+                    ctrl.input = "mouse.all";
+                    changed = true;
+                }
+                if (ImGui::MenuItem("keys.all (Any Keyboard Key)"))
+                {
+                    ctrl.input = "keys.all";
+                    changed = true;
+                }
+                if (ImGui::MenuItem("input.all (Any Input)"))
+                {
+                    ctrl.input = "input.all";
+                    changed = true;
+                }
+
+                ImGui::Separator();
+                ImGui::TextDisabled("Mouse Buttons");
+                if (ImGui::MenuItem("mouse.back (Back / X1)"))
+                {
+                    ctrl.input = "mouse.back";
+                    changed = true;
+                }
+                if (ImGui::MenuItem("mouse.forward (Forward / X2)"))
+                {
+                    ctrl.input = "mouse.forward";
+                    changed = true;
+                }
+                if (ImGui::MenuItem("mouse.right (Right Click)"))
+                {
+                    ctrl.input = "mouse.right";
+                    changed = true;
+                }
+                if (ImGui::MenuItem("mouse.left (Left Click)"))
+                {
+                    ctrl.input = "mouse.left";
+                    changed = true;
+                }
+                if (ImGui::MenuItem("mouse.middle (Middle Click)"))
+                {
+                    ctrl.input = "mouse.middle";
+                    changed = true;
+                }
+
+                ImGui::Separator();
+                ImGui::TextDisabled("Common Keys");
+                if (ImGui::MenuItem("space"))
+                {
+                    ctrl.input = "space";
+                    changed = true;
+                }
+                if (ImGui::MenuItem("esc"))
+                {
+                    ctrl.input = "esc";
+                    changed = true;
+                }
+                if (ImGui::MenuItem("f2"))
+                {
+                    ctrl.input = "f2";
+                    changed = true;
+                }
+                if (ImGui::MenuItem("f6"))
+                {
+                    ctrl.input = "f6";
+                    changed = true;
+                }
+                if (ImGui::MenuItem("f12"))
+                {
+                    ctrl.input = "f12";
+                    changed = true;
+                }
+
+                ImGui::EndPopup();
+            }
+
+            ImGui::SameLine();
+            if (capture.controlIndex == static_cast<int>(i))
+            {
+                ImGui::TextColored(ImVec4(1, 1, 0, 1), "Press key/mouse...");
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel"))
+                {
+                    capture.controlIndex = -1;
+                }
+            }
+            else
+            {
+                if (ImGui::Button("Capture"))
+                {
+                    capture.controlIndex = static_cast<int>(i);
+                }
+            }
+
             ImGui::SameLine();
             if (ImGui::Button("X"))
             {
@@ -81,12 +184,32 @@ namespace autoinput::ui::editors
         if (controlToDelete >= 0 && controlToDelete < static_cast<int>(command.controls.size()))
         {
             command.controls.erase(command.controls.begin() + controlToDelete);
+            if (capture.controlIndex == controlToDelete)
+            {
+                capture.controlIndex = -1;
+            }
+            else if (capture.controlIndex > controlToDelete)
+            {
+                capture.controlIndex--;
+            }
             changed = true;
         }
 
         if (ImGui::Button(loc.text("buttons.addControl").data()))
         {
             command.controls.push_back({ .action = "toggle", .input = "" });
+            changed = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("+ Cancel (mouse.all)"))
+        {
+            command.controls.push_back({ .action = "cancel", .input = "mouse.all" });
+            changed = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("+ Toggle (mouse.back)"))
+        {
+            command.controls.push_back({ .action = "toggle", .input = "mouse.back" });
             changed = true;
         }
 

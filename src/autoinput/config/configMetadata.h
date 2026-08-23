@@ -126,6 +126,46 @@ namespace autoinput
          * @return A vector of valid special key names.
          */
         [[nodiscard]] static std::vector<std::string_view> validSpecialKeyNames();
+
+        /**
+         * @brief Get a list of canonical wildcard input names.
+         * @return A vector containing wildcard input triggers ("mouse.all", "keys.all", "input.all").
+         */
+        [[nodiscard]] static std::vector<std::string_view> validWildcardInputNames();
+
+        /**
+         * @brief Get a list of all wildcard input aliases.
+         * @return A vector containing wildcard input triggers and aliases.
+         */
+        [[nodiscard]] static std::vector<std::string_view> validWildcardInputAliases();
+
+        /**
+         * @brief Checks if a trigger string represents any/all mouse buttons.
+         * @param str Trigger string to check (e.g. "mouse.all", "mouse.*", "mouse.any").
+         * @return True if the string matches a mouse wildcard.
+         */
+        [[nodiscard]] static bool isMouseAllTrigger(std::string_view str);
+
+        /**
+         * @brief Checks if a trigger string represents any/all keyboard keys.
+         * @param str Trigger string to check (e.g. "keys.all", "key.all", "keys.*").
+         * @return True if the string matches a keyboard key wildcard.
+         */
+        [[nodiscard]] static bool isKeysAllTrigger(std::string_view str);
+
+        /**
+         * @brief Checks if a trigger string represents any/all manual input (mouse or keyboard).
+         * @param str Trigger string to check (e.g. "input.all", "input.*", "all", "any").
+         * @return True if the string matches a global manual input wildcard.
+         */
+        [[nodiscard]] static bool isInputAllTrigger(std::string_view str);
+
+        /**
+         * @brief Checks if a trigger string represents any wildcard trigger.
+         * @param str Trigger string to check.
+         * @return True if the string matches any wildcard.
+         */
+        [[nodiscard]] static bool isWildcardTrigger(std::string_view str);
     };
 }
 

@@ -4,6 +4,7 @@
  * @date March 2026
  */
 #include "autoinput/app/autoinput.h"
+#include "autoinput/config/configMetadata.h"
 #include "autoinput/support/logger.h"
 #include "autoinput/platform/platform.h"
 #include "autoinput/platform/backend.h"
@@ -35,18 +36,42 @@ namespace autoinput
         }
 
         IPlatformBackend* backendPtr = m_backend.get();
+        m_mouseHandlers.clear();
+        m_keyHandlers.clear();
+        m_sequenceHandlers.clear();
+        m_additionalHandlers.clear();
+
         const size_t buttonCount = m_arguments.buttons.size();
         for (size_t i = 0; i < buttonCount; ++i)
         {
             auto& mouse = m_arguments.buttons[i];
-            m_mouseHandlers[mouse] = MouseHandler{mouse, backendPtr};
-            if (i < m_arguments.commandNames.size())
+            const std::string name = i < m_arguments.commandNames.size() ? m_arguments.commandNames[i] : "";
+            const std::string group = i < m_arguments.exclusiveGroups.size() ? m_arguments.exclusiveGroups[i] : "";
+
+            if (!m_mouseHandlers.contains(mouse))
             {
-                m_mouseHandlers[mouse].setName(m_arguments.commandNames[i]);
+                m_mouseHandlers[mouse] = MouseHandler{mouse, backendPtr};
+                if (!name.empty())
+                {
+                    m_mouseHandlers[mouse].setName(name);
+                }
+                if (!group.empty())
+                {
+                    m_mouseHandlers[mouse].setExclusiveGroup(group);
+                }
             }
-            if (i < m_arguments.exclusiveGroups.size())
+            else
             {
-                m_mouseHandlers[mouse].setExclusiveGroup(m_arguments.exclusiveGroups[i]);
+                auto extra = std::make_unique<MouseHandler>(mouse, backendPtr);
+                if (!name.empty())
+                {
+                    extra->setName(name);
+                }
+                if (!group.empty())
+                {
+                    extra->setExclusiveGroup(group);
+                }
+                m_additionalHandlers.push_back(std::move(extra));
             }
         }
 
@@ -54,14 +79,33 @@ namespace autoinput
         for (size_t i = 0; i < keyCount; ++i)
         {
             auto& key = m_arguments.keys[i];
-            m_keyHandlers[key] = KeyHandler{key, backendPtr};
-            if (i + buttonCount < m_arguments.commandNames.size())
+            const std::string name = i + buttonCount < m_arguments.commandNames.size() ? m_arguments.commandNames[i + buttonCount] : "";
+            const std::string group = i + buttonCount < m_arguments.exclusiveGroups.size() ? m_arguments.exclusiveGroups[i + buttonCount] : "";
+
+            if (!m_keyHandlers.contains(key))
             {
-                m_keyHandlers[key].setName(m_arguments.commandNames[i + buttonCount]);
+                m_keyHandlers[key] = KeyHandler{key, backendPtr};
+                if (!name.empty())
+                {
+                    m_keyHandlers[key].setName(name);
+                }
+                if (!group.empty())
+                {
+                    m_keyHandlers[key].setExclusiveGroup(group);
+                }
             }
-            if (i + buttonCount < m_arguments.exclusiveGroups.size())
+            else
             {
-                m_keyHandlers[key].setExclusiveGroup(m_arguments.exclusiveGroups[i + buttonCount]);
+                auto extra = std::make_unique<KeyHandler>(key, backendPtr);
+                if (!name.empty())
+                {
+                    extra->setName(name);
+                }
+                if (!group.empty())
+                {
+                    extra->setExclusiveGroup(group);
+                }
+                m_additionalHandlers.push_back(std::move(extra));
             }
         }
 
@@ -69,7 +113,14 @@ namespace autoinput
         for (const auto& sequenceData : m_arguments.sequences)
         {
             Key startKey = Key::fromString(sequenceData.start);
-            m_sequenceHandlers[startKey] = SequenceHandler{ sequenceData, backendPtr };
+            if (!m_sequenceHandlers.contains(startKey))
+            {
+                m_sequenceHandlers[startKey] = SequenceHandler{ sequenceData, backendPtr };
+            }
+            else
+            {
+                m_additionalHandlers.push_back(std::make_unique<SequenceHandler>(sequenceData, backendPtr));
+            }
         }
 
         bool success = true;
@@ -85,9 +136,26 @@ namespace autoinput
                 .exclusiveGroup = group,
             };
 
-            if (mouseTrigger != MouseButton::None)
+            if (ConfigMetadata::isInputAllTrigger(keyStr))
+            {
+                info.matchAnyInput = true;
+            }
+            else if (ConfigMetadata::isMouseAllTrigger(keyStr))
+            {
+                info.matchAnyMouse = true;
+                info.triggerButton = MouseButton::All;
+            }
+            else if (ConfigMetadata::isKeysAllTrigger(keyStr))
+            {
+                info.matchAnyKey = true;
+            }
+            else if (mouseTrigger != MouseButton::None)
             {
                 info.triggerButton = mouseTrigger;
+                if (mouseTrigger == MouseButton::All)
+                {
+                    info.matchAnyMouse = true;
+                }
             }
             else
             {
@@ -263,15 +331,63 @@ namespace autoinput
             return false;
         }
         bool handled = false;
+        std::vector<const KeyInfo*> exactMatches;
 
+        auto isExactKeyMatch = [&](const KeyInfo& keyInfo) {
+            if (keyInfo.matchAnyInput || keyInfo.matchAnyKey)
+            {
+                return false;
+            }
+            return (keyInfo.keyCode != INVALID_KEY && keyInfo.keyCode == charKey) ||
+                   (keyInfo.functionKey != INVALID_KEY && keyInfo.functionKey == functionKey) ||
+                   (keyInfo.virtualKey != 0 && keyInfo.virtualKey == vk);
+        };
+
+        auto isSameTarget = [](const KeyInfo& a, const KeyInfo& b) {
+            if (!a.name.empty() || !b.name.empty())
+            {
+                return a.name == b.name;
+            }
+            if (a.mouse.button != MouseButton::None && b.mouse.button != MouseButton::None && a.mouse == b.mouse)
+            {
+                return true;
+            }
+            if (!a.key.character.empty() && !b.key.character.empty() && a.key == b.key)
+            {
+                return true;
+            }
+            return false;
+        };
+
+        // Pass 1: Execute exact key matches
         for (const KeyInfo& keyInfo : m_keyInfo)
         {
-            if ((keyInfo.keyCode != INVALID_KEY && keyInfo.keyCode == charKey) ||
-                (keyInfo.functionKey != INVALID_KEY && keyInfo.functionKey == functionKey) ||
-                (keyInfo.virtualKey != 0 && keyInfo.virtualKey == vk))
+            if (isExactKeyMatch(keyInfo))
             {
-                applyControlAction(keyInfo);
-                handled = true;
+                if (applyControlAction(keyInfo))
+                {
+                    if (keyInfo.controlAction != ControlAction::Stop && keyInfo.controlAction != ControlAction::Cancel)
+                    {
+                        handled = true;
+                    }
+                }
+                exactMatches.push_back(&keyInfo);
+            }
+        }
+
+        // Pass 2: Execute wildcard matches (skip if target was exact-matched in the same event)
+        for (const KeyInfo& keyInfo : m_keyInfo)
+        {
+            if (keyInfo.matchAnyInput || keyInfo.matchAnyKey)
+            {
+                const bool targetAlreadyHandled = std::ranges::any_of(exactMatches, [&](const KeyInfo* exact) {
+                    return isSameTarget(*exact, keyInfo);
+                });
+
+                if (!targetAlreadyHandled)
+                {
+                    applyControlAction(keyInfo);
+                }
             }
         }
 
@@ -312,13 +428,67 @@ namespace autoinput
         }
 
         bool handled = false;
+        std::vector<const KeyInfo*> exactMatches;
 
+        auto isExactMouseMatch = [&](const KeyInfo& keyInfo) {
+            if (keyInfo.matchAnyInput || keyInfo.matchAnyMouse || keyInfo.triggerButton == MouseButton::All)
+            {
+                return false;
+            }
+            return keyInfo.triggerButton == trigger;
+        };
+
+        auto isSameTarget = [](const KeyInfo& a, const KeyInfo& b) {
+            if (!a.name.empty() || !b.name.empty())
+            {
+                return a.name == b.name;
+            }
+            if (a.mouse.button != MouseButton::None && b.mouse.button != MouseButton::None && a.mouse == b.mouse)
+            {
+                return true;
+            }
+            if (!a.key.character.empty() && !b.key.character.empty() && a.key == b.key)
+            {
+                return true;
+            }
+            return false;
+        };
+
+        // Pass 1: Execute exact mouse button matches
         for (const KeyInfo& keyInfo : m_keyInfo)
         {
-            if (keyInfo.triggerButton == trigger)
+            if (isExactMouseMatch(keyInfo))
             {
-                applyControlAction(keyInfo);
-                handled = true;
+                if (applyControlAction(keyInfo))
+                {
+                    if (keyInfo.controlAction != ControlAction::Stop && keyInfo.controlAction != ControlAction::Cancel)
+                    {
+                        handled = true;
+                    }
+                }
+                exactMatches.push_back(&keyInfo);
+            }
+        }
+
+        // Pass 2: Execute wildcard matches (skip if target was exact-matched in the same event)
+        for (const KeyInfo& keyInfo : m_keyInfo)
+        {
+            if (keyInfo.matchAnyInput || keyInfo.matchAnyMouse ||
+                (keyInfo.triggerButton != MouseButton::None && static_cast<bool>(keyInfo.triggerButton & trigger)))
+            {
+                if (isExactMouseMatch(keyInfo))
+                {
+                    continue;
+                }
+
+                const bool targetAlreadyHandled = std::ranges::any_of(exactMatches, [&](const KeyInfo* exact) {
+                    return isSameTarget(*exact, keyInfo);
+                });
+
+                if (!targetAlreadyHandled)
+                {
+                    applyControlAction(keyInfo);
+                }
             }
         }
 
@@ -349,26 +519,75 @@ namespace autoinput
         return activeApp.find(targetApp) != std::string::npos;
     }
 
-    InputHandler* Program::findHandlerByName(const std::string_view name)
+    std::vector<InputHandler*> Program::getAllHandlers()
     {
-        if (name.empty()) return nullptr;
+        std::vector<InputHandler*> handlers;
         for (auto& [mouse, handler] : m_mouseHandlers)
         {
-            if (handler.getName() == name) return &handler;
+            handlers.push_back(&handler);
         }
         for (auto& [key, handler] : m_keyHandlers)
         {
-            if (handler.getName() == name) return &handler;
+            handlers.push_back(&handler);
         }
         for (auto& [key, handler] : m_sequenceHandlers)
         {
-            if (handler.getName() == name) return &handler;
+            handlers.push_back(&handler);
+        }
+        for (auto& handlerPtr : m_additionalHandlers)
+        {
+            if (handlerPtr)
+            {
+                handlers.push_back(handlerPtr.get());
+            }
+        }
+        return handlers;
+    }
+
+    std::vector<const InputHandler*> Program::getAllHandlers() const
+    {
+        std::vector<const InputHandler*> handlers;
+        for (const auto& [mouse, handler] : m_mouseHandlers)
+        {
+            handlers.push_back(&handler);
+        }
+        for (const auto& [key, handler] : m_keyHandlers)
+        {
+            handlers.push_back(&handler);
+        }
+        for (const auto& [key, handler] : m_sequenceHandlers)
+        {
+            handlers.push_back(&handler);
+        }
+        for (const auto& handlerPtr : m_additionalHandlers)
+        {
+            if (handlerPtr)
+            {
+                handlers.push_back(handlerPtr.get());
+            }
+        }
+        return handlers;
+    }
+
+    InputHandler* Program::findHandlerByName(const std::string_view name)
+    {
+        if (name.empty()) return nullptr;
+        for (InputHandler* handler : getAllHandlers())
+        {
+            if (handler && handler->getName() == name) return handler;
         }
         return nullptr;
     }
 
     InputHandler* Program::getHandlerForKeyInfo(const KeyInfo& keyInfo)
     {
+        if (!keyInfo.name.empty())
+        {
+            if (InputHandler* handler = findHandlerByName(keyInfo.name))
+            {
+                return handler;
+            }
+        }
         if (keyInfo.mouse.button != MouseButton::None)
         {
             if (m_mouseHandlers.contains(keyInfo.mouse))
@@ -387,50 +606,33 @@ namespace autoinput
                 return &m_sequenceHandlers.at(keyInfo.key);
             }
         }
-        if (!keyInfo.name.empty())
-        {
-            return findHandlerByName(keyInfo.name);
-        }
         return nullptr;
     }
 
     void Program::stopExclusiveGroup(const std::string& group)
     {
         if (group.empty()) return;
-        for (auto& mouseHandler : m_mouseHandlers | std::views::values)
+        for (InputHandler* handler : getAllHandlers())
         {
-            if (mouseHandler.getActive() && mouseHandler.getExclusiveGroup() == group)
+            if (handler && handler->getActive() && handler->getExclusiveGroup() == group)
             {
-                stopHandler(mouseHandler);
-            }
-        }
-        for (auto& keyHandler : m_keyHandlers | std::views::values)
-        {
-            if (keyHandler.getActive() && keyHandler.getExclusiveGroup() == group)
-            {
-                stopHandler(keyHandler);
-            }
-        }
-        for (auto& seqHandler : m_sequenceHandlers | std::views::values)
-        {
-            if (seqHandler.getActive() && seqHandler.getExclusiveGroup() == group)
-            {
-                stopHandler(seqHandler);
+                stopHandler(*handler);
             }
         }
     }
 
     void Program::stopHandler(InputHandler& handler)
     {
+        const bool wasActiveOrPaused = handler.getActive() || handler.getPaused();
         handler.release();
-        if (handler.getActive() || handler.getPaused())
+        if (wasActiveOrPaused)
         {
             handler.setActive(false);
             handler.setPaused(false);
             handler.m_autoclickerThread.request_stop();
             handler.m_cv.notify_all();
+            updateStatusIndicator(handler.getName(), false);
         }
-        updateStatusIndicator(handler.getName(), false);
     }
 
     void Program::pauseHandler(InputHandler& handler)
@@ -746,10 +948,6 @@ namespace autoinput
         {
             stopHandler(*handler);
         }
-        else
-        {
-            updateStatusIndicator(std::string(name), false);
-        }
     }
 
     void Program::pauseCommand(const std::string_view name)
@@ -778,39 +976,18 @@ namespace autoinput
 
     void Program::stopAllCommands()
     {
-        for (auto& mouseHandler : m_mouseHandlers | std::views::values)
+        for (InputHandler* handler : getAllHandlers())
         {
-            mouseHandler.release();
-            if (mouseHandler.getActive() || mouseHandler.getPaused())
+            if (handler)
             {
-                mouseHandler.setActive(false);
-                mouseHandler.setPaused(false);
-                mouseHandler.m_autoclickerThread.request_stop();
-                mouseHandler.m_cv.notify_all();
-            }
-        }
-
-        for (auto& keyHandler : m_keyHandlers | std::views::values)
-        {
-            keyHandler.release();
-            if (keyHandler.getActive() || keyHandler.getPaused())
-            {
-                keyHandler.setActive(false);
-                keyHandler.setPaused(false);
-                keyHandler.m_autoclickerThread.request_stop();
-                keyHandler.m_cv.notify_all();
-            }
-        }
-
-        for (auto& seqHandler : m_sequenceHandlers | std::views::values)
-        {
-            seqHandler.release();
-            if (seqHandler.getActive() || seqHandler.getPaused())
-            {
-                seqHandler.setActive(false);
-                seqHandler.setPaused(false);
-                seqHandler.m_autoclickerThread.request_stop();
-                seqHandler.m_cv.notify_all();
+                handler->release();
+                if (handler->getActive() || handler->getPaused())
+                {
+                    handler->setActive(false);
+                    handler->setPaused(false);
+                    handler->m_autoclickerThread.request_stop();
+                    handler->m_cv.notify_all();
+                }
             }
         }
 
@@ -920,13 +1097,12 @@ namespace autoinput
             }
         }
 
-        for (auto& handler : m_mouseHandlers | std::views::values)
+        for (InputHandler* handler : getAllHandlers())
         {
-            handler.setPaused(shouldPause);
-        }
-        for (auto& handler : m_keyHandlers | std::views::values)
-        {
-            handler.setPaused(shouldPause);
+            if (handler)
+            {
+                handler->setPaused(shouldPause);
+            }
         }
 
         if (shouldPause)
@@ -948,34 +1124,12 @@ namespace autoinput
         }
 
         bool isActive = false;
-        for (const auto& handler : m_mouseHandlers | std::views::values)
+        for (const InputHandler* handler : std::as_const(*this).getAllHandlers())
         {
-            if (handler.getActive() && !handler.getPaused())
+            if (handler && handler->getActive() && !handler->getPaused())
             {
                 isActive = true;
                 break;
-            }
-        }
-        if (!isActive)
-        {
-            for (const auto& handler : m_keyHandlers | std::views::values)
-            {
-                if (handler.getActive() && !handler.getPaused())
-                {
-                    isActive = true;
-                    break;
-                }
-            }
-        }
-        if (!isActive)
-        {
-            for (const auto& handler : m_sequenceHandlers | std::views::values)
-            {
-                if (handler.getActive() && !handler.getPaused())
-                {
-                    isActive = true;
-                    break;
-                }
             }
         }
 

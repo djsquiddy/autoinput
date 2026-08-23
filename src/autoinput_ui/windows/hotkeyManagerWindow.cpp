@@ -67,12 +67,28 @@ namespace autoinput::ui
             for (size_t i = 0; i < m_configData->commands.size(); ++i)
             {
                 const auto& cmd = m_configData->commands[i];
-                HotkeyEntry entry;
-                entry.type = HotkeyEntry::Type::Command;
-                entry.name = cmd.name;
-                entry.hotkey = cmd.startKeys.empty() ? "" : cmd.startKeys[0];
-                entry.index = i;
-                m_entries.push_back(std::move(entry));
+                if (!cmd.controls.empty())
+                {
+                    for (size_t c = 0; c < cmd.controls.size(); ++c)
+                    {
+                        HotkeyEntry entry;
+                        entry.type = HotkeyEntry::Type::CommandControl;
+                        entry.name = cmd.name + " (" + cmd.controls[c].action + ")";
+                        entry.hotkey = cmd.controls[c].input;
+                        entry.index = i;
+                        entry.controlIndex = c;
+                        m_entries.push_back(std::move(entry));
+                    }
+                }
+                else
+                {
+                    HotkeyEntry entry;
+                    entry.type = HotkeyEntry::Type::Command;
+                    entry.name = cmd.name;
+                    entry.hotkey = cmd.startKeys.empty() ? "" : cmd.startKeys[0];
+                    entry.index = i;
+                    m_entries.push_back(std::move(entry));
+                }
             }
             
             // Sequences
@@ -116,16 +132,7 @@ namespace autoinput::ui
             
             hotkeyCounts[entry.hotkey]++;
             
-            // Validate key name (very basic check, could use Key::fromString)
-            try {
-                auto k = Key::fromString(entry.hotkey);
-                if (k.character.empty() && k.modifier == KeyModifier::None)
-                {
-                    entry.isValid = false;
-                }
-            } catch (...) {
-                entry.isValid = false;
-            }
+            entry.isValid = isValidTrigger(entry.hotkey);
         }
         
         for (auto& entry : m_entries)
@@ -195,8 +202,9 @@ namespace autoinput::ui
         
         if (seq && !seq->events.empty())
         {
-            // Find the best KeyDown event (prefer one with a character or function key)
+            // Find the best KeyDown or MouseDown event
             std::string bestKey;
+            std::string bestButton;
             for (const auto& event : seq->events)
             {
                 if (event.type == RecordedEventType::KeyDown && event.key.has_value())
@@ -217,11 +225,25 @@ namespace autoinput::ui
                         break;
                     }
                 }
+                else if (event.type == RecordedEventType::MouseDown && event.button.has_value())
+                {
+                    bestButton = *event.button;
+                }
             }
             
+            std::string chosen;
             if (!bestKey.empty())
             {
-                m_captureTarget->hotkey = bestKey;
+                chosen = bestKey;
+            }
+            else if (!bestButton.empty())
+            {
+                chosen = bestButton.starts_with("mouse.") ? bestButton : ("mouse." + bestButton);
+            }
+
+            if (!chosen.empty())
+            {
+                m_captureTarget->hotkey = chosen;
                 m_statusMessage = Localization::get().format("status.capturedKey", m_captureTarget->hotkey);
                 markDirty();
                 validateHotkeys();
@@ -253,6 +275,13 @@ namespace autoinput::ui
                             else
                                 m_configData->commands[entry.index].startKeys[0] = entry.hotkey;
                         }
+                    }
+                    break;
+                case HotkeyEntry::Type::CommandControl:
+                    if (entry.index < m_configData->commands.size() &&
+                        entry.controlIndex < m_configData->commands[entry.index].controls.size())
+                    {
+                        m_configData->commands[entry.index].controls[entry.controlIndex].input = entry.hotkey;
                     }
                     break;
                 case HotkeyEntry::Type::Sequence:

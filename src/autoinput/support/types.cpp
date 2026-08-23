@@ -370,6 +370,10 @@ namespace autoinput
         {
             return MouseButton::Forward;
         }
+        if (button == "all" || button == "any" || button == "*" || button == "all_buttons" || button == "all-buttons" || button == "allbuttons")
+        {
+            return MouseButton::All;
+        }
         return MouseButton::None;
     }
 
@@ -387,6 +391,8 @@ namespace autoinput
             return std::string{ "back" };
         case MouseButton::Forward:
             return std::string{ "forward" };
+        case MouseButton::All:
+            return std::string{ "all" };
         case MouseButton::None:
         default:
             return std::string{};

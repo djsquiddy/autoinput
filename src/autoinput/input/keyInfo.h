@@ -29,6 +29,9 @@ namespace autoinput
         ControlAction controlAction{ ControlAction::Toggle };
         std::string name;
         std::string exclusiveGroup;
+        bool matchAnyMouse{ false };
+        bool matchAnyKey{ false };
+        bool matchAnyInput{ false };
     };
 }
 

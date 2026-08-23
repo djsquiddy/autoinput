@@ -492,5 +492,238 @@ namespace autoinput
         EXPECT_TRUE(syntheticMouse.isSynthetic());
         EXPECT_FALSE(program.processMouseEvent(syntheticMouse));
     }
+
+    TEST(ControlBindingTest, ControlBinding_WildcardInputsPassValidation)
+    {
+        EXPECT_TRUE(isValidTrigger("mouse.all"));
+        EXPECT_TRUE(isValidTrigger("mouse.*"));
+        EXPECT_TRUE(isValidTrigger("mouse.any"));
+        EXPECT_TRUE(isValidTrigger("mouse_all"));
+        EXPECT_TRUE(isValidTrigger("keys.all"));
+        EXPECT_TRUE(isValidTrigger("key.all"));
+        EXPECT_TRUE(isValidTrigger("keys.*"));
+        EXPECT_TRUE(isValidTrigger("input.all"));
+        EXPECT_TRUE(isValidTrigger("input.*"));
+        EXPECT_TRUE(isValidTrigger("input.any"));
+        EXPECT_TRUE(isValidTrigger("all"));
+        EXPECT_TRUE(isValidTrigger("any"));
+
+        CommandData cmd;
+        cmd.name = "wildcard-command";
+        cmd.action = "hold";
+        cmd.buttons = { "left" };
+        cmd.controls = {
+            { .action = "toggle", .input = "mouse.back" },
+            { .action = "cancel", .input = "mouse.all" },
+            { .action = "pause", .input = "keys.all" },
+            { .action = "stop-all", .input = "input.all" }
+        };
+
+        const auto errors = validateCommandData(cmd);
+        EXPECT_TRUE(errors.empty());
+    }
+
+    TEST(ControlBindingTest, ControlBinding_MouseAllCancelsCommandOnAnyMouseButton)
+    {
+        Program program;
+        program.arguments().buttons.push_back(Mouse(MouseButton::Left));
+        program.arguments().targetActions.push_back(ActionState::HOLD);
+        program.arguments().commandNames.push_back("left-hold");
+        program.arguments().commandControls.push_back({
+            { .action = "start", .input = "f2" },
+            { .action = "cancel", .input = "mouse.all" }
+        });
+        program.setBackend(std::make_unique<ControlBindingTestBackend>());
+        ASSERT_TRUE(program.init());
+
+        // Start command via F2 key event
+        KeyboardData keyData;
+        WindowsKeyboardData winKeyData;
+        KBDLLHOOKSTRUCT kbdStruct{};
+        KeyboardInput startKey = createWin32KeyInput(keyData, winKeyData, kbdStruct, WM_KEYDOWN, VK_F2, 0);
+        EXPECT_TRUE(program.processKeyEvent(std::move(startKey)));
+        EXPECT_TRUE(program.getMouseHandlers().at(Mouse(MouseButton::Left)).getActive());
+
+        // Keyboard press (e.g. Space) should NOT trigger mouse.all cancel
+        KeyboardData spaceData;
+        WindowsKeyboardData winSpaceData;
+        KBDLLHOOKSTRUCT spaceStruct{};
+        KeyboardInput spaceKey = createWin32KeyInput(spaceData, winSpaceData, spaceStruct, WM_KEYDOWN, VK_SPACE, 0);
+        EXPECT_FALSE(program.processKeyEvent(std::move(spaceKey)));
+        EXPECT_TRUE(program.getMouseHandlers().at(Mouse(MouseButton::Left)).getActive());
+
+        // Mouse Right click should trigger mouse.all cancel without swallowing input
+        MouseData mouseData;
+        WindowsMouseData winMouseData;
+        MSLLHOOKSTRUCT mouseStruct{};
+        MouseInput rightClick = createWin32MouseInput(mouseData, winMouseData, mouseStruct, WM_RBUTTONDOWN, 0, 0);
+        EXPECT_FALSE(program.processMouseEvent(rightClick));
+        EXPECT_FALSE(program.getMouseHandlers().at(Mouse(MouseButton::Left)).getActive());
+    }
+
+    TEST(ControlBindingTest, ControlBinding_KeysAllCancelsCommandOnAnyKey)
+    {
+        Program program;
+        program.arguments().buttons.push_back(Mouse(MouseButton::Left));
+        program.arguments().targetActions.push_back(ActionState::HOLD);
+        program.arguments().commandNames.push_back("left-hold");
+        program.arguments().commandControls.push_back({
+            { .action = "start", .input = "mouse.back" },
+            { .action = "cancel", .input = "keys.all" }
+        });
+        program.setBackend(std::make_unique<ControlBindingTestBackend>());
+        ASSERT_TRUE(program.init());
+
+        // Start command via Mouse Back
+        MouseData startMouseData;
+        WindowsMouseData winStartMouseData;
+        MSLLHOOKSTRUCT startMouseStruct{};
+        MouseInput backClick = createWin32MouseInput(startMouseData, winStartMouseData, startMouseStruct, WM_XBUTTONDOWN, XBUTTON1 << 16, 0);
+        EXPECT_TRUE(program.processMouseEvent(backClick));
+        EXPECT_TRUE(program.getMouseHandlers().at(Mouse(MouseButton::Left)).getActive());
+
+        // Mouse Right click should NOT trigger keys.all cancel
+        MouseData rightData;
+        WindowsMouseData winRightData;
+        MSLLHOOKSTRUCT rightStruct{};
+        MouseInput rightClick = createWin32MouseInput(rightData, winRightData, rightStruct, WM_RBUTTONDOWN, 0, 0);
+        EXPECT_FALSE(program.processMouseEvent(rightClick));
+        EXPECT_TRUE(program.getMouseHandlers().at(Mouse(MouseButton::Left)).getActive());
+
+        // Any keyboard key (e.g. Space) should trigger keys.all cancel without swallowing input
+        KeyboardData keyData;
+        WindowsKeyboardData winKeyData;
+        KBDLLHOOKSTRUCT kbdStruct{};
+        KeyboardInput anyKey = createWin32KeyInput(keyData, winKeyData, kbdStruct, WM_KEYDOWN, VK_SPACE, 0);
+        EXPECT_FALSE(program.processKeyEvent(std::move(anyKey)));
+        EXPECT_FALSE(program.getMouseHandlers().at(Mouse(MouseButton::Left)).getActive());
+    }
+
+    TEST(ControlBindingTest, ControlBinding_InputAllCancelsCommandOnMouseOrKey)
+    {
+        Program program;
+        program.arguments().buttons.push_back(Mouse(MouseButton::Left));
+        program.arguments().targetActions.push_back(ActionState::HOLD);
+        program.arguments().commandNames.push_back("left-hold");
+        program.arguments().commandControls.push_back({
+            { .action = "start", .input = "f2" },
+            { .action = "cancel", .input = "input.all" }
+        });
+        program.setBackend(std::make_unique<ControlBindingTestBackend>());
+        ASSERT_TRUE(program.init());
+
+        // 1. Start and cancel via mouse without swallowing mouse click
+        KeyboardData keyData1;
+        WindowsKeyboardData winKeyData1;
+        KBDLLHOOKSTRUCT kbdStruct1{};
+        KeyboardInput startKey1 = createWin32KeyInput(keyData1, winKeyData1, kbdStruct1, WM_KEYDOWN, VK_F2, 0);
+        EXPECT_TRUE(program.processKeyEvent(std::move(startKey1)));
+        EXPECT_TRUE(program.getMouseHandlers().at(Mouse(MouseButton::Left)).getActive());
+
+        MouseData mouseData;
+        WindowsMouseData winMouseData;
+        MSLLHOOKSTRUCT mouseStruct{};
+        MouseInput mouseClick = createWin32MouseInput(mouseData, winMouseData, mouseStruct, WM_MBUTTONDOWN, 0, 0);
+        EXPECT_FALSE(program.processMouseEvent(mouseClick));
+        EXPECT_FALSE(program.getMouseHandlers().at(Mouse(MouseButton::Left)).getActive());
+
+        // Release F2 from pressed keys set so it can be pressed again
+        KeyboardData keyReleaseData;
+        WindowsKeyboardData winKeyReleaseData;
+        KBDLLHOOKSTRUCT kbdReleaseStruct{};
+        KeyboardInput releaseKey = createWin32KeyInput(keyReleaseData, winKeyReleaseData, kbdReleaseStruct, WM_KEYUP, VK_F2, 0);
+        program.processKeyEvent(std::move(releaseKey));
+
+        // 2. Start and cancel via keyboard without swallowing keystroke
+        KeyboardData keyData2;
+        WindowsKeyboardData winKeyData2;
+        KBDLLHOOKSTRUCT kbdStruct2{};
+        KeyboardInput startKey2 = createWin32KeyInput(keyData2, winKeyData2, kbdStruct2, WM_KEYDOWN, VK_F2, 0);
+        EXPECT_TRUE(program.processKeyEvent(std::move(startKey2)));
+        EXPECT_TRUE(program.getMouseHandlers().at(Mouse(MouseButton::Left)).getActive());
+
+        KeyboardData anyKeyData;
+        WindowsKeyboardData winAnyKeyData;
+        KBDLLHOOKSTRUCT anyKeyStruct{};
+        KeyboardInput anyKey = createWin32KeyInput(anyKeyData, winAnyKeyData, anyKeyStruct, WM_KEYDOWN, VK_ESCAPE, 0);
+        EXPECT_FALSE(program.processKeyEvent(std::move(anyKey)));
+        EXPECT_FALSE(program.getMouseHandlers().at(Mouse(MouseButton::Left)).getActive());
+    }
+
+    TEST(ControlBindingTest, ControlBinding_MultipleCommandsSameButtonWithWildcardCancel)
+    {
+        // Replicate pitt.toml scenario:
+        // Command 1: left-hold (hold left mouse, toggle mouse.forward, cancel mouse.all, exclusiveGroup left-click-mode)
+        // Command 2: left-click (click left mouse, toggle mouse.back, cancel mouse.right, exclusiveGroup left-click-mode)
+        Program program;
+        program.arguments().buttons.push_back(Mouse(MouseButton::Left));
+        program.arguments().targetActions.push_back(ActionState::HOLD);
+        program.arguments().commandNames.push_back("left-hold");
+        program.arguments().exclusiveGroups.push_back("left-click-mode");
+        program.arguments().commandControls.push_back({
+            { .action = "toggle", .input = "mouse.forward" },
+            { .action = "cancel", .input = "mouse.all" }
+        });
+
+        program.arguments().buttons.push_back(Mouse(MouseButton::Left));
+        program.arguments().targetActions.push_back(ActionState::CLICK);
+        program.arguments().commandNames.push_back("left-click");
+        program.arguments().exclusiveGroups.push_back("left-click-mode");
+        program.arguments().commandControls.push_back({
+            { .action = "toggle", .input = "mouse.back" },
+            { .action = "cancel", .input = "mouse.right" }
+        });
+
+        auto testBackend = std::make_unique<ControlBindingTestBackend>();
+        auto* backendPtr = testBackend.get();
+        program.setBackend(std::move(testBackend));
+        ASSERT_TRUE(program.init());
+
+        // Press mouse.forward to start left-hold
+        MouseData forwardData;
+        WindowsMouseData winForwardData;
+        MSLLHOOKSTRUCT forwardStruct{};
+        MouseInput forwardInput = createWin32MouseInput(forwardData, winForwardData, forwardStruct, WM_XBUTTONDOWN, XBUTTON2 << 16, 0);
+        EXPECT_TRUE(program.processMouseEvent(forwardInput));
+        EXPECT_TRUE(backendPtr->activePressedButtons.contains(MouseButton::Left));
+
+        // Click right mouse: should trigger mouse.all cancel on left-hold, release left button, and NOT consume the right click
+        MouseData rightData1;
+        WindowsMouseData winRightData1;
+        MSLLHOOKSTRUCT rightStruct1{};
+        MouseInput rightClick1 = createWin32MouseInput(rightData1, winRightData1, rightStruct1, WM_RBUTTONDOWN, 0, 0);
+        EXPECT_FALSE(program.processMouseEvent(rightClick1));
+        EXPECT_FALSE(backendPtr->activePressedButtons.contains(MouseButton::Left));
+
+        // Press mouse.forward again to start left-hold
+        EXPECT_TRUE(program.processMouseEvent(forwardInput));
+        EXPECT_TRUE(backendPtr->activePressedButtons.contains(MouseButton::Left));
+
+        // Click left mouse: should trigger mouse.all cancel on left-hold, release left button, and NOT consume the click
+        MouseData leftData;
+        WindowsMouseData winLeftData;
+        MSLLHOOKSTRUCT leftStruct{};
+        MouseInput leftClick = createWin32MouseInput(leftData, winLeftData, leftStruct, WM_LBUTTONDOWN, 0, 0);
+        EXPECT_FALSE(program.processMouseEvent(leftClick));
+        EXPECT_FALSE(backendPtr->activePressedButtons.contains(MouseButton::Left));
+
+        // Subsequent left clicks should not be consumed and left button remains unpressed
+        EXPECT_FALSE(program.processMouseEvent(leftClick));
+        EXPECT_FALSE(backendPtr->activePressedButtons.contains(MouseButton::Left));
+
+        // Press mouse.back to start left-click
+        MouseData backData;
+        WindowsMouseData winBackData;
+        MSLLHOOKSTRUCT backStruct{};
+        MouseInput backInput = createWin32MouseInput(backData, winBackData, backStruct, WM_XBUTTONDOWN, XBUTTON1 << 16, 0);
+        EXPECT_TRUE(program.processMouseEvent(backInput));
+
+        // Right click cancels left-click without consuming right click
+        MouseData rightData;
+        WindowsMouseData winRightData;
+        MSLLHOOKSTRUCT rightStruct{};
+        MouseInput rightClick = createWin32MouseInput(rightData, winRightData, rightStruct, WM_RBUTTONDOWN, 0, 0);
+        EXPECT_FALSE(program.processMouseEvent(rightClick));
+    }
 #endif
 }

@@ -260,6 +260,7 @@ namespace autoinput
         Right = 1 << 2,
         Back = 1 << 3,
         Forward = 1 << 4,
+        All = Left | Middle | Right | Back | Forward,
     };
     AUTOINPUT_ENABLE_ENUM_BITWISE_OPERATORS(MouseButton);
 

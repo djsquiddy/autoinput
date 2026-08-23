@@ -104,6 +104,26 @@ namespace autoinput::ui
                 m_statusMessage = loc.format("status.capturedKey", bestButton);
                 applied = true;
             }
+            else if (m_captureControlIndex >= 0 && m_captureControlIndex < static_cast<int>(cmd.controls.size()))
+            {
+                if (!bestKey.empty())
+                {
+                    cmd.controls[m_captureControlIndex].input = bestKey;
+                    m_statusMessage = loc.format("status.capturedKey", bestKey);
+                    applied = true;
+                }
+                else if (!bestButton.empty())
+                {
+                    std::string btn = bestButton;
+                    if (!btn.starts_with("mouse."))
+                    {
+                        btn = "mouse." + btn;
+                    }
+                    cmd.controls[m_captureControlIndex].input = btn;
+                    m_statusMessage = loc.format("status.capturedKey", btn);
+                    applied = true;
+                }
+            }
         }
 
         if (applied)
@@ -119,6 +139,7 @@ namespace autoinput::ui
     {
         m_captureCommandIndex = -1;
         m_captureStartKeyIndex = -1;
+        m_captureControlIndex = -1;
         m_captureKeyIndex = -1;
         m_captureButtonIndex = -1;
         m_isCapturingEndKey = false;
@@ -413,6 +434,7 @@ namespace autoinput::ui
                 const bool isThisCommandCapturing = (m_captureCommandIndex == static_cast<int>(i));
                 editors::CommandCaptureState captureState;
                 captureState.startKeyIndex = isThisCommandCapturing ? m_captureStartKeyIndex : -1;
+                captureState.controlIndex = isThisCommandCapturing ? m_captureControlIndex : -1;
                 captureState.inputs.keyIndex = isThisCommandCapturing ? m_captureKeyIndex : -1;
                 captureState.inputs.buttonIndex = isThisCommandCapturing ? m_captureButtonIndex : -1;
                 const editors::CommandCaptureState originalCaptureState = captureState;
@@ -423,6 +445,7 @@ namespace autoinput::ui
                 }
 
                 if (captureState.startKeyIndex != originalCaptureState.startKeyIndex ||
+                    captureState.controlIndex != originalCaptureState.controlIndex ||
                     captureState.inputs.keyIndex != originalCaptureState.inputs.keyIndex ||
                     captureState.inputs.buttonIndex != originalCaptureState.inputs.buttonIndex)
                 {
@@ -433,6 +456,12 @@ namespace autoinput::ui
                     {
                         m_captureCommandIndex = static_cast<int>(i);
                         m_captureStartKeyIndex = captureState.startKeyIndex;
+                        startCapture();
+                    }
+                    else if (captureState.controlIndex != -1)
+                    {
+                        m_captureCommandIndex = static_cast<int>(i);
+                        m_captureControlIndex = captureState.controlIndex;
                         startCapture();
                     }
                     else if (captureState.inputs.keyIndex != -1)
