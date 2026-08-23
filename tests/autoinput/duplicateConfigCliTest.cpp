@@ -40,15 +40,19 @@ namespace autoinput::test
         std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config duplicate source destination";
         auto result = runCommand(command);
 
+        // Verify config duplicate CLI command exits with success code
         EXPECT_EQ(result.exitCode, 0);
+        // Verify output indicates configuration was duplicated successfully
         EXPECT_NE(result.output.find("Configuration duplicated"), std::string::npos);
 
         std::filesystem::path destPath = userConfigDir / "destination.toml";
+        // Ensure destination config file was created in user config directory
         EXPECT_TRUE(std::filesystem::exists(destPath));
 
         // Verify content
         std::ifstream file(destPath);
         std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        // Verify duplicated file contains source config comments and settings
         EXPECT_NE(content.find("# Source config"), std::string::npos);
         EXPECT_NE(content.find("end = \"f3\""), std::string::npos);
     }
@@ -71,7 +75,9 @@ namespace autoinput::test
         std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config copy source dest_alias";
         auto result = runCommand(command);
 
+        // Verify copy alias command exits successfully
         EXPECT_EQ(result.exitCode, 0);
+        // Ensure destination file exists under user config directory
         EXPECT_TRUE(std::filesystem::exists(userConfigDir / "dest_alias.toml"));
     }
 
@@ -92,7 +98,9 @@ namespace autoinput::test
         std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config duplicate source dest";
         auto result = runCommand(command);
 
+        // Ensure duplicating over existing destination returns non-zero error code
         EXPECT_NE(result.exitCode, 0);
+        // Verify error message indicates destination already exists
         EXPECT_NE(result.output.find("already exists"), std::string::npos);
     }
 
@@ -105,7 +113,9 @@ namespace autoinput::test
         std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config duplicate non_existent dest";
         auto result = runCommand(command);
 
+        // Ensure duplicating missing source returns non-zero error code
         EXPECT_NE(result.exitCode, 0);
+        // Verify error message indicates source file was not found
         EXPECT_NE(result.output.find("could not be found"), std::string::npos);
     }
 
@@ -124,7 +134,9 @@ namespace autoinput::test
         std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config duplicate source source";
         auto result = runCommand(command);
 
+        // Ensure duplicating to same source and destination returns non-zero error code
         EXPECT_NE(result.exitCode, 0);
+        // Verify error message indicates same path conflict
         EXPECT_NE(result.output.find("same path"), std::string::npos);
     }
 
@@ -153,10 +165,14 @@ namespace autoinput::test
             
             command = quotePath(AUTOINPUT_EXE_PATH) + " config duplicate test-builtin my-copy-2";
             result = runCommand(command);
+            // Verify fallback built-in duplicate command succeeds
             EXPECT_EQ(result.exitCode, 0);
+            // Ensure duplicated built-in config exists in user config folder
             EXPECT_TRUE(std::filesystem::exists(tempDir.path() / ".autoinput" / "my-copy-2.toml"));
         } else {
+            // Verify built-in duplicate command exits successfully
             EXPECT_EQ(result.exitCode, 0);
+            // Ensure duplicated built-in config exists in user config folder
             EXPECT_TRUE(std::filesystem::exists(tempDir.path() / ".autoinput" / "my-copy.toml"));
         }
     }
@@ -180,9 +196,12 @@ namespace autoinput::test
         std::string command = quotePath(AUTOINPUT_EXE_PATH) + " config duplicate source " + quotePath(destInOtherDir);
         auto result = runCommand(command);
 
+        // Verify duplicate command exits successfully
         EXPECT_EQ(result.exitCode, 0);
         // It should NOT be in someOtherDir, but in userConfigDir
+        // Ensure destination was not created in arbitrary specified path
         EXPECT_FALSE(std::filesystem::exists(destInOtherDir));
+        // Verify destination was created in user config directory instead
         EXPECT_TRUE(std::filesystem::exists(userConfigDir / "dest.toml"));
     }
 }

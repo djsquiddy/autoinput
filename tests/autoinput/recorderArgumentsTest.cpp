@@ -41,6 +41,7 @@ namespace autoinput::cli
         };
         auto argv = toArgv(args);
 
+        // Ensure parsing CLI arguments with full recording options succeeds
         ASSERT_TRUE(app.parse(gsl::make_span(argv)) == ErrorCode::Success);
     }
 
@@ -53,6 +54,7 @@ namespace autoinput::cli
         };
         auto argv = toArgv(args);
 
+        // Ensure parsing CLI arguments with default recording options succeeds
         ASSERT_TRUE(app.parse(gsl::make_span(argv)) == ErrorCode::Success);
     }
 
@@ -65,6 +67,7 @@ namespace autoinput::cli
         };
         auto argv = toArgv(args);
 
+        // Ensure parsing CLI arguments fails when using deprecated legacy flag syntax --record
         ASSERT_FALSE(app.parse(gsl::make_span(argv)) == ErrorCode::Success);
     }
 }

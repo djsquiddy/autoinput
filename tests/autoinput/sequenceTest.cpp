@@ -45,25 +45,40 @@ events = [
         file.close();
 
         auto configData = loadConfigData(path);
+        // Ensure sequence configuration TOML file was loaded successfully
         ASSERT_TRUE(configData.has_value());
+        // Verify the end key was parsed as 'f3'
         EXPECT_EQ(configData->endKey, "f3");
+        // Ensure exactly one sequence was parsed from the configuration
         ASSERT_EQ(configData->sequences.size(), 1);
 
         const auto& seq = configData->sequences[0];
+        // Verify sequence name is 'my-macro'
         EXPECT_EQ(seq.name, "my-macro");
+        // Verify sequence start key is 'f6'
         EXPECT_EQ(seq.start, "f6");
+        // Verify repeat flag is false
         EXPECT_FALSE(seq.repeat);
+        // Ensure all five recorded events were parsed
         ASSERT_EQ(seq.events.size(), 5);
 
+        // Verify the first event type is MouseMove
         EXPECT_EQ(seq.events[0].type, RecordedEventType::MouseMove);
+        // Verify the mouse X coordinate is 1000
         EXPECT_EQ(seq.events[0].x, 1000);
+        // Verify the mouse Y coordinate is 500
         EXPECT_EQ(seq.events[0].y, 500);
 
+        // Verify the second event type is MouseDown
         EXPECT_EQ(seq.events[1].type, RecordedEventType::MouseDown);
+        // Verify the mouse button is 'left'
         EXPECT_EQ(seq.events[1].button, "left");
+        // Verify the event delay is '120ms'
         EXPECT_EQ(seq.events[1].delay, "120ms");
 
+        // Verify the fourth event type is KeyDown
         EXPECT_EQ(seq.events[3].type, RecordedEventType::KeyDown);
+        // Verify the key for fourth event is 'space'
         EXPECT_EQ(seq.events[3].key, "space");
     }
 
@@ -84,6 +99,7 @@ events = [
         data.endKey = "f3";
 
         auto errors = validateConfigData(data);
+        // Verify that a complete and valid sequence produces no validation errors
         EXPECT_TRUE(errors.empty());
     }
 
@@ -102,6 +118,7 @@ events = [
         data.sequences.push_back(seq);
 
         auto errors = validateConfigData(data);
+        // Ensure validation errors are produced for an invalid sequence
         ASSERT_FALSE(errors.empty());
         
         bool foundStartError = false;
@@ -111,7 +128,9 @@ events = [
             if (err.message.find("start key is required") != std::string::npos) foundStartError = true;
             if (err.message.find("Key is required for key event") != std::string::npos) foundKeyError = true;
         }
+        // Verify that a missing start key error was reported
         EXPECT_TRUE(foundStartError);
+        // Verify that a missing key name error for key event was reported
         EXPECT_TRUE(foundKeyError);
     }
 
@@ -189,15 +208,22 @@ events = [
             retries++;
         }
         
+        // Verify that sequence playback completed within the timeout period
         EXPECT_TRUE(finished) << "Playback timed out";
         
         {
             std::lock_guard lock(backend.mutex);
+            // Ensure both sequence events were dispatched to the backend
             ASSERT_EQ(backend.calls.size(), 2);
+            // Verify the first dispatched event is KeyDown
             EXPECT_EQ(backend.calls[0].type, RecordedEventType::KeyDown);
+            // Verify the key dispatched for the first event is 'a'
             EXPECT_EQ(backend.calls[0].value, "a");
+            // Verify the second dispatched event is MouseMove
             EXPECT_EQ(backend.calls[1].type, RecordedEventType::MouseMove);
+            // Verify the mouse X coordinate dispatched is 100
             EXPECT_EQ(backend.calls[1].x, 100);
+            // Verify the mouse Y coordinate dispatched is 200
             EXPECT_EQ(backend.calls[1].y, 200);
         }
 

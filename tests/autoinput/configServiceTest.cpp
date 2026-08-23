@@ -51,8 +51,10 @@ start = "f2"
         services::ConfigService service(env);
         ProgramArguments args;
         
+        // Verify configuration is loaded and applied to arguments successfully
         ASSERT_TRUE(service.applyConfigToArguments("test_config", args));
         
+        // Verify command name, mouse action, and trigger key are populated in ProgramArguments
         ASSERT_EQ(args.commandNames.size(), 1);
         EXPECT_EQ(args.commandNames[0], "test-cmd");
         ASSERT_EQ(args.buttons.size(), 1);

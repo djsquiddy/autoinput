@@ -28,11 +28,13 @@ def _make_dummy_png_bytes(width: int = 64, height: int = 64) -> bytes:
 def test_get_png_dimensions() -> None:
     png_bytes = _make_dummy_png_bytes(128, 256)
     w, h = get_png_dimensions(png_bytes)
+    # Verify PNG width and height parsed from IHDR chunk
     assert w == 128
     assert h == 256
 
 
 def test_get_png_dimensions_invalid() -> None:
+    # Verify ValueError is raised when parsing invalid non-PNG data
     with pytest.raises(ValueError):
         get_png_dimensions(b"not a png")
 
@@ -40,15 +42,16 @@ def test_get_png_dimensions_invalid() -> None:
 def test_png_to_ico_bytes() -> None:
     png_bytes = _make_dummy_png_bytes(64, 64)
     ico_bytes = png_to_ico_bytes(png_bytes)
+    # Verify total byte length (6-byte ICONDIR + 16-byte ICONDIRENTRY + PNG payload)
     assert len(ico_bytes) == 6 + 16 + len(png_bytes)
 
-    # Check ICONDIR
+    # Check ICONDIR header values
     reserved, image_type, count = struct.unpack("<HHH", ico_bytes[:6])
     assert reserved == 0
     assert image_type == 1  # 1 for icon
     assert count == 1
 
-    # Check ICONDIRENTRY
+    # Check ICONDIRENTRY header values
     w, h, color_count, reserved, planes, bpp, bytes_in_res, offset = struct.unpack(
         "<BBBBHHII", ico_bytes[6:22]
     )
@@ -63,7 +66,7 @@ def test_png_to_ico_bytes() -> None:
 
 
 def test_png_to_ico_bytes_large_dimensions() -> None:
-    # Test 512x512 where 0 represents >= 256
+    # Test 512x512 where 0 represents >= 256 in ICO directory header
     png_bytes = _make_dummy_png_bytes(512, 512)
     ico_bytes = png_to_ico_bytes(png_bytes)
     w, h = ico_bytes[6], ico_bytes[7]
@@ -78,7 +81,9 @@ def test_convert_png_to_ico(tmp_path: pathlib.Path) -> None:
     png_path.write_bytes(png_bytes)
 
     convert_png_to_ico(png_path, ico_path)
+    # Verify output .ico file exists on disk
     assert ico_path.exists()
+    # Verify written ICO bytes match conversion algorithm output
     assert ico_path.read_bytes() == png_to_ico_bytes(png_bytes)
 
 
@@ -88,6 +93,7 @@ def test_generate_rc_content() -> None:
         png_path="resources/appIcon.png",
         icon_id=101,
     )
+    # Verify resource definitions in generated .rc script
     assert "#define IDI_APP_ICON 101" in rc_text
     assert 'IDI_APP_ICON ICON "build/appIcon.ico"' in rc_text
     assert 'IDI_APP_ICON RCDATA "resources/appIcon.png"' in rc_text
@@ -95,6 +101,7 @@ def test_generate_rc_content() -> None:
 
 def test_generate_rc_content_no_png() -> None:
     rc_text = generate_rc_content(ico_path="build/appIcon.ico")
+    # Verify resource definitions when PNG RCDATA is omitted
     assert "#define IDI_APP_ICON 101" in rc_text
     assert 'IDI_APP_ICON ICON "build/appIcon.ico"' in rc_text
     assert "RCDATA" not in rc_text
@@ -107,15 +114,15 @@ def test_generate_success_and_check_only(tmp_path: pathlib.Path) -> None:
 
     png_path.write_bytes(_make_dummy_png_bytes(48, 48))
 
-    # Generate files
+    # Generate files: verify returns True and outputs .ico and .rc files
     assert generate(png_path=png_path, ico_path=ico_path, rc_path=rc_path, check_only=False) is True
     assert ico_path.exists()
     assert rc_path.exists()
 
-    # Check mode should pass
+    # Check mode should pass when files match
     assert generate(png_path=png_path, ico_path=ico_path, rc_path=rc_path, check_only=True) is True
 
-    # Check mode should fail if modified
+    # Check mode should fail if .rc content is corrupted
     rc_path.write_text("corrupted", encoding="utf-8")
     assert generate(png_path=png_path, ico_path=ico_path, rc_path=rc_path, check_only=True) is False
 
@@ -124,6 +131,7 @@ def test_generate_missing_png(tmp_path: pathlib.Path) -> None:
     png_path = tmp_path / "nonexistent.png"
     ico_path = tmp_path / "icon.ico"
     rc_path = tmp_path / "icon.rc"
+    # Verify generator returns False when source PNG file is missing
     assert generate(png_path=png_path, ico_path=ico_path, rc_path=rc_path) is False
 
 
@@ -154,11 +162,14 @@ def test_windows_pe_resources_when_built() -> None:
         if not exe_path.exists():
             continue
         h = kernel32.LoadLibraryExW(str(exe_path), None, load_library_as_datafile)
+        # Verify executable binary was loaded as PE resource module
         assert h is not None and h != 0, f"Could not load {exe_path}"
         try:
             r_group = kernel32.FindResourceW(h, icon_id, rt_group_icon)
+            # Verify embedded icon group resource exists in binary
             assert r_group is not None and r_group != 0, f"RT_GROUP_ICON (101) not found in {exe_name}"
             r_rcdata = kernel32.FindResourceW(h, icon_id, rt_rcdata)
+            # Verify embedded raw PNG resource data exists in binary
             assert r_rcdata is not None and r_rcdata != 0, f"RT_RCDATA (101) not found in {exe_name}"
         finally:
             kernel32.FreeLibrary(h)

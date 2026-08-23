@@ -39,8 +39,10 @@ start = "f2"
         );
 
         auto configData = loadConfigData(path);
+        // Verify valid configuration file is loaded successfully
         ASSERT_TRUE(configData.has_value());
         auto errors = validateConfigData(*configData);
+        // Ensure no validation errors are produced for a valid configuration
         EXPECT_TRUE(errors.empty());
     }
 
@@ -60,8 +62,10 @@ start = "f2"
         );
 
         auto configData = loadConfigData(path);
+        // Verify invalid configuration file is parsed into config data
         ASSERT_TRUE(configData.has_value());
         auto errors = validateConfigData(*configData);
+        // Ensure validation errors are reported for invalid command configuration
         EXPECT_FALSE(errors.empty());
     }
 
@@ -70,8 +74,10 @@ start = "f2"
         test::TemporaryDirectory tempDir("config_val_int_missing");
         const std::filesystem::path path = tempDir.path() / "missing.toml";
 
+        // Verify nonexistent config file path is reported as not existing
         EXPECT_FALSE(doesConfigDataExists(path));
         auto configData = loadConfigData(path);
+        // Ensure loading a missing config file fails to produce a value
         EXPECT_FALSE(configData.has_value());
     }
 }

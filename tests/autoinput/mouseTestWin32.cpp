@@ -24,8 +24,11 @@ namespace autoinput
         data.internal = winData;
 
         MouseInput input(data);
+        // Verify isBackButtonDown detects XBUTTON1 down event
         EXPECT_TRUE(input.isBackButtonDown());
+        // Verify getButtonState reports Back mouse button
         EXPECT_EQ(input.getButtonState().button, MouseButton::Back);
+        // Verify getButtonState reports button is pressed down
         EXPECT_TRUE(input.getButtonState().isDown);
     }
 
@@ -41,8 +44,11 @@ namespace autoinput
         data.internal = winData;
 
         MouseInput input(data);
+        // Verify isForwardButtonDown detects XBUTTON2 down event
         EXPECT_TRUE(input.isForwardButtonDown());
+        // Verify getButtonState reports Forward mouse button
         EXPECT_EQ(input.getButtonState().button, MouseButton::Forward);
+        // Verify getButtonState reports button is pressed down
         EXPECT_TRUE(input.getButtonState().isDown);
     }
 
@@ -58,8 +64,11 @@ namespace autoinput
         data.internal = winData;
 
         MouseInput input(data);
+        // Verify isBackButtonUp detects XBUTTON1 up event
         EXPECT_TRUE(input.isBackButtonUp());
+        // Verify getButtonState reports Back mouse button
         EXPECT_EQ(input.getButtonState().button, MouseButton::Back);
+        // Verify getButtonState reports button is released
         EXPECT_FALSE(input.getButtonState().isDown);
     }
 
@@ -75,8 +84,11 @@ namespace autoinput
         data.internal = winData;
 
         MouseInput input(data);
+        // Verify isForwardButtonUp detects XBUTTON2 up event
         EXPECT_TRUE(input.isForwardButtonUp());
+        // Verify getButtonState reports Forward mouse button
         EXPECT_EQ(input.getButtonState().button, MouseButton::Forward);
+        // Verify getButtonState reports button is released
         EXPECT_FALSE(input.getButtonState().isDown);
     }
 }

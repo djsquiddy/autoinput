@@ -28,7 +28,9 @@ protected:
 TEST_F(FixVerificationTest, SyntheticMouseEventsAreIgnored)
 {
     g_program->arguments().buttons = {MouseButton::Left};
+    // Ensure arguments post-parse succeeds
     ASSERT_TRUE(g_program->arguments().postParseArguments());
+    // Ensure program initializes successfully
     ASSERT_TRUE(g_program->init());
 
     MSLLHOOKSTRUCT ms{};
@@ -38,13 +40,16 @@ TEST_F(FixVerificationTest, SyntheticMouseEventsAreIgnored)
     data.internal = winData;
     MouseInput input(data);
 
+    // Verify injected synthetic mouse event is ignored and not processed
     EXPECT_FALSE(g_program->processMouseEvent(input));
 }
 
 TEST_F(FixVerificationTest, SyntheticKeyboardEventsAreIgnored)
 {
     g_program->arguments().startKeys = {"f2"};
+    // Ensure arguments post-parse succeeds
     ASSERT_TRUE(g_program->arguments().postParseArguments());
+    // Ensure program initializes successfully
     ASSERT_TRUE(g_program->init());
 
     KBDLLHOOKSTRUCT kbs{};
@@ -55,6 +60,7 @@ TEST_F(FixVerificationTest, SyntheticKeyboardEventsAreIgnored)
     data.internal = winData;
     KeyboardInput input(data);
 
+    // Verify injected synthetic keyboard event is ignored and not processed
     EXPECT_FALSE(g_program->processKeyEvent(std::move(input)));
 }
 
@@ -63,19 +69,23 @@ TEST_F(FixVerificationTest, HoldStateProperlyTracked)
     g_program->arguments().buttons = {MouseButton::Left};
     g_program->arguments().targetActions = {ActionState::HOLD};
     g_program->arguments().commandNames = {"left-hold"};
+    // Ensure arguments post-parse succeeds
     ASSERT_TRUE(g_program->arguments().postParseArguments());
+    // Ensure program initializes successfully
     ASSERT_TRUE(g_program->init());
 
     const auto& keyInfo = g_program->getKeyInfo()[0];
     g_program->start(keyInfo);
 
     auto& handler = g_program->getMouseHandlers().at(MouseButton::Left);
+    // Verify mouse button is held down and active after start
     EXPECT_TRUE(handler.isPressed());
     EXPECT_TRUE(handler.getActive());
     EXPECT_TRUE(g_program->getLastIsActiveIndicator());
 
     // Toggle off
     g_program->start(keyInfo);
+    // Verify mouse button is released and inactive after toggle off
     EXPECT_FALSE(handler.isPressed());
     EXPECT_FALSE(handler.getActive());
     EXPECT_FALSE(g_program->getLastIsActiveIndicator());
@@ -85,13 +95,16 @@ TEST_F(FixVerificationTest, RedundantStatusMessagesFiltered)
 {
     g_program->arguments().buttons = {MouseButton::Left};
     g_program->arguments().commandNames = {"left-click"};
+    // Ensure arguments post-parse succeeds
     ASSERT_TRUE(g_program->arguments().postParseArguments());
+    // Ensure program initializes successfully
     ASSERT_TRUE(g_program->init());
 
     const auto& keyInfo = g_program->getKeyInfo()[0];
     
     // First activation
     g_program->start(keyInfo);
+    // Verify active status indicator is set on activation
     EXPECT_TRUE(g_program->getLastIsActiveIndicator());
     
     // Simulate a repeat trigger call to start()
@@ -100,6 +113,7 @@ TEST_F(FixVerificationTest, RedundantStatusMessagesFiltered)
     // our fix in updateStatusIndicator should handle it.
     
     // We can verify m_lastTriggeredCommandActive is still true
+    // Verify last triggered command name and active state are preserved
     EXPECT_EQ(g_program->getLastTriggeredCommandName(), "left-click");
     EXPECT_TRUE(g_program->getLastTriggeredCommandActive().value_or(false));
 }

@@ -15,12 +15,14 @@ namespace autoinput::testing
     TEST(WindowsNotificationSinkTest, CanConstructAndDestruct)
     {
         auto sink = platform::createDesktopNotificationSink();
+        // Verify desktop notification sink factory returns a valid instance
         EXPECT_NE(sink, nullptr);
     }
 
     TEST(WindowsNotificationSinkTest, NotifyIsSafe)
     {
         auto sink = platform::createDesktopNotificationSink();
+        // Ensure desktop notification sink instance is created
         ASSERT_NE(sink, nullptr);
         
         // This should not crash even if it fails to show the notification (e.g. no shell)
@@ -33,7 +35,9 @@ namespace autoinput::testing
         auto sink1 = platform::createDesktopNotificationSink();
         auto sink2 = platform::createDesktopNotificationSink();
         
+        // Ensure first desktop notification sink instance is created
         ASSERT_NE(sink1, nullptr);
+        // Ensure second desktop notification sink instance is created
         ASSERT_NE(sink2, nullptr);
         
         sink1->notify("Sink 1", "Message 1");

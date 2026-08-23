@@ -65,19 +65,25 @@ TEST_F(HandlerTest, KeyHandlerPressAndRelease)
     Key key = Key::fromString("a");
     KeyHandler handler(key, mockPtr);
 
+    // Expect single backend key press call when handler is pressed
     EXPECT_CALL(*mockPtr, keyPress(key)).Times(Exactly(1));
     handler.press();
+    // Verify key handler reports pressed state after press
     EXPECT_TRUE(handler.isPressed());
 
     // Redundant press should be ignored
+    // Ensure duplicate press does not invoke backend key press again
     EXPECT_CALL(*mockPtr, keyPress(_)).Times(0);
     handler.press();
 
+    // Expect single backend key release call when handler is released
     EXPECT_CALL(*mockPtr, keyRelease(key)).Times(Exactly(1));
     handler.release();
+    // Verify key handler reports unpressed state after release
     EXPECT_FALSE(handler.isPressed());
 
     // Redundant release should be ignored
+    // Ensure duplicate release does not invoke backend key release again
     EXPECT_CALL(*mockPtr, keyRelease(_)).Times(0);
     handler.release();
 }
@@ -87,19 +93,25 @@ TEST_F(HandlerTest, MouseHandlerPressAndRelease)
     Mouse mouse(MouseButton::Left);
     MouseHandler handler(mouse, mockPtr);
 
+    // Expect single backend mouse press call when handler is pressed
     EXPECT_CALL(*mockPtr, mousePress(mouse)).Times(Exactly(1));
     handler.press();
+    // Verify mouse handler reports pressed state after press
     EXPECT_TRUE(handler.isPressed());
 
     // Redundant press should be ignored
+    // Ensure duplicate press does not invoke backend mouse press again
     EXPECT_CALL(*mockPtr, mousePress(_)).Times(0);
     handler.press();
 
+    // Expect single backend mouse release call when handler is released
     EXPECT_CALL(*mockPtr, mouseRelease(mouse)).Times(Exactly(1));
     handler.release();
+    // Verify mouse handler reports unpressed state after release
     EXPECT_FALSE(handler.isPressed());
 
     // Redundant release should be ignored
+    // Ensure duplicate release does not invoke backend mouse release again
     EXPECT_CALL(*mockPtr, mouseRelease(_)).Times(0);
     handler.release();
 }
@@ -108,21 +120,26 @@ TEST_F(HandlerTest, HandlerWithNullBackend)
 {
     KeyHandler keyHandler(Key::fromString("a"), nullptr);
     keyHandler.press();
+    // Ensure key handler is not marked pressed when backend pointer is null
     EXPECT_FALSE(keyHandler.isPressed()); // Should not be pressed if backend is null
 
     MouseHandler mouseHandler(MouseButton::Left, nullptr);
     mouseHandler.press();
+    // Ensure mouse handler is not marked pressed when backend pointer is null
     EXPECT_FALSE(mouseHandler.isPressed());
 }
 
 TEST_F(HandlerTest, PauseState)
 {
     KeyHandler handler(Key::fromString("a"));
+    // Verify handler is not paused initially
     EXPECT_FALSE(handler.getPaused());
     
     handler.setPaused(true);
+    // Ensure handler is marked paused after setting pause state to true
     EXPECT_TRUE(handler.getPaused());
     
     handler.setPaused(false);
+    // Ensure handler is marked unpaused after setting pause state to false
     EXPECT_FALSE(handler.getPaused());
 }

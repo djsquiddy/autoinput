@@ -21,6 +21,7 @@ from commands.gen_localization_ids import get_parser, main
 def test_parser_defaults() -> None:
     parser = get_parser()
     args = parser.parse_args([])
+    # Verify default argument paths and check flag
     assert args.loc == DEFAULT_LOCALIZATION_FILE
     assert args.header == GENERATED_LOCALIZATION_HEADER
     assert args.source == GENERATED_LOCALIZATION_SOURCE
@@ -30,6 +31,7 @@ def test_parser_defaults() -> None:
 def test_parser_custom_args() -> None:
     parser = get_parser()
     args = parser.parse_args(["--loc", "custom.toml", "--header", "out.h", "--source", "out.cpp", "--check"])
+    # Verify custom parsed argument values
     assert args.loc == pathlib.Path("custom.toml")
     assert args.header == pathlib.Path("out.h")
     assert args.source == pathlib.Path("out.cpp")
@@ -57,6 +59,7 @@ def test_gen_localization_ids_main_success(monkeypatch: pytest.MonkeyPatch, tmp_
     ]
     monkeypatch.setattr(sys, "argv", test_args)
     ret = main()
+    # Verify main returns 0 and outputs header and source files
     assert ret == 0
     assert header_file.exists()
     assert source_file.exists()
@@ -74,10 +77,10 @@ def test_gen_localization_ids_main_check_mode(monkeypatch: pytest.MonkeyPatch, t
     header_file = tmp_path / "loc.h"
     source_file = tmp_path / "loc.cpp"
 
-    # First generate
+    # First generate: verify returns 0
     monkeypatch.setattr(sys, "argv", ["gen_localization_ids.py", "--loc", str(loc_file), "--header", str(header_file), "--source", str(source_file)])
     assert main() == 0
 
-    # Then check
+    # Then check: verify check mode returns 0 when files match
     monkeypatch.setattr(sys, "argv", ["gen_localization_ids.py", "--loc", str(loc_file), "--header", str(header_file), "--source", str(source_file), "--check"])
     assert main() == 0

@@ -76,10 +76,13 @@ start = "f3"
 )toml");
 
         Settings settings;
+        // Ensure settings are successfully loaded across built-in and user configurations
         ASSERT_TRUE(settings.load());
 
         const auto& defaults = settings.getDefaults();
+        // Verify user configuration overrides the built-in start key
         EXPECT_EQ(defaults.start, "f3"); // Overridden
+        // Verify non-overridden end key is retained from built-in configuration
         EXPECT_EQ(defaults.end, "f2");   // Kept from built-in
     }
 
@@ -94,10 +97,13 @@ blacklist = ["app3.exe"]
 )toml");
 
         Settings settings;
+        // Ensure settings are successfully loaded
         ASSERT_TRUE(settings.load());
 
         const auto& defaults = settings.getDefaults();
+        // Ensure user blacklist completely replaces built-in blacklist rather than merging
         ASSERT_EQ(defaults.blacklist.size(), 1);
+        // Verify blacklist contains the single entry defined in user configuration
         EXPECT_EQ(defaults.blacklist[0], "app3.exe");
     }
 
@@ -108,8 +114,10 @@ start = "f10"
 )toml");
 
         Settings settings;
+        // Ensure settings load succeeds when only user-level settings file exists
         ASSERT_TRUE(settings.load());
 
+        // Verify start key value is parsed from user-level settings
         EXPECT_EQ(settings.getDefaults().start, "f10");
     }
 
@@ -120,8 +128,10 @@ start = "f11"
 )toml");
 
         Settings settings;
+        // Ensure settings load succeeds when only built-in settings file exists
         ASSERT_TRUE(settings.load());
 
+        // Verify start key value is parsed from built-in settings
         EXPECT_EQ(settings.getDefaults().start, "f11");
     }
 }

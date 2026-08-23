@@ -25,16 +25,21 @@ def _load_toml_text(tmp_path: pathlib.Path, text: str):
 
 def test_real_help_toml_loads() -> None:
     metadata = load_cli_help_metadata(REAL_HELP_TOML)
+    # Verify application name and summary from production help.toml
     assert metadata.app_name == "autoinput"
     assert metadata.app_summary
+    # Verify count of global options
     assert len(metadata.global_options) == 4
+    # Verify all expected top-level commands exist
     command_names = {c.name for c in metadata.commands}
     assert command_names == {"run", "record", "config", "apps", "serve", "help"}
 
+    # Verify config command subcommands
     config_cmd = next(c for c in metadata.commands if c.name == "config")
     subcommand_names = {s.name for s in config_cmd.subcommands}
     assert subcommand_names == {"list", "validate", "duplicate", "copy", "path"}
 
+    # Verify completion categories exist
     assert "log_levels" in metadata.completions
     assert "action_types" in metadata.completions
     assert "mouse_buttons" in metadata.completions
@@ -42,6 +47,7 @@ def test_real_help_toml_loads() -> None:
 
 
 def test_missing_names(tmp_path: pathlib.Path) -> None:
+    # Verify validation fails when option names key is missing
     with pytest.raises(CliHelpValidationError, match=r"(?i)names"):
         _load_toml_text(
             tmp_path,
@@ -58,6 +64,7 @@ def test_missing_names(tmp_path: pathlib.Path) -> None:
 
 
 def test_empty_names(tmp_path: pathlib.Path) -> None:
+    # Verify validation fails when option names list is empty
     with pytest.raises(CliHelpValidationError, match=r"(?i)names"):
         _load_toml_text(
             tmp_path,
@@ -75,6 +82,7 @@ def test_empty_names(tmp_path: pathlib.Path) -> None:
 
 
 def test_duplicate_global_option_names(tmp_path: pathlib.Path) -> None:
+    # Verify validation fails when global options define duplicate flag names
     with pytest.raises(CliHelpValidationError, match=r"(?i)duplicate"):
         _load_toml_text(
             tmp_path,
@@ -95,6 +103,7 @@ def test_duplicate_global_option_names(tmp_path: pathlib.Path) -> None:
 
 
 def test_duplicate_option_names_within_command(tmp_path: pathlib.Path) -> None:
+    # Verify validation fails when command options define duplicate flag names
     with pytest.raises(CliHelpValidationError, match=r"(?i)duplicate"):
         _load_toml_text(
             tmp_path,
@@ -120,6 +129,7 @@ def test_duplicate_option_names_within_command(tmp_path: pathlib.Path) -> None:
 
 
 def test_value_false_with_value_name(tmp_path: pathlib.Path) -> None:
+    # Verify validation fails when boolean option (value=false) defines a value_name placeholder
     with pytest.raises(CliHelpValidationError, match=r"(?i)value_name"):
         _load_toml_text(
             tmp_path,
@@ -138,6 +148,7 @@ def test_value_false_with_value_name(tmp_path: pathlib.Path) -> None:
 
 
 def test_unknown_completion(tmp_path: pathlib.Path) -> None:
+    # Verify validation fails when option references an undefined completion type
     with pytest.raises(CliHelpValidationError, match=r"(?i)completion"):
         _load_toml_text(
             tmp_path,
@@ -175,10 +186,12 @@ def test_completion_reference_to_completions_table(tmp_path: pathlib.Path) -> No
         completion = "custom_types"
         """,
     )
+    # Verify completion successfully references a custom defined completions table
     assert metadata.global_options[0].completion == "custom_types"
 
 
 def test_duplicate_top_level_command_names(tmp_path: pathlib.Path) -> None:
+    # Verify validation fails when multiple top-level commands have identical names
     with pytest.raises(CliHelpValidationError, match=r"(?i)duplicate"):
         _load_toml_text(
             tmp_path,
@@ -201,6 +214,7 @@ def test_duplicate_top_level_command_names(tmp_path: pathlib.Path) -> None:
 
 
 def test_duplicate_subcommand_names(tmp_path: pathlib.Path) -> None:
+    # Verify validation fails when multiple subcommands within a command share the same name
     with pytest.raises(CliHelpValidationError, match=r"(?i)duplicate"):
         _load_toml_text(
             tmp_path,
@@ -228,6 +242,7 @@ def test_duplicate_subcommand_names(tmp_path: pathlib.Path) -> None:
 
 
 def test_missing_command_description(tmp_path: pathlib.Path) -> None:
+    # Verify validation fails when a command description is empty
     with pytest.raises(CliHelpValidationError, match=r"(?i)description"):
         _load_toml_text(
             tmp_path,
@@ -245,6 +260,7 @@ def test_missing_command_description(tmp_path: pathlib.Path) -> None:
 
 
 def test_missing_option_description(tmp_path: pathlib.Path) -> None:
+    # Verify validation fails when an option description is empty
     with pytest.raises(CliHelpValidationError, match=r"(?i)description"):
         _load_toml_text(
             tmp_path,
@@ -261,6 +277,7 @@ def test_missing_option_description(tmp_path: pathlib.Path) -> None:
 
 
 def test_missing_subcommand_description(tmp_path: pathlib.Path) -> None:
+    # Verify validation fails when a subcommand description is empty
     with pytest.raises(CliHelpValidationError, match=r"(?i)description"):
         _load_toml_text(
             tmp_path,
@@ -283,6 +300,7 @@ def test_missing_subcommand_description(tmp_path: pathlib.Path) -> None:
 
 
 def test_missing_app_name(tmp_path: pathlib.Path) -> None:
+    # Verify validation fails when application name is empty
     with pytest.raises(CliHelpValidationError, match=r"(?i)name"):
         _load_toml_text(
             tmp_path,
@@ -295,6 +313,7 @@ def test_missing_app_name(tmp_path: pathlib.Path) -> None:
 
 
 def test_missing_command_usage(tmp_path: pathlib.Path) -> None:
+    # Verify validation fails when command usage string is empty
     with pytest.raises(CliHelpValidationError, match=r"(?i)usage"):
         _load_toml_text(
             tmp_path,
@@ -313,5 +332,6 @@ def test_missing_command_usage(tmp_path: pathlib.Path) -> None:
 
 def test_file_not_found(tmp_path: pathlib.Path) -> None:
     non_existent = tmp_path / "does_not_exist.toml"
+    # Verify FileNotFoundError is raised when TOML file does not exist
     with pytest.raises(FileNotFoundError):
         load_cli_help_metadata(non_existent)

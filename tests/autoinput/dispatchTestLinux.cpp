@@ -59,8 +59,11 @@ TEST(LinuxDispatchTest, KeyboardX11)
     x11.keycode = 65;
     data.internal = x11;
 
+    // Verify X11 key press event is recognized as key down
     EXPECT_TRUE(linux_dispatch::Keyboard_isKeyDown(data));
+    // Verify X11 key press event is not recognized as key up
     EXPECT_FALSE(linux_dispatch::Keyboard_isKeyUp(data));
+    // Verify character code matches X11 keycode value
     EXPECT_EQ(linux_dispatch::Keyboard_getChar(data), 65);
 }
 
@@ -72,8 +75,11 @@ TEST(LinuxDispatchTest, KeyboardWayland)
     way.code = 66;
     data.internal = way;
 
+    // Verify Wayland key press event is recognized as key down
     EXPECT_TRUE(linux_dispatch::Keyboard_isKeyDown(data));
+    // Verify Wayland key press event is not recognized as key up
     EXPECT_FALSE(linux_dispatch::Keyboard_isKeyUp(data));
+    // Verify character code matches Wayland key code value
     EXPECT_EQ(linux_dispatch::Keyboard_getChar(data), 66);
 }
 
@@ -85,7 +91,9 @@ TEST(LinuxDispatchTest, MouseX11)
     x11.state = 1;
     data.internal = x11;
 
+    // Verify X11 left mouse button press is recognized as left button down
     EXPECT_TRUE(linux_dispatch::Mouse_isLeftButtonDown(data));
+    // Verify X11 left mouse button press is not recognized as left button up
     EXPECT_FALSE(linux_dispatch::Mouse_isLeftButtonUp(data));
 }
 
@@ -97,7 +105,9 @@ TEST(LinuxDispatchTest, MouseWayland)
     way.value = 1;
     data.internal = way;
 
+    // Verify Wayland left mouse button press is recognized as left button down
     EXPECT_TRUE(linux_dispatch::Mouse_isLeftButtonDown(data));
+    // Verify Wayland left mouse button press is not recognized as left button up
     EXPECT_FALSE(linux_dispatch::Mouse_isLeftButtonUp(data));
 }
 
@@ -105,8 +115,10 @@ TEST(LinuxDispatchTest, NoMatch)
 {
     autoinput::KeyboardData data;
     // No internal data set
+    // Ensure unset keyboard internal data does not trigger key down
     EXPECT_FALSE(linux_dispatch::Keyboard_isKeyDown(data));
     
     autoinput::MouseData mdata;
+    // Ensure unset mouse internal data does not trigger mouse button down
     EXPECT_FALSE(linux_dispatch::Mouse_isLeftButtonDown(mdata));
 }

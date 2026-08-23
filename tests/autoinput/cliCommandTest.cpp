@@ -50,6 +50,7 @@ namespace autoinput::cli
         {
             CliApplication app;
             auto argv = toArgv(args);
+            // Verify application parses valid top-level help and command combinations
             EXPECT_TRUE(app.parse(gsl::make_span(argv)) == ErrorCode::Success) << "Failed to parse: " << args[1];
         }
     }
@@ -59,10 +60,12 @@ namespace autoinput::cli
         CliApplication app;
         std::vector<std::string> args = {"autoinput", "--bad"};
         auto argv = toArgv(args);
+        // Verify invalid option fails CLI parsing
         EXPECT_FALSE(app.parse(gsl::make_span(argv)) == ErrorCode::Success);
 
         args = {"autoinput", "unknown-command"};
         argv = toArgv(args);
+        // Verify unknown command fails CLI parsing
         EXPECT_FALSE(app.parse(gsl::make_span(argv)) == ErrorCode::Success);
     }
 
@@ -87,6 +90,7 @@ namespace autoinput::cli
             RunCommand cmd(context);
             auto argv = toArgv(args);
             i32 index = 1;
+            // Verify positive command line arguments parse and validate for run command
             EXPECT_TRUE(cmd.parse(gsl::make_span(argv), index)) << "Failed to parse: " << args[0];
             EXPECT_TRUE(cmd.validate()) << "Failed to validate: " << args[0];
         }
@@ -118,6 +122,7 @@ namespace autoinput::cli
             // parse might return true but validate false, or parse might return false
             if (cmd.parse(gsl::make_span(argv), index))
             {
+                // Verify invalid argument values fail semantic validation
                 EXPECT_FALSE(cmd.validate()) << "Should have failed validation: " << args[1];
             }
         }
@@ -142,6 +147,7 @@ namespace autoinput::cli
             RecordCommand cmd(context);
             auto argv = toArgv(args);
             i32 index = 1;
+            // Verify positive command line arguments parse and validate for record command
             EXPECT_TRUE(cmd.parse(gsl::make_span(argv), index)) << "Failed to parse: " << args[1];
             EXPECT_TRUE(cmd.validate()) << "Failed to validate: " << args[1];
         }
@@ -167,6 +173,7 @@ namespace autoinput::cli
             i32 index = 1;
             if (cmd.parse(gsl::make_span(argv), index))
             {
+                // Verify invalid argument patterns fail record validation
                 EXPECT_FALSE(cmd.validate()) << "Should have failed validation";
             }
         }
@@ -189,6 +196,7 @@ namespace autoinput::cli
             ConfigCommand cmd(context);
             auto argv = toArgv(args);
             i32 index = 1;
+            // Verify positive config subcommands parse and validate
             EXPECT_TRUE(cmd.parse(gsl::make_span(argv), index)) << "Failed to parse: " << args[1];
             EXPECT_TRUE(cmd.validate()) << "Failed to validate: " << args[1];
         }
@@ -217,6 +225,7 @@ namespace autoinput::cli
             i32 index = 1;
             if (cmd.parse(gsl::make_span(argv), index))
             {
+                // Verify invalid config subcommand arguments fail validation
                 EXPECT_FALSE(cmd.validate()) << "Should have failed validation";
             }
         }
@@ -234,6 +243,7 @@ namespace autoinput::cli
             AppsCommand cmd(context);
             auto argv = toArgv(args);
             i32 index = 1;
+            // Verify apps list command parses and validates
             EXPECT_TRUE(cmd.parse(gsl::make_span(argv), index)) << "Failed to parse: " << args[1];
             EXPECT_TRUE(cmd.validate()) << "Failed to validate: " << args[1];
         }
@@ -255,6 +265,7 @@ namespace autoinput::cli
             i32 index = 1;
             if (cmd.parse(gsl::make_span(argv), index))
             {
+                // Verify invalid apps command arguments fail validation
                 EXPECT_FALSE(cmd.validate()) << "Should have failed validation";
             }
         }
@@ -280,6 +291,7 @@ namespace autoinput::cli
             HelpCommand cmd(context);
             auto argv = toArgv(args);
             i32 index = 1;
+            // Verify valid help topic queries parse and validate
             EXPECT_TRUE(cmd.parse(gsl::make_span(argv), index)) << "Failed to parse: " << args[1];
             EXPECT_TRUE(cmd.validate()) << "Failed to validate: " << args[1];
         }
@@ -301,6 +313,7 @@ namespace autoinput::cli
             i32 index = 1;
             if (cmd.parse(gsl::make_span(argv), index))
             {
+                // Verify unknown help topics fail validation
                 EXPECT_FALSE(cmd.validate()) << "Should have failed validation";
             }
         }

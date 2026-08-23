@@ -35,6 +35,7 @@ from commands.build import (
 
 
 def test_format_duration() -> None:
+    # Verify duration formatting for None, negative, seconds, and minutes
     assert format_duration(None) == "-"
     assert format_duration(-5.0) == "0.00s"
     assert format_duration(12.345) == "12.35s"
@@ -43,6 +44,7 @@ def test_format_duration() -> None:
 
 
 def test_format_file_size() -> None:
+    # Verify file size formatting for bytes, kilobytes, and megabytes
     assert format_file_size(500) == "500 B"
     assert format_file_size(2048) == "2.00 KB"
     assert format_file_size(5 * 1024 * 1024) == "5.00 MB"
@@ -50,20 +52,25 @@ def test_format_file_size() -> None:
 
 def test_format_log_line() -> None:
     line_green = "[==========] Running tests"
+    # Verify green ANSI styling for test start line
     assert format_log_line(line_green).startswith("\033[32m")
 
     line_red = "[  FAILED  ] Test.Case"
+    # Verify red ANSI styling for test failure line
     assert format_log_line(line_red).startswith("\033[31m")
 
     line_yellow = "[  SKIPPED ] Test.Case"
+    # Verify yellow ANSI styling for test skip line
     assert format_log_line(line_yellow).startswith("\033[33m")
 
     line_plain = "Regular text"
+    # Verify plain log lines remain unmodified
     assert format_log_line(line_plain) == line_plain
 
 
 def test_parse_arguments_defaults() -> None:
     config = parse_arguments([])
+    # Verify default build configuration flags and settings
     assert config.clean is False
     assert config.build_type == "Release"
     assert config.build_tests is True
@@ -78,6 +85,7 @@ def test_parse_arguments_defaults() -> None:
 
 def test_parse_arguments_targets_and_clean() -> None:
     config = parse_arguments(["ui", "clean", "debug"])
+    # Verify specific target selection and clean flag
     assert config.clean is True
     assert config.build_type == "Debug"
     assert config.build_ui is True
@@ -87,6 +95,7 @@ def test_parse_arguments_targets_and_clean() -> None:
 
 def test_parse_arguments_preset() -> None:
     config = parse_arguments(["--preset", "ninja-debug", "tests"])
+    # Verify preset name parsing and target filtering
     assert config.preset == "ninja-debug"
     assert config.build_tests is True
     assert config.build_ui is False
@@ -95,11 +104,13 @@ def test_parse_arguments_preset() -> None:
 
 def test_parse_arguments_list_presets() -> None:
     config = parse_arguments(["--list-presets"])
+    # Verify list presets flag parsing
     assert config.list_presets is True
 
 
 def test_parse_arguments_bulk_build_and_cmake_args() -> None:
     config = parse_arguments(["--bulk-build", "-DFOO=BAR", "-DCMAKE_UNITY_BUILD=ON"])
+    # Verify bulk build flag and passthrough CMake arguments
     assert config.bulk_build is True
     assert "-DFOO=BAR" in config.extra_cmake_args
     assert "-DCMAKE_UNITY_BUILD=ON" in config.extra_cmake_args
@@ -133,6 +144,7 @@ def test_load_cmake_presets_inherits(tmp_path: pathlib.Path, monkeypatch: pytest
     monkeypatch.setattr("commands.build.PROJECT_ROOT", tmp_path)
     presets = load_cmake_presets()
 
+    # Verify preset inheritance and exclusion of hidden presets
     assert "base" in presets
     assert "derived" in presets
     assert "hidden-preset" not in presets
@@ -151,6 +163,7 @@ def test_find_executables(tmp_path: pathlib.Path) -> None:
 
     executables = find_executables(tmp_path)
     if sys.platform == "win32":
+        # Verify discovering executable files and file sizes in bin directory
         assert len(executables) == 1
         assert executables[0].name == "autoinput.exe"
         assert executables[0].size == 1024
@@ -186,6 +199,7 @@ def test_builder_clean_build(tmp_path: pathlib.Path) -> None:
     builder = Builder(config, build_dir)
 
     ok, duration = builder.clean_build()
+    # Verify clean_build succeeds and removes build directory
     assert ok is True
     assert not build_dir.exists()
 
@@ -195,6 +209,7 @@ def test_builder_create_build_directory(tmp_path: pathlib.Path) -> None:
     config = BuildConfig(clean=False, build_type="Release", build_tests=False, build_tray=False, build_ui=False)
     builder = Builder(config, build_dir)
 
+    # Verify build directory creation on first and subsequent calls
     assert builder.create_build_directory() is True
     assert build_dir.exists()
     assert builder.create_build_directory() is True
@@ -214,6 +229,7 @@ def test_builder_run_success(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.
 
     monkeypatch.setattr("commands.build.run_command", lambda *args, **kwargs: 0)
     ret = builder.run()
+    # Verify full build workflow returns success exit code
     assert ret == EXIT_SUCCESSFUL
 
 
@@ -230,6 +246,7 @@ def test_builder_run_cmake_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: pa
 
     monkeypatch.setattr("commands.build.run_command", lambda *args, **kwargs: 1)
     ret = builder.run()
+    # Verify CMake configuration failure return code
     assert ret == EXIT_FAILED_CMAKE_CONFIGURATION
 
 
@@ -255,6 +272,7 @@ def test_builder_run_build_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: pa
 
     monkeypatch.setattr("commands.build.run_command", mock_run)
     ret = builder.run()
+    # Verify compilation step failure return code
     assert ret == EXIT_FAILED_SOURCE_COMPILATION
 
 
@@ -285,6 +303,7 @@ def test_builder_run_tests_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: pa
 
     monkeypatch.setattr("commands.build.run_command", mock_run)
     ret = builder.run()
+    # Verify C++ unit test failure return code
     assert ret == EXIT_FAILED_UNIT_TESTS
 
 
@@ -292,6 +311,7 @@ def test_builder_run_python_tests(monkeypatch: pytest.MonkeyPatch, tmp_path: pat
     config_disabled = BuildConfig(clean=False, build_type="Release", build_tests=False, build_tray=False, build_ui=False)
     builder_disabled = Builder(config_disabled, tmp_path)
     ret, dur, ran = builder_disabled.run_python_tests()
+    # Verify Python tests are skipped when build_tests is disabled
     assert ret == EXIT_SUCCESSFUL
     assert ran is False
 
@@ -299,6 +319,7 @@ def test_builder_run_python_tests(monkeypatch: pytest.MonkeyPatch, tmp_path: pat
     builder_enabled = Builder(config_enabled, tmp_path)
     monkeypatch.setattr("commands.build.run_command", lambda *args, **kwargs: 0)
     ret, dur, ran = builder_enabled.run_python_tests()
+    # Verify Python tests are executed when build_tests is enabled
     assert ret == EXIT_SUCCESSFUL
     assert ran is True
 
@@ -330,6 +351,7 @@ def test_builder_run_python_tests_failure(monkeypatch: pytest.MonkeyPatch, tmp_p
 
     monkeypatch.setattr("commands.build.run_command", mock_run)
     ret = builder.run()
+    # Verify Python test failure returns EXIT_FAILED_PYTHON_TESTS
     assert ret == EXIT_FAILED_PYTHON_TESTS
 
 
@@ -346,10 +368,12 @@ def test_preset_builder_create(monkeypatch: pytest.MonkeyPatch, tmp_path: pathli
 
     config = BuildConfig(clean=False, build_type="Debug", build_tests=False, build_tray=False, build_ui=False, preset="ninja-debug")
     builder = PresetBuilder.create(config)
+    # Verify PresetBuilder is instantiated for valid preset name
     assert builder is not None
     assert builder.preset_name == "ninja-debug"
 
     config_invalid = BuildConfig(clean=False, build_type="Debug", build_tests=False, build_tray=False, build_ui=False, preset="nonexistent")
+    # Verify PresetBuilder returns None for unknown preset
     assert PresetBuilder.create(config_invalid) is None
 
 
@@ -362,10 +386,12 @@ def test_list_preset(monkeypatch: pytest.MonkeyPatch) -> None:
         }
     }
     monkeypatch.setattr("commands.build.load_cmake_presets", lambda: mock_presets)
+    # Verify _list_preset exits with code 0
     assert _list_preset() == 0
 
 
 def test_build_main_list_presets(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sys, "argv", ["build.py", "--list-presets"])
     monkeypatch.setattr("commands.build.load_cmake_presets", lambda: {})
+    # Verify main execution with --list-presets flag returns 0
     assert main() == 0

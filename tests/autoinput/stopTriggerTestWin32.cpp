@@ -42,6 +42,7 @@ namespace autoinput
         // Actually, init() also sets up the backend.
         
         // Let's call init() with minimal arguments
+        // Ensure program initializes successfully
         ASSERT_TRUE(g_program->init());
 
         // The default init() might not set "end" if it's not in defaults.
@@ -49,6 +50,7 @@ namespace autoinput
         // Looking at Program::init(), it clears m_keyInfo and then populates it from arguments.
         
         g_program->setTestActiveApp("Notepad.exe");
+        // Ensure active application is recognized as blacklisted
         ASSERT_TRUE(g_program->isApplicationBlacklisted());
 
         // Simulate "End" key press (VK_END = 0x23)
@@ -63,6 +65,7 @@ namespace autoinput
         data.internal = winData;
         
         // In the fixed state, this should return true and stop automation
+        // Verify stop key is processed even when current application is blacklisted
         EXPECT_TRUE(g_program->processKeyEvent(KeyboardInput(data)));
     }
 
@@ -88,6 +91,7 @@ namespace autoinput
             testProgram->setBackend(std::make_unique<FakeBackend>());
             g_program = testProgram.get();
             g_program->arguments().endKey = tc.keyName;
+            // Ensure program initializes with configured stop key
             ASSERT_TRUE(g_program->init());
 
             KBDLLHOOKSTRUCT kbdStruct{};
@@ -100,6 +104,7 @@ namespace autoinput
             KeyboardData data;
             data.internal = winData;
             
+            // Verify special stop key triggers program stop
             EXPECT_TRUE(g_program->processKeyEvent(KeyboardInput(data))) << "Failed for key: " << tc.keyName;
             
             g_program = nullptr;
@@ -108,6 +113,7 @@ namespace autoinput
 
     TEST_F(StopTriggerReproTest, DefaultF3StopKeyWorks)
     {
+        // Ensure program initializes successfully with defaults
         ASSERT_TRUE(g_program->init());
 
         KBDLLHOOKSTRUCT kbdStruct{};
@@ -120,6 +126,7 @@ namespace autoinput
         KeyboardData data;
         data.internal = winData;
         
+        // Verify default F3 stop key triggers stop
         EXPECT_TRUE(g_program->processKeyEvent(KeyboardInput(data)));
     }
 
@@ -128,6 +135,7 @@ namespace autoinput
         g_program->arguments().startKeys = {"home"};
         g_program->arguments().endKey = "end";
         g_program->arguments().keys = {Key::fromString("a")};
+        // Ensure program initializes with special start and stop keys
         ASSERT_TRUE(g_program->init());
 
         // Press Home to start
@@ -136,6 +144,7 @@ namespace autoinput
         WindowsKeyboardData homeData{ WM_KEYDOWN, &homeStruct };
         KeyboardData dataHome;
         dataHome.internal = homeData;
+        // Verify pressing special start key triggers start
         EXPECT_TRUE(g_program->processKeyEvent(KeyboardInput(dataHome)));
         
         // Small sleep to let the thread run a bit
@@ -147,6 +156,7 @@ namespace autoinput
         WindowsKeyboardData endData{ WM_KEYDOWN, &endStruct };
         KeyboardData dataEnd;
         dataEnd.internal = endData;
+        // Verify pressing special stop key triggers stop
         EXPECT_TRUE(g_program->processKeyEvent(KeyboardInput(dataEnd)));
     }
 }

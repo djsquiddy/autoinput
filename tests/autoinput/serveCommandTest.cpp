@@ -30,10 +30,13 @@ namespace autoinput::cli
     {
         CommandContext context;
         ServeCommand cmd(context);
+        // Verify the command name is 'serve'
         EXPECT_EQ(cmd.getName(), "serve");
         
         HelpEntry help = cmd.getHelpEntry();
+        // Verify the command help usage string is not empty
         EXPECT_FALSE(help.usage.empty());
+        // Verify the command help description is not empty
         EXPECT_FALSE(help.description.empty());
     }
 
@@ -49,7 +52,9 @@ namespace autoinput::cli
             ServeCommand cmd(context);
             auto argv = toArgv(args);
             i32 index = 1;
+            // Verify parsing valid serve command arguments succeeds
             EXPECT_TRUE(cmd.parse(gsl::make_span(argv), index)) << "Failed to parse: " << args[1];
+            // Verify validating parsed serve command succeeds
             EXPECT_TRUE(cmd.validate()) << "Failed to validate: " << args[1];
         }
     }
@@ -69,6 +74,7 @@ namespace autoinput::cli
             i32 index = 1;
             if (cmd.parse(gsl::make_span(argv), index))
             {
+                // Verify validation fails when mandatory flags like --stdio are missing
                 EXPECT_FALSE(cmd.validate()) << "Should have failed validation";
             }
         }

@@ -77,6 +77,7 @@ def sample_metadata() -> CliHelpMetadata:
 
 
 def test_builtin_completions() -> None:
+    # Verify standard built-in completion generator identifiers are present
     assert "file" in BUILTIN_COMPLETIONS
     assert "path" in BUILTIN_COMPLETIONS
     assert "none" in BUILTIN_COMPLETIONS
@@ -85,18 +86,22 @@ def test_builtin_completions() -> None:
 
 
 def test_cpp_escape() -> None:
+    # Verify quotes and backslashes are escaped for C++ string literals
     assert _escape(r'hello "world" \ test') == r'hello \"world\" \\ test'
 
 
 def test_cpp_string_view_array() -> None:
     empty_arr = _cpp_string_view_array([])
+    # Verify empty string view array representation
     assert "{  }" in empty_arr
     items_arr = _cpp_string_view_array(["-h", "--help"])
+    # Verify string_view literal suffixes ("sv") are appended to array elements
     assert '"-h"sv, "--help"sv' in items_arr
 
 
 def test_cpp_generator_header(sample_metadata: CliHelpMetadata) -> None:
     header = generate_cli_help_header(sample_metadata)
+    # Verify header guard, namespace, and struct definitions exist in generated C++ header
     assert "#pragma once" in header
     assert "namespace autoinput::cli::HelpMetadata" in header
     assert "struct CliOptionMetadata" in header
@@ -106,6 +111,7 @@ def test_cpp_generator_header(sample_metadata: CliHelpMetadata) -> None:
 
 def test_cpp_generator_source(sample_metadata: CliHelpMetadata) -> None:
     source = generate_cli_help_source(sample_metadata)
+    # Verify namespace, app name, summary, and commands exist in generated C++ source
     assert "namespace autoinput::cli::HelpMetadata" in source
     assert "testapp" in source
     assert "A test application." in source
@@ -115,17 +121,19 @@ def test_cpp_generator_source(sample_metadata: CliHelpMetadata) -> None:
 
 def test_generate_cli_help_content(sample_metadata: CliHelpMetadata) -> None:
     header, source = generate_cli_help_content(sample_metadata)
+    # Verify both header and source contents are generated simultaneously
     assert "struct CliOptionMetadata" in header
     assert "namespace autoinput::cli::HelpMetadata" in source
 
 
 def test_validate_cli_help_metadata_valid(sample_metadata: CliHelpMetadata) -> None:
-    # Should not raise
+    # Should not raise any validation error for valid metadata
     validate_cli_help_metadata(sample_metadata)
 
 
 def test_validate_invalid_app_name() -> None:
     meta = CliHelpMetadata(app_name="", app_summary="sum", global_options=[], commands=[], completions={})
+    # Verify validation fails when application name is empty
     with pytest.raises(CliHelpValidationError, match=r"(?i)name"):
         validate_cli_help_metadata(meta)
 
@@ -138,6 +146,7 @@ def test_validate_invalid_option_empty_names() -> None:
         commands=[],
         completions={},
     )
+    # Verify validation fails when option has no flag names defined
     with pytest.raises(CliHelpValidationError, match=r"(?i)names"):
         validate_cli_help_metadata(meta)
 
@@ -150,6 +159,7 @@ def test_validate_invalid_command_usage() -> None:
         commands=[CliCommand(name="run", usage="", description="desc", options=[], subcommands=[])],
         completions={},
     )
+    # Verify validation fails when command usage string is empty
     with pytest.raises(CliHelpValidationError, match=r"(?i)usage"):
         validate_cli_help_metadata(meta)
 
@@ -178,17 +188,17 @@ def test_generate_end_to_end(tmp_path: pathlib.Path) -> None:
     header_file = tmp_path / "generated" / "help.h"
     source_file = tmp_path / "generated" / "help.cpp"
 
-    # Run generator in write mode
+    # Run generator in write mode: verify returns True and files are created
     ret = generate(metadata_path=metadata_file, header_path=header_file, source_path=source_file, check_only=False)
     assert ret is True
     assert header_file.exists()
     assert source_file.exists()
 
-    # Run generator in check mode (should match)
+    # Run generator in check mode: verify returns True when files match
     ret_check = generate(metadata_path=metadata_file, header_path=header_file, source_path=source_file, check_only=True)
     assert ret_check is True
 
-    # Modify header and check mode should fail
+    # Modify header and check mode: verify returns False when content differs
     header_file.write_text("corrupted", encoding="utf-8")
     ret_check_fail = generate(metadata_path=metadata_file, header_path=header_file, source_path=source_file, check_only=True)
     assert ret_check_fail is False
@@ -201,6 +211,7 @@ def test_generate_missing_metadata(tmp_path: pathlib.Path) -> None:
         source_path=tmp_path / "help.cpp",
         check_only=False,
     )
+    # Verify generator returns False when input metadata TOML file is missing
     assert ret is False
 
 
@@ -213,4 +224,5 @@ def test_generate_invalid_metadata(tmp_path: pathlib.Path) -> None:
         source_path=tmp_path / "help.cpp",
         check_only=False,
     )
+    # Verify generator returns False when metadata fails validation
     assert ret is False

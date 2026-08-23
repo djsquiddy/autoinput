@@ -44,6 +44,7 @@ TEST(SignalCleanupTest, SignalEndCallsCleanup)
     testProgram->setBackend(std::move(mock));
     g_program = testProgram.get();
     
+    // Verify cleanup is invoked exactly once on the platform backend when signaling program end
     EXPECT_CALL(*mockPtr, cleanup()).Times(Exactly(1));
     
     platform::signalEnd();

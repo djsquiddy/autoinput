@@ -49,6 +49,7 @@ namespace autoinput::testing
         g_program->arguments().commandNames = {"LeftClick", "RightClick"};
         g_program->arguments().startKeys = {"f1", "f2"}; // triggers
         g_program->arguments().statusNotificationMode = StatusNotificationMode::Both;
+        // Ensure program initializes successfully with multiple command configurations
         ASSERT_TRUE(g_program->init());
 
         auto mockSink = std::make_unique<MockNotificationSink>();
@@ -67,16 +68,21 @@ namespace autoinput::testing
             }
         }
 
+        // Ensure key information for f1 trigger was successfully created
         ASSERT_NE(f1Info, nullptr);
+        // Ensure key information for f2 trigger was successfully created
         ASSERT_NE(f2Info, nullptr);
 
         {
             ::testing::InSequence s;
+            // Verify notification sent when first command becomes active
             EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (LeftClick): ACTIVE", NotificationSeverity::Info)).Times(1);
+            // Verify notification sent when second command becomes active
             EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (RightClick): ACTIVE", NotificationSeverity::Info)).Times(1);
             // Verify that stopping one command while another is active results in a PAUSED notification for that command
             EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking (LeftClick): PAUSED", NotificationSeverity::Warning)).Times(1);
             // Expect final PAUSED notification from Program::end() in TearDown
+            // Verify final generic PAUSED notification is sent when program terminates
             EXPECT_CALL(*mockSinkPtr, notify(_, "Auto clicking: PAUSED", NotificationSeverity::Warning)).Times(1);
         }
 

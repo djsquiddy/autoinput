@@ -11,6 +11,7 @@ namespace autoinput
     TEST(BackendCapabilitiesTest, DefaultCapabilitiesAreFalse)
     {
         BackendCapabilities caps;
+        // Verify default capability flags are disabled
         EXPECT_FALSE(caps.keyboardHooks);
         EXPECT_FALSE(caps.mouseHooks);
         EXPECT_FALSE(caps.focusDetection);
@@ -24,6 +25,7 @@ namespace autoinput
         FakeBackend backend;
         BackendCapabilities caps = backend.capabilities();
 
+        // Verify FakeBackend provides all capabilities for mock testing
         EXPECT_TRUE(caps.keyboardHooks);
         EXPECT_TRUE(caps.mouseHooks);
         EXPECT_TRUE(caps.focusDetection);

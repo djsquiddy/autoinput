@@ -29,6 +29,7 @@ namespace autoinput
     {
         const std::filesystem::path path = getConfigFilePath("example");
 
+        // Verify .toml extension is appended to filename without extension
         EXPECT_EQ(path.filename(), "example.toml");
     }
 
@@ -36,6 +37,7 @@ namespace autoinput
     {
         const std::filesystem::path path = getConfigFilePath("example.toml");
 
+        // Verify existing .toml extension is preserved without duplicating
         EXPECT_EQ(path.filename(), "example.toml");
     }
 
@@ -48,6 +50,7 @@ namespace autoinput
             "[command]\naction = \"click\"\n"
         );
 
+        // Verify doesConfigDataExists returns true for existing file
         EXPECT_TRUE(doesConfigDataExists(path));
     }
 
@@ -56,6 +59,7 @@ namespace autoinput
         test::TemporaryDirectory tempDir("config_test_missing");
         const std::filesystem::path path = tempDir.path() / "autoinput_missing_config_test.toml";
 
+        // Verify doesConfigDataExists returns false for non-existent file
         EXPECT_FALSE(doesConfigDataExists(path));
     }
 
@@ -64,6 +68,7 @@ namespace autoinput
         test::TemporaryDirectory tempDir("config_test_missing_load");
         const std::filesystem::path path = tempDir.path() / "autoinput_missing_load_config_test.toml";
 
+        // Verify loadConfigData returns nullopt when file does not exist
         EXPECT_FALSE(loadConfigData(path).has_value());
     }
 
@@ -84,6 +89,7 @@ end = "f3"
 
         const std::optional<ConfigData> configData = loadConfigData(path);
 
+        // Verify config loaded and parsed single command with action and end key
         ASSERT_TRUE(configData.has_value());
         ASSERT_EQ(configData->commands.size(), 1);
         EXPECT_EQ(configData->commands[0].name, "test-command");
@@ -123,6 +129,7 @@ start = "f6"
 
         const std::optional<ConfigData> configData = loadConfigData(path);
 
+        // Verify all three commands and exclusive groups are parsed
         ASSERT_TRUE(configData.has_value());
         ASSERT_EQ(configData->commands.size(), 3);
         EXPECT_EQ(configData->commands[0].name, "cmd1");
@@ -152,6 +159,7 @@ release = "1s..2s"
 
         const std::optional<ConfigData> configData = loadConfigData(path);
 
+        // Verify press and release wait time intervals are parsed
         ASSERT_TRUE(configData.has_value());
         ASSERT_EQ(configData->commands.size(), 1);
         EXPECT_EQ(configData->commands[0].pressWait, "100ms..250ms");
@@ -173,6 +181,7 @@ start = ["f2", "f4"]
 
         const std::optional<ConfigData> configData = loadConfigData(path);
 
+        // Verify single button with array of start trigger keys
         ASSERT_TRUE(configData.has_value());
         ASSERT_EQ(configData->commands.size(), 1);
         ASSERT_EQ(configData->commands[0].buttons.size(), 1);
@@ -197,6 +206,7 @@ start = "f2"
 
         const std::optional<ConfigData> configData = loadConfigData(path);
 
+        // Verify array of buttons with single start trigger key
         ASSERT_TRUE(configData.has_value());
         ASSERT_EQ(configData->commands.size(), 1);
         ASSERT_EQ(configData->commands[0].buttons.size(), 2);
@@ -220,6 +230,7 @@ key = ["a", "b"]
 
         const std::optional<ConfigData> configData = loadConfigData(path);
 
+        // Verify array of target keystrokes is parsed
         ASSERT_TRUE(configData.has_value());
         ASSERT_EQ(configData->commands.size(), 1);
         ASSERT_EQ(configData->commands[0].keys.size(), 2);
@@ -241,6 +252,7 @@ application = "notepad.exe"
 
         const std::optional<ConfigData> configData = loadConfigData(path);
 
+        // Verify target application name is parsed
         ASSERT_TRUE(configData.has_value());
         EXPECT_EQ(configData->application, "notepad.exe");
     }
@@ -260,6 +272,7 @@ blacklist = ["game.exe", "other.exe"]
 
         const std::optional<ConfigData> configData = loadConfigData(path);
 
+        // Verify blacklist process name array is parsed
         ASSERT_TRUE(configData.has_value());
         ASSERT_EQ(configData->blacklist.size(), 2);
         EXPECT_EQ(configData->blacklist[0], "game.exe");
@@ -281,6 +294,7 @@ blacklist = "only.exe"
 
         const std::optional<ConfigData> configData = loadConfigData(path);
 
+        // Verify single blacklist string is parsed into array
         ASSERT_TRUE(configData.has_value());
         ASSERT_EQ(configData->blacklist.size(), 1);
         EXPECT_EQ(configData->blacklist[0], "only.exe");
@@ -311,21 +325,25 @@ start = "f9"
 
         const std::optional<ConfigData> configData = loadConfigData(path);
 
+        // Verify multiple command entries and top-level settings are parsed
         ASSERT_TRUE(configData.has_value());
         ASSERT_EQ(configData->commands.size(), 2);
 
+        // Verify first command (mouse click)
         EXPECT_EQ(configData->commands[0].action, "click");
         ASSERT_EQ(configData->commands[0].buttons.size(), 1);
         EXPECT_EQ(configData->commands[0].buttons[0], "left");
         ASSERT_EQ(configData->commands[0].startKeys.size(), 1);
         EXPECT_EQ(configData->commands[0].startKeys[0], "f8");
 
+        // Verify second command (key hold)
         EXPECT_EQ(configData->commands[1].action, "hold");
         ASSERT_EQ(configData->commands[1].keys.size(), 1);
         EXPECT_EQ(configData->commands[1].keys[0], "a");
         ASSERT_EQ(configData->commands[1].startKeys.size(), 1);
         EXPECT_EQ(configData->commands[1].startKeys[0], "f9");
 
+        // Verify global endKey, application, and blacklist
         EXPECT_EQ(configData->endKey, "f10");
         EXPECT_EQ(configData->application, "notepad.exe");
         ASSERT_EQ(configData->blacklist.size(), 1);
@@ -340,6 +358,7 @@ start = "f9"
 
         std::string value;
 
+        // Verify existing table key returns true and sets value
         EXPECT_TRUE(tryGetTableValue(table, "name", value));
         EXPECT_EQ(value, "autoinput");
     }
@@ -352,6 +371,7 @@ start = "f9"
 
         std::string value = "unchanged";
 
+        // Verify missing key returns false and leaves variable unchanged
         EXPECT_FALSE(tryGetTableValue(table, "missing", value));
         EXPECT_EQ(value, "unchanged");
     }
@@ -364,6 +384,7 @@ start = "f9"
 
         std::string value = "unchanged";
 
+        // Verify type mismatch returns false and leaves variable unchanged
         EXPECT_FALSE(tryGetTableValue(table, "count", value));
         EXPECT_EQ(value, "unchanged");
     }

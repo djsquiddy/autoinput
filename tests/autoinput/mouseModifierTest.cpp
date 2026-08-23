@@ -38,15 +38,20 @@ public:
 TEST(MouseModifierTest, ParsesShiftLeftClick)
 {
     auto mouse = Mouse::fromString("shift+left");
+    // Verify that the mouse button is parsed as Left
     EXPECT_EQ(mouse.button, MouseButton::Left);
+    // Verify that the modifier is parsed as Shift
     EXPECT_EQ(mouse.modifier, KeyModifier::Shift);
 }
 
 TEST(MouseModifierTest, ParsesMultipleModifiersWithClick)
 {
     auto mouse = Mouse::fromString("ctrl+alt+right");
+    // Verify that the mouse button is parsed as Right
     EXPECT_EQ(mouse.button, MouseButton::Right);
+    // Verify that the Ctrl modifier flag is present
     EXPECT_TRUE(static_cast<bool>(mouse.modifier & KeyModifier::Ctrl));
+    // Verify that the Alt modifier flag is present
     EXPECT_TRUE(static_cast<bool>(mouse.modifier & KeyModifier::Alt));
 }
 
@@ -57,17 +62,21 @@ TEST(MouseModifierTest, ProgramTriggersShiftLeftClick)
     arguments.buttons.push_back(Mouse(MouseButton::Left, KeyModifier::Shift));
     arguments.targetActions.push_back(ActionState::HOLD);
     arguments.startKeys.push_back("f2");
+    // Ensure argument post-parsing succeeds and properly sets up triggers
     ASSERT_TRUE(arguments.postParseArguments());
 
     auto mock = std::make_unique<MockMouseModifierBackend>();
     MockMouseModifierBackend* mockPtr = mock.get();
     program.setBackend(std::move(mock));
+    // Ensure program initializes successfully with the mock backend
     ASSERT_TRUE(program.init());
 
     const auto& keyInfo = program.getKeyInfo();
+    // Ensure start and end trigger key info entries are generated
     ASSERT_EQ(keyInfo.size(), 2); // start and end
 
     Mouse expectedMouse(MouseButton::Left, KeyModifier::Shift);
+    // Verify that the backend receives exactly one mouse press with Shift+Left
     EXPECT_CALL(*mockPtr, mousePress(expectedMouse)).Times(Exactly(1));
     
     program.start(keyInfo[0]);

@@ -30,6 +30,7 @@ def _make_dummy_png_bytes(width: int = 32, height: int = 32) -> bytes:
 def test_parser_defaults() -> None:
     parser = get_parser()
     args = parser.parse_args([])
+    # Verify default argument paths and check flag
     assert args.png == DEFAULT_APP_ICON_PNG
     assert args.ico == GENERATED_APP_ICON_ICO
     assert args.rc == GENERATED_APP_ICON_RC
@@ -39,6 +40,7 @@ def test_parser_defaults() -> None:
 def test_parser_custom_args() -> None:
     parser = get_parser()
     args = parser.parse_args(["--png", "custom.png", "--ico", "out.ico", "--rc", "out.rc", "--check"])
+    # Verify custom parsed argument values
     assert args.png == pathlib.Path("custom.png")
     assert args.ico == pathlib.Path("out.ico")
     assert args.rc == pathlib.Path("out.rc")
@@ -59,6 +61,7 @@ def test_gen_app_icon_main_success(monkeypatch: pytest.MonkeyPatch, tmp_path: pa
     ]
     monkeypatch.setattr(sys, "argv", test_args)
     ret = main()
+    # Verify CLI execution returns 0 and produces both .ico and .rc files
     assert ret == 0
     assert ico_file.exists()
     assert rc_file.exists()
@@ -70,7 +73,7 @@ def test_gen_app_icon_main_check_mode(monkeypatch: pytest.MonkeyPatch, tmp_path:
     ico_file = tmp_path / "appIcon.ico"
     rc_file = tmp_path / "appIcon.rc"
 
-    # First generate
+    # First generate: verify returns 0
     monkeypatch.setattr(
         sys,
         "argv",
@@ -78,7 +81,7 @@ def test_gen_app_icon_main_check_mode(monkeypatch: pytest.MonkeyPatch, tmp_path:
     )
     assert main() == 0
 
-    # Then check
+    # Then check: verify check mode succeeds with return code 0
     monkeypatch.setattr(
         sys,
         "argv",

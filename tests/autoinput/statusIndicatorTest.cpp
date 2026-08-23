@@ -33,30 +33,36 @@ protected:
 TEST_F(StatusIndicatorTest, StateTransitionsCorrectly)
 {
     g_program->arguments().buttons = {MouseButton::Left};
+    // Ensure program initializes successfully
     ASSERT_TRUE(g_program->init());
     
     // Initial state
+    // Verify status indicator is initially inactive
     EXPECT_FALSE(g_program->getLastIsActiveIndicator());
     
     // Activate a handler
     auto& handler = g_program->getMouseHandlers().at(MouseButton::Left);
     handler.setActive(true);
     g_program->updateStatusIndicator();
+    // Verify status indicator is active after handler activation
     EXPECT_TRUE(g_program->getLastIsActiveIndicator());
     
     // Pause it
     handler.setPaused(true);
     g_program->updateStatusIndicator();
+    // Verify status indicator is inactive when handler is paused
     EXPECT_FALSE(g_program->getLastIsActiveIndicator());
     
     // Resume it
     handler.setPaused(false);
     g_program->updateStatusIndicator();
+    // Verify status indicator is active when handler is resumed
     EXPECT_TRUE(g_program->getLastIsActiveIndicator());
     
     // Deactivate it
     handler.setActive(false);
     g_program->updateStatusIndicator();
+    // Verify status indicator is inactive when handler is deactivated
     EXPECT_FALSE(g_program->getLastIsActiveIndicator());
 }
 
@@ -64,9 +70,11 @@ TEST_F(StatusIndicatorTest, RespectsJsonOutputMode)
 {
     g_program->arguments().buttons = {MouseButton::Left};
     g_program->arguments().jsonOutput = true;
+    // Ensure program initializes successfully in JSON output mode
     ASSERT_TRUE(g_program->init());
     
     // Initial state
+    // Verify status indicator is initially inactive
     EXPECT_FALSE(g_program->getLastIsActiveIndicator());
     
     // Activate a handler
@@ -75,5 +83,6 @@ TEST_F(StatusIndicatorTest, RespectsJsonOutputMode)
     
     // updateStatusIndicator should return early and not update the indicator state
     g_program->updateStatusIndicator();
+    // Verify status indicator is not updated when JSON output mode is enabled
     EXPECT_FALSE(g_program->getLastIsActiveIndicator());
 }

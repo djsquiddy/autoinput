@@ -24,6 +24,7 @@ namespace autoinput
         config.endKey = "f10";
 
         auto errors = validateConfigData(config);
+        // Ensure valid configuration produces no validation errors
         EXPECT_TRUE(errors.empty());
     }
 
@@ -33,7 +34,9 @@ namespace autoinput
         config.endKey = "f10";
 
         auto errors = validateConfigData(config);
+        // Ensure validation fails when config contains no commands or sequences
         ASSERT_FALSE(errors.empty());
+        // Verify appropriate error message is returned for empty config
         EXPECT_EQ(errors[0].message, "Config is empty (no commands or sequences).");
     }
 
@@ -46,7 +49,9 @@ namespace autoinput
         config.endKey = "f10";
 
         auto errors = validateConfigData(config);
+        // Ensure validation fails for invalid action in command
         ASSERT_FALSE(errors.empty());
+        // Verify error message indicates invalid action
         EXPECT_TRUE(errors[0].message.find("Invalid action") != std::string::npos);
     }
 
@@ -57,6 +62,7 @@ namespace autoinput
         cmd.buttons = {"left"};
 
         auto errors = validateCommandData(cmd);
+        // Ensure valid command data produces no validation errors
         EXPECT_TRUE(errors.empty());
     }
 
@@ -66,7 +72,9 @@ namespace autoinput
         cmd.action = "invalid";
 
         auto errors = validateCommandData(cmd);
+        // Ensure validation fails for invalid command data
         ASSERT_FALSE(errors.empty());
+        // Verify error message contains invalid action details
         EXPECT_EQ(errors[0].message, "Invalid action: 'invalid'");
     }
 
@@ -88,7 +96,9 @@ namespace autoinput
         config.commands.push_back(cmd2);
 
         auto errors = validateConfigData(config);
+        // Ensure validation fails when duplicate command names exist
         ASSERT_FALSE(errors.empty());
+        // Verify duplicate command name error message is returned
         EXPECT_EQ(errors[0].message, "Duplicate command name: 'duplicate'");
     }
 
@@ -110,6 +120,7 @@ namespace autoinput
         config.commands.push_back(cmd2);
 
         auto errors = validateConfigData(config);
+        // Ensure empty command names are allowed without reporting duplicates
         EXPECT_TRUE(errors.empty());
     }
 
@@ -123,7 +134,9 @@ namespace autoinput
         config.endKey = "f10";
 
         auto errors = validateConfigData(config);
+        // Ensure validation fails when an invalid mouse button is specified
         ASSERT_FALSE(errors.empty());
+        // Verify error message indicates invalid mouse button
         EXPECT_TRUE(errors[0].message.find("Invalid mouse button") != std::string::npos);
     }
 
@@ -137,7 +150,9 @@ namespace autoinput
         config.endKey = "f10";
 
         auto errors = validateConfigData(config);
+        // Ensure validation fails when an invalid key is specified
         ASSERT_FALSE(errors.empty());
+        // Verify error message indicates invalid key
         EXPECT_TRUE(errors[0].message.find("Invalid key") != std::string::npos);
     }
 
@@ -151,7 +166,9 @@ namespace autoinput
         config.endKey = "f10";
 
         auto errors = validateConfigData(config);
+        // Ensure validation fails when an invalid start key is specified
         ASSERT_FALSE(errors.empty());
+        // Verify error message indicates invalid start key
         EXPECT_TRUE(errors[0].message.find("Invalid start key") != std::string::npos);
     }
 
@@ -165,7 +182,9 @@ namespace autoinput
         config.endKey = "f10";
 
         auto errors = validateConfigData(config);
+        // Ensure validation fails when an invalid press wait delay format is provided
         ASSERT_FALSE(errors.empty());
+        // Verify error message indicates invalid press wait delay
         EXPECT_TRUE(errors[0].message.find("Invalid press wait delay") != std::string::npos);
     }
 
@@ -178,7 +197,9 @@ namespace autoinput
         config.endKey = "";
 
         auto errors = validateConfigData(config);
+        // Ensure validation fails when an empty/invalid end key is specified
         ASSERT_FALSE(errors.empty());
+        // Verify error message indicates invalid end key
         EXPECT_TRUE(errors[0].message.find("Invalid end key") != std::string::npos);
     }
 
@@ -194,6 +215,7 @@ namespace autoinput
         config.endKey = Key{.character = "f10"};
 
         auto errors = validateRuntimeConfig(config);
+        // Ensure valid runtime configuration produces no validation errors
         EXPECT_TRUE(errors.empty());
     }
 
@@ -206,7 +228,9 @@ namespace autoinput
         config.endKey = Key{.character = "f10"};
 
         auto errors = validateRuntimeConfig(config);
+        // Ensure runtime configuration validation fails for invalid action state
         ASSERT_FALSE(errors.empty());
+        // Verify error message indicates invalid action
         EXPECT_TRUE(errors[0].message.find("Invalid action") != std::string::npos);
     }
 
@@ -221,6 +245,7 @@ namespace autoinput
         config.endKey = "f10";
 
         auto errors = validateConfigData(config);
+        // Verify "back" mouse button is accepted as a valid start trigger
         EXPECT_TRUE(errors.empty()) << (errors.empty() ? "" : errors[0].message);
     }
 
@@ -235,6 +260,7 @@ namespace autoinput
         config.endKey = "f10";
 
         auto errors = validateConfigData(config);
+        // Verify "forward" mouse button is accepted as a valid start trigger
         EXPECT_TRUE(errors.empty()) << (errors.empty() ? "" : errors[0].message);
     }
 
@@ -249,6 +275,7 @@ namespace autoinput
         config.endKey = "back";
 
         auto errors = validateConfigData(config);
+        // Verify "back" mouse button is accepted as a valid end trigger
         EXPECT_TRUE(errors.empty()) << (errors.empty() ? "" : errors[0].message);
     }
 
@@ -263,6 +290,7 @@ namespace autoinput
         config.endKey = "forward";
 
         auto errors = validateConfigData(config);
+        // Verify "forward" mouse button is accepted as a valid end trigger
         EXPECT_TRUE(errors.empty()) << (errors.empty() ? "" : errors[0].message);
     }
 
@@ -276,13 +304,17 @@ namespace autoinput
         config.endKey = "f10";
 
         auto errors = validateConfigData(config);
+        // Ensure invalid start trigger is rejected by validator
         EXPECT_FALSE(errors.empty());
+        // Verify error message indicates invalid start key
         EXPECT_TRUE(errors[0].message.find("Invalid start key") != std::string::npos);
         
         config.commands[0].startKeys = {"f1"};
         config.endKey = "invalid_trigger";
         errors = validateConfigData(config);
+        // Ensure invalid end trigger is rejected by validator
         EXPECT_FALSE(errors.empty());
+        // Verify error message indicates invalid end key
         EXPECT_TRUE(errors[0].message.find("Invalid end key") != std::string::npos);
     }
 
@@ -296,6 +328,7 @@ namespace autoinput
         config.endKey = "enter";
 
         auto errors = validateConfigData(config);
+        // Verify standard keyboard keys and combinations are accepted as valid triggers
         EXPECT_TRUE(errors.empty()) << (errors.empty() ? "" : errors[0].message);
     }
 }

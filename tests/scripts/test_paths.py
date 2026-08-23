@@ -50,55 +50,86 @@ from autoinput_tools.paths import (
 
 
 def test_directory_constants() -> None:
+    # Verify project root exists on disk
     assert PROJECT_ROOT.exists()
+    # Verify ROOT_DIR alias resolves to PROJECT_ROOT
     assert ROOT_DIR == PROJECT_ROOT
+    # Verify scripts directory path
     assert SCRIPTS_DIR == PROJECT_ROOT / "scripts"
+    # Verify SCRIPT_DIR alias resolves to SCRIPTS_DIR
     assert SCRIPT_DIR == SCRIPTS_DIR
+    # Verify tools directory path
     assert TOOLS_DIR == SCRIPTS_DIR / "autoinput_tools"
+    # Verify commands directory path
     assert COMMANDS_DIR == SCRIPTS_DIR / "commands"
+    # Verify source directory path
     assert SRC_DIR == PROJECT_ROOT / "src"
+    # Verify UI source directory path
     assert UI_SRC_DIR == SRC_DIR / "autoinput_ui"
+    # Verify resources directory path
     assert RESOURCES_DIR == PROJECT_ROOT / "resources"
+    # Verify RESOURCE_DIR alias resolves to RESOURCES_DIR
     assert RESOURCE_DIR == RESOURCES_DIR
+    # Verify configs directory path
     assert CONFIGS_DIR == PROJECT_ROOT / "configs"
+    # Verify localization resources directory path
     assert LOCALIZATION_DIR == RESOURCES_DIR / "localization"
+    # Verify CLI resources directory path
     assert CLI_RESOURCES_DIR == RESOURCES_DIR / "cli"
+    # Verify autocomplete directory path
     assert AUTOCOMPLETE_DIR == SCRIPTS_DIR / "autocomplete"
 
 
 def test_file_constants() -> None:
+    # Verify default localization TOML file path
     assert DEFAULT_LOCALIZATION_FILE == LOCALIZATION_DIR / "en-US.toml"
+    # Verify default CLI help metadata file path
     assert DEFAULT_CLI_HELP_METADATA_FILE == CLI_RESOURCES_DIR / "help.toml"
+    # Verify DEFAULT_HELP_TOML alias resolves to DEFAULT_CLI_HELP_METADATA_FILE
     assert DEFAULT_HELP_TOML == DEFAULT_CLI_HELP_METADATA_FILE
+    # Verify default app icon PNG path
     assert DEFAULT_APP_ICON_PNG == RESOURCES_DIR / "appIcon.png"
+    # Verify DEFAULT_APP_ICON_FILE alias resolves to DEFAULT_APP_ICON_PNG
     assert DEFAULT_APP_ICON_FILE == DEFAULT_APP_ICON_PNG
 
+    # Verify generated localization C++ header and source file paths
     assert GENERATED_LOCALIZATION_HEADER == GENERATED_DIR / "autoinput" / "support" / "localizationIds.h"
     assert GENERATED_LOCALIZATION_SOURCE == GENERATED_DIR / "autoinput" / "support" / "localizationIds.cpp"
 
+    # Verify generated CLI help C++ header and source file paths
     assert GENERATED_CLI_HELP_HEADER == GENERATED_DIR / "autoinput" / "cli" / "cliHelpMetadata.h"
     assert GENERATED_CLI_HELP_SOURCE == GENERATED_DIR / "autoinput" / "cli" / "cliHelpMetadata.cpp"
 
+    # Verify generated Windows app icon (.ico) and resource script (.rc) paths
     assert GENERATED_APP_ICON_ICO == GENERATED_DIR / "autoinput" / "resources" / "appIcon.ico"
     assert GENERATED_APP_ICON_RC == GENERATED_DIR / "autoinput" / "resources" / "appIcon.rc"
 
+    # Verify shell completion file paths
     assert AUTOCOMPLETE_ZSH_FILE == AUTOCOMPLETE_DIR / "_autoinput"
     assert AUTOCOMPLETE_BASH_FILE == AUTOCOMPLETE_DIR / "autoinput_completion.bash"
     assert AUTOCOMPLETE_LUA_FILE == AUTOCOMPLETE_DIR / "autoinput_completion.lua"
 
 
 def test_helper_path_functions() -> None:
+    # Verify project_path joins components relative to PROJECT_ROOT
     assert project_path("foo", "bar") == PROJECT_ROOT / "foo" / "bar"
+    # Verify resource_path joins components relative to RESOURCES_DIR
     assert resource_path("cli", "help.toml") == RESOURCES_DIR / "cli" / "help.toml"
+    # Verify generated_path joins components relative to GENERATED_DIR
     assert generated_path("out.h") == GENERATED_DIR / "out.h"
 
 
 def test_get_python_filepath() -> None:
+    # Verify getting python file path without .py extension
     assert get_python_filepath("test") == SCRIPT_DIR / "test.py"
+    # Verify getting python file path with .py extension
     assert get_python_filepath("test.py") == SCRIPT_DIR / "test.py"
+    # Verify getting nested python file path
     assert get_python_filepath("commands/build.py") == SCRIPT_DIR / "commands" / "build.py"
 
 
 def test_get_python_module_path() -> None:
+    # Verify module path derived from script file name
     assert get_python_module_path("build.py") == f"{SCRIPT_DIR.stem}.build"
+    # Verify module path derived from dotted string
     assert get_python_module_path("foo.bar") == f"{SCRIPT_DIR.stem}.foo"

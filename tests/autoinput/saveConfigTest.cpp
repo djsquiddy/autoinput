@@ -47,20 +47,31 @@ namespace autoinput
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
+        // Ensure parsing CLI arguments for saving config succeeds
         ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())) == ErrorCode::Success);
+        // Ensure CLI application execution succeeds
         ASSERT_EQ(app.execute(), ErrorCode::Success);
 
         std::filesystem::path dumpPath = getUserConfigsPath() / "test_config.toml";
+        // Ensure the output configuration file is created at the expected path
         ASSERT_TRUE(std::filesystem::exists(dumpPath));
 
         auto loaded = loadConfigData(dumpPath);
+        // Ensure the saved config file can be loaded successfully
         ASSERT_TRUE(loaded.has_value());
+        // Ensure exactly one command was saved in the configuration
         ASSERT_EQ(loaded->commands.size(), 1);
+        // Verify the saved command action is 'hold'
         EXPECT_EQ(loaded->commands[0].action, "hold");
+        // Ensure exactly one button was saved for the command
         ASSERT_EQ(loaded->commands[0].buttons.size(), 1);
+        // Verify the saved button is 'right'
         EXPECT_EQ(loaded->commands[0].buttons[0], "right");
+        // Ensure exactly one start key was saved for the command
         ASSERT_EQ(loaded->commands[0].startKeys.size(), 1);
+        // Verify the saved start key is 'f5'
         EXPECT_EQ(loaded->commands[0].startKeys[0], "f5");
+        // Verify the saved end key is 'f6'
         EXPECT_EQ(loaded->endKey, "f6");
     }
 
@@ -71,15 +82,21 @@ namespace autoinput
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
+        // Ensure parsing CLI arguments with wait times succeeds
         ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())) == ErrorCode::Success);
+        // Ensure executing CLI application succeeds
         ASSERT_EQ(app.execute(), ErrorCode::Success);
 
         std::filesystem::path dumpPath = getUserConfigsPath() / "wait_config.toml";
         
         auto loaded = loadConfigData(dumpPath);
+        // Ensure saved config file with wait times can be loaded
         ASSERT_TRUE(loaded.has_value());
+        // Ensure exactly one command was saved
         ASSERT_EQ(loaded->commands.size(), 1);
+        // Verify press wait delay range was correctly saved
         EXPECT_EQ(loaded->commands[0].pressWait, "500ms..1s");
+        // Verify release wait delay was correctly saved
         EXPECT_EQ(loaded->commands[0].releaseWait, "2s");
     }
 
@@ -90,15 +107,21 @@ namespace autoinput
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
+        // Ensure parsing CLI arguments with blacklist options succeeds
         ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())) == ErrorCode::Success);
+        // Ensure executing CLI application succeeds
         ASSERT_EQ(app.execute(), ErrorCode::Success);
 
         std::filesystem::path dumpPath = getUserConfigsPath() / "blacklist_config.toml";
         
         auto loaded = loadConfigData(dumpPath);
+        // Ensure saved blacklist config file can be loaded
         ASSERT_TRUE(loaded.has_value());
+        // Ensure both blacklisted applications were saved
         ASSERT_EQ(loaded->blacklist.size(), 2);
+        // Verify the first blacklisted executable is 'app1.exe'
         EXPECT_EQ(loaded->blacklist[0], "app1.exe");
+        // Verify the second blacklisted executable is 'app2.exe'
         EXPECT_EQ(loaded->blacklist[1], "app2.exe");
     }
 
@@ -110,25 +133,39 @@ namespace autoinput
         std::vector<char*> argv;
         for (auto& s : argvStr) argv.push_back(s.data());
 
+        // Ensure parsing CLI arguments with multiple commands succeeds
         ASSERT_TRUE(app.parse(gsl::make_span(argv.data(), argv.size())) == ErrorCode::Success);
+        // Ensure executing CLI application succeeds
         ASSERT_EQ(app.execute(), ErrorCode::Success);
 
         std::filesystem::path dumpPath = getUserConfigsPath() / "multi_config.toml";
         
         auto loaded = loadConfigData(dumpPath);
+        // Ensure saved multi-command config file can be loaded
         ASSERT_TRUE(loaded.has_value());
+        // Ensure two commands were saved to the configuration
         ASSERT_EQ(loaded->commands.size(), 2);
         
+        // Verify the action of the first command is 'hold'
         EXPECT_EQ(loaded->commands[0].action, "hold");
+        // Ensure one button was saved for the first command
         ASSERT_EQ(loaded->commands[0].buttons.size(), 1);
+        // Verify the button for the first command is 'middle'
         EXPECT_EQ(loaded->commands[0].buttons[0], "middle");
+        // Ensure one start key was saved for the first command
         ASSERT_EQ(loaded->commands[0].startKeys.size(), 1);
+        // Verify the start key for the first command is 'f8'
         EXPECT_EQ(loaded->commands[0].startKeys[0], "f8");
 
+        // Verify the action of the second command is 'hold'
         EXPECT_EQ(loaded->commands[1].action, "hold");
+        // Ensure one button was saved for the second command
         ASSERT_EQ(loaded->commands[1].buttons.size(), 1);
+        // Verify the button for the second command is 'right'
         EXPECT_EQ(loaded->commands[1].buttons[0], "right");
+        // Ensure one start key was saved for the second command
         ASSERT_EQ(loaded->commands[1].startKeys.size(), 1);
+        // Verify the start key for the second command is 'f9'
         EXPECT_EQ(loaded->commands[1].startKeys[0], "f9");
     }
 
@@ -152,14 +189,21 @@ namespace autoinput
         configData.commands.push_back(cmd2);
 
         std::filesystem::path dumpPath = getUserConfigsPath() / "group_config.toml";
+        // Ensure saving configuration with named commands and exclusive groups succeeds
         ASSERT_TRUE(saveConfigData(configData, dumpPath));
 
         auto loaded = loadConfigData(dumpPath);
+        // Ensure saved config file can be loaded
         ASSERT_TRUE(loaded.has_value());
+        // Ensure two commands are present in the loaded configuration
         ASSERT_EQ(loaded->commands.size(), 2);
+        // Verify the first command's name is 'cmd1'
         EXPECT_EQ(loaded->commands[0].name, "cmd1");
+        // Verify the first command's exclusive group is 'group1'
         EXPECT_EQ(loaded->commands[0].exclusiveGroup, "group1");
+        // Verify the second command's name is 'cmd2'
         EXPECT_EQ(loaded->commands[1].name, "cmd2");
+        // Verify the second command's exclusive group is 'group1'
         EXPECT_EQ(loaded->commands[1].exclusiveGroup, "group1");
     }
 
@@ -177,6 +221,7 @@ namespace autoinput
         std::filesystem::path dumpPath = m_tempHome.path() / "inline_test.toml";
         // Note: saveConfigData might use getUserConfigsPath internally if only a filename is given, 
         // but here we pass a full path.
+        // Ensure saving configuration with timing settings succeeds
         ASSERT_TRUE(saveConfigData(configData, dumpPath));
 
         std::ifstream file(dumpPath);
@@ -185,9 +230,11 @@ namespace autoinput
         // Check if it contains the inline table. We accept single or double quotes.
         bool foundDouble = content.find("time = { press = \"100ms\", release = \"250ms\" }") != std::string::npos;
         bool foundSingle = content.find("time = { press = '100ms', release = '250ms' }") != std::string::npos;
+        // Verify that the timing table is written in inline format
         EXPECT_TRUE(foundDouble || foundSingle) << "Actual content:\n" << content;
 
         // And NOT the nested table
+        // Verify that the timing table is not written as a nested table header
         EXPECT_EQ(content.find("[command.time]"), std::string::npos);
     }
 
@@ -201,6 +248,7 @@ namespace autoinput
         configData.commands.push_back(cmd);
 
         std::filesystem::path dumpPath = m_tempHome.path() / "inline_press.toml";
+        // Ensure saving configuration with only press timing succeeds
         ASSERT_TRUE(saveConfigData(configData, dumpPath));
 
         std::ifstream file(dumpPath);
@@ -208,7 +256,9 @@ namespace autoinput
         
         bool foundDouble = content.find("time = { press = \"100ms\" }") != std::string::npos;
         bool foundSingle = content.find("time = { press = '100ms' }") != std::string::npos;
+        // Verify that the press timing is written as an inline table
         EXPECT_TRUE(foundDouble || foundSingle) << "Actual content:\n" << content;
+        // Verify that release timing key is omitted when not specified
         EXPECT_EQ(content.find("release ="), std::string::npos);
     }
 
@@ -222,6 +272,7 @@ namespace autoinput
         configData.commands.push_back(cmd);
 
         std::filesystem::path dumpPath = m_tempHome.path() / "inline_release.toml";
+        // Ensure saving configuration with only release timing succeeds
         ASSERT_TRUE(saveConfigData(configData, dumpPath));
 
         std::ifstream file(dumpPath);
@@ -229,7 +280,9 @@ namespace autoinput
         
         bool foundDouble = content.find("time = { release = \"250ms\" }") != std::string::npos;
         bool foundSingle = content.find("time = { release = '250ms' }") != std::string::npos;
+        // Verify that the release timing is written as an inline table
         EXPECT_TRUE(foundDouble || foundSingle) << "Actual content:\n" << content;
+        // Verify that press timing key is omitted when not specified
         EXPECT_EQ(content.find("press ="), std::string::npos);
     }
 
@@ -254,13 +307,16 @@ namespace autoinput
         }
 
         std::filesystem::path dumpPath = m_tempHome.path() / "inline_multi.toml";
+        // Ensure saving multiple commands with inline timing succeeds
         ASSERT_TRUE(saveConfigData(configData, dumpPath));
 
         std::ifstream file(dumpPath);
         std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
         
+        // Verify the first command's inline timing table was written correctly
         EXPECT_TRUE(content.find("time = { press = '100ms', release = '250ms' }") != std::string::npos ||
                     content.find("time = { press = \"100ms\", release = \"250ms\" }") != std::string::npos);
+        // Verify the second command's inline timing table was written correctly
         EXPECT_TRUE(content.find("time = { press = '50ms', release = '1s' }") != std::string::npos ||
                     content.find("time = { press = \"50ms\", release = \"1s\" }") != std::string::npos);
     }
@@ -280,11 +336,13 @@ namespace autoinput
         configData.commands.push_back(cmd);
 
         std::filesystem::path dumpPath = m_tempHome.path() / "inline_default.toml";
+        // Ensure saving configuration with default settings succeeds
         ASSERT_TRUE(saveConfigData(configData, dumpPath, defaults));
 
         std::ifstream file(dumpPath);
         std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
         
+        // Verify timing section is omitted when timings match the default values
         EXPECT_EQ(content.find("time ="), std::string::npos);
     }
 
@@ -299,12 +357,17 @@ namespace autoinput
         configData.commands.push_back(cmd);
 
         std::filesystem::path dumpPath = m_tempHome.path() / "save_load_test.toml";
+        // Ensure saving configuration with custom timing succeeds
         ASSERT_TRUE(saveConfigData(configData, dumpPath));
 
         auto loaded = loadConfigData(dumpPath);
+        // Ensure the saved config file can be loaded back successfully
         ASSERT_TRUE(loaded.has_value());
+        // Ensure one command is present in the loaded configuration
         ASSERT_EQ(loaded->commands.size(), 1);
+        // Verify the loaded press wait delay matches the saved 123ms value
         EXPECT_EQ(loaded->commands[0].pressWait, "123ms");
+        // Verify the loaded release wait delay matches the saved 456ms value
         EXPECT_EQ(loaded->commands[0].releaseWait, "456ms");
     }
 
@@ -322,9 +385,13 @@ namespace autoinput
         }
 
         auto loaded = loadConfigData(configPath);
+        // Ensure configuration file with legacy nested timing table format can be loaded
         ASSERT_TRUE(loaded.has_value());
+        // Ensure one command was loaded from nested timing configuration
         ASSERT_EQ(loaded->commands.size(), 1);
+        // Verify press wait delay from nested table was parsed correctly
         EXPECT_EQ(loaded->commands[0].pressWait, "789ms");
+        // Verify release wait delay from nested table was parsed correctly
         EXPECT_EQ(loaded->commands[0].releaseWait, "1s");
     }
 }

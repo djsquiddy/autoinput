@@ -34,7 +34,9 @@ TEST(MousePrioritizationTest, GetButtonStatePrioritization)
     {
         MouseInput input(data);
         auto state = input.getButtonState();
+        // Verify WM_LBUTTONDOWN event maps to Left mouse button
         EXPECT_EQ(state.button, MouseButton::Left);
+        // Verify WM_LBUTTONDOWN indicates the button is down
         EXPECT_TRUE(state.isDown);
     }
 
@@ -43,7 +45,9 @@ TEST(MousePrioritizationTest, GetButtonStatePrioritization)
     {
         MouseInput input(data);
         auto state = input.getButtonState();
+        // Verify WM_LBUTTONUP event maps to Left mouse button
         EXPECT_EQ(state.button, MouseButton::Left);
+        // Verify WM_LBUTTONUP indicates the button is released
         EXPECT_FALSE(state.isDown);
     }
 
@@ -52,7 +56,9 @@ TEST(MousePrioritizationTest, GetButtonStatePrioritization)
     {
         MouseInput input(data);
         auto state = input.getButtonState();
+        // Verify WM_RBUTTONDOWN event maps to Right mouse button
         EXPECT_EQ(state.button, MouseButton::Right);
+        // Verify WM_RBUTTONDOWN indicates the button is down
         EXPECT_TRUE(state.isDown);
     }
     
@@ -65,7 +71,9 @@ TEST(MousePrioritizationTest, GetButtonStatePrioritization)
     {
         MouseInput input(data);
         auto state = input.getButtonState();
+        // Verify WM_XBUTTONDOWN with XBUTTON1 maps to Back mouse button
         EXPECT_EQ(state.button, MouseButton::Back);
+        // Verify WM_XBUTTONDOWN indicates the button is down
         EXPECT_TRUE(state.isDown);
     }
     
@@ -77,7 +85,9 @@ TEST(MousePrioritizationTest, GetButtonStatePrioritization)
     {
         MouseInput input(data);
         auto state = input.getButtonState();
+        // Verify WM_XBUTTONDOWN with XBUTTON2 maps to Forward mouse button
         EXPECT_EQ(state.button, MouseButton::Forward);
+        // Verify WM_XBUTTONDOWN indicates the button is down
         EXPECT_TRUE(state.isDown);
     }
 #else
@@ -92,6 +102,8 @@ TEST(MousePrioritizationTest, GetButtonStateNone)
     // Empty internal data
     MouseInput input(data);
     auto state = input.getButtonState();
+    // Verify empty mouse input defaults to MouseButton::None
     EXPECT_EQ(state.button, MouseButton::None);
+    // Verify empty mouse input reports button not down
     EXPECT_FALSE(state.isDown);
 }

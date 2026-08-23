@@ -43,6 +43,7 @@ namespace autoinput::cli
             Logger::setLogLevel(LogLevel::Debug);
             CliApplication app;
             auto argv = toArgv(args);
+            // Verify that legacy positional argument formats are rejected with ErrorCode::UnknownCommand
             EXPECT_TRUE(app.parse(gsl::make_span(argv)) == ErrorCode::UnknownCommand) << "Should have rejected legacy syntax: " << args[1];
         }
     }
@@ -52,6 +53,7 @@ namespace autoinput::cli
         CliApplication app;
         std::vector<std::string> args = {"autoinput", "run", "--type", "hold", "--button", "left"};
         auto argv = toArgv(args);
+        // Verify that modern command-line syntax using subcommands and options parses successfully
         EXPECT_TRUE(app.parse(gsl::make_span(argv)) == ErrorCode::Success);
     }
 }

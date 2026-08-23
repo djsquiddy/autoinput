@@ -40,6 +40,7 @@ namespace autoinput
 
         std::filesystem::path foundPath = getConfigFilePath("test_user_config");
         
+        // Verify getConfigFilePath locates configuration in user home .autoinput directory
         EXPECT_EQ(foundPath, configFile);
     }
 
@@ -59,6 +60,7 @@ namespace autoinput
 
         std::filesystem::path foundPath = getConfigFilePath("test_global_config");
         
+        // Verify fallback to global configs directory when absent from user directory
         EXPECT_EQ(foundPath, configFile);
 
         // Clean up global config created for test
@@ -88,7 +90,7 @@ namespace autoinput
 
         std::filesystem::path foundPath = getConfigFilePath("priority_test");
         
-        // Should find user one
+        // Verify user configuration takes precedence over global configuration
         EXPECT_EQ(foundPath, userConfigFile);
 
         // Clean up global config
@@ -103,7 +105,7 @@ namespace autoinput
         
         std::filesystem::path foundPath = getConfigFilePath("non_existent");
         
-        // It should return global path by default
+        // Verify non-existent configuration defaults to global path location
         EXPECT_EQ(foundPath, expectedPath);
     }
 }

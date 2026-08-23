@@ -37,15 +37,18 @@ TEST_F(FocusTest, PauseOnBlacklistedApp)
     // Add some handlers
     g_program->arguments().buttons = {MouseButton::Left};
     g_program->arguments().keys = {Key::fromString("a")};
+    // Ensure program initializes successfully
     ASSERT_TRUE(g_program->init());
     
     // Initially not paused
     for (auto& [mouse, handler] : g_program->getMouseHandlers())
     {
+        // Verify mouse handler is initially not paused
         EXPECT_FALSE(handler.getPaused());
     }
     for (auto& [key, handler] : g_program->getKeyHandlers())
     {
+        // Verify key handler is initially not paused
         EXPECT_FALSE(handler.getPaused());
     }
     
@@ -54,10 +57,12 @@ TEST_F(FocusTest, PauseOnBlacklistedApp)
     // Should be paused now
     for (auto& [mouse, handler] : g_program->getMouseHandlers())
     {
+        // Ensure mouse handler pauses when blacklisted application gains focus
         EXPECT_TRUE(handler.getPaused());
     }
     for (auto& [key, handler] : g_program->getKeyHandlers())
     {
+        // Ensure key handler pauses when blacklisted application gains focus
         EXPECT_TRUE(handler.getPaused());
     }
 
@@ -66,10 +71,12 @@ TEST_F(FocusTest, PauseOnBlacklistedApp)
     // Should be resumed now
     for (auto& [mouse, handler] : g_program->getMouseHandlers())
     {
+        // Verify mouse handler resumes when focus moves away from blacklisted app
         EXPECT_FALSE(handler.getPaused());
     }
     for (auto& [key, handler] : g_program->getKeyHandlers())
     {
+        // Verify key handler resumes when focus moves away from blacklisted app
         EXPECT_FALSE(handler.getPaused());
     }
 }
@@ -80,14 +87,18 @@ TEST_F(FocusTest, PauseOnLostFocusFromTargetApp)
     
     // Add some handlers
     g_program->arguments().buttons = {MouseButton::Left};
+    // Ensure program initializes successfully
     ASSERT_TRUE(g_program->init());
     
     g_program->onFocusChanged("mygame.exe");
+    // Verify handler is unpaused when target application is focused
     EXPECT_FALSE(g_program->getMouseHandlers().begin()->second.getPaused());
 
     g_program->onFocusChanged("Notepad.exe");
+    // Ensure handler pauses when focus switches away from target application
     EXPECT_TRUE(g_program->getMouseHandlers().begin()->second.getPaused());
 
     g_program->onFocusChanged("mygame.exe");
+    // Verify handler resumes when target application regains focus
     EXPECT_FALSE(g_program->getMouseHandlers().begin()->second.getPaused());
 }

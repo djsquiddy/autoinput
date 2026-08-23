@@ -52,6 +52,7 @@ namespace autoinput
         args.commandNames.push_back("cmd3");
         args.exclusiveGroups.push_back("");
 
+        // Ensure program initializes successfully
         ASSERT_TRUE(m_program->init());
 
         auto& mouseHandlers = m_program->getMouseHandlers();
@@ -64,30 +65,35 @@ namespace autoinput
         // 1. Start cmd1
         const auto& keyInfo = m_program->getKeyInfo();
         m_program->start(keyInfo[0]); // cmd1
+        // Verify only cmd1 left mouse handler becomes active
         EXPECT_TRUE(mouseHandlers[leftMouse].getActive());
         EXPECT_FALSE(mouseHandlers[rightMouse].getActive());
         EXPECT_FALSE(keyHandlers[spaceKey].getActive());
 
         // 2. Start cmd2 -> should stop cmd1
         m_program->start(keyInfo[1]); // cmd2
+        // Ensure starting cmd2 stops cmd1 due to shared exclusive group G1
         EXPECT_FALSE(mouseHandlers[leftMouse].getActive());
         EXPECT_TRUE(mouseHandlers[rightMouse].getActive());
         EXPECT_FALSE(keyHandlers[spaceKey].getActive());
 
         // 3. Start cmd3 -> should NOT stop cmd2
         m_program->start(keyInfo[2]); // cmd3
+        // Ensure starting un-grouped cmd3 does not affect active cmd2
         EXPECT_FALSE(mouseHandlers[leftMouse].getActive());
         EXPECT_TRUE(mouseHandlers[rightMouse].getActive());
         EXPECT_TRUE(keyHandlers[spaceKey].getActive());
 
         // 4. Start cmd1 again -> should stop cmd2, but NOT cmd3
         m_program->start(keyInfo[0]); // cmd1
+        // Ensure starting cmd1 stops conflicting cmd2 while leaving un-grouped cmd3 active
         EXPECT_TRUE(mouseHandlers[leftMouse].getActive());
         EXPECT_FALSE(mouseHandlers[rightMouse].getActive());
         EXPECT_TRUE(keyHandlers[spaceKey].getActive());
 
         // 5. Toggle cmd1 off
         m_program->start(keyInfo[0]); // cmd1 toggle off
+        // Ensure toggling off cmd1 leaves only cmd3 running
         EXPECT_FALSE(mouseHandlers[leftMouse].getActive());
         EXPECT_FALSE(mouseHandlers[rightMouse].getActive());
         EXPECT_TRUE(keyHandlers[spaceKey].getActive());
@@ -117,6 +123,7 @@ namespace autoinput
         args.commandNames.push_back("cmd2");
         args.exclusiveGroups.push_back("G2");
 
+        // Ensure program initializes successfully
         ASSERT_TRUE(m_program->init());
 
         auto& mouseHandlers = m_program->getMouseHandlers();
@@ -126,9 +133,11 @@ namespace autoinput
         const auto& keyInfo = m_program->getKeyInfo();
         
         m_program->start(keyInfo[0]); // cmd1
+        // Verify cmd1 starts successfully
         EXPECT_TRUE(mouseHandlers[leftMouse].getActive());
         
         m_program->start(keyInfo[1]); // cmd2
+        // Ensure starting cmd2 from different group G2 runs concurrently with cmd1 in G1
         EXPECT_TRUE(mouseHandlers[leftMouse].getActive());
         EXPECT_TRUE(mouseHandlers[rightMouse].getActive());
         
