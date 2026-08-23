@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+"""Project build automation script for AutoInput."""
+
 import argparse
 import json
 import logging
@@ -10,17 +12,20 @@ import stat
 import subprocess
 import sys
 import time
-
 from dataclasses import dataclass, field
-try:
-    from . import utils
-except ImportError:
-    try:
-        import utils
-    except ImportError:
-        # Fallback if invoked from project root without -m
-        sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-        import utils
+
+_SCRIPTS_DIR = pathlib.Path(__file__).resolve().parent.parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
+from autoinput_tools.paths import (
+    BUILD_DIR,
+    COMMANDS_DIR,
+    PROJECT_ROOT,
+)
+from autoinput_tools.process import run_command
+
+EXIT_SUCCESSFUL = 0
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +93,7 @@ def format_log_line(line: str) -> str:
 
 def load_cmake_presets() -> dict[str, dict]:
     """Loads and resolves configure presets from CMakePresets.json and CMakeUserPresets.json."""
-    preset_files = [utils.ROOT_DIR / "CMakePresets.json", utils.ROOT_DIR / "CMakeUserPresets.json"]
+    preset_files = [PROJECT_ROOT / "CMakePresets.json", PROJECT_ROOT / "CMakeUserPresets.json"]
     raw_configure_presets = {}
 
     for pf in preset_files:
@@ -539,25 +544,25 @@ class Builder:
             if not arg.startswith(("-DCMAKE_UNITY_BUILD", "/DCMAKE_UNITY_BUILD")):
                 cmake_cmd.append(arg)
         cmake_cmd.append("..")
-        ret = utils.run_command([str(c) for c in cmake_cmd], cwd=self.build_dir)
+        ret = run_command([str(c) for c in cmake_cmd], cwd=self.build_dir)
         duration = time.perf_counter() - start
         if ret != 0:
             logger.error(f"CMake failed with return code {ret}.")
             return ret, duration
         logger.info(f"Finished running CMake ({format_duration(duration)}).")
-        return utils.EXIT_SUCCESSFUL, duration
+        return EXIT_SUCCESSFUL, duration
 
     # noinspection method-may-be-static
     def build(self) -> tuple[int, float]:
         logger.info("Building...")
         start = time.perf_counter()
-        ret = utils.run_command(["ninja"], cwd=self.build_dir)
+        ret = run_command(["ninja"], cwd=self.build_dir)
         duration = time.perf_counter() - start
         if ret != 0:
             logger.error(f"Ninja build failed with return code {ret}.")
             return ret, duration
         logger.info(f"Finished building ({format_duration(duration)}).")
-        return utils.EXIT_SUCCESSFUL, duration
+        return EXIT_SUCCESSFUL, duration
 
     def run_tests(self) -> tuple[int, float | None, bool]:
         logger.info("Running tests...")
@@ -572,29 +577,29 @@ class Builder:
 
             if test_bin.exists():
                 start = time.perf_counter()
-                ret = utils.run_command([test_bin], cwd=self.build_dir)
+                ret = run_command([test_bin], cwd=self.build_dir)
                 duration = time.perf_counter() - start
                 if ret != 0:
                     logger.error(f"Tests failed with return code {ret}.")
                     return ret, duration, True
                 logger.info(f"Finished running tests ({format_duration(duration)}).")
-                return utils.EXIT_SUCCESSFUL, duration, True
+                return EXIT_SUCCESSFUL, duration, True
             else:
                 logger.info("Test binary not found, skipping tests.")
-                return utils.EXIT_SUCCESSFUL, None, False
+                return EXIT_SUCCESSFUL, None, False
         else:
             logger.info("Tests are disabled, skipping.")
-            return utils.EXIT_SUCCESSFUL, None, False
+            return EXIT_SUCCESSFUL, None, False
 
     def run_localization_audit(self) -> tuple[int, float | None, bool]:
         if not self.config.audit:
-            return utils.EXIT_SUCCESSFUL, None, False
+            return EXIT_SUCCESSFUL, None, False
         # Running localization audit
         logger.info("Running localization audit...")
         if self.config.build_ui:
             start = time.perf_counter()
-            audit_script = utils.get_python_filepath('audit_localization')
-            ret = utils.run_command(
+            audit_script = COMMANDS_DIR / "audit_localization.py"
+            ret = run_command(
                 [sys.executable, str(audit_script)],
                 cwd=self.build_dir
             )
@@ -603,10 +608,10 @@ class Builder:
                 logger.error(f"Localization audit failed with return code {ret}.")
                 return ret, duration, True
             logger.info(f"Finished running localization audit ({format_duration(duration)}).")
-            return utils.EXIT_SUCCESSFUL, duration, True
+            return EXIT_SUCCESSFUL, duration, True
         else:
             logger.info("UI is disabled, skipping localization audit.")
-            return utils.EXIT_SUCCESSFUL, None, False
+            return EXIT_SUCCESSFUL, None, False
 
     def _find_autoinput_executable(self) -> pathlib.Path | None:
         executables = find_executables(self.build_dir)
@@ -630,24 +635,24 @@ class Builder:
         # passed along as a fallback hint in case --source binary is ever used.
         logger.info("Updating autocomplete scripts from resources/cli/help.toml...")
         start = time.perf_counter()
-        update_script = utils.get_python_filepath("update_autocomplete")
+        update_script = COMMANDS_DIR / "update_autocomplete.py"
         command = [sys.executable, str(update_script)]
 
         autoinput_bin = self._find_autoinput_executable()
         if autoinput_bin:
             command.extend(["--binary", str(autoinput_bin)])
 
-        ret = utils.run_command(command, cwd=utils.ROOT_DIR)
+        ret = run_command(command, cwd=PROJECT_ROOT)
         duration = time.perf_counter() - start
         if ret != 0:
             logger.error(f"Updating autocomplete scripts failed with return code {ret}.")
             return ret, duration, True
         logger.info(f"Finished updating autocomplete scripts ({format_duration(duration)}).")
-        return utils.EXIT_SUCCESSFUL, duration, True
+        return EXIT_SUCCESSFUL, duration, True
 
     def run(self) -> int:
         total_start = time.perf_counter()
-        exit_code = utils.EXIT_SUCCESSFUL
+        exit_code = EXIT_SUCCESSFUL
         report = BuildReport(self.config, self.build_dir)
 
         try:
@@ -669,7 +674,7 @@ class Builder:
 
             # CMake configuration
             ret, cmake_dur = self.run_cmake_configure()
-            if ret != utils.EXIT_SUCCESSFUL:
+            if ret != EXIT_SUCCESSFUL:
                 report.record_step("CMake Configure", "FAILED", cmake_dur)
                 exit_code = EXIT_FAILED_CMAKE_CONFIGURATION
                 return exit_code
@@ -678,7 +683,7 @@ class Builder:
             # Build
             ret, build_dur = self.build()
             report.config = self.config
-            if ret != utils.EXIT_SUCCESSFUL:
+            if ret != EXIT_SUCCESSFUL:
                 report.record_step("Build", "FAILED", build_dur)
                 exit_code = EXIT_FAILED_SOURCE_COMPILATION
                 return exit_code
@@ -688,7 +693,7 @@ class Builder:
             test_ret, test_dur, test_run = self.run_tests()
             if not test_run:
                 report.record_step("Unit Tests", "SKIPPED")
-            elif test_ret != utils.EXIT_SUCCESSFUL:
+            elif test_ret != EXIT_SUCCESSFUL:
                 report.record_step("Unit Tests", "FAILED", test_dur)
                 exit_code = EXIT_FAILED_UNIT_TESTS
                 return exit_code
@@ -699,7 +704,7 @@ class Builder:
             audit_ret, audit_dur, audit_run = self.run_localization_audit()
             if not audit_run:
                 report.record_step("Localization Audit", "SKIPPED")
-            elif audit_ret != utils.EXIT_SUCCESSFUL:
+            elif audit_ret != EXIT_SUCCESSFUL:
                 report.record_step("Localization Audit", "FAILED", audit_dur)
                 exit_code = EXIT_LOCALIZATION_AUDIT
                 return exit_code
@@ -710,18 +715,18 @@ class Builder:
             auto_ret, auto_dur, auto_run = self.run_update_autocomplete()
             if not auto_run:
                 report.record_step("Update Autocomplete", "SKIPPED")
-            elif auto_ret != utils.EXIT_SUCCESSFUL:
+            elif auto_ret != EXIT_SUCCESSFUL:
                 report.record_step("Update Autocomplete", "FAILED", auto_dur)
                 exit_code = EXIT_FAILED_AUTOCOMPLETE
                 return exit_code
             else:
                 report.record_step("Update Autocomplete", "PASSED", auto_dur)
 
-            return utils.EXIT_SUCCESSFUL
+            return EXIT_SUCCESSFUL
         finally:
             total_duration = time.perf_counter() - total_start
             report.collect_executables()
-            report.print_summary(total_duration, exit_code == utils.EXIT_SUCCESSFUL)
+            report.print_summary(total_duration, exit_code == EXIT_SUCCESSFUL)
 
 
 class PresetBuilder(Builder):
@@ -748,7 +753,7 @@ class PresetBuilder(Builder):
     @staticmethod
     def _get_preset_build_dir(preset_data: dict, preset_name: str) -> pathlib.Path:
         raw_binary_dir = preset_data.get("binaryDir", "${sourceDir}/build/${presetName}")
-        resolved = raw_binary_dir.replace("${sourceDir}", str(utils.ROOT_DIR)).replace("${presetName}", preset_name)
+        resolved = raw_binary_dir.replace("${sourceDir}", str(PROJECT_ROOT)).replace("${presetName}", preset_name)
         return pathlib.Path(resolved).resolve()
 
     def run_cmake_configure(self) -> tuple[int, float]:
@@ -767,19 +772,19 @@ class PresetBuilder(Builder):
         for arg in self.config.extra_cmake_args:
             if not arg.startswith(("-DCMAKE_UNITY_BUILD", "/DCMAKE_UNITY_BUILD")):
                 cmake_cmd.append(arg)
-        ret = utils.run_command(cmake_cmd, cwd=utils.ROOT_DIR)
+        ret = run_command(cmake_cmd, cwd=PROJECT_ROOT)
         duration = time.perf_counter() - start
         if ret != 0:
             logger.error(f"CMake failed with return code {ret}.")
             return ret, duration
         logger.info(f"Finished running CMake ({format_duration(duration)}).")
-        return utils.EXIT_SUCCESSFUL, duration
+        return EXIT_SUCCESSFUL, duration
 
     def build(self) -> tuple[int, float]:
         logger.info(f"Building with preset '{self.preset_name}'...")
         start = time.perf_counter()
         build_cmd = ["cmake", "--build", "--preset", self.preset_name]
-        ret = utils.run_command(build_cmd, cwd=utils.ROOT_DIR)
+        ret = run_command(build_cmd, cwd=PROJECT_ROOT)
         duration = time.perf_counter() - start
         if ret != 0:
             logger.error(f"Build failed with return code {ret}.")
@@ -801,7 +806,7 @@ class PresetBuilder(Builder):
             list_presets=self.config.list_presets,
             extra_cmake_args=self.config.extra_cmake_args,
         )
-        return utils.EXIT_SUCCESSFUL, duration
+        return EXIT_SUCCESSFUL, duration
 
 
 def main() -> int:
@@ -812,7 +817,7 @@ def main() -> int:
     if config.list_presets:
         return _list_preset()
 
-    builder = PresetBuilder.create(config) if config.preset else Builder(config, utils.BUILD_DIR)
+    builder = PresetBuilder.create(config) if config.preset else Builder(config, BUILD_DIR)
     if builder is None:
         return EXIT_FAILED_TO_CREATE_BUILDER
     return builder.run()

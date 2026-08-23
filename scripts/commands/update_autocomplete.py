@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+"""Update shell autocomplete scripts for AutoInput."""
+
 import argparse
 import logging
 import os
@@ -9,17 +11,23 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 
-try:
-    from . import utils
-    from .cli_help import CliHelpMetadata, CliCommand as ToolCliCommand, CliOption as ToolCliOption, load_cli_help_metadata
-except ImportError:
-    try:
-        import utils
-        from cli_help import CliHelpMetadata, CliCommand as ToolCliCommand, CliOption as ToolCliOption, load_cli_help_metadata
-    except ImportError:
-        sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-        import utils
-        from cli_help import CliHelpMetadata, CliCommand as ToolCliCommand, CliOption as ToolCliOption, load_cli_help_metadata
+_SCRIPTS_DIR = pathlib.Path(__file__).resolve().parent.parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
+from autoinput_tools.cli.model import (
+    CliCommand as ToolCliCommand,
+    CliHelpMetadata,
+    CliOption as ToolCliOption,
+)
+from autoinput_tools.cli.toml import load_cli_help_metadata
+from autoinput_tools.paths import (
+    AUTOCOMPLETE_BASH_FILE,
+    AUTOCOMPLETE_LUA_FILE,
+    AUTOCOMPLETE_ZSH_FILE,
+    DEFAULT_CLI_HELP_METADATA_FILE,
+    PROJECT_ROOT,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +76,7 @@ class CliMetadata:
     modifiers: list[str] = field(default_factory=lambda: list(MODIFIERS))
 
 
-DEFAULT_METADATA_TOML = utils.RESOURCE_DIR / "cli" / "help.toml"
+DEFAULT_METADATA_TOML = DEFAULT_CLI_HELP_METADATA_FILE
 
 ALL_SHELL_TARGETS = {"zsh", "bash", "lua"}
 
@@ -145,7 +153,7 @@ def find_autoinput_binary(binary_arg: str | None = None) -> pathlib.Path | None:
         logger.warning(f"Specified binary path does not exist: {binary_arg}")
         return None
 
-    root = utils.ROOT_DIR
+    root = PROJECT_ROOT
     exe_name = "autoinput.exe" if sys.platform == "win32" else "autoinput"
 
     candidates = [
@@ -969,7 +977,7 @@ def generate_lua_completion(metadata: CliMetadata, eol: str = "\n") -> str:
         '        "path" .. clink.arg.new_parser({configs_matcher})',
         "    }",
         "})",
-        'config_parser:set_flags("--force")',
+        'config_parser:setlags("--force")',
         "",
         "local apps_parser = clink.arg.new_parser()",
         "apps_parser:set_arguments({",
@@ -1175,9 +1183,9 @@ def main(argv: list[str] | None = None) -> int:
         format="%(levelname)s: %(message)s" if not args.verbose else "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
-    zsh_path = pathlib.Path(args.zsh).resolve() if args.zsh else utils.AUTOCOMPLETE_ZSH_FILE
-    bash_path = pathlib.Path(args.bash).resolve() if args.bash else utils.AUTOCOMPLETE_BASH_FILE
-    lua_path = pathlib.Path(args.lua).resolve() if args.lua else utils.AUTOCOMPLETE_LUA_FILE
+    zsh_path = pathlib.Path(args.zsh).resolve() if args.zsh else AUTOCOMPLETE_ZSH_FILE
+    bash_path = pathlib.Path(args.bash).resolve() if args.bash else AUTOCOMPLETE_BASH_FILE
+    lua_path = pathlib.Path(args.lua).resolve() if args.lua else AUTOCOMPLETE_LUA_FILE
 
     metadata: CliMetadata | None = None
     if args.source == "binary":
@@ -1226,7 +1234,7 @@ def main(argv: list[str] | None = None) -> int:
                 logger.info(f"Autocomplete script for {name} ({path}) is up to date.")
 
         if not all_up_to_date:
-            logger.error("Autocomplete verification failed. Run 'python scripts/update_autocomplete.py' to update.")
+            logger.error("Autocomplete verification failed. Run 'python scripts/commands/update_autocomplete.py' to update.")
             return 1
 
         logger.info("All autocomplete scripts are up to date.")

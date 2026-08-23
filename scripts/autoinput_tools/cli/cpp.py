@@ -1,48 +1,10 @@
-#!/usr/bin/env python
-"""Generates C++ CLI help metadata (cliHelpMetadata.h/.cpp) from resources/cli/help.toml.
+"""C++ rendering for CLI help metadata."""
 
-Mirrors the pattern used by scripts/gen_localization_ids.py.
-"""
-import argparse
 import logging
 import pathlib
-import sys
-
-try:
-    from . import utils
-    from .cli_help import (
-        CliCommand,
-        CliHelpMetadata,
-        CliHelpValidationError,
-        CliOption,
-        load_cli_help_metadata,
-    )
-except ImportError:
-    try:
-        import utils
-        from cli_help import (
-            CliCommand,
-            CliHelpMetadata,
-            CliHelpValidationError,
-            CliOption,
-            load_cli_help_metadata,
-        )
-    except ImportError:
-        sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-        import utils
-        from cli_help import (
-            CliCommand,
-            CliHelpMetadata,
-            CliHelpValidationError,
-            CliOption,
-            load_cli_help_metadata,
-        )
+from .model import CliCommand, CliHelpMetadata, CliOption
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_HELP_TOML = utils.RESOURCE_DIR / "cli" / "help.toml"
-DEFAULT_HEADER_OUTPUT_FILE: pathlib.Path = utils.BUILD_DIR / "generated" / "autoinput" / "cli" / "cliHelpMetadata.h"
-DEFAULT_SOURCE_OUTPUT_FILE = DEFAULT_HEADER_OUTPUT_FILE.with_suffix(".cpp")
 
 GENERATED_HEADER_COMMENT = (
     "AUTO-GENERATED \u2014 DO NOT EDIT. "
@@ -55,11 +17,14 @@ def _escape(value: str) -> str:
     return (
         value.replace("\\", "\\\\")
         .replace('"', '\\"')
+        .replace("\r", "\\r")
         .replace("\n", "\\n")
+        .replace("\t", "\\t")
     )
 
 
 def _cpp_string_view_array(values: list[str]) -> str:
+    """Render a list of strings as a C++ initializer list of string_view literals."""
     return "{ " + ", ".join(f'"{_escape(v)}"sv' for v in values) + " }"
 
 
@@ -118,8 +83,6 @@ class CppGenerator:
         )
 
         subcommands_array_var = f"{var}_subcommands"
-        # Forward declared below via std::array<const CliCommandMetadata*, N> to allow
-        # a command's subcommands to reference fully-defined CliCommandMetadata instances.
         self._command_array_lines.append(
             f"    inline constexpr std::array<CliCommandMetadata, {len(subcommand_vars)}> {subcommands_array_var} = "
             "{ " + ", ".join(subcommand_vars) + " };"
@@ -168,7 +131,8 @@ class CppGenerator:
         return "\n".join(self._option_array_lines), "\n".join(self._command_array_lines)
 
 
-def generate_header_content(eol: str = "\n") -> str:
+def generate_cli_help_header(metadata: CliHelpMetadata | None = None, eol: str = "\n") -> str:
+    """Generate the C++ header file content for CLI help metadata."""
     header_lines = [
         "/**",
         " * @file cliHelpMetadata.h",
@@ -240,7 +204,8 @@ def generate_header_content(eol: str = "\n") -> str:
     return eol.join(header_lines)
 
 
-def generate_source_content(metadata: CliHelpMetadata, eol: str = "\n") -> str:
+def generate_cli_help_source(metadata: CliHelpMetadata, eol: str = "\n") -> str:
+    """Generate the C++ source file content for CLI help metadata."""
     generator = CppGenerator(metadata)
     option_defs, command_defs = generator.generate()
 
@@ -286,106 +251,11 @@ def generate_source_content(metadata: CliHelpMetadata, eol: str = "\n") -> str:
     return eol.join(source_lines)
 
 
-def check_and_update_file_contents(filepath: pathlib.Path, contents: str, filetype: str, check_only: bool) -> bool:
-    if check_only:
-        if not filepath.exists():
-            logger.error(f"Output {filetype} file does not exist: {filepath}")
-            return False
-        try:
-            existing = filepath.read_text(encoding="utf-8")
-            if existing == contents:
-                logger.info(f"CLI help {filetype} {filepath} is up to date.")
-                return True
-            logger.error(f"CLI help {filetype} {filepath} is out of date.")
-            return False
-        except Exception as e:
-            logger.error(f"Failed to read existing {filetype} {filepath}: {e}")
-            return False
-
-    try:
-        filepath.parent.mkdir(parents=True, exist_ok=True)
-        if filepath.exists():
-            try:
-                existing = filepath.read_text(encoding="utf-8")
-                if existing == contents:
-                    logger.info(f"CLI help {filetype} {filepath} is already up to date.")
-                    return True
-            except Exception:
-                pass
-
-        with filepath.open("w", encoding="utf-8", newline="\n") as f:
-            f.write(contents)
-        logger.info(f"Successfully generated {filepath}.")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to write {filetype} to {filepath}: {e}")
-        return False
-
-
-def generate(
-    toml_path: pathlib.Path = DEFAULT_HELP_TOML,
-    header_path: pathlib.Path = DEFAULT_HEADER_OUTPUT_FILE,
-    source_path: pathlib.Path = DEFAULT_SOURCE_OUTPUT_FILE,
-    check_only: bool = False,
+def generate_cli_help_content(
+    metadata: CliHelpMetadata,
     eol: str = "\n",
-) -> bool:
-    try:
-        metadata = load_cli_help_metadata(toml_path)
-    except (FileNotFoundError, CliHelpValidationError) as e:
-        logger.error(f"Failed to load CLI help metadata from {toml_path}: {e}")
-        return False
-
-    header_content = generate_header_content(eol=eol)
-    source_content = generate_source_content(metadata, eol=eol)
-
-    if not check_and_update_file_contents(header_path, header_content, "header", check_only):
-        return False
-    return check_and_update_file_contents(source_path, source_content, "source", check_only)
-
-
-def get_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Generate C++ CLI help metadata (cliHelpMetadata.h/.cpp) from resources/cli/help.toml.",
-    )
-    _ = parser.add_argument(
-        "--toml",
-        type=pathlib.Path,
-        default=DEFAULT_HELP_TOML,
-        help=f"Path to source TOML file (default: {DEFAULT_HELP_TOML})",
-    )
-    _ = parser.add_argument(
-        "--header",
-        type=pathlib.Path,
-        default=DEFAULT_HEADER_OUTPUT_FILE,
-        help=f"Path to output header file (default: {DEFAULT_HEADER_OUTPUT_FILE})",
-    )
-    _ = parser.add_argument(
-        "--source",
-        type=pathlib.Path,
-        default=DEFAULT_SOURCE_OUTPUT_FILE,
-        help=f"Path to output source file (default: {DEFAULT_SOURCE_OUTPUT_FILE})",
-    )
-    _ = parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Check if output files are up to date without modifying them.",
-    )
-    return parser
-
-
-def main():
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    args = get_parser().parse_args()
-    success = generate(
-        toml_path=args.toml,
-        header_path=args.header,
-        source_path=args.source,
-        check_only=args.check,
-    )
-    if not success:
-        sys.exit(1)
-    sys.exit(0)
-
-
-if __name__ == "__main__":
-    main()
+) -> tuple[str, str]:
+    """Generate C++ header and source content for CLI help metadata."""
+    header = generate_cli_help_header(metadata, eol=eol)
+    source = generate_cli_help_source(metadata, eol=eol)
+    return header, source

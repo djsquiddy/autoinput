@@ -1,22 +1,23 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+"""Audit localization keys used in C++ source files against en-US.toml."""
+
 import io
 import logging
 import os
+import pathlib
 import re
 import sys
 
-try:
-    from . import utils
-except ImportError:
-    try:
-        import utils
-    except ImportError:
-        sys.path.insert(0, str(os.path.dirname(os.path.abspath(__file__))))
-        import utils
+_SCRIPTS_DIR = pathlib.Path(__file__).resolve().parent.parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
+
+from autoinput_tools.localization.toml import LocalizationFile
+from autoinput_tools.paths import PROJECT_ROOT, UI_SRC_DIR
 
 logger = logging.getLogger(__name__)
 
-AUDIT_LOC = 'en-US'
+AUDIT_LOC = "en-US"
 
 # Regex to find localization keys in C++ source
 KEY_PATTERNS = [
@@ -32,20 +33,21 @@ KEY_PATTERNS = [
     re.compile(r'm_titleKey\s*=\s*"([^"]+)"'),
 ]
 
-def audit():
-    loc_data = utils.LocalizationFile.load(AUDIT_LOC)
+
+def audit() -> bool:
+    loc_data = LocalizationFile.load(AUDIT_LOC)
     if not loc_data.is_valid():
         return False
     valid_keys = loc_data.get_all_keys()
-    missing_keys = {} # key -> list of files
-    used_keys = set()
+    missing_keys: dict[str, list[str]] = {}  # key -> list of files
+    used_keys: set[str] = set()
 
     # Scan source files
-    for root, _, files in os.walk(utils.UI_SRC_DIR):
+    for root, _, files in os.walk(UI_SRC_DIR):
         for file in files:
             if file.endswith((".cpp", ".h")):
                 path = os.path.join(root, file)
-                rel_path = os.path.relpath(path, utils.ROOT_DIR)
+                rel_path = os.path.relpath(path, PROJECT_ROOT)
                 try:
                     with io.open(path, "r", encoding="utf-8", errors="ignore") as f:
                         content = f.read()
@@ -90,6 +92,7 @@ def audit():
         logger.info("No unused keys found in TOML.")
 
     return len(missing_keys) == 0
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(message)s")

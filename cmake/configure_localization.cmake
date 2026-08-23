@@ -7,14 +7,18 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 set(LOCALIZATION_SOURCE_TOML "${LOCALIZATION_DIR}/en-US.toml")
 set(GEN_LOCALIZATION_IDS_MODULE "gen_localization_ids")
-set(GEN_LOCALIZATION_IDS_SCRIPT "${SCRIPTS_DIR}/${GEN_LOCALIZATION_IDS_MODULE}.py")
+set(GEN_LOCALIZATION_IDS_SCRIPT "${PYTHON_COMMANDS_DIR}/${GEN_LOCALIZATION_IDS_MODULE}.py")
 set(LOCALIZATION_IDS_FILENAME "${CODE_GENERATED_DIR}/autoinput/support/localizationIds")
 set(LOCALIZATION_IDS_HEADER "${LOCALIZATION_IDS_FILENAME}.h")
 set(LOCALIZATION_IDS_SOURCE "${LOCALIZATION_IDS_FILENAME}.cpp")
 
 # Generate during CMake configuration (prebuild step) so files exist immediately for IDE indexing and early build phases
 execute_process(
-    COMMAND "${Python3_EXECUTABLE}" -m "${PYTHON_SCRIPTS_MODULE_NAME}.${GEN_LOCALIZATION_IDS_MODULE}"
+    COMMAND
+        ${CMAKE_COMMAND} -E env
+        "PYTHONPATH=${SCRIPTS_DIR}"
+        "${Python3_EXECUTABLE}"
+        "${GEN_LOCALIZATION_IDS_SCRIPT}"
         --loc "${LOCALIZATION_SOURCE_TOML}"
         --header "${LOCALIZATION_IDS_HEADER}"
         --source "${LOCALIZATION_IDS_SOURCE}"
@@ -29,14 +33,24 @@ endif()
 # Set up custom command and target for incremental build-time regeneration when TOML or script changes
 add_custom_command(
     OUTPUT "${LOCALIZATION_IDS_HEADER}" "${LOCALIZATION_IDS_SOURCE}"
-    COMMAND "${Python3_EXECUTABLE}" -m "${PYTHON_SCRIPTS_MODULE_NAME}.${GEN_LOCALIZATION_IDS_MODULE}"
+    COMMAND
+        ${CMAKE_COMMAND} -E env
+        "PYTHONPATH=${SCRIPTS_DIR}"
+        "${Python3_EXECUTABLE}"
+        "${GEN_LOCALIZATION_IDS_SCRIPT}"
         --loc "${LOCALIZATION_SOURCE_TOML}"
         --header "${LOCALIZATION_IDS_HEADER}"
         --source "${LOCALIZATION_IDS_SOURCE}"
     DEPENDS
         "${LOCALIZATION_SOURCE_TOML}"
         "${GEN_LOCALIZATION_IDS_SCRIPT}"
-        "${SCRIPTS_DIR}/utils.py"
+        "${SCRIPTS_DIR}/autoinput_tools/localization/generate.py"
+        "${SCRIPTS_DIR}/autoinput_tools/localization/cpp.py"
+        "${SCRIPTS_DIR}/autoinput_tools/localization/ids.py"
+        "${SCRIPTS_DIR}/autoinput_tools/localization/model.py"
+        "${SCRIPTS_DIR}/autoinput_tools/localization/toml.py"
+        "${SCRIPTS_DIR}/autoinput_tools/file_io.py"
+        "${SCRIPTS_DIR}/autoinput_tools/paths.py"
     WORKING_DIRECTORY "${PROJECT_ROOT_DIR}"
     COMMENT "Generating localization IDs header: ${LOCALIZATION_IDS_HEADER}, source: ${LOCALIZATION_IDS_SOURCE}"
     VERBATIM

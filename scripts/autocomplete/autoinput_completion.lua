@@ -117,7 +117,7 @@ config_parser:set_arguments({
         "path" .. clink.arg.new_parser({configs_matcher})
     }
 })
-config_parser:set_flags("--force")
+config_parser:setlags("--force")
 
 local apps_parser = clink.arg.new_parser()
 apps_parser:set_arguments({

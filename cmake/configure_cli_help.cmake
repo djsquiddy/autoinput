@@ -7,15 +7,19 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 set(CLI_HELP_SOURCE_TOML "${CLI_RESOURCES_DIR}/help.toml")
 set(GEN_CLI_HELP_MODULE "gen_cli_help")
-set(GEN_CLI_HELP_SCRIPT "${SCRIPTS_DIR}/${GEN_CLI_HELP_MODULE}.py")
+set(GEN_CLI_HELP_SCRIPT "${PYTHON_COMMANDS_DIR}/${GEN_CLI_HELP_MODULE}.py")
 set(CLI_HELP_METADATA_FILENAME "${CODE_GENERATED_DIR}/autoinput/cli/cliHelpMetadata")
 set(CLI_HELP_METADATA_HEADER "${CLI_HELP_METADATA_FILENAME}.h")
 set(CLI_HELP_METADATA_SOURCE "${CLI_HELP_METADATA_FILENAME}.cpp")
 
 # Generate during CMake configuration (prebuild step) so files exist immediately for IDE indexing and early build phases
 execute_process(
-    COMMAND "${Python3_EXECUTABLE}" -m "${PYTHON_SCRIPTS_MODULE_NAME}.${GEN_CLI_HELP_MODULE}"
-        --toml "${CLI_HELP_SOURCE_TOML}"
+    COMMAND
+        ${CMAKE_COMMAND} -E env
+        "PYTHONPATH=${SCRIPTS_DIR}"
+        "${Python3_EXECUTABLE}"
+        "${GEN_CLI_HELP_SCRIPT}"
+        --metadata "${CLI_HELP_SOURCE_TOML}"
         --header "${CLI_HELP_METADATA_HEADER}"
         --source "${CLI_HELP_METADATA_SOURCE}"
     WORKING_DIRECTORY "${PROJECT_ROOT_DIR}"
@@ -29,15 +33,24 @@ endif()
 # Set up custom command and target for incremental build-time regeneration when TOML or script changes
 add_custom_command(
     OUTPUT "${CLI_HELP_METADATA_HEADER}" "${CLI_HELP_METADATA_SOURCE}"
-    COMMAND "${Python3_EXECUTABLE}" -m "${PYTHON_SCRIPTS_MODULE_NAME}.${GEN_CLI_HELP_MODULE}"
-        --toml "${CLI_HELP_SOURCE_TOML}"
+    COMMAND
+        ${CMAKE_COMMAND} -E env
+        "PYTHONPATH=${SCRIPTS_DIR}"
+        "${Python3_EXECUTABLE}"
+        "${GEN_CLI_HELP_SCRIPT}"
+        --metadata "${CLI_HELP_SOURCE_TOML}"
         --header "${CLI_HELP_METADATA_HEADER}"
         --source "${CLI_HELP_METADATA_SOURCE}"
     DEPENDS
         "${CLI_HELP_SOURCE_TOML}"
         "${GEN_CLI_HELP_SCRIPT}"
-        "${SCRIPTS_DIR}/cli_help.py"
-        "${SCRIPTS_DIR}/utils.py"
+        "${SCRIPTS_DIR}/autoinput_tools/cli/generate.py"
+        "${SCRIPTS_DIR}/autoinput_tools/cli/cpp.py"
+        "${SCRIPTS_DIR}/autoinput_tools/cli/toml.py"
+        "${SCRIPTS_DIR}/autoinput_tools/cli/validation.py"
+        "${SCRIPTS_DIR}/autoinput_tools/cli/model.py"
+        "${SCRIPTS_DIR}/autoinput_tools/file_io.py"
+        "${SCRIPTS_DIR}/autoinput_tools/paths.py"
     WORKING_DIRECTORY "${PROJECT_ROOT_DIR}"
     COMMENT "Generating CLI help metadata header: ${CLI_HELP_METADATA_HEADER}, source: ${CLI_HELP_METADATA_SOURCE}"
     VERBATIM
