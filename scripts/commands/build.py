@@ -39,6 +39,7 @@ EXIT_FAILED_UNIT_TESTS = 1004
 EXIT_LOCALIZATION_AUDIT = 1005
 EXIT_FAILED_TO_CREATE_BUILDER = 1006
 EXIT_FAILED_AUTOCOMPLETE = 1007
+EXIT_FAILED_PYTHON_TESTS = 1008
 
 
 KNOWN_BUILD_TYPES = {
@@ -222,8 +223,11 @@ def parse_arguments(argv: list[str]) -> BuildConfig:
             preset = item.split("=", 1)[1]
         elif item_lower in ("--clean", "/clean", "-clean", "clean"):
             clean = True
-        elif item_lower in ("ui", "tray", "tests", "all"):
-            explicit_targets.add(item_lower)
+        elif item_lower in ("ui", "tray", "tests", "all", "python-tests", "python_tests", "pytest", "pytests"):
+            if item_lower in ("python-tests", "python_tests", "pytest", "pytests"):
+                explicit_targets.add("tests")
+            else:
+                explicit_targets.add(item_lower)
         elif item_lower in KNOWN_BUILD_TYPES:
             if build_type is None:
                 build_type = KNOWN_BUILD_TYPES[item_lower]
@@ -431,6 +435,7 @@ class BuildReport:
             "CMake Configure": StepResult("CMake Configure", "SKIPPED"),
             "Build": StepResult("Build", "SKIPPED"),
             "Unit Tests": StepResult("Unit Tests", "SKIPPED"),
+            "Python Tests": StepResult("Python Tests", "SKIPPED"),
             "Localization Audit": StepResult("Localization Audit", "SKIPPED"),
             "Update Autocomplete": StepResult("Update Autocomplete", "SKIPPED"),
         }
@@ -591,6 +596,29 @@ class Builder:
             logger.info("Tests are disabled, skipping.")
             return EXIT_SUCCESSFUL, None, False
 
+    def run_python_tests(self) -> tuple[int, float | None, bool]:
+        logger.info("Running Python tests...")
+        if self.config.build_tests:
+            test_dir = PROJECT_ROOT / "tests" / "scripts"
+            if not test_dir.exists():
+                logger.info("Python test directory not found, skipping Python tests.")
+                return EXIT_SUCCESSFUL, None, False
+
+            start = time.perf_counter()
+            ret = run_command(
+                [sys.executable, "-m", "pytest", str(test_dir)],
+                cwd=PROJECT_ROOT,
+            )
+            duration = time.perf_counter() - start
+            if ret != 0:
+                logger.error(f"Python tests failed with return code {ret}.")
+                return ret, duration, True
+            logger.info(f"Finished running Python tests ({format_duration(duration)}).")
+            return EXIT_SUCCESSFUL, duration, True
+        else:
+            logger.info("Tests are disabled, skipping Python tests.")
+            return EXIT_SUCCESSFUL, None, False
+
     def run_localization_audit(self) -> tuple[int, float | None, bool]:
         if not self.config.audit:
             return EXIT_SUCCESSFUL, None, False
@@ -699,6 +727,17 @@ class Builder:
                 return exit_code
             else:
                 report.record_step("Unit Tests", "PASSED", test_dur)
+
+            # Running Python tests
+            py_test_ret, py_test_dur, py_test_run = self.run_python_tests()
+            if not py_test_run:
+                report.record_step("Python Tests", "SKIPPED")
+            elif py_test_ret != EXIT_SUCCESSFUL:
+                report.record_step("Python Tests", "FAILED", py_test_dur)
+                exit_code = EXIT_FAILED_PYTHON_TESTS
+                return exit_code
+            else:
+                report.record_step("Python Tests", "PASSED", py_test_dur)
 
             # Localization audit
             audit_ret, audit_dur, audit_run = self.run_localization_audit()

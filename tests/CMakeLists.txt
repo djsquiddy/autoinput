@@ -79,3 +79,22 @@ configure_autoinput_target(${PROJECT_NAME_TEST})
 configure_autoinput_platform(${PROJECT_NAME_TEST})
 
 gtest_discover_tests(${PROJECT_NAME_TEST})
+
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_FOUND)
+    add_test(
+        NAME autoinput_python_tests
+        COMMAND "${Python3_EXECUTABLE}" -m pytest "${CMAKE_CURRENT_LIST_DIR}/scripts"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+    set_tests_properties(autoinput_python_tests PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${SCRIPTS_DIR}"
+    )
+
+    add_custom_target(python_tests
+        COMMAND ${CMAKE_COMMAND} -E env "PYTHONPATH=${SCRIPTS_DIR}" "${Python3_EXECUTABLE}" -m pytest "${CMAKE_CURRENT_LIST_DIR}/scripts"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        COMMENT "Running Python unit tests with pytest"
+        VERBATIM
+    )
+endif()

@@ -13,6 +13,7 @@ if str(_SCRIPTS_DIR) not in sys.path:
 
 from commands.build import (
     EXIT_FAILED_CMAKE_CONFIGURATION,
+    EXIT_FAILED_PYTHON_TESTS,
     EXIT_FAILED_SOURCE_COMPILATION,
     EXIT_FAILED_UNIT_TESTS,
     EXIT_SUCCESSFUL,
@@ -168,6 +169,7 @@ def test_build_report_print_summary(tmp_path: pathlib.Path) -> None:
     report.record_step("CMake Configure", "PASSED", 1.5)
     report.record_step("Build", "PASSED", 3.2)
     report.record_step("Unit Tests", "PASSED", 0.8)
+    report.record_step("Python Tests", "PASSED", 0.5)
     report.executables = [ExecutableInfo(name="app.exe", path=tmp_path / "app.exe", size=2048)]
 
     # Calling print_summary should run without error
@@ -284,6 +286,51 @@ def test_builder_run_tests_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: pa
     monkeypatch.setattr("commands.build.run_command", mock_run)
     ret = builder.run()
     assert ret == EXIT_FAILED_UNIT_TESTS
+
+
+def test_builder_run_python_tests(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path) -> None:
+    config_disabled = BuildConfig(clean=False, build_type="Release", build_tests=False, build_tray=False, build_ui=False)
+    builder_disabled = Builder(config_disabled, tmp_path)
+    ret, dur, ran = builder_disabled.run_python_tests()
+    assert ret == EXIT_SUCCESSFUL
+    assert ran is False
+
+    config_enabled = BuildConfig(clean=False, build_type="Release", build_tests=True, build_tray=False, build_ui=False)
+    builder_enabled = Builder(config_enabled, tmp_path)
+    monkeypatch.setattr("commands.build.run_command", lambda *args, **kwargs: 0)
+    ret, dur, ran = builder_enabled.run_python_tests()
+    assert ret == EXIT_SUCCESSFUL
+    assert ran is True
+
+
+def test_builder_run_python_tests_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path) -> None:
+    build_dir = tmp_path / "build"
+    bin_dir = build_dir / "bin"
+    bin_dir.mkdir(parents=True)
+    test_exe_name = "autoinput-tests.exe" if sys.platform == "win32" else "autoinput-tests"
+    (bin_dir / test_exe_name).write_bytes(b"dummy")
+
+    config = BuildConfig(
+        clean=False,
+        build_type="Release",
+        build_tests=True,
+        build_tray=False,
+        build_ui=False,
+    )
+    builder = Builder(config, build_dir)
+
+    call_count = 0
+
+    def mock_run(cmd, *args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        if call_count <= 3:
+            return 0  # configure, build, unit tests pass
+        return 1  # python tests fail
+
+    monkeypatch.setattr("commands.build.run_command", mock_run)
+    ret = builder.run()
+    assert ret == EXIT_FAILED_PYTHON_TESTS
 
 
 def test_preset_builder_create(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path) -> None:
