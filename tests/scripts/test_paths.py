@@ -19,9 +19,13 @@ from autoinput_tools.paths import (
     CLI_RESOURCES_DIR,
     COMMANDS_DIR,
     CONFIGS_DIR,
+    DEFAULT_APP_ICON_FILE,
+    DEFAULT_APP_ICON_PNG,
     DEFAULT_CLI_HELP_METADATA_FILE,
     DEFAULT_HELP_TOML,
     DEFAULT_LOCALIZATION_FILE,
+    GENERATED_APP_ICON_ICO,
+    GENERATED_APP_ICON_RC,
     GENERATED_CLI_HELP_HEADER,
     GENERATED_CLI_HELP_SOURCE,
     GENERATED_DIR,
@@ -66,12 +70,17 @@ def test_file_constants() -> None:
     assert DEFAULT_LOCALIZATION_FILE == LOCALIZATION_DIR / "en-US.toml"
     assert DEFAULT_CLI_HELP_METADATA_FILE == CLI_RESOURCES_DIR / "help.toml"
     assert DEFAULT_HELP_TOML == DEFAULT_CLI_HELP_METADATA_FILE
+    assert DEFAULT_APP_ICON_PNG == RESOURCES_DIR / "appIcon.png"
+    assert DEFAULT_APP_ICON_FILE == DEFAULT_APP_ICON_PNG
 
     assert GENERATED_LOCALIZATION_HEADER == GENERATED_DIR / "autoinput" / "support" / "localizationIds.h"
     assert GENERATED_LOCALIZATION_SOURCE == GENERATED_DIR / "autoinput" / "support" / "localizationIds.cpp"
 
     assert GENERATED_CLI_HELP_HEADER == GENERATED_DIR / "autoinput" / "cli" / "cliHelpMetadata.h"
     assert GENERATED_CLI_HELP_SOURCE == GENERATED_DIR / "autoinput" / "cli" / "cliHelpMetadata.cpp"
+
+    assert GENERATED_APP_ICON_ICO == GENERATED_DIR / "autoinput" / "resources" / "appIcon.ico"
+    assert GENERATED_APP_ICON_RC == GENERATED_DIR / "autoinput" / "resources" / "appIcon.rc"
 
     assert AUTOCOMPLETE_ZSH_FILE == AUTOCOMPLETE_DIR / "_autoinput"
     assert AUTOCOMPLETE_BASH_FILE == AUTOCOMPLETE_DIR / "autoinput_completion.bash"

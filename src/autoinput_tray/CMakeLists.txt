@@ -13,7 +13,6 @@ if(AUTOINPUT_BUILD_TRAY)
                 ${CMAKE_CURRENT_LIST_DIR}/win32/win32TrayApp.h
                 ${CMAKE_CURRENT_LIST_DIR}/win32/win32TrayIcon.cpp
                 ${CMAKE_CURRENT_LIST_DIR}/win32/win32TrayIcon.h
-                ${CMAKE_CURRENT_LIST_DIR}/win32/resources.rc
         )
     endif()
 

@@ -23,6 +23,8 @@ CLI_RESOURCES_DIR: pathlib.Path = RESOURCES_DIR / "cli"
 DEFAULT_LOCALIZATION_FILE: pathlib.Path = LOCALIZATION_DIR / "en-US.toml"
 DEFAULT_CLI_HELP_METADATA_FILE: pathlib.Path = CLI_RESOURCES_DIR / "help.toml"
 DEFAULT_HELP_TOML: pathlib.Path = DEFAULT_CLI_HELP_METADATA_FILE
+DEFAULT_APP_ICON_PNG: pathlib.Path = RESOURCES_DIR / "appIcon.png"
+DEFAULT_APP_ICON_FILE: pathlib.Path = DEFAULT_APP_ICON_PNG
 
 GENERATED_DIR: pathlib.Path = BUILD_DIR / "generated"
 
@@ -31,6 +33,9 @@ GENERATED_LOCALIZATION_SOURCE: pathlib.Path = GENERATED_LOCALIZATION_HEADER.with
 
 GENERATED_CLI_HELP_HEADER: pathlib.Path = GENERATED_DIR / "autoinput" / "cli" / "cliHelpMetadata.h"
 GENERATED_CLI_HELP_SOURCE: pathlib.Path = GENERATED_CLI_HELP_HEADER.with_suffix(".cpp")
+
+GENERATED_APP_ICON_ICO: pathlib.Path = GENERATED_DIR / "autoinput" / "resources" / "appIcon.ico"
+GENERATED_APP_ICON_RC: pathlib.Path = GENERATED_DIR / "autoinput" / "resources" / "appIcon.rc"
 
 AUTOCOMPLETE_DIR: pathlib.Path = SCRIPTS_DIR / "autocomplete"
 AUTOCOMPLETE_ZSH_FILE: pathlib.Path = AUTOCOMPLETE_DIR / "_autoinput"
