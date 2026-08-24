@@ -599,6 +599,10 @@ class Builder:
     def run_python_tests(self) -> tuple[int, float | None, bool]:
         logger.info("Running Python tests...")
         if self.config.build_tests:
+            import importlib.util
+            if importlib.util.find_spec("pytest") is None:
+                logger.warning('pytest is not installed. Skipping running python tests.')
+                return EXIT_SUCCESSFUL, None, False
             test_dir = PROJECT_ROOT / "tests" / "scripts"
             if not test_dir.exists():
                 logger.info("Python test directory not found, skipping Python tests.")
