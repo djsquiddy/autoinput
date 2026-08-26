@@ -12,6 +12,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <Psapi.h>  // IWYU pragma: export
+#include "autoinput/platform/foregroundWindowListener.h"
 
 namespace autoinput
 {
@@ -25,6 +26,29 @@ namespace autoinput
     {
         WPARAM wParam{ 0 };
         MSLLHOOKSTRUCT* mouseStruct{ nullptr };
+    };
+
+    namespace platform
+    {
+        AppWindowInfo getAppWindowInfo(HWND hwnd);
+    }
+
+    class WindowsForegroundWindowListener : public IForegroundWindowListener
+    {
+    public:
+        WindowsForegroundWindowListener() = default;
+        ~WindowsForegroundWindowListener() override;
+
+        bool start(ForegroundWindowCallback callback) override;
+        void stop() override;
+        [[nodiscard]] std::optional<AppWindowInfo> getForegroundWindow() override;
+        [[nodiscard]] bool isSupported() const override { return true; }
+
+        void notify(const AppWindowInfo& info);
+
+    private:
+        HWINEVENTHOOK m_hook{ nullptr };
+        ForegroundWindowCallback m_callback;
     };
 }
 #endif

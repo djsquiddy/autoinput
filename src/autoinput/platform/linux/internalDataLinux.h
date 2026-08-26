@@ -85,6 +85,60 @@ namespace autoinput
      */
     std::unique_ptr<IPlatformBackend> createX11Backend();
 
+#if defined(__linux__)
+    class X11ForegroundWindowListener : public IForegroundWindowListener
+    {
+    public:
+        X11ForegroundWindowListener();
+        ~X11ForegroundWindowListener() override;
+
+        bool start(ForegroundWindowCallback callback) override;
+        void stop() override;
+        [[nodiscard]] std::optional<AppWindowInfo> getForegroundWindow() override;
+        [[nodiscard]] bool isSupported() const override;
+
+        void notify(const AppWindowInfo& info);
+
+    private:
+        ForegroundWindowCallback m_callback;
+        bool m_running{ false };
+    };
+
+    class WaylandForegroundWindowListener : public IForegroundWindowListener
+    {
+    public:
+        WaylandForegroundWindowListener() = default;
+        ~WaylandForegroundWindowListener() override = default;
+
+        bool start(ForegroundWindowCallback callback) override;
+        void stop() override;
+        [[nodiscard]] std::optional<AppWindowInfo> getForegroundWindow() override;
+        [[nodiscard]] bool isSupported() const override { return false; }
+    };
+#else
+    class X11ForegroundWindowListener : public IForegroundWindowListener
+    {
+    public:
+        X11ForegroundWindowListener() = default;
+        ~X11ForegroundWindowListener() override = default;
+        bool start(ForegroundWindowCallback) override { return false; }
+        void stop() override {}
+        [[nodiscard]] std::optional<AppWindowInfo> getForegroundWindow() override { return std::nullopt; }
+        [[nodiscard]] bool isSupported() const override { return false; }
+    };
+
+    class WaylandForegroundWindowListener : public IForegroundWindowListener
+    {
+    public:
+        WaylandForegroundWindowListener() = default;
+        ~WaylandForegroundWindowListener() override = default;
+        bool start(ForegroundWindowCallback) override { return false; }
+        void stop() override {}
+        [[nodiscard]] std::optional<AppWindowInfo> getForegroundWindow() override { return std::nullopt; }
+        [[nodiscard]] bool isSupported() const override { return false; }
+    };
+#endif
+
     // Platform-specific input helper functions
     bool isX11KeyDown(const X11KeyboardData& data);
     bool isWaylandKeyDown(const WaylandKeyboardData& data);

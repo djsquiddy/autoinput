@@ -1,10 +1,10 @@
 @echo off
 setlocal
 set "CURRENT_DIR=%~dp0"
-set "PROJECT_DIR=%CURRENT_DIR%.."
+set "SCRIPT_DIR=%CURRENT_DIR%.."
 
-pushd %PROJECT_DIR%
-    python -m "scripts.build" %*
+pushd %SCRIPT_DIR%
+    python -m "commands.build" %*
     set "RET=%ERRORLEVEL%"
 popd
 

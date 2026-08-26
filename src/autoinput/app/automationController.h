@@ -148,6 +148,12 @@ namespace autoinput
          */
         [[nodiscard]] IPlatformBackend* getBackend() const;
 
+        /**
+         * @brief Gets the cached foreground application window information.
+         * @return Optional AppWindowInfo of the cached foreground window.
+         */
+        [[nodiscard]] std::optional<AppWindowInfo> getCachedForegroundWindow() const;
+
     private:
         StatusCallback m_statusCallback{ nullptr };
         std::unique_ptr<Program> m_program;

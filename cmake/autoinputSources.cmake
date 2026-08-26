@@ -8,6 +8,7 @@ function(autoinput_get_common_sources output_var)
             ${CMAKE_SOURCE_DIR}/src/autoinput/config/defaults.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/config/defaults.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/platform/backend.h
+            ${CMAKE_SOURCE_DIR}/src/autoinput/platform/foregroundWindowListener.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/platform/backendFactory.h
             ${CMAKE_SOURCE_DIR}/src/autoinput/platform/backendFactory.cpp
             ${CMAKE_SOURCE_DIR}/src/autoinput/input/command.h

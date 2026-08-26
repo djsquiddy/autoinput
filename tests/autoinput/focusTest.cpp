@@ -102,3 +102,128 @@ TEST_F(FocusTest, PauseOnLostFocusFromTargetApp)
     // Verify handler resumes when target application regains focus
     EXPECT_FALSE(g_program->getMouseHandlers().begin()->second.getPaused());
 }
+
+TEST_F(FocusTest, CachedForegroundStateUpdatesOnEvent)
+{
+    ASSERT_TRUE(g_program->init());
+
+    AppWindowInfo info{
+        .processName = "code.exe",
+        .windowTitle = "Visual Studio Code",
+        .pid = 12345,
+        .executablePath = "C:\\Program Files\\VSCode\\Code.exe",
+        .backendId = "0x1234"
+    };
+
+    g_program->onFocusChanged(info);
+
+    auto cached = g_program->getCachedForegroundWindow();
+    ASSERT_TRUE(cached.has_value());
+    EXPECT_EQ(cached->processName, "code.exe");
+    EXPECT_EQ(cached->windowTitle, "Visual Studio Code");
+    EXPECT_EQ(cached->pid, 12345u);
+    EXPECT_EQ(cached->executablePath, "C:\\Program Files\\VSCode\\Code.exe");
+    EXPECT_EQ(cached->backendId, "0x1234");
+}
+
+TEST_F(FocusTest, AppMatchingUsesCachedValue)
+{
+    // Test target app matching by window title
+    g_program->arguments().applicationName = "special window title";
+    g_program->arguments().buttons = {MouseButton::Left};
+    ASSERT_TRUE(g_program->init());
+
+    AppWindowInfo nonMatchingInfo{
+        .processName = "app.exe",
+        .windowTitle = "Regular Window",
+        .pid = 100,
+        .executablePath = "/usr/bin/app",
+        .backendId = "100"
+    };
+    g_program->onFocusChanged(nonMatchingInfo);
+    EXPECT_TRUE(g_program->getMouseHandlers().begin()->second.getPaused());
+    EXPECT_FALSE(g_program->isApplicationBlacklisted());
+
+    AppWindowInfo matchingTitleInfo{
+        .processName = "app.exe",
+        .windowTitle = "My Special Window Title",
+        .pid = 100,
+        .executablePath = "/usr/bin/app",
+        .backendId = "100"
+    };
+    g_program->onFocusChanged(matchingTitleInfo);
+    EXPECT_FALSE(g_program->getMouseHandlers().begin()->second.getPaused());
+
+    // Test blacklist matching by executable path
+    g_program->arguments().applicationName.clear();
+    g_program->arguments().blacklist = {"blocked_path"};
+
+    AppWindowInfo blacklistedExeInfo{
+        .processName = "runner.exe",
+        .windowTitle = "Runner",
+        .pid = 200,
+        .executablePath = "/opt/blocked_path/runner",
+        .backendId = "200"
+    };
+    g_program->onFocusChanged(blacklistedExeInfo);
+    EXPECT_TRUE(g_program->getMouseHandlers().begin()->second.getPaused());
+    EXPECT_TRUE(g_program->isApplicationBlacklisted());
+}
+
+TEST_F(FocusTest, EmptyOrUnavailableForegroundAppHandledSafely)
+{
+    g_program->arguments().applicationName = "mygame";
+    g_program->arguments().blacklist = {"forbidden"};
+    g_program->arguments().buttons = {MouseButton::Left};
+    ASSERT_TRUE(g_program->init());
+
+    // Deliver empty AppWindowInfo
+    AppWindowInfo emptyInfo{};
+    g_program->onFocusChanged(emptyInfo);
+
+    auto cached = g_program->getCachedForegroundWindow();
+    ASSERT_TRUE(cached.has_value());
+    EXPECT_TRUE(cached->processName.empty());
+    EXPECT_TRUE(cached->windowTitle.empty());
+    EXPECT_EQ(cached->pid, 0u);
+
+    // Empty app should not match target app "mygame" -> paused
+    EXPECT_TRUE(g_program->getMouseHandlers().begin()->second.getPaused());
+    // Empty app should not be blacklisted
+    EXPECT_FALSE(g_program->isApplicationBlacklisted());
+}
+
+TEST_F(FocusTest, ConsecutiveDuplicateEventsDeduplicated)
+{
+    g_program->arguments().applicationName = "app";
+    g_program->arguments().buttons = {MouseButton::Left};
+    ASSERT_TRUE(g_program->init());
+
+    AppWindowInfo info{
+        .processName = "app.exe",
+        .windowTitle = "App Title",
+        .pid = 500,
+        .executablePath = "C:\\app.exe",
+        .backendId = "0x500"
+    };
+
+    // First event
+    g_program->onFocusChanged(info);
+    EXPECT_FALSE(g_program->getMouseHandlers().begin()->second.getPaused());
+
+    // Repeated identical event
+    g_program->onFocusChanged(info);
+    EXPECT_FALSE(g_program->getMouseHandlers().begin()->second.getPaused());
+}
+
+TEST_F(FocusTest, BackendFocusDetectionCapabilities)
+{
+    FakeBackend fakeBackend;
+    EXPECT_TRUE(fakeBackend.capabilities().focusDetection);
+
+#ifdef _WIN32
+    auto winBackend = createWindowsBackend();
+    ASSERT_TRUE(winBackend != nullptr);
+    EXPECT_TRUE(winBackend->capabilities().focusDetection);
+#endif
+}

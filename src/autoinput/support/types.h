@@ -135,6 +135,8 @@ namespace autoinput
         u64 pid{ 0 };
         std::string executablePath;
         std::string backendId;
+
+        bool operator==(const AppWindowInfo& other) const = default;
     };
 
     /**

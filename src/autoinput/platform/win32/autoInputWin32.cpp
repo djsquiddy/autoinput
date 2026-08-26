@@ -214,7 +214,7 @@ namespace autoinput
         std::unique_ptr<KeyboardData> g_keyboardData;
         HHOOK g_hMouseHook = nullptr;
         std::unique_ptr<MouseData> g_mouseData;
-        HWINEVENTHOOK g_hFocusHook = nullptr;
+        WindowsForegroundWindowListener* g_activeWindowsFocusListener = nullptr;
 
         void CALLBACK WinEventProc(
             HWINEVENTHOOK hWinEventHook,
@@ -226,9 +226,19 @@ namespace autoinput
             DWORD dwmsEventTime
         )
         {
-            if (event == EVENT_SYSTEM_FOREGROUND && g_program)
+            if (event != EVENT_SYSTEM_FOREGROUND || hwnd == nullptr || idObject != OBJID_WINDOW)
             {
-                g_program->onFocusChanged(platform::getActiveApplicationName());
+                return;
+            }
+
+            AppWindowInfo info = platform::getAppWindowInfo(hwnd);
+            if (g_activeWindowsFocusListener)
+            {
+                g_activeWindowsFocusListener->notify(info);
+            }
+            else if (g_program)
+            {
+                g_program->onFocusChanged(info);
             }
         }
 
@@ -413,7 +423,86 @@ namespace autoinput
             // Let the event continue normally
             return CallNextHookEx(g_hMouseHook, nCode, wParam, lParam);
         }
+    }
 
+    WindowsForegroundWindowListener::~WindowsForegroundWindowListener()
+    {
+        stop();
+    }
+
+    bool WindowsForegroundWindowListener::start(ForegroundWindowCallback callback)
+    {
+        m_callback = std::move(callback);
+        g_activeWindowsFocusListener = this;
+
+        m_hook = SetWinEventHook(
+            EVENT_SYSTEM_FOREGROUND,
+            EVENT_SYSTEM_FOREGROUND,
+            NULL,
+            WinEventProc,
+            0,
+            0,
+            WINEVENT_OUTOFCONTEXT
+        );
+
+        if (!m_hook)
+        {
+            if (g_activeWindowsFocusListener == this)
+            {
+                g_activeWindowsFocusListener = nullptr;
+            }
+            Logger::error("SetWinEventHook for Focus failed: {}\n", GetLastError());
+            return false;
+        }
+
+        Logger::debug("Windows foreground window listener started.\n");
+
+        if (auto fg = getForegroundWindow(); fg.has_value())
+        {
+            notify(*fg);
+        }
+
+        return true;
+    }
+
+    void WindowsForegroundWindowListener::stop()
+    {
+        if (m_hook)
+        {
+            UnhookWinEvent(m_hook);
+            m_hook = nullptr;
+            if (g_activeWindowsFocusListener == this)
+            {
+                g_activeWindowsFocusListener = nullptr;
+            }
+            Logger::debug("Windows foreground window listener stopped.\n");
+        }
+    }
+
+    std::optional<AppWindowInfo> WindowsForegroundWindowListener::getForegroundWindow()
+    {
+        HWND hwnd = GetForegroundWindow();
+        if (hwnd)
+        {
+            return platform::getAppWindowInfo(hwnd);
+        }
+        return std::nullopt;
+    }
+
+    void WindowsForegroundWindowListener::notify(const AppWindowInfo& info)
+    {
+        if (m_callback)
+        {
+            m_callback(info);
+        }
+        else if (g_program)
+        {
+            g_program->onFocusChanged(info);
+        }
+    }
+
+    namespace
+    {
         class WindowsBackend : public IPlatformBackend
         {
         public:
@@ -447,25 +536,12 @@ namespace autoinput
                     return false;
                 }
 
-                g_hFocusHook = SetWinEventHook(
-                    EVENT_SYSTEM_FOREGROUND,
-                    EVENT_SYSTEM_FOREGROUND,
-                    NULL,
-                    WinEventProc,
-                    0,
-                    0,
-                    WINEVENT_OUTOFCONTEXT
-                );
-
-                if (!g_hFocusHook)
+                m_focusListener = std::make_unique<WindowsForegroundWindowListener>();
+                if (!m_focusListener->start([this](const AppWindowInfo& info) {
+                    notifyForegroundWindowChanged(info);
+                }))
                 {
-                    Logger::error("SetWinEventHook for Focus failed: {}\n", GetLastError());
                     return false;
-                }
-
-                if (g_program)
-                {
-                    g_program->onFocusChanged(platform::getActiveApplicationName());
                 }
 
                 return true;
@@ -494,10 +570,10 @@ namespace autoinput
                     UnhookWindowsHookEx(g_hMouseHook);
                     g_hMouseHook = nullptr;
                 }
-                if (g_hFocusHook)
+                if (m_focusListener)
                 {
-                    UnhookWinEvent(g_hFocusHook);
-                    g_hFocusHook = nullptr;
+                    m_focusListener->stop();
+                    m_focusListener.reset();
                 }
             }
 
@@ -714,6 +790,10 @@ namespace autoinput
 
             std::optional<AppWindowInfo> getForegroundWindow() override
             {
+                if (m_focusListener)
+                {
+                    return m_focusListener->getForegroundWindow();
+                }
                 HWND hwnd = GetForegroundWindow();
                 if (hwnd)
                 {
@@ -737,6 +817,9 @@ namespace autoinput
             }
 
             std::string getName() const override { return "Windows Backend"; }
+
+        private:
+            std::unique_ptr<WindowsForegroundWindowListener> m_focusListener;
         };
     }
 

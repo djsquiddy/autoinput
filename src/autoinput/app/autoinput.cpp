@@ -19,12 +19,45 @@ namespace autoinput
     Program::Program(std::unique_ptr<IPlatformBackend> backend)
         : m_backend{ std::move(backend) }
     {
+        if (m_backend)
+        {
+            m_backend->setForegroundWindowCallback([this](const AppWindowInfo& info) {
+                onFocusChanged(info);
+            });
+            if (auto fg = m_backend->getForegroundWindow(); fg.has_value())
+            {
+                std::lock_guard lock(m_focusMutex);
+                m_cachedForegroundWindow = *fg;
+            }
+        }
     }
-
 
     void Program::setBackend(std::unique_ptr<IPlatformBackend> backend)
     {
         m_backend = std::move(backend);
+        if (m_backend)
+        {
+            m_backend->setForegroundWindowCallback([this](const AppWindowInfo& info) {
+                onFocusChanged(info);
+            });
+            if (auto fg = m_backend->getForegroundWindow(); fg.has_value())
+            {
+                std::lock_guard lock(m_focusMutex);
+                m_cachedForegroundWindow = *fg;
+            }
+        }
+    }
+
+    std::optional<AppWindowInfo> Program::getCachedForegroundWindow() const
+    {
+        std::scoped_lock lock(m_focusMutex);
+        return m_cachedForegroundWindow;
+    }
+
+    void Program::setCachedForegroundWindow(const AppWindowInfo& appInfo)
+    {
+        std::scoped_lock lock(m_focusMutex);
+        m_cachedForegroundWindow = appInfo;
     }
 
     bool Program::init()
@@ -33,6 +66,15 @@ namespace autoinput
         {
             Logger::error("Program::init() called without a backend!\n");
             return false;
+        }
+
+        m_backend->setForegroundWindowCallback([this](const AppWindowInfo& info) {
+            onFocusChanged(info);
+        });
+        if (auto fg = m_backend->getForegroundWindow(); fg.has_value())
+        {
+            std::scoped_lock lock(m_focusMutex);
+            m_cachedForegroundWindow = *fg;
         }
 
         IPlatformBackend* backendPtr = m_backend.get();
@@ -502,20 +544,40 @@ namespace autoinput
             return true;
         }
 
-        std::string activeApp;
+        const std::string targetApp = toLowerCase(m_arguments.applicationName);
+
 #ifdef AUTOINPUT_TESTING
         if (!m_testActiveApp.empty())
         {
-            activeApp = toLowerCase(m_testActiveApp);
+            const std::string activeApp = toLowerCase(m_testActiveApp);
+            return activeApp.find(targetApp) != std::string::npos;
         }
-        else
-        {
-            activeApp = toLowerCase(platform::getActiveApplicationName());
-        }
-#else
-        activeApp = toLowerCase(platform::getActiveApplicationName());
 #endif
-        const std::string targetApp = toLowerCase(m_arguments.applicationName);
+
+        std::string processName;
+        std::string exePath;
+        std::string windowTitle;
+        bool hasCached = false;
+
+        {
+            std::lock_guard lock(m_focusMutex);
+            if (m_cachedForegroundWindow.has_value())
+            {
+                hasCached = true;
+                processName = toLowerCase(m_cachedForegroundWindow->processName);
+                exePath = toLowerCase(m_cachedForegroundWindow->executablePath);
+                windowTitle = toLowerCase(m_cachedForegroundWindow->windowTitle);
+            }
+        }
+
+        if (hasCached)
+        {
+            return (!processName.empty() && processName.find(targetApp) != std::string::npos) ||
+                   (!exePath.empty() && exePath.find(targetApp) != std::string::npos) ||
+                   (!windowTitle.empty() && windowTitle.find(targetApp) != std::string::npos);
+        }
+
+        const std::string activeApp = toLowerCase(platform::getActiveApplicationName());
         return activeApp.find(targetApp) != std::string::npos;
     }
 
@@ -1047,20 +1109,53 @@ namespace autoinput
             return false;
         }
 
-        std::string activeApp;
 #ifdef AUTOINPUT_TESTING
         if (!m_testActiveApp.empty())
         {
-            activeApp = toLowerCase(m_testActiveApp);
+            const std::string activeApp = toLowerCase(m_testActiveApp);
+            for (const std::string& app : m_arguments.blacklist)
+            {
+                if (activeApp.find(toLowerCase(app)) != std::string::npos)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
-        else
-        {
-            activeApp = toLowerCase(platform::getActiveApplicationName());
-        }
-#else
-        activeApp = toLowerCase(platform::getActiveApplicationName());
 #endif
 
+        std::string processName;
+        std::string exePath;
+        std::string windowTitle;
+        bool hasCached = false;
+
+        {
+            std::lock_guard lock(m_focusMutex);
+            if (m_cachedForegroundWindow.has_value())
+            {
+                hasCached = true;
+                processName = toLowerCase(m_cachedForegroundWindow->processName);
+                exePath = toLowerCase(m_cachedForegroundWindow->executablePath);
+                windowTitle = toLowerCase(m_cachedForegroundWindow->windowTitle);
+            }
+        }
+
+        if (hasCached)
+        {
+            for (const std::string& app : m_arguments.blacklist)
+            {
+                const std::string lowerApp = toLowerCase(app);
+                if ((!processName.empty() && processName.find(lowerApp) != std::string::npos) ||
+                    (!exePath.empty() && exePath.find(lowerApp) != std::string::npos) ||
+                    (!windowTitle.empty() && windowTitle.find(lowerApp) != std::string::npos))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        const std::string activeApp = toLowerCase(platform::getActiveApplicationName());
         for (const std::string& app : m_arguments.blacklist)
         {
             if (activeApp.find(toLowerCase(app)) != std::string::npos)
@@ -1073,14 +1168,64 @@ namespace autoinput
 
     void Program::onFocusChanged(const std::string& activeApp)
     {
-        const std::string lowerActiveApp = toLowerCase(activeApp);
+        AppWindowInfo info;
+        info.processName = activeApp;
+        onFocusChanged(info);
+    }
+
+    void Program::onFocusChanged(const AppWindowInfo& appInfo)
+    {
+        bool isDuplicate = false;
+        {
+            std::lock_guard lock(m_focusMutex);
+            if (m_cachedForegroundWindow.has_value())
+            {
+                const auto& prev = *m_cachedForegroundWindow;
+                if (!appInfo.backendId.empty() && !prev.backendId.empty())
+                {
+                    if (appInfo.backendId == prev.backendId && appInfo.pid == prev.pid &&
+                        appInfo.processName == prev.processName && appInfo.windowTitle == prev.windowTitle)
+                    {
+                        isDuplicate = true;
+                    }
+                }
+                else if (appInfo.pid != 0 && prev.pid != 0)
+                {
+                    if (appInfo.pid == prev.pid && appInfo.processName == prev.processName &&
+                        appInfo.windowTitle == prev.windowTitle)
+                    {
+                        isDuplicate = true;
+                    }
+                }
+                else if (appInfo.processName == prev.processName && appInfo.windowTitle == prev.windowTitle &&
+                         appInfo.executablePath == prev.executablePath)
+                {
+                    isDuplicate = true;
+                }
+            }
+            m_cachedForegroundWindow = appInfo;
+        }
+
+        if (!isDuplicate)
+        {
+            Logger::debug("Foreground window changed: process='{}', title='{}', pid={}, backendId='{}'\n",
+                          appInfo.processName, appInfo.windowTitle, appInfo.pid, appInfo.backendId);
+        }
+
+        const std::string lowerProcessName = toLowerCase(appInfo.processName);
+        const std::string lowerTitle = toLowerCase(appInfo.windowTitle);
+        const std::string lowerExe = toLowerCase(appInfo.executablePath);
+
         bool shouldPause = false;
 
         if (!m_arguments.blacklist.empty())
         {
             for (const std::string& app : m_arguments.blacklist)
             {
-                if (lowerActiveApp.find(toLowerCase(app)) != std::string::npos)
+                const std::string lowerApp = toLowerCase(app);
+                if ((!lowerProcessName.empty() && lowerProcessName.find(lowerApp) != std::string::npos) ||
+                    (!lowerExe.empty() && lowerExe.find(lowerApp) != std::string::npos) ||
+                    (!lowerTitle.empty() && lowerTitle.find(lowerApp) != std::string::npos))
                 {
                     shouldPause = true;
                     break;
@@ -1091,7 +1236,14 @@ namespace autoinput
         if (!m_arguments.applicationName.empty())
         {
             const std::string targetApp = toLowerCase(m_arguments.applicationName);
-            if (lowerActiveApp.find(targetApp) == std::string::npos)
+            bool matches = false;
+            if ((!lowerProcessName.empty() && lowerProcessName.find(targetApp) != std::string::npos) ||
+                (!lowerExe.empty() && lowerExe.find(targetApp) != std::string::npos) ||
+                (!lowerTitle.empty() && lowerTitle.find(targetApp) != std::string::npos))
+            {
+                matches = true;
+            }
+            if (!matches)
             {
                 shouldPause = true;
             }
@@ -1105,13 +1257,16 @@ namespace autoinput
             }
         }
 
-        if (shouldPause)
+        if (!isDuplicate)
         {
-            Logger::debug("Application lost focus or blacklisted application focused, pausing auto-pressing.\n");
-        }
-        else
-        {
-            Logger::debug("Application focused, resuming auto-pressing.\n");
+            if (shouldPause)
+            {
+                Logger::debug("Application lost focus or blacklisted application focused, pausing auto-pressing.\n");
+            }
+            else
+            {
+                Logger::debug("Application focused, resuming auto-pressing.\n");
+            }
         }
         updateStatusIndicator();
     }

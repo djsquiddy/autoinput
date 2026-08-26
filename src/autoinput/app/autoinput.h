@@ -27,6 +27,7 @@
 #include <unordered_map>
 #include <memory>
 #include <optional>
+#include <mutex>
 
 namespace autoinput
 {
@@ -248,6 +249,24 @@ namespace autoinput
         void onFocusChanged(const std::string& activeApp);
 
         /**
+         * @brief Handles a change in the focused application window.
+         * @param appInfo Information about the newly focused application window.
+         */
+        void onFocusChanged(const AppWindowInfo& appInfo);
+
+        /**
+         * @brief Gets the cached foreground application window information.
+         * @return Optional AppWindowInfo of the cached foreground window.
+         */
+        [[nodiscard]] std::optional<AppWindowInfo> getCachedForegroundWindow() const;
+
+        /**
+         * @brief Sets the cached foreground application window information.
+         * @param appInfo Information about the foreground application window.
+         */
+        void setCachedForegroundWindow(const AppWindowInfo& appInfo);
+
+        /**
          * @brief Updates the status indicator in the system tray or terminal.
          * @param triggeredCommandName The name of the command that was triggered (optional).
          * @param triggeredCommandActive Whether the triggered command is now active (optional).
@@ -266,18 +285,20 @@ namespace autoinput
     private:
         StatusCallback m_statusCallback{ nullptr };
         std::unique_ptr<IPlatformBackend> m_backend{ nullptr };
-        std::unordered_map<Mouse, MouseHandler, HashFunction<Mouse>> m_mouseHandlers{};
-        std::unordered_map<Key, KeyHandler, HashFunction<Key>> m_keyHandlers{};
-        std::unordered_map<Key, SequenceHandler, HashFunction<Key>> m_sequenceHandlers{};
-        std::vector<std::unique_ptr<InputHandler>> m_additionalHandlers{};
+        std::unordered_map<Mouse, MouseHandler, HashFunction<Mouse>> m_mouseHandlers;
+        std::unordered_map<Key, KeyHandler, HashFunction<Key>> m_keyHandlers;
+        std::unordered_map<Key, SequenceHandler, HashFunction<Key>> m_sequenceHandlers;
+        std::vector<std::unique_ptr<InputHandler>> m_additionalHandlers;
         std::unique_ptr<SequenceRecorder> m_recorder{ nullptr };
-        ProgramArguments m_arguments{};
-        std::vector<KeyInfo> m_keyInfo{};
+        ProgramArguments m_arguments;
+        std::vector<KeyInfo> m_keyInfo;
         bool m_lastIsActiveIndicator{ false };
         std::string m_lastTriggeredCommandName;
         std::optional<bool> m_lastTriggeredCommandActive;
-        std::unordered_set<int32_t> m_keysPressed{};
+        std::unordered_set<int32_t> m_keysPressed;
         std::unique_ptr<NotificationService> m_notificationService{ nullptr };
+        mutable std::mutex m_focusMutex;
+        std::optional<AppWindowInfo> m_cachedForegroundWindow;
 #ifdef AUTOINPUT_TESTING
         std::string m_testActiveApp;
 #endif

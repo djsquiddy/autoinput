@@ -11,6 +11,7 @@
 #include "autoinput/platform/linux/internalDataLinux.h"
 #include <format>
 #include <filesystem>
+#include <fstream>
 #include <set>
 
 namespace autoinput
@@ -139,6 +140,20 @@ namespace autoinput
                     info.executablePath = buf;
                     info.processName = std::filesystem::path(buf).filename().string();
                 }
+
+                if (info.processName.empty())
+                {
+                    std::string commPath = std::format("/proc/{}/comm", info.pid);
+                    std::ifstream commFile(commPath);
+                    if (commFile.is_open())
+                    {
+                        std::string comm;
+                        if (std::getline(commFile, comm) && !comm.empty())
+                        {
+                            info.processName = comm;
+                        }
+                    }
+                }
             }
             
             // Fallback for process name if we couldn't get it from PID
@@ -156,12 +171,114 @@ namespace autoinput
             return info;
         }
 
+        AppWindowInfo getX11ForegroundWindowInfo()
+        {
+            if (!g_display) return {};
+
+            Window activeWindow = 0;
+            if (g_rootWindow != 0 && g_activeWindowAtom != 0)
+            {
+                Atom actual_type;
+                int actual_format;
+                unsigned long nitems, bytes_after;
+                unsigned char* prop = nullptr;
+
+                if (XGetWindowProperty(g_display, g_rootWindow, g_activeWindowAtom,
+                    0, 1, False, XA_WINDOW,
+                    &actual_type, &actual_format, &nitems, &bytes_after, &prop) == Success)
+                {
+                    if (prop && nitems > 0)
+                    {
+                        activeWindow = *reinterpret_cast<Window*>(prop);
+                        XFree(prop);
+                    }
+                }
+            }
+
+            if (activeWindow == 0 || activeWindow == PointerRoot || activeWindow == None)
+            {
+                Window focusedWindow = 0;
+                int revert_to = 0;
+                XGetInputFocus(g_display, &focusedWindow, &revert_to);
+                if (focusedWindow != None && focusedWindow != PointerRoot)
+                {
+                    activeWindow = focusedWindow;
+                }
+            }
+
+            if (activeWindow != 0 && activeWindow != PointerRoot && activeWindow != None)
+            {
+                return getX11AppWindowInfo(activeWindow);
+            }
+
+            return {};
+        }
+    }
+
+    X11ForegroundWindowListener::X11ForegroundWindowListener() = default;
+    X11ForegroundWindowListener::~X11ForegroundWindowListener()
+    {
+        stop();
+    }
+
+    bool X11ForegroundWindowListener::start(ForegroundWindowCallback callback)
+    {
+        m_callback = std::move(callback);
+        m_running = true;
+        Logger::debug("X11 foreground window listener started.\n");
+
+        if (auto fg = getForegroundWindow(); fg.has_value())
+        {
+            notify(*fg);
+        }
+        return true;
+    }
+
+    void X11ForegroundWindowListener::stop()
+    {
+        if (m_running)
+        {
+            m_running = false;
+            Logger::debug("X11 foreground window listener stopped.\n");
+        }
+    }
+
+    std::optional<AppWindowInfo> X11ForegroundWindowListener::getForegroundWindow()
+    {
+        if (!g_display) return std::nullopt;
+        AppWindowInfo info = getX11ForegroundWindowInfo();
+        if (!info.processName.empty() || !info.windowTitle.empty() || info.pid != 0)
+        {
+            return info;
+        }
+        return std::nullopt;
+    }
+
+    bool X11ForegroundWindowListener::isSupported() const
+    {
+        return true;
+    }
+
+    void X11ForegroundWindowListener::notify(const AppWindowInfo& info)
+    {
+        if (m_callback)
+        {
+            m_callback(info);
+        }
+        else if (g_program)
+        {
+            g_program->onFocusChanged(info);
+        }
+    }
+
+    namespace
+    {
         class X11Backend : public IPlatformBackend
         {
         public:
             void requestStop() override
             {
-                // TODO: Implement
+                g_running = false;
             }
 
             bool installHooks() override
@@ -176,38 +293,41 @@ namespace autoinput
 
                 g_rootWindow = DefaultRootWindow(g_display);
 
-                for (const auto& info : g_program->getKeyInfo())
+                if (g_program)
                 {
-                    if (info.triggerButton != MouseButton::None)
+                    for (const auto& info : g_program->getKeyInfo())
                     {
-                        const unsigned int button = toX11Button(info.triggerButton);
-                        XGrabButton(g_display, button, AnyModifier, g_rootWindow, False, 
-                            ButtonPressMask | ButtonReleaseMask, GrabModeAsync, GrabModeAsync, None, None);
-                    }
-                    else if (info.virtualKey != 0)
-                    {
-                        const KeyCode code = static_cast<KeyCode>(info.virtualKey + 8);
-                        XGrabKey(g_display, code, AnyModifier, g_rootWindow, False, GrabModeAsync, GrabModeAsync);
-                    }
-                    else if (info.keyCode != INVALID_KEY)
-                    {
-                        const KeyCode code = XKeysymToKeycode(g_display, static_cast<KeySym>(info.keyCode));
-                        XGrabKey(g_display, code, AnyModifier, g_rootWindow, False, GrabModeAsync, GrabModeAsync);
-                    }
-                    else if (info.functionKey != INVALID_KEY)
-                    {
-                        const KeyCode code = XKeysymToKeycode(g_display, XK_F1 + info.functionKey - 1);
-                        XGrabKey(g_display, code, AnyModifier, g_rootWindow, False, GrabModeAsync, GrabModeAsync);
+                        if (info.triggerButton != MouseButton::None)
+                        {
+                            const unsigned int button = toX11Button(info.triggerButton);
+                            XGrabButton(g_display, button, AnyModifier, g_rootWindow, False, 
+                                ButtonPressMask | ButtonReleaseMask, GrabModeAsync, GrabModeAsync, None, None);
+                        }
+                        else if (info.virtualKey != 0)
+                        {
+                            const KeyCode code = static_cast<KeyCode>(info.virtualKey + 8);
+                            XGrabKey(g_display, code, AnyModifier, g_rootWindow, False, GrabModeAsync, GrabModeAsync);
+                        }
+                        else if (info.keyCode != INVALID_KEY)
+                        {
+                            const KeyCode code = XKeysymToKeycode(g_display, static_cast<KeySym>(info.keyCode));
+                            XGrabKey(g_display, code, AnyModifier, g_rootWindow, False, GrabModeAsync, GrabModeAsync);
+                        }
+                        else if (info.functionKey != INVALID_KEY)
+                        {
+                            const KeyCode code = XKeysymToKeycode(g_display, XK_F1 + info.functionKey - 1);
+                            XGrabKey(g_display, code, AnyModifier, g_rootWindow, False, GrabModeAsync, GrabModeAsync);
+                        }
                     }
                 }
 
                 XSelectInput(g_display, g_rootWindow, PropertyChangeMask);
                 g_activeWindowAtom = XInternAtom(g_display, "_NET_ACTIVE_WINDOW", False);
 
-                if (g_program)
-                {
-                    g_program->onFocusChanged(getX11ActiveApplicationName());
-                }
+                m_focusListener = std::make_unique<X11ForegroundWindowListener>();
+                m_focusListener->start([this](const AppWindowInfo& info) {
+                    notifyForegroundWindowChanged(info);
+                });
 
                 return true;
             }
@@ -226,16 +346,30 @@ namespace autoinput
                         if (event.type == KeyPress || event.type == KeyRelease)
                         {
                             kbdData.event = event.xkey;
-                            g_program->processKeyEvent(KeyboardInput{ KeyboardData{ kbdData } });
+                            if (g_program)
+                            {
+                                g_program->processKeyEvent(KeyboardInput{ KeyboardData{ kbdData } });
+                            }
                         }
                         else if (event.type == ButtonPress || event.type == ButtonRelease)
                         {
                             mouseData.event = event.xbutton;
-                            g_program->processMouseEvent(MouseInput{ MouseData{ mouseData } });
+                            if (g_program)
+                            {
+                                g_program->processMouseEvent(MouseInput{ MouseData{ mouseData } });
+                            }
                         }
                         else if (event.type == PropertyNotify && event.xproperty.atom == g_activeWindowAtom)
                         {
-                            g_program->onFocusChanged(getX11ActiveApplicationName());
+                            AppWindowInfo info = getX11ForegroundWindowInfo();
+                            if (m_focusListener)
+                            {
+                                m_focusListener->notify(info);
+                            }
+                            else
+                            {
+                                notifyForegroundWindowChanged(info);
+                            }
                         }
                     }
                     else
@@ -247,6 +381,11 @@ namespace autoinput
 
             void cleanup() override
             {
+                if (m_focusListener)
+                {
+                    m_focusListener->stop();
+                    m_focusListener.reset();
+                }
                 if (g_display)
                 {
                     XUngrabKey(g_display, AnyKey, AnyModifier, g_rootWindow);
@@ -417,12 +556,17 @@ namespace autoinput
 
             std::optional<AppWindowInfo> getForegroundWindow() override
             {
+                if (m_focusListener)
+                {
+                    return m_focusListener->getForegroundWindow();
+                }
                 if (!g_display) return std::nullopt;
-                Window focusedWindow;
-                int revert_to;
-                XGetInputFocus(g_display, &focusedWindow, &revert_to);
-                if (focusedWindow == None || focusedWindow == PointerRoot) return std::nullopt;
-                return getX11AppWindowInfo(focusedWindow);
+                AppWindowInfo info = getX11ForegroundWindowInfo();
+                if (!info.processName.empty() || !info.windowTitle.empty() || info.pid != 0)
+                {
+                    return info;
+                }
+                return std::nullopt;
             }
 
             BackendCapabilities capabilities() const override
@@ -438,6 +582,11 @@ namespace autoinput
                     .getCursorPosition = true
                 };
             }
+
+            std::string getName() const override { return "X11 Backend"; }
+
+        private:
+            std::unique_ptr<X11ForegroundWindowListener> m_focusListener;
         };
     }
 

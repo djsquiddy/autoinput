@@ -241,4 +241,9 @@ namespace autoinput
     {
         return m_program ? m_program->getBackend() : nullptr;
     }
+
+    std::optional<AppWindowInfo> AutomationController::getCachedForegroundWindow() const
+    {
+        return m_program ? m_program->getCachedForegroundWindow() : std::nullopt;
+    }
 }

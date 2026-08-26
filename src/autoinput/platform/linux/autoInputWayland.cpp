@@ -125,10 +125,7 @@ namespace autoinput
                     return false;
                 }
 
-                if (g_program)
-                {
-                    g_program->onFocusChanged(getWaylandActiveApplicationName());
-                }
+                Logger::debug("Active application change events are unavailable on generic Wayland sessions.\n");
 
                 return true;
             }
@@ -322,7 +319,24 @@ namespace autoinput
                     .getCursorPosition = false
                 };
             }
+
+            std::string getName() const override { return "Wayland Backend"; }
         };
+    }
+
+    bool WaylandForegroundWindowListener::start(ForegroundWindowCallback /*callback*/)
+    {
+        Logger::debug("Active application change events are unavailable on generic Wayland sessions.\n");
+        return false;
+    }
+
+    void WaylandForegroundWindowListener::stop()
+    {
+    }
+
+    std::optional<AppWindowInfo> WaylandForegroundWindowListener::getForegroundWindow()
+    {
+        return std::nullopt;
     }
 
     int32_t getWaylandVirtualKey(const WaylandKeyboardData& data)

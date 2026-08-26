@@ -15,6 +15,7 @@
 
 #include "autoinput/support/types.h"
 #include "autoinput/support/logger.h"
+#include "autoinput/platform/foregroundWindowListener.h"
 
 namespace autoinput
 {
@@ -149,6 +150,30 @@ namespace autoinput
          * @return The name of the backend.
          */
         virtual std::string getName() const = 0;
+
+        /**
+         * @brief Sets the callback for foreground window change notifications.
+         * @param callback The callback to invoke on focus change.
+         */
+        virtual void setForegroundWindowCallback(ForegroundWindowCallback callback)
+        {
+            m_foregroundCallback = std::move(callback);
+        }
+
+        /**
+         * @brief Notifies the registered callback of a foreground window change.
+         * @param info Information about the new foreground window.
+         */
+        void notifyForegroundWindowChanged(const AppWindowInfo& info)
+        {
+            if (m_foregroundCallback)
+            {
+                m_foregroundCallback(info);
+            }
+        }
+
+    protected:
+        ForegroundWindowCallback m_foregroundCallback;
     };
 
     /**
@@ -158,7 +183,14 @@ namespace autoinput
     {
     public:
         /** @brief Mock implementation of installHooks. */
-        bool installHooks() override { return true; }
+        bool installHooks() override
+        {
+            if (m_mockForegroundWindow.has_value())
+            {
+                notifyForegroundWindowChanged(*m_mockForegroundWindow);
+            }
+            return true;
+        }
         /** @brief Mock implementation of runListener. */
         void runListener() override { m_stop = false; while (!m_stop) std::this_thread::sleep_for(std::chrono::milliseconds(100)); }
         /** @brief Mock implementation of cleanup. */
@@ -190,7 +222,20 @@ namespace autoinput
         /** @brief Mock implementation of enumerateWindows. */
         std::vector<AppWindowInfo> enumerateWindows() override { return {}; }
         /** @brief Mock implementation of getForegroundWindow. */
-        std::optional<AppWindowInfo> getForegroundWindow() override { return std::nullopt; }
+        std::optional<AppWindowInfo> getForegroundWindow() override { return m_mockForegroundWindow; }
+
+        /** @brief Sets a mock foreground window for testing and notifies listeners. */
+        void setMockForegroundWindow(AppWindowInfo info)
+        {
+            m_mockForegroundWindow = std::move(info);
+            notifyForegroundWindowChanged(*m_mockForegroundWindow);
+        }
+
+        /** @brief Clears the mock foreground window. */
+        void clearMockForegroundWindow()
+        {
+            m_mockForegroundWindow.reset();
+        }
 
         /** @brief Mock implementation of capabilities. */
         BackendCapabilities capabilities() const override
@@ -211,6 +256,7 @@ namespace autoinput
         std::string getName() const override { return "Fake Backend"; }
     private:
         std::atomic<bool> m_stop{ false };
+        std::optional<AppWindowInfo> m_mockForegroundWindow;
     };
 
 #ifdef _WIN32
