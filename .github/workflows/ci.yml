@@ -35,6 +35,16 @@ jobs:
       - name: Set up Ninja
         uses: ashutoshvarma/setup-ninja@master
 
+      - name: Print compiler versions
+        shell: pwsh
+        run: |
+          where clang-cl
+          clang-cl --version
+          where cmake
+          cmake --version
+          where ninja
+          ninja --version
+
       - name: Build
         run: >
           python scripts/commands/build.py
@@ -44,6 +54,8 @@ jobs:
           Release
           -DCMAKE_C_COMPILER=clang-cl
           -DCMAKE_CXX_COMPILER=clang-cl
+          -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
+          -DCMAKE_CXX_FLAGS="-Wno-error=unknown-warning-option"
 
       - name: Test
         run: python scripts/commands/build.py --test-only all Release
