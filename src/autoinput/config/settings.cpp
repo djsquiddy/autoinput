@@ -6,6 +6,7 @@
 #include "autoinput/config/settings.h"
 #include "autoinput/support/logger.h"
 #include <fstream>
+#include <set>
 
 namespace autoinput
 {

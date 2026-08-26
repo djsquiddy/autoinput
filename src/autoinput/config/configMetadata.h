@@ -4,11 +4,12 @@
  * @author djsquiddy
  * @date August 2026
  */
-#ifndef INCLUDE_AUTOINPUT_CONFIG_CONFIGMETADATA_H
-#define INCLUDE_AUTOINPUT_CONFIG_CONFIGMETADATA_H
+#ifndef INCLUDE_AUTOINPUT_CONFIG_CONFIG_METADATA_H
+#define INCLUDE_AUTOINPUT_CONFIG_CONFIG_METADATA_H
 #pragma once
 
 #include <vector>
+#include <string>
 #include <string_view>
 
 namespace autoinput
@@ -169,4 +170,4 @@ namespace autoinput
     };
 }
 
-#endif // INCLUDE_AUTOINPUT_CONFIG_CONFIGMETADATA_H
+#endif // INCLUDE_AUTOINPUT_CONFIG_CONFIG_METADATA_H

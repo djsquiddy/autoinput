@@ -376,9 +376,18 @@ namespace autoinput::ui
                 ImGui::TableNextColumn();
                 switch (entry.type)
                 {
-                    case HotkeyEntry::Type::Command: ImGui::Text("%s", loc.text("labels.command").data()); break;
-                    case HotkeyEntry::Type::Sequence: ImGui::Text("%s", loc.text("labels.sequence").data()); break;
-                    case HotkeyEntry::Type::GlobalEnd: ImGui::Text("%s", loc.text("labels.global").data()); break;
+                case HotkeyEntry::Type::Command:
+                    ImGui::Text("%s", loc.text("labels.command").data());
+                    break;
+                case HotkeyEntry::Type::CommandControl:
+                    ImGui::Text("%s", loc.text("labels.commandControl").data());
+                    break;
+                case HotkeyEntry::Type::Sequence:
+                    ImGui::Text("%s", loc.text("labels.sequence").data());
+                    break;
+                case HotkeyEntry::Type::GlobalEnd:
+                    ImGui::Text("%s", loc.text("labels.global").data());
+                    break;
                 }
                 
                 // Name

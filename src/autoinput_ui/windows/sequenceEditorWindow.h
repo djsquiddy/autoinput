@@ -10,15 +10,11 @@
 
 #include "../core/uiWindow.h"
 #include "autoinput/config/config.h"
+#include "autoinput/config/configValidator.h"
 #include <vector>
 #include <string>
 #include <filesystem>
-#include <optional>
 
-namespace autoinput
-{
-    struct ValidationError;
-}
 
 namespace autoinput::ui
 {
@@ -43,21 +39,21 @@ namespace autoinput::ui
 
         void normalizeDelays(bool removeZeros);
 
-        autoinput::ConfigData m_configData;
+        ConfigData m_configData;
         std::string m_currentConfigName;
         std::filesystem::path m_currentConfigPath;
 
         int m_selectedSequenceIndex{ -1 };
         std::vector<std::string> m_availableConfigs;
-        std::vector<autoinput::ValidationError> m_validationErrors;
+        std::vector<ValidationError> m_validationErrors;
         std::string m_statusMessage;
 
         void renderToolbar();
         void renderSequenceSelector();
         void renderSequenceEditor();
-        void renderStepEditor(autoinput::RecordedEvent& event, size_t index);
+        void renderStepEditor(RecordedEvent& event, size_t index);
         
-        void insertEvent(autoinput::RecordedEventType type, size_t index);
+        void insertEvent(RecordedEventType type, size_t index);
     };
 }
 

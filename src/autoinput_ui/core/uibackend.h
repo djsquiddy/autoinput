@@ -8,6 +8,8 @@
 #define INCLUDE_AUTOINPUT_UI_UI_BACKEND_H
 #pragma once
 
+#include <memory>
+
 namespace autoinput::ui
 {
     class IUiBackend
