@@ -16,6 +16,7 @@ from commands.build import (
     EXIT_FAILED_PYTHON_TESTS,
     EXIT_FAILED_SOURCE_COMPILATION,
     EXIT_FAILED_UNIT_TESTS,
+    EXIT_LOCALIZATION_AUDIT,
     EXIT_SUCCESSFUL,
     BuildConfig,
     Builder,
@@ -80,7 +81,58 @@ def test_parse_arguments_defaults() -> None:
     assert config.audit is False
     assert config.bulk_build is False
     assert config.list_presets is False
+    assert config.build_only is False
+    assert config.test_only is False
+    assert config.audit_only is False
     assert config.extra_cmake_args == []
+
+
+def test_parse_arguments_build_only() -> None:
+    config = parse_arguments(["--build-only", "all", "Release"])
+    assert config.build_only is True
+    assert config.test_only is False
+    assert config.audit_only is False
+    assert config.build_tests is True
+    assert config.build_type == "Release"
+
+
+def test_parse_arguments_test_only() -> None:
+    config = parse_arguments(["--test-only", "all", "Release"])
+    assert config.test_only is True
+    assert config.build_only is False
+    assert config.audit_only is False
+    assert config.build_tests is True
+    assert config.build_type == "Release"
+
+
+def test_parse_arguments_test_only_explicit_ui() -> None:
+    # If target is explicit ui, test-only still enables tests
+    config = parse_arguments(["--test-only", "ui", "Release"])
+    assert config.test_only is True
+    assert config.build_tests is True
+
+
+def test_parse_arguments_audit_only() -> None:
+    config = parse_arguments(["--audit-only", "all", "Release"])
+    assert config.audit_only is True
+    assert config.audit is True
+    assert config.build_only is False
+    assert config.test_only is False
+    assert config.build_ui is True
+
+
+def test_parse_arguments_invalid_combinations() -> None:
+    with pytest.raises(SystemExit):
+        parse_arguments(["--build-only", "--test-only"])
+
+    with pytest.raises(SystemExit):
+        parse_arguments(["--build-only", "--audit-only"])
+
+    with pytest.raises(SystemExit):
+        parse_arguments(["--test-only", "--audit-only"])
+
+    with pytest.raises(SystemExit):
+        parse_arguments(["--build-only", "--test-only", "--audit-only"])
 
 
 def test_parse_arguments_targets_and_clean() -> None:
@@ -395,3 +447,125 @@ def test_build_main_list_presets(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("commands.build.load_cmake_presets", lambda: {})
     # Verify main execution with --list-presets flag returns 0
     assert main() == 0
+
+
+def test_builder_run_build_only(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path) -> None:
+    build_dir = tmp_path / "build"
+    config = BuildConfig(
+        clean=True,
+        build_type="Release",
+        build_tests=True,
+        build_tray=True,
+        build_ui=True,
+        build_only=True,
+    )
+    builder = Builder(config, build_dir)
+
+    executed_commands = []
+
+    def mock_run(cmd, *args, **kwargs):
+        executed_commands.append(cmd)
+        return 0
+
+    monkeypatch.setattr("commands.build.run_command", mock_run)
+    ret = builder.run()
+    assert ret == EXIT_SUCCESSFUL
+    # Verify CMake configure and ninja build were called, but tests/audit/autocomplete were not
+    assert len(executed_commands) == 2
+    assert "cmake" in str(executed_commands[0][0])
+    assert executed_commands[1] == ["ninja"]
+
+
+def test_builder_run_test_only(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path) -> None:
+    build_dir = tmp_path / "build"
+    bin_dir = build_dir / "bin"
+    bin_dir.mkdir(parents=True)
+    test_exe_name = "autoinput-tests.exe" if sys.platform == "win32" else "autoinput-tests"
+    (bin_dir / test_exe_name).write_bytes(b"dummy")
+
+    config = BuildConfig(
+        clean=True,
+        build_type="Release",
+        build_tests=True,
+        build_tray=True,
+        build_ui=True,
+        test_only=True,
+    )
+    builder = Builder(config, build_dir)
+
+    executed_commands = []
+
+    def mock_run(cmd, *args, **kwargs):
+        executed_commands.append(cmd)
+        return 0
+
+    monkeypatch.setattr("commands.build.run_command", mock_run)
+    ret = builder.run()
+    assert ret == EXIT_SUCCESSFUL
+    # Verify no cmake/ninja was called, but test binaries/pytest were run
+    assert len(executed_commands) > 0
+    for cmd in executed_commands:
+        assert cmd != ["ninja"]
+        assert "cmake" not in str(cmd[0])
+
+
+def test_builder_run_audit_only_success(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path) -> None:
+    build_dir = tmp_path / "build"
+    build_dir.mkdir(parents=True)
+
+    config = BuildConfig(
+        clean=True,
+        build_type="Release",
+        build_tests=True,
+        build_tray=True,
+        build_ui=True,
+        audit=True,
+        audit_only=True,
+    )
+    builder = Builder(config, build_dir)
+
+    executed_commands = []
+
+    def mock_run(cmd, *args, **kwargs):
+        executed_commands.append(cmd)
+        return 0
+
+    monkeypatch.setattr("commands.build.run_command", mock_run)
+    ret = builder.run()
+    assert ret == EXIT_SUCCESSFUL
+    # Verify only audit script was executed
+    assert len(executed_commands) == 1
+    assert "audit_localization.py" in str(executed_commands[0][1])
+
+
+def test_builder_run_audit_only_missing_build_dir(tmp_path: pathlib.Path) -> None:
+    build_dir = tmp_path / "nonexistent"
+    config = BuildConfig(
+        clean=False,
+        build_type="Release",
+        build_tests=False,
+        build_tray=False,
+        build_ui=True,
+        audit=True,
+        audit_only=True,
+    )
+    builder = Builder(config, build_dir)
+    ret = builder.run()
+    assert ret == EXIT_LOCALIZATION_AUDIT
+
+
+def test_builder_run_audit_only_missing_ui(tmp_path: pathlib.Path) -> None:
+    build_dir = tmp_path / "build"
+    build_dir.mkdir(parents=True)
+    config = BuildConfig(
+        clean=False,
+        build_type="Release",
+        build_tests=False,
+        build_tray=False,
+        build_ui=False,
+        audit=True,
+        audit_only=True,
+    )
+    builder = Builder(config, build_dir)
+    ret = builder.run()
+    assert ret == EXIT_LOCALIZATION_AUDIT

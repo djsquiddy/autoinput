@@ -61,6 +61,9 @@ class BuildConfig:
     audit: bool = False
     bulk_build: bool = False
     list_presets: bool = False
+    build_only: bool = False
+    test_only: bool = False
+    audit_only: bool = False
     extra_cmake_args: list[str] = field(default_factory=list)
 
 
@@ -194,6 +197,21 @@ def get_parser() -> argparse.ArgumentParser:
         help="Build all targets in parallel.",
     )
     _ = parser.add_argument(
+        "--build-only",
+        action="store_true",
+        help="Configure and build the project only without running tests, audit, or updating autocomplete.",
+    )
+    _ = parser.add_argument(
+        "--test-only",
+        action="store_true",
+        help="Run tests only without cleaning, configuring, building, or auditing.",
+    )
+    _ = parser.add_argument(
+        "--audit-only",
+        action="store_true",
+        help="Run localization audit only without cleaning, configuring, building, running tests, or updating autocomplete.",
+    )
+    _ = parser.add_argument(
         "targets_and_type",
         nargs="*",
         help="Build targets (ui, tray, tests, all) and/or build type (Release, Debug, etc.) or /clean",
@@ -211,6 +229,9 @@ def parse_arguments(argv: list[str]) -> BuildConfig:
     build_type: str | None = args.build_type
     audit: bool = args.audit
     bulk_build: bool = args.bulk_build
+    build_only: bool = args.build_only
+    test_only: bool = args.test_only
+    audit_only: bool = args.audit_only
     explicit_targets: set[str] = set()
     extra_cmake_args: list[str] = []
 
@@ -223,6 +244,12 @@ def parse_arguments(argv: list[str]) -> BuildConfig:
             preset = item.split("=", 1)[1]
         elif item_lower in ("--clean", "/clean", "-clean", "clean"):
             clean = True
+        elif item_lower in ("--build-only", "/build-only", "-build-only"):
+            build_only = True
+        elif item_lower in ("--test-only", "/test-only", "-test-only"):
+            test_only = True
+        elif item_lower in ("--audit-only", "/audit-only", "-audit-only"):
+            audit_only = True
         elif item_lower in ("ui", "tray", "tests", "all", "python-tests", "python_tests", "pytest", "pytests"):
             if item_lower in ("python-tests", "python_tests", "pytest", "pytests"):
                 explicit_targets.add("tests")
@@ -243,6 +270,10 @@ def parse_arguments(argv: list[str]) -> BuildConfig:
             if build_type is None:
                 build_type = item
 
+    flag_count = sum([bool(build_only), bool(test_only), bool(audit_only)])
+    if flag_count > 1:
+        parser.error("Flags --build-only, --test-only, and --audit-only are mutually exclusive.")
+
     if list_presets:
         return BuildConfig(
             clean=clean,
@@ -250,27 +281,33 @@ def parse_arguments(argv: list[str]) -> BuildConfig:
             build_tests=False,
             build_tray=False,
             build_ui=False,
-            audit=audit,
+            audit=audit or audit_only,
             bulk_build=bulk_build,
             preset=preset,
             list_presets=True,
+            build_only=build_only,
+            test_only=test_only,
+            audit_only=audit_only,
             extra_cmake_args=extra_cmake_args,
         )
 
     if preset:
-        build_tests = "tests" in explicit_targets
+        build_tests = ("tests" in explicit_targets) or test_only
         build_tray = "tray" in explicit_targets
-        build_ui = "ui" in explicit_targets
+        build_ui = ("ui" in explicit_targets) or (audit_only and not explicit_targets)
         return BuildConfig(
             clean=clean,
             build_type=build_type or "Release",
             build_tests=build_tests,
             build_tray=build_tray,
             build_ui=build_ui,
-            audit=audit,
+            audit=audit or audit_only,
             bulk_build=bulk_build,
             preset=preset,
             list_presets=False,
+            build_only=build_only,
+            test_only=test_only,
+            audit_only=audit_only,
             extra_cmake_args=extra_cmake_args,
         )
 
@@ -292,7 +329,7 @@ def parse_arguments(argv: list[str]) -> BuildConfig:
         logger.info("Enabling building autoinput ui app")
         build_ui = True
     else:
-        build_tests = "tests" in explicit_targets
+        build_tests = ("tests" in explicit_targets) or test_only
         if build_tests:
             logger.info("Enabling building autoinput tests")
         build_tray = "tray" in explicit_targets
@@ -309,9 +346,12 @@ def parse_arguments(argv: list[str]) -> BuildConfig:
         build_tray=build_tray,
         build_ui=build_ui,
         preset=None,
-        audit=audit,
+        audit=audit or audit_only,
         bulk_build=bulk_build,
         list_presets=False,
+        build_only=build_only,
+        test_only=test_only,
+        audit_only=audit_only,
         extra_cmake_args=extra_cmake_args,
     )
 
@@ -624,10 +664,18 @@ class Builder:
             return EXIT_SUCCESSFUL, None, False
 
     def run_localization_audit(self) -> tuple[int, float | None, bool]:
-        if not self.config.audit:
+        if not self.config.audit and not self.config.audit_only:
             return EXIT_SUCCESSFUL, None, False
         # Running localization audit
         logger.info("Running localization audit...")
+        if self.config.audit_only:
+            if not self.build_dir.exists():
+                logger.error(f"Build directory does not exist: {self.build_dir}. A prior build is required for audit.")
+                return EXIT_LOCALIZATION_AUDIT, None, True
+            if not self.config.build_ui:
+                logger.error("Localization audit requires UI to be enabled/built. Target 'ui' or 'all' is required.")
+                return EXIT_LOCALIZATION_AUDIT, None, True
+
         if self.config.build_ui:
             start = time.perf_counter()
             audit_script = COMMANDS_DIR / "audit_localization.py"
@@ -689,7 +737,9 @@ class Builder:
 
         try:
             # Clean
-            if self.config.clean:
+            if self.config.test_only or self.config.audit_only:
+                report.record_step("Clean", "SKIPPED")
+            elif self.config.clean:
                 clean_ok, clean_dur = self.clean_build()
                 if not clean_ok:
                     report.record_step("Clean", "FAILED", clean_dur)
@@ -699,71 +749,87 @@ class Builder:
             else:
                 report.record_step("Clean", "SKIPPED")
 
-            # Create build directory
-            if not self.create_build_directory():
-                exit_code = EXIT_FAILED_CREATE_BUILD_DIRECTORY
-                return exit_code
+            # Create build directory, CMake configure, Build
+            if not self.config.test_only and not self.config.audit_only:
+                # Create build directory
+                if not self.create_build_directory():
+                    exit_code = EXIT_FAILED_CREATE_BUILD_DIRECTORY
+                    return exit_code
 
-            # CMake configuration
-            ret, cmake_dur = self.run_cmake_configure()
-            if ret != EXIT_SUCCESSFUL:
-                report.record_step("CMake Configure", "FAILED", cmake_dur)
-                exit_code = EXIT_FAILED_CMAKE_CONFIGURATION
-                return exit_code
-            report.record_step("CMake Configure", "PASSED", cmake_dur)
+                # CMake configuration
+                ret, cmake_dur = self.run_cmake_configure()
+                if ret != EXIT_SUCCESSFUL:
+                    report.record_step("CMake Configure", "FAILED", cmake_dur)
+                    exit_code = EXIT_FAILED_CMAKE_CONFIGURATION
+                    return exit_code
+                report.record_step("CMake Configure", "PASSED", cmake_dur)
 
-            # Build
-            ret, build_dur = self.build()
-            report.config = self.config
-            if ret != EXIT_SUCCESSFUL:
-                report.record_step("Build", "FAILED", build_dur)
-                exit_code = EXIT_FAILED_SOURCE_COMPILATION
-                return exit_code
-            report.record_step("Build", "PASSED", build_dur)
+                # Build
+                ret, build_dur = self.build()
+                report.config = self.config
+                if ret != EXIT_SUCCESSFUL:
+                    report.record_step("Build", "FAILED", build_dur)
+                    exit_code = EXIT_FAILED_SOURCE_COMPILATION
+                    return exit_code
+                report.record_step("Build", "PASSED", build_dur)
+            else:
+                report.record_step("CMake Configure", "SKIPPED")
+                report.record_step("Build", "SKIPPED")
 
             # Running tests
-            test_ret, test_dur, test_run = self.run_tests()
-            if not test_run:
+            if self.config.build_only or self.config.audit_only:
                 report.record_step("Unit Tests", "SKIPPED")
-            elif test_ret != EXIT_SUCCESSFUL:
-                report.record_step("Unit Tests", "FAILED", test_dur)
-                exit_code = EXIT_FAILED_UNIT_TESTS
-                return exit_code
-            else:
-                report.record_step("Unit Tests", "PASSED", test_dur)
-
-            # Running Python tests
-            py_test_ret, py_test_dur, py_test_run = self.run_python_tests()
-            if not py_test_run:
                 report.record_step("Python Tests", "SKIPPED")
-            elif py_test_ret != EXIT_SUCCESSFUL:
-                report.record_step("Python Tests", "FAILED", py_test_dur)
-                exit_code = EXIT_FAILED_PYTHON_TESTS
-                return exit_code
             else:
-                report.record_step("Python Tests", "PASSED", py_test_dur)
+                # Running tests
+                test_ret, test_dur, test_run = self.run_tests()
+                if not test_run:
+                    report.record_step("Unit Tests", "SKIPPED")
+                elif test_ret != EXIT_SUCCESSFUL:
+                    report.record_step("Unit Tests", "FAILED", test_dur)
+                    exit_code = EXIT_FAILED_UNIT_TESTS
+                    return exit_code
+                else:
+                    report.record_step("Unit Tests", "PASSED", test_dur)
+
+                # Running Python tests
+                py_test_ret, py_test_dur, py_test_run = self.run_python_tests()
+                if not py_test_run:
+                    report.record_step("Python Tests", "SKIPPED")
+                elif py_test_ret != EXIT_SUCCESSFUL:
+                    report.record_step("Python Tests", "FAILED", py_test_dur)
+                    exit_code = EXIT_FAILED_PYTHON_TESTS
+                    return exit_code
+                else:
+                    report.record_step("Python Tests", "PASSED", py_test_dur)
 
             # Localization audit
-            audit_ret, audit_dur, audit_run = self.run_localization_audit()
-            if not audit_run:
+            if self.config.build_only or self.config.test_only:
                 report.record_step("Localization Audit", "SKIPPED")
-            elif audit_ret != EXIT_SUCCESSFUL:
-                report.record_step("Localization Audit", "FAILED", audit_dur)
-                exit_code = EXIT_LOCALIZATION_AUDIT
-                return exit_code
             else:
-                report.record_step("Localization Audit", "PASSED", audit_dur)
+                audit_ret, audit_dur, audit_run = self.run_localization_audit()
+                if not audit_run:
+                    report.record_step("Localization Audit", "SKIPPED")
+                elif audit_ret != EXIT_SUCCESSFUL:
+                    report.record_step("Localization Audit", "FAILED", audit_dur)
+                    exit_code = EXIT_LOCALIZATION_AUDIT
+                    return exit_code
+                else:
+                    report.record_step("Localization Audit", "PASSED", audit_dur)
 
             # Update autocomplete
-            auto_ret, auto_dur, auto_run = self.run_update_autocomplete()
-            if not auto_run:
+            if self.config.build_only or self.config.test_only or self.config.audit_only:
                 report.record_step("Update Autocomplete", "SKIPPED")
-            elif auto_ret != EXIT_SUCCESSFUL:
-                report.record_step("Update Autocomplete", "FAILED", auto_dur)
-                exit_code = EXIT_FAILED_AUTOCOMPLETE
-                return exit_code
             else:
-                report.record_step("Update Autocomplete", "PASSED", auto_dur)
+                auto_ret, auto_dur, auto_run = self.run_update_autocomplete()
+                if not auto_run:
+                    report.record_step("Update Autocomplete", "SKIPPED")
+                elif auto_ret != EXIT_SUCCESSFUL:
+                    report.record_step("Update Autocomplete", "FAILED", auto_dur)
+                    exit_code = EXIT_FAILED_AUTOCOMPLETE
+                    return exit_code
+                else:
+                    report.record_step("Update Autocomplete", "PASSED", auto_dur)
 
             return EXIT_SUCCESSFUL
         finally:
@@ -847,6 +913,9 @@ class PresetBuilder(Builder):
             audit=self.config.audit,
             bulk_build=self.config.bulk_build,
             list_presets=self.config.list_presets,
+            build_only=self.config.build_only,
+            test_only=self.config.test_only,
+            audit_only=self.config.audit_only,
             extra_cmake_args=self.config.extra_cmake_args,
         )
         return EXIT_SUCCESSFUL, duration

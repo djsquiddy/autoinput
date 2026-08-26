@@ -26,14 +26,17 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Install Python test dependencies
+        run: python -m pip install --upgrade pip pytest
+
       - name: Set up Ninja
         uses: ashutoshvarma/setup-ninja@master
 
-      - name: Configure CMake
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DAUTOINPUT_BUILD_TESTS=ON -DAUTOINPUT_BUILD_TRAY=ON -DAUTOINPUT_BUILD_UI=ON
-
       - name: Build
-        run: cmake --build build --config Release
+        run: python scripts/commands/build.py --clean --build-only all Release
 
       - name: Test
-        run: ctest --test-dir build --output-on-failure -C Release
+        run: python scripts/commands/build.py --test-only all Release
+
+      - name: Audit
+        run: python scripts/commands/build.py --audit-only all Release
