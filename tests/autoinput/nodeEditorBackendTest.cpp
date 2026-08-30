@@ -70,6 +70,11 @@ TEST_F(NodeEditorBackendTest, CreateFallbackBackendExplicitly)
     EXPECT_FALSE(caps.supportsLinkCreationQuery);
     EXPECT_FALSE(caps.supportsLinkDeletionQuery);
     EXPECT_FALSE(caps.supportsSelectionQuery);
+    EXPECT_FALSE(caps.supportsGroups);
+    EXPECT_FALSE(caps.supportsComments);
+    EXPECT_FALSE(caps.supportsMinimap);
+    EXPECT_FALSE(caps.supportsZoom);
+    EXPECT_FALSE(caps.supportsMultiSelect);
     EXPECT_EQ(caps.backendName, "Fallback");
     EXPECT_FALSE(caps.description.empty());
 }
@@ -133,6 +138,11 @@ TEST_F(NodeEditorBackendTest, ImnodesBackendCapabilitiesWhenEnabled)
     EXPECT_TRUE(caps.supportsLinkCreationQuery);
     EXPECT_TRUE(caps.supportsLinkDeletionQuery);
     EXPECT_TRUE(caps.supportsSelectionQuery);
+    EXPECT_FALSE(caps.supportsGroups);
+    EXPECT_FALSE(caps.supportsComments);
+    EXPECT_FALSE(caps.supportsMinimap);
+    EXPECT_FALSE(caps.supportsZoom);
+    EXPECT_TRUE(caps.supportsMultiSelect);
     EXPECT_EQ(caps.backendName, "imnodes");
 }
 #endif

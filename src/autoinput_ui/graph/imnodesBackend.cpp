@@ -23,6 +23,11 @@ namespace autoinput::ui::graph
             m_capabilities.supportsLinkCreationQuery = true;
             m_capabilities.supportsLinkDeletionQuery = true;
             m_capabilities.supportsSelectionQuery = true;
+            m_capabilities.supportsGroups = false;
+            m_capabilities.supportsComments = false;
+            m_capabilities.supportsMinimap = false;
+            m_capabilities.supportsZoom = false;
+            m_capabilities.supportsMultiSelect = true;
             m_capabilities.backendName = "imnodes";
             m_capabilities.description = "imnodes immediate-mode node editor backend for Dear ImGui";
         }

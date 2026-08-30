@@ -50,6 +50,11 @@ namespace autoinput::ui::graph
         bool supportsLinkCreationQuery{ false };
         bool supportsLinkDeletionQuery{ false };
         bool supportsSelectionQuery{ false };
+        bool supportsGroups{ false };
+        bool supportsComments{ false };
+        bool supportsMinimap{ false };
+        bool supportsZoom{ false };
+        bool supportsMultiSelect{ false };
         std::string backendName{ "Fallback" };
         std::string description{ "No-op fallback backend (placeholder without active visual editor)" };
     };

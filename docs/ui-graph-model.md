@@ -267,7 +267,7 @@ The abstraction standardizes common visual canvas interactions without exposing 
 - **Links & Topology**: `drawLink(linkId, startPinId, endPinId)`.
 - **User Interaction Queries**: `queryCreatedLink()`, `queryDeletedLink()`, `querySelectedNodes()`, `querySelectedLinks()`.
 - **Coordinate Synchronization**: `setNodePosition(nodeId, pos)`, `getNodePosition(nodeId)`.
-- **Capability Introspection**: `capabilities()` reports supported features and backend description.
+- **Capability Introspection**: `capabilities()` reports `NodeEditorCapabilities` including support for canvas rendering, position queries, link creation/deletion events, selection queries, groups, comments, minimap, zoom, and multi-selection.
 
 ### Fallback Backend (`FallbackNodeEditorBackend`)
 
