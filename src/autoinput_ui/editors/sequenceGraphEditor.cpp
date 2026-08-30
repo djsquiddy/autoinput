@@ -6,8 +6,11 @@
  */
 #include "sequenceGraphEditor.h"
 
+#include <algorithm>
+#include <cstring>
 #include <format>
 #include <string_view>
+#include <unordered_set>
 
 #if __has_include(<imgui.h>)
 #include <imgui.h>
@@ -35,6 +38,7 @@ namespace autoinput::ui::editors
         compileOptions.defaultRepeat = sequence.repeat;
         cachedSequenceEventCount = sequence.events.size();
 
+        clearUndoRedo();
         validateCurrentGraph();
         isGraphSynchronized = true;
         statusMessage = std::format("Graph synchronized with sequence ({} nodes).", graphDocument.nodeCount());
@@ -42,7 +46,9 @@ namespace autoinput::ui::editors
 
     bool SequenceGraphEditorState::validateCurrentGraph()
     {
-        validationResult = graph::validateGraph(graphDocument, graph::ValidationOptions::sequenceGraph());
+        auto opts = graph::ValidationOptions::sequenceGraph();
+        opts.treatDisconnectedAsError = true;
+        validationResult = graph::validateGraph(graphDocument, opts);
         if (validationResult.isValid())
         {
             statusMessage = "Graph validation passed: valid linear sequence topology.";
@@ -89,6 +95,14 @@ namespace autoinput::ui::editors
 
     bool SequenceGraphEditorState::applyToSequence(autoinput::RecordedSequence& targetSequence)
     {
+        if (!validateCurrentGraph())
+        {
+            lastCompilationError =
+                validationResult.issues.empty() ? "Graph validation failed." : validationResult.issues.front().message;
+            statusMessage = std::format("Cannot apply changes: {}", *lastCompilationError);
+            return false;
+        }
+
         auto result = compileGraph(compileOptions.sourceSequence);
         if (result.success && result.sequence.has_value())
         {
@@ -98,6 +112,9 @@ namespace autoinput::ui::editors
             statusMessage = "Graph successfully compiled and applied to sequence.";
             return true;
         }
+
+        lastCompilationError = result.issues.empty() ? "Compilation failed." : result.issues.front().message;
+        statusMessage = std::format("Cannot apply changes: {}", *lastCompilationError);
         return false;
     }
 
@@ -105,6 +122,538 @@ namespace autoinput::ui::editors
         const autoinput::RecordedSequence& sequence) const
     {
         return resolveNodeInspectionDetails(graphDocument, viewerState.selectedNodeId, sequence, validationResult);
+    }
+
+    void SequenceGraphEditorState::selectNode(graph::NodeId nodeId)
+    {
+        viewerState.selectNode(nodeId);
+    }
+
+    void SequenceGraphEditorState::clearSelection()
+    {
+        viewerState.clearSelection();
+    }
+
+    graph::NodeId SequenceGraphEditorState::getSelectedNodeId() const noexcept
+    {
+        return viewerState.selectedNodeId;
+    }
+
+    bool SequenceGraphEditorState::hasSelection() const noexcept
+    {
+        return viewerState.hasSelection();
+    }
+
+    void SequenceGraphEditorState::pushUndoSnapshot()
+    {
+        undoStack.push_back(GraphEditorSnapshot{ .graphDocument = graphDocument,
+                                                 .selectedNodeId = viewerState.selectedNodeId,
+                                                 .statusMessage = statusMessage });
+        if (undoStack.size() > maxUndoSteps)
+        {
+            undoStack.erase(undoStack.begin());
+        }
+        redoStack.clear();
+    }
+
+    bool SequenceGraphEditorState::canUndo() const noexcept
+    {
+        return !undoStack.empty();
+    }
+
+    bool SequenceGraphEditorState::canRedo() const noexcept
+    {
+        return !redoStack.empty();
+    }
+
+    bool SequenceGraphEditorState::undo()
+    {
+        if (!canUndo())
+        {
+            return false;
+        }
+        redoStack.push_back(GraphEditorSnapshot{ .graphDocument = graphDocument,
+                                                 .selectedNodeId = viewerState.selectedNodeId,
+                                                 .statusMessage = statusMessage });
+
+        auto snapshot = std::move(undoStack.back());
+        undoStack.pop_back();
+
+        graphDocument = std::move(snapshot.graphDocument);
+        viewerState.selectedNodeId = snapshot.selectedNodeId;
+        statusMessage = "Undo performed.";
+        validateCurrentGraph();
+        return true;
+    }
+
+    bool SequenceGraphEditorState::redo()
+    {
+        if (!canRedo())
+        {
+            return false;
+        }
+        undoStack.push_back(GraphEditorSnapshot{ .graphDocument = graphDocument,
+                                                 .selectedNodeId = viewerState.selectedNodeId,
+                                                 .statusMessage = statusMessage });
+
+        auto snapshot = std::move(redoStack.back());
+        redoStack.pop_back();
+
+        graphDocument = std::move(snapshot.graphDocument);
+        viewerState.selectedNodeId = snapshot.selectedNodeId;
+        statusMessage = "Redo performed.";
+        validateCurrentGraph();
+        return true;
+    }
+
+    void SequenceGraphEditorState::clearUndoRedo()
+    {
+        undoStack.clear();
+        redoStack.clear();
+    }
+
+    graph::NodeId SequenceGraphEditorState::addEventNode(const autoinput::RecordedEvent& event,
+                                                         std::optional<graph::NodeId> insertAfterNodeId)
+    {
+        pushUndoSnapshot();
+
+        graph::NodeId precedingId = graph::InvalidNodeId;
+        if (insertAfterNodeId.has_value() && graphDocument.findNode(*insertAfterNodeId) != nullptr)
+        {
+            precedingId = *insertAfterNodeId;
+        }
+        else if (viewerState.hasSelection() && graphDocument.findNode(viewerState.selectedNodeId) != nullptr)
+        {
+            const auto* selectedNode = graphDocument.findNode(viewerState.selectedNodeId);
+            if (selectedNode->kind == graph::NodeKind::End)
+            {
+                auto chain = getLinearExecutionNodes(graphDocument);
+                if (chain.size() >= 2)
+                {
+                    precedingId = chain[chain.size() - 2];
+                }
+                else
+                {
+                    precedingId = viewerState.selectedNodeId;
+                }
+            }
+            else
+            {
+                precedingId = viewerState.selectedNodeId;
+            }
+        }
+        else
+        {
+            auto chain = getLinearExecutionNodes(graphDocument);
+            if (chain.size() >= 2)
+            {
+                precedingId = chain[chain.size() - 2];
+            }
+            else if (!chain.empty())
+            {
+                precedingId = chain.front();
+            }
+            else
+            {
+                for (const auto& n : graphDocument.nodes())
+                {
+                    if (n.kind == graph::NodeKind::Start)
+                    {
+                        precedingId = n.id;
+                        break;
+                    }
+                }
+            }
+        }
+
+        graph::NodeKind kind = (event.type == autoinput::RecordedEventType::Invalid) ? graph::NodeKind::Wait
+                                                                                     : graph::NodeKind::RecordedEvent;
+
+        std::string title = graph::formatRecordedEventTitle(event);
+        std::string subtitle = graph::formatRecordedEventSubtitle(event, !adapterOptions.separateWaitNodes);
+
+        auto& newNode = graphDocument.createNode(kind, title);
+        newNode.setDetails(subtitle);
+        graphDocument.createPin(newNode.id, graph::PinDirection::Input, "in");
+        graphDocument.createPin(newNode.id, graph::PinDirection::Output, "out");
+
+        if (precedingId != graph::InvalidNodeId)
+        {
+            const auto* prevOutPin = findPinOfDirection(graphDocument, precedingId, graph::PinDirection::Output);
+            const auto* newInPin = findPinOfDirection(graphDocument, newNode.id, graph::PinDirection::Input);
+            const auto* newOutPin = findPinOfDirection(graphDocument, newNode.id, graph::PinDirection::Output);
+
+            if (prevOutPin != nullptr && newInPin != nullptr && newOutPin != nullptr)
+            {
+                graph::LinkId existingLinkId = graph::InvalidLinkId;
+                graph::PinId oldTargetPinId = graph::InvalidPinId;
+
+                for (const auto& link : graphDocument.links())
+                {
+                    if (link.fromPinId == prevOutPin->id)
+                    {
+                        existingLinkId = link.id;
+                        oldTargetPinId = link.toPinId;
+                        break;
+                    }
+                }
+
+                if (existingLinkId != graph::InvalidLinkId)
+                {
+                    graphDocument.removeLink(existingLinkId);
+                    graphDocument.createLink(prevOutPin->id, newInPin->id);
+                    graphDocument.createLink(newOutPin->id, oldTargetPinId);
+                }
+                else
+                {
+                    graphDocument.createLink(prevOutPin->id, newInPin->id);
+                    for (const auto& n : graphDocument.nodes())
+                    {
+                        if (n.kind == graph::NodeKind::End)
+                        {
+                            const auto* endInPin = findPinOfDirection(graphDocument, n.id, graph::PinDirection::Input);
+                            if (endInPin != nullptr)
+                            {
+                                graphDocument.createLink(newOutPin->id, endInPin->id);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        autoLayout();
+        viewerState.selectNode(newNode.id);
+        validateCurrentGraph();
+        statusMessage = std::format("Added node '{}' (ID #{}).", newNode.title, newNode.id);
+        return newNode.id;
+    }
+
+    graph::NodeId SequenceGraphEditorState::addWaitNode(std::string_view delay,
+                                                        std::optional<graph::NodeId> insertAfterNodeId)
+    {
+        autoinput::RecordedEvent waitEv{ .type = autoinput::RecordedEventType::Invalid, .delay = std::string(delay) };
+        return addEventNode(waitEv, insertAfterNodeId);
+    }
+
+    bool SequenceGraphEditorState::deleteNode(graph::NodeId nodeId, bool reconnectChain)
+    {
+        const auto* node = graphDocument.findNode(nodeId);
+        if (node == nullptr)
+        {
+            return false;
+        }
+        if (node->kind == graph::NodeKind::Start || node->kind == graph::NodeKind::End)
+        {
+            statusMessage = "Cannot delete required Start or End node.";
+            return false;
+        }
+
+        pushUndoSnapshot();
+
+        if (reconnectChain)
+        {
+            graph::PinId prevOutPinId = graph::InvalidPinId;
+            graph::PinId nextInPinId = graph::InvalidPinId;
+
+            for (graph::PinId pinId : node->pinIds)
+            {
+                const auto* pin = graphDocument.findPin(pinId);
+                if (pin == nullptr)
+                {
+                    continue;
+                }
+                if (pin->direction == graph::PinDirection::Input)
+                {
+                    for (const auto& link : graphDocument.links())
+                    {
+                        if (link.toPinId == pin->id)
+                        {
+                            prevOutPinId = link.fromPinId;
+                            break;
+                        }
+                    }
+                }
+                else if (pin->direction == graph::PinDirection::Output)
+                {
+                    for (const auto& link : graphDocument.links())
+                    {
+                        if (link.fromPinId == pin->id)
+                        {
+                            nextInPinId = link.toPinId;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            graphDocument.removeNode(nodeId);
+
+            if (prevOutPinId != graph::InvalidPinId && nextInPinId != graph::InvalidPinId)
+            {
+                graphDocument.createLink(prevOutPinId, nextInPinId);
+            }
+        }
+        else
+        {
+            graphDocument.removeNode(nodeId);
+        }
+
+        if (viewerState.selectedNodeId == nodeId)
+        {
+            viewerState.clearSelection();
+        }
+
+        autoLayout();
+        validateCurrentGraph();
+        statusMessage = std::format("Deleted node #{} from graph.", nodeId);
+        return true;
+    }
+
+    bool SequenceGraphEditorState::deleteSelectedNode(bool reconnectChain)
+    {
+        if (!viewerState.hasSelection())
+        {
+            return false;
+        }
+        return deleteNode(viewerState.selectedNodeId, reconnectChain);
+    }
+
+    bool SequenceGraphEditorState::updateNodeEvent(graph::NodeId nodeId, const autoinput::RecordedEvent& event)
+    {
+        auto* node = graphDocument.findNode(nodeId);
+        if (node == nullptr || node->kind == graph::NodeKind::Start || node->kind == graph::NodeKind::End)
+        {
+            return false;
+        }
+
+        pushUndoSnapshot();
+
+        node->kind = (event.type == autoinput::RecordedEventType::Invalid) ? graph::NodeKind::Wait
+                                                                           : graph::NodeKind::RecordedEvent;
+        node->title = graph::formatRecordedEventTitle(event);
+        node->subtitle = graph::formatRecordedEventSubtitle(event, !adapterOptions.separateWaitNodes);
+        node->sourceIndex = std::nullopt;
+
+        validateCurrentGraph();
+        statusMessage = std::format("Updated node #{} event parameters.", nodeId);
+        return true;
+    }
+
+    bool SequenceGraphEditorState::updateNodeDelay(graph::NodeId nodeId, std::string_view newDelay)
+    {
+        const auto* node = graphDocument.findNode(nodeId);
+        if (node == nullptr || node->kind == graph::NodeKind::Start || node->kind == graph::NodeKind::End)
+        {
+            return false;
+        }
+
+        auto event = graph::parseRecordedEventFromNode(*node);
+        event.delay = std::string(newDelay);
+        return updateNodeEvent(nodeId, event);
+    }
+
+    bool SequenceGraphEditorState::moveNodeUp(graph::NodeId nodeId)
+    {
+        const auto* node = graphDocument.findNode(nodeId);
+        if (node == nullptr || node->kind == graph::NodeKind::Start || node->kind == graph::NodeKind::End)
+        {
+            return false;
+        }
+
+        auto chain = getLinearExecutionNodes(graphDocument);
+        auto it = std::find(chain.begin(), chain.end(), nodeId);
+        if (it == chain.end() || it == chain.begin() || it == chain.begin() + 1)
+        {
+            return false;
+        }
+
+        pushUndoSnapshot();
+
+        auto idx = static_cast<std::size_t>(std::distance(chain.begin(), it));
+        std::swap(chain[idx], chain[idx - 1]);
+
+        auto allLinks = graphDocument.links();
+        for (const auto& link : allLinks)
+        {
+            graphDocument.removeLink(link.id);
+        }
+
+        for (std::size_t i = 0; i + 1 < chain.size(); ++i)
+        {
+            const auto* outPin = findPinOfDirection(graphDocument, chain[i], graph::PinDirection::Output);
+            const auto* inPin = findPinOfDirection(graphDocument, chain[i + 1], graph::PinDirection::Input);
+            if (outPin != nullptr && inPin != nullptr)
+            {
+                graphDocument.createLink(outPin->id, inPin->id);
+            }
+        }
+
+        autoLayout();
+        validateCurrentGraph();
+        statusMessage = std::format("Moved node #{} up.", nodeId);
+        return true;
+    }
+
+    bool SequenceGraphEditorState::moveNodeDown(graph::NodeId nodeId)
+    {
+        const auto* node = graphDocument.findNode(nodeId);
+        if (node == nullptr || node->kind == graph::NodeKind::Start || node->kind == graph::NodeKind::End)
+        {
+            return false;
+        }
+
+        auto chain = getLinearExecutionNodes(graphDocument);
+        auto it = std::find(chain.begin(), chain.end(), nodeId);
+        if (it == chain.end() || it + 1 >= chain.end() || *(it + 1) == chain.back())
+        {
+            return false;
+        }
+
+        pushUndoSnapshot();
+
+        auto idx = static_cast<std::size_t>(std::distance(chain.begin(), it));
+        std::swap(chain[idx], chain[idx + 1]);
+
+        auto allLinks = graphDocument.links();
+        for (const auto& link : allLinks)
+        {
+            graphDocument.removeLink(link.id);
+        }
+
+        for (std::size_t i = 0; i + 1 < chain.size(); ++i)
+        {
+            const auto* outPin = findPinOfDirection(graphDocument, chain[i], graph::PinDirection::Output);
+            const auto* inPin = findPinOfDirection(graphDocument, chain[i + 1], graph::PinDirection::Input);
+            if (outPin != nullptr && inPin != nullptr)
+            {
+                graphDocument.createLink(outPin->id, inPin->id);
+            }
+        }
+
+        autoLayout();
+        validateCurrentGraph();
+        statusMessage = std::format("Moved node #{} down.", nodeId);
+        return true;
+    }
+
+    bool SequenceGraphEditorState::reconnectLinearChain()
+    {
+        const graph::GraphNode* startNode = nullptr;
+        const graph::GraphNode* endNode = nullptr;
+        std::vector<const graph::GraphNode*> eventNodes;
+
+        for (const auto& n : graphDocument.nodes())
+        {
+            if (n.kind == graph::NodeKind::Start && startNode == nullptr)
+            {
+                startNode = &n;
+            }
+            else if (n.kind == graph::NodeKind::End && endNode == nullptr)
+            {
+                endNode = &n;
+            }
+            else if (n.kind != graph::NodeKind::Start && n.kind != graph::NodeKind::End)
+            {
+                eventNodes.push_back(&n);
+            }
+        }
+
+        if (startNode == nullptr || endNode == nullptr)
+        {
+            statusMessage = "Cannot reconnect linear chain: missing Start or End node.";
+            return false;
+        }
+
+        pushUndoSnapshot();
+
+        std::sort(eventNodes.begin(), eventNodes.end(),
+                  [](const graph::GraphNode* a, const graph::GraphNode* b)
+                  {
+                      if (a->position.x != b->position.x)
+                      {
+                          return a->position.x < b->position.x;
+                      }
+                      return a->id < b->id;
+                  });
+
+        auto allLinks = graphDocument.links();
+        for (const auto& link : allLinks)
+        {
+            graphDocument.removeLink(link.id);
+        }
+
+        std::vector<graph::NodeId> order;
+        order.push_back(startNode->id);
+        for (const auto* evNode : eventNodes)
+        {
+            order.push_back(evNode->id);
+        }
+        order.push_back(endNode->id);
+
+        for (std::size_t i = 0; i + 1 < order.size(); ++i)
+        {
+            const auto* outPin = findPinOfDirection(graphDocument, order[i], graph::PinDirection::Output);
+            const auto* inPin = findPinOfDirection(graphDocument, order[i + 1], graph::PinDirection::Input);
+            if (outPin != nullptr && inPin != nullptr)
+            {
+                graphDocument.createLink(outPin->id, inPin->id);
+            }
+        }
+
+        autoLayout();
+        validateCurrentGraph();
+        statusMessage = "Reconnected linear sequence chain.";
+        return true;
+    }
+
+    bool SequenceGraphEditorState::connectNodes(graph::NodeId sourceNodeId, graph::NodeId targetNodeId)
+    {
+        const auto* outPin = findPinOfDirection(graphDocument, sourceNodeId, graph::PinDirection::Output);
+        const auto* inPin = findPinOfDirection(graphDocument, targetNodeId, graph::PinDirection::Input);
+        if (outPin == nullptr || inPin == nullptr)
+        {
+            return false;
+        }
+
+        pushUndoSnapshot();
+        graphDocument.createLink(outPin->id, inPin->id);
+        validateCurrentGraph();
+        statusMessage = std::format("Connected node #{} to node #{}.", sourceNodeId, targetNodeId);
+        return true;
+    }
+
+    void SequenceGraphEditorState::autoLayout(float startX, float startY, float stepX, float stepY)
+    {
+        auto chain = getLinearExecutionNodes(graphDocument);
+        std::unordered_set<graph::NodeId> positioned;
+
+        float curX = startX;
+        float curY = startY;
+
+        for (graph::NodeId id : chain)
+        {
+            auto* node = graphDocument.findNode(id);
+            if (node != nullptr)
+            {
+                node->position = graph::NodePosition{ .x = curX, .y = curY };
+                positioned.insert(id);
+                curX += stepX;
+                curY += stepY;
+            }
+        }
+
+        float offX = startX;
+        float offY = startY + 150.0F;
+        for (auto& node : graphDocument.nodes())
+        {
+            if (!positioned.contains(node.id))
+            {
+                node.position = graph::NodePosition{ .x = offX, .y = offY };
+                offX += stepX;
+            }
+        }
     }
 
     std::optional<SelectedNodeInspectionDetails> resolveNodeInspectionDetails(
@@ -129,9 +678,87 @@ namespace autoinput::ui::editors
             details.hasAssociatedEvent = true;
             details.associatedEvent = sequence.events[*details.sourceIndex];
         }
+        else if (node->kind == graph::NodeKind::RecordedEvent || node->kind == graph::NodeKind::Wait)
+        {
+            details.hasAssociatedEvent = true;
+            details.associatedEvent = graph::parseRecordedEventFromNode(*node);
+        }
 
         details.validationIssues = graph::getNodeValidationIssues(validationResult, nodeId);
         return details;
+    }
+
+    const graph::GraphPin* findPinOfDirection(const graph::GraphDocument& doc, graph::NodeId nodeId,
+                                              graph::PinDirection direction)
+    {
+        const auto* node = doc.findNode(nodeId);
+        if (node == nullptr)
+        {
+            return nullptr;
+        }
+        for (graph::PinId pinId : node->pinIds)
+        {
+            const auto* pin = doc.findPin(pinId);
+            if (pin != nullptr && pin->direction == direction)
+            {
+                return pin;
+            }
+        }
+        return nullptr;
+    }
+
+    std::vector<graph::NodeId> getLinearExecutionNodes(const graph::GraphDocument& doc)
+    {
+        std::vector<graph::NodeId> result;
+        const graph::GraphNode* startNode = nullptr;
+        for (const auto& node : doc.nodes())
+        {
+            if (node.kind == graph::NodeKind::Start)
+            {
+                startNode = &node;
+                break;
+            }
+        }
+        if (startNode == nullptr)
+        {
+            return result;
+        }
+
+        std::unordered_set<graph::NodeId> visited;
+        const graph::GraphNode* current = startNode;
+        result.push_back(current->id);
+        visited.insert(current->id);
+
+        while (current != nullptr && current->kind != graph::NodeKind::End)
+        {
+            const graph::GraphLink* nextLink = nullptr;
+            for (const auto& link : doc.links())
+            {
+                if (doc.pinBelongsToNode(link.fromPinId, current->id))
+                {
+                    nextLink = &link;
+                    break;
+                }
+            }
+            if (nextLink == nullptr)
+            {
+                break;
+            }
+            const auto* toPin = doc.findPin(nextLink->toPinId);
+            if (toPin == nullptr)
+            {
+                break;
+            }
+            const auto* nextNode = doc.findNode(toPin->nodeId);
+            if (nextNode == nullptr || visited.contains(nextNode->id))
+            {
+                break;
+            }
+            visited.insert(nextNode->id);
+            result.push_back(nextNode->id);
+            current = nextNode;
+        }
+        return result;
     }
 
     std::string formatEventFieldsSummary(const autoinput::RecordedEvent& event)
@@ -162,6 +789,90 @@ namespace autoinput::ui::editors
         void renderToolbar(autoinput::RecordedSequence& sequence, SequenceGraphEditorState& state, bool& modified)
         {
             ImGui::BeginGroup();
+
+            if (ImGui::Button("Undo"))
+            {
+                state.undo();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Redo"))
+            {
+                state.redo();
+            }
+            ImGui::SameLine();
+            ImGui::TextDisabled("|");
+            ImGui::SameLine();
+
+            if (ImGui::Button("+ Key"))
+            {
+                autoinput::RecordedEvent keyEv{ .type = autoinput::RecordedEventType::KeyDown,
+                                                .delay = "10ms",
+                                                .key = "space" };
+                state.addEventNode(keyEv);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("+ Mouse"))
+            {
+                autoinput::RecordedEvent mouseEv{ .type = autoinput::RecordedEventType::MouseDown,
+                                                  .delay = "10ms",
+                                                  .button = "left" };
+                state.addEventNode(mouseEv);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("+ Delay"))
+            {
+                state.addWaitNode("50ms");
+            }
+            ImGui::SameLine();
+            ImGui::TextDisabled("|");
+            ImGui::SameLine();
+
+            const bool canDelete = state.viewerState.hasSelection();
+            if (!canDelete)
+            {
+                ImGui::BeginDisabled();
+            }
+            if (ImGui::Button("Delete Node"))
+            {
+                state.deleteSelectedNode(true);
+            }
+            if (!canDelete)
+            {
+                ImGui::EndDisabled();
+            }
+
+            ImGui::SameLine();
+            if (ImGui::Button("Move Up"))
+            {
+                if (state.viewerState.hasSelection())
+                {
+                    state.moveNodeUp(state.viewerState.selectedNodeId);
+                }
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Move Down"))
+            {
+                if (state.viewerState.hasSelection())
+                {
+                    state.moveNodeDown(state.viewerState.selectedNodeId);
+                }
+            }
+
+            ImGui::SameLine();
+            if (ImGui::Button("Reconnect"))
+            {
+                state.reconnectLinearChain();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Auto Layout"))
+            {
+                state.autoLayout();
+            }
+
+            ImGui::SameLine();
+            ImGui::TextDisabled("|");
+            ImGui::SameLine();
+
             if (ImGui::Button("Rebuild Graph"))
             {
                 state.rebuildFromSequence(sequence);
@@ -173,32 +884,12 @@ namespace autoinput::ui::editors
             }
             ImGui::SameLine();
 
-            if (state.isEditingAllowed)
+            if (ImGui::Button("Apply to Sequence"))
             {
-                if (ImGui::Button("Apply to Sequence"))
+                if (state.applyToSequence(sequence))
                 {
-                    if (state.applyToSequence(sequence))
-                    {
-                        modified = true;
-                    }
+                    modified = true;
                 }
-            }
-            else
-            {
-                ImGui::BeginDisabled();
-                ImGui::Button("Apply to Sequence");
-                ImGui::EndDisabled();
-                if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                {
-                    ImGui::SetTooltip(
-                        "Graph editing is currently in safe inspection mode. Edit sequence in the Steps Table.");
-                }
-            }
-
-            ImGui::SameLine();
-            if (ImGui::Checkbox("Separate Wait Nodes", &state.adapterOptions.separateWaitNodes))
-            {
-                state.rebuildFromSequence(sequence);
             }
 
             ImGui::SameLine();
@@ -228,7 +919,7 @@ namespace autoinput::ui::editors
             ImGui::EndGroup();
         }
 
-        void renderInspectorPanel(const autoinput::RecordedSequence& sequence, const SequenceGraphEditorState& state)
+        void renderInspectorPanel(const autoinput::RecordedSequence& sequence, SequenceGraphEditorState& state)
         {
             ImGui::TextUnformatted("Selected Node Inspector");
             ImGui::Separator();
@@ -258,45 +949,133 @@ namespace autoinput::ui::editors
                 ImGui::TextUnformatted(detailsText.c_str());
             }
 
-            if (details->sourceIndex.has_value())
+            if (details->kind == graph::NodeKind::RecordedEvent || details->kind == graph::NodeKind::Wait)
             {
                 ImGui::Spacing();
-                ImGui::SeparatorText("Recorded Event Mapping");
-                const std::string sourceIdxText = std::format("Source Index: Event #{}", *details->sourceIndex);
-                ImGui::BulletText("%s", sourceIdxText.c_str());
+                ImGui::SeparatorText("Node Parameters");
 
-                if (details->hasAssociatedEvent)
+                auto ev = details->associatedEvent;
+                bool evChanged = false;
+
+                // Event Type Combo
+                const char* typeNames[] = { "KeyDown", "KeyUp", "MouseDown", "MouseUp", "MouseMove", "Delay/Wait" };
+                int currentTypeIdx = 5;
+                if (ev.type == autoinput::RecordedEventType::KeyDown)
                 {
-                    const auto& ev = details->associatedEvent;
-                    const std::string summaryText = std::format("Event Summary: {}", formatEventFieldsSummary(ev));
-                    const std::string delayText = std::format("Delay: {}", ev.delay);
-                    ImGui::BulletText("%s", summaryText.c_str());
-                    ImGui::BulletText("%s", delayText.c_str());
+                    currentTypeIdx = 0;
+                }
+                else if (ev.type == autoinput::RecordedEventType::KeyUp)
+                {
+                    currentTypeIdx = 1;
+                }
+                else if (ev.type == autoinput::RecordedEventType::MouseDown)
+                {
+                    currentTypeIdx = 2;
+                }
+                else if (ev.type == autoinput::RecordedEventType::MouseUp)
+                {
+                    currentTypeIdx = 3;
+                }
+                else if (ev.type == autoinput::RecordedEventType::MouseMove)
+                {
+                    currentTypeIdx = 4;
+                }
 
+                if (ImGui::Combo("Event Type", &currentTypeIdx, typeNames, 6))
+                {
+                    switch (currentTypeIdx)
+                    {
+                    case 0: ev.type = autoinput::RecordedEventType::KeyDown; break;
+                    case 1: ev.type = autoinput::RecordedEventType::KeyUp; break;
+                    case 2: ev.type = autoinput::RecordedEventType::MouseDown; break;
+                    case 3: ev.type = autoinput::RecordedEventType::MouseUp; break;
+                    case 4: ev.type = autoinput::RecordedEventType::MouseMove; break;
+                    case 5:
+                    default: ev.type = autoinput::RecordedEventType::Invalid; break;
+                    }
+                    evChanged = true;
+                }
+
+                // Delay input
+                char delayBuf[64]{};
+                std::strncpy(delayBuf, ev.delay.c_str(), sizeof(delayBuf) - 1);
+                if (ImGui::InputText("Delay", delayBuf, sizeof(delayBuf)))
+                {
+                    ev.delay = delayBuf;
+                    evChanged = true;
+                }
+
+                // Key input for KeyDown / KeyUp
+                if (ev.type == autoinput::RecordedEventType::KeyDown || ev.type == autoinput::RecordedEventType::KeyUp)
+                {
+                    char keyBuf[64]{};
                     if (ev.key.has_value())
                     {
-                        const std::string keyText = std::format("Key: \"{}\"", *ev.key);
-                        ImGui::BulletText("%s", keyText.c_str());
+                        std::strncpy(keyBuf, ev.key->c_str(), sizeof(keyBuf) - 1);
                     }
-                    if (ev.button.has_value())
+                    if (ImGui::InputText("Key", keyBuf, sizeof(keyBuf)))
                     {
-                        const std::string btnText = std::format("Mouse Button: \"{}\"", *ev.button);
-                        ImGui::BulletText("%s", btnText.c_str());
-                    }
-                    if (ev.x.has_value() || ev.y.has_value())
-                    {
-                        const std::string posText =
-                            std::format("Position: ({}, {})", ev.x.value_or(0), ev.y.value_or(0));
-                        ImGui::BulletText("%s", posText.c_str());
+                        ev.key = std::string(keyBuf);
+                        evChanged = true;
                     }
                 }
-                else
+
+                // Button input for MouseDown / MouseUp
+                if (ev.type == autoinput::RecordedEventType::MouseDown ||
+                    ev.type == autoinput::RecordedEventType::MouseUp)
                 {
-                    ImGui::TextDisabled("Source event index points outside current sequence events.");
+                    const char* btnNames[] = { "left", "right", "middle" };
+                    int btnIdx = 0;
+                    if (ev.button.has_value())
+                    {
+                        if (*ev.button == "right")
+                        {
+                            btnIdx = 1;
+                        }
+                        else if (*ev.button == "middle")
+                        {
+                            btnIdx = 2;
+                        }
+                    }
+                    if (ImGui::Combo("Button", &btnIdx, btnNames, 3))
+                    {
+                        ev.button = btnNames[btnIdx];
+                        evChanged = true;
+                    }
+                }
+
+                // Coordinates for MouseMove
+                if (ev.type == autoinput::RecordedEventType::MouseMove)
+                {
+                    int pos[2] = { ev.x.value_or(0), ev.y.value_or(0) };
+                    if (ImGui::InputInt2("Position (X, Y)", pos))
+                    {
+                        ev.x = pos[0];
+                        ev.y = pos[1];
+                        evChanged = true;
+                    }
+                }
+
+                if (evChanged)
+                {
+                    state.updateNodeEvent(details->nodeId, ev);
                 }
 
                 ImGui::Spacing();
-                ImGui::TextDisabled("Safe inspection mode: use Steps Table to modify parameters.");
+                if (ImGui::Button("Delete Node"))
+                {
+                    state.deleteNode(details->nodeId, true);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Move Up"))
+                {
+                    state.moveNodeUp(details->nodeId);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Move Down"))
+                {
+                    state.moveNodeDown(details->nodeId);
+                }
             }
 
             if (!details->validationIssues.empty())
@@ -328,34 +1107,46 @@ namespace autoinput::ui::editors
             ImGui::TextUnformatted("Graph Validation");
             if (state.validationResult.isValid())
             {
-                ImGui::TextColored(ImVec4(0.2F, 0.85F, 0.3F, 1.0F), "Topology Valid");
-                const std::string flowText =
-                    std::format("Linear flow: Start -> {} event(s) -> End", sequence.events.size());
-                ImGui::TextDisabled("%s", flowText.c_str());
+                ImGui::TextColored(ImVec4(0.3F, 0.9F, 0.3F, 1.0F), "Graph topology is valid linear sequence.");
+                if (state.validationResult.hasWarnings())
+                {
+                    ImGui::TextColored(ImVec4(0.95F, 0.8F, 0.2F, 1.0F), "%zu warning(s) present.",
+                                       state.validationResult.warningCount());
+                }
             }
             else
             {
-                ImGui::TextColored(ImVec4(0.95F, 0.3F, 0.3F, 1.0F), "Issues Detected (%zu)",
-                                   state.validationResult.issues.size());
+                ImGui::TextColored(ImVec4(0.95F, 0.3F, 0.3F, 1.0F), "Validation failed: %zu error(s).",
+                                   state.validationResult.errorCount());
+            }
 
-                for (std::size_t i = 0; i < state.validationResult.issues.size(); ++i)
+            if (state.lastCompilationError.has_value())
+            {
+                ImGui::Spacing();
+                ImGui::TextColored(ImVec4(0.95F, 0.2F, 0.2F, 1.0F), "Compilation Error: %s",
+                                   state.lastCompilationError->c_str());
+            }
+
+            if (!state.validationResult.issues.empty())
+            {
+                ImGui::Spacing();
+                ImGui::BeginChild("ValidationIssuesList", ImVec2(0, 100.0F), true);
+                for (const auto& issue : state.validationResult.issues)
                 {
-                    const auto& issue = state.validationResult.issues[i];
                     const std::string issueText =
                         std::format("[{}] {}", graph::validationSeverityToString(issue.severity), issue.message);
-
-                    ImGui::BulletText("%s", issueText.c_str());
-
                     if (issue.nodeId.has_value())
                     {
-                        ImGui::SameLine();
-                        const std::string btnLabel = std::format("Select #{}##issue_{}", *issue.nodeId, i);
-                        if (ImGui::SmallButton(btnLabel.c_str()))
+                        const std::string buttonLabel = std::format("Select #{}", *issue.nodeId);
+                        if (ImGui::SmallButton(buttonLabel.c_str()))
                         {
                             state.viewerState.selectNode(*issue.nodeId);
                         }
+                        ImGui::SameLine();
                     }
+                    ImGui::TextUnformatted(issueText.c_str());
                 }
+                ImGui::EndChild();
             }
         }
     } // namespace
@@ -364,49 +1155,51 @@ namespace autoinput::ui::editors
     bool renderSequenceGraphEditor(autoinput::RecordedSequence& sequence, SequenceGraphEditorState& state,
                                    const char* editorId)
     {
-#ifdef AUTOINPUT_UI_INTERNAL_HAS_IMGUI
-        if (ImGui::GetCurrentContext() == nullptr)
-        {
-            return false;
-        }
-
         state.syncWithSequence(sequence);
 
-        bool modified = false;
+        bool sequenceModified = false;
+
+#ifdef AUTOINPUT_UI_INTERNAL_HAS_IMGUI
         ImGui::PushID(editorId);
 
-        renderToolbar(sequence, state, modified);
+        renderToolbar(sequence, state, sequenceModified);
         ImGui::Separator();
 
-        const float availableWidth = ImGui::GetContentRegionAvail().x;
-        const float leftPanelWidth = (availableWidth > 500.0F) ? (availableWidth * 0.62F) : availableWidth;
+        float inspectorWidth = 320.0F;
+        float availWidth = ImGui::GetContentRegionAvail().x;
+        float mainViewerWidth = (availWidth > inspectorWidth + 100.0F) ? (availWidth - inspectorWidth - 10.0F) : 0.0F;
 
-        // Left Panel: Fallback Graph Viewer
-        ImGui::BeginChild("GraphViewerArea", ImVec2(leftPanelWidth, 0), true);
-        graph::renderFallbackGraphViewer(state.graphDocument, state.validationResult, state.viewerState,
-                                         "SeqGraphViewer");
-        ImGui::EndChild();
-
-        // Right Panel: Inspector & Validation Side Panel
-        if (availableWidth > 500.0F)
+        if (mainViewerWidth > 0.0F)
         {
+            ImGui::BeginChild("MainGraphViewerRegion", ImVec2(mainViewerWidth, 0), false);
+            graph::renderFallbackGraphViewer(state.graphDocument, state.validationResult, state.viewerState,
+                                             "SequenceGraphCanvas");
+            ImGui::EndChild();
+
             ImGui::SameLine();
-            ImGui::BeginChild("GraphInspectorSideArea", ImVec2(0, 0), true);
+
+            ImGui::BeginChild("SideInspectorRegion", ImVec2(inspectorWidth, 0), true);
             renderInspectorPanel(sequence, state);
             ImGui::Spacing();
             ImGui::Separator();
+            ImGui::Spacing();
             renderValidationPanel(sequence, state);
             ImGui::EndChild();
         }
+        else
+        {
+            graph::renderFallbackGraphViewer(state.graphDocument, state.validationResult, state.viewerState,
+                                             "SequenceGraphCanvas");
+            ImGui::Separator();
+            renderInspectorPanel(sequence, state);
+            ImGui::Separator();
+            renderValidationPanel(sequence, state);
+        }
 
         ImGui::PopID();
-        return modified;
-#else
-        (void)sequence;
-        (void)state;
-        (void)editorId;
-        return false;
 #endif
+
+        return sequenceModified;
     }
 
 } // namespace autoinput::ui::editors

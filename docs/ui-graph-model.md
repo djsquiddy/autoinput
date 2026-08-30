@@ -337,28 +337,34 @@ renderFallbackGraphViewer(doc, viewerState);
 
 ## Sequence Graph Viewer / Editor UI (`SequenceGraphEditor`)
 
-The Sequence Graph Editor (`autoinput_ui/editors/sequenceGraphEditor.h`) provides a high-level UI component and non-UI state controller exposing sequence-to-graph conversion directly within the AutoInput UI.
+The Sequence Graph Editor (`autoinput_ui/editors/sequenceGraphEditor.h`) provides an interactive UI component and non-UI state controller exposing visual sequence inspection, linear graph editing, validation, and safe sequence compilation directly within the AutoInput UI.
 
 ### Key Capabilities & Workflow
 
-- **Sequence Visualization**:
+- **Sequence Visualization & Synchronization**:
   - Automatically converts active `RecordedSequence` data into a linear `GraphDocument` representation (`Start -> RecordedEvent / Wait -> End`).
   - Integrated into `SequenceEditorWindow` with a tabbed interface allowing instant switching between the tabular `Steps Table` and the `Visual Graph`.
-- **Toolbar & Controls**:
-  - **Rebuild Graph**: Re-synchronizes and reconstructs the graph document from the latest sequence events.
-  - **Validate**: Executes sequence topology validation rules (`ValidationOptions::sequenceGraph()`) and displays status feedback.
-  - **Apply to Sequence / Compile**: Compiles the graph back into the target `RecordedSequence` using topological sorting and source mapping.
-  - **Separate Wait Nodes**: Toggles explicit decomposition of non-zero event delays into standalone `Wait` nodes.
-  - **View Mode Switching**: Quickly switches between `Split`, `List`, and `Canvas` layout modes.
+- **Safe Linear Graph Editing Operations**:
+  - **Adding Recorded Event Nodes**: Insert new key events, mouse events, or dedicated wait/delay nodes (`addEventNode`, `addWaitNode`). Inserts nodes directly into the linear chain between predecessor and successor nodes.
+  - **Deleting Event Nodes**: Safely remove event nodes (`deleteNode`, `deleteSelectedNode`) while protecting mandatory `Start` and `End` nodes. Automatically reconnects predecessor directly to successor.
+  - **Editing Event Parameters**: Modify event types, key strings, mouse buttons, coordinates, and delay durations directly in the Selected Node Inspector panel (`updateNodeEvent`, `updateNodeDelay`).
+  - **Reordering Events**: Move nodes earlier or later in execution order (`moveNodeUp`, `moveNodeDown`), automatically rewiring graph links to reflect new topological order.
+  - **Linear Chain Reconnection**: Cleanly repairs broken, disconnected, or missing links across the sequence with a single click (`reconnectLinearChain`).
+  - **Auto Layout**: Automatically arranges nodes with uniform spacing from Start to End (`autoLayout`).
+- **Snapshot-Based Undo / Redo**:
+  - Maintains an internal snapshot history (`GraphEditorSnapshot`) for state changes (`undo()`, `redo()`, `canUndo()`, `canRedo()`, `pushUndoSnapshot()`), allowing non-destructive experimentation.
 - **Selected Node Inspector Panel**:
-  - Displays detailed properties for selected nodes (Node ID, Kind, Title, and Subtitle).
-  - Inspects underlying `RecordedEvent` data via `sourceIndex` mapping, displaying event type, delay, key, button, and mouse coordinates.
-- **Validation Panel**:
-  - Highlights topological findings and execution issues.
-  - Interactive "Select" action buttons jump directly to offending nodes in the graph canvas/list.
-- **Safe Inspection Boundaries**:
-  - Graph editing is currently kept in safe inspection mode to prevent sequence data corruption while full drag-and-drop link editing backends are being integrated.
-  - Step parameters and ordering can be safely modified in the Steps Table and viewed in the Visual Graph.
+  - Displays detailed properties for selected nodes (Node ID, Kind, Title, Subtitle, and Source Index).
+  - Interactive parameter controls for event type combo (KeyDown, KeyUp, MouseDown, MouseUp, MouseMove, Delay/Wait), delay input, key text, mouse button selection, and coordinates.
+  - Contextual action buttons for deleting or moving the selected node.
+- **Validation & Safe Apply Pipeline**:
+  - **Validate**: Evaluates topology and structural constraints with `ValidationOptions::sequenceGraph()`.
+  - **Apply to Sequence**: Re-validates and compiles the graph back into the target `RecordedSequence`. If validation or compilation fails (e.g., cycles, branching, disconnected nodes, or missing endpoints), compilation errors are reported and the original sequence is preserved completely unchanged.
+
+### Current Limitations
+
+- **Linear Topology**: The current sequence execution compiler strictly enforces linear single-entry, single-exit execution (`Start -> Events -> End`). Non-linear branching or merging will be flagged during validation and rejected by the compiler.
+- **No Direct Automation Execution**: The editor modifies the sequence model; automation execution continues to follow the project's existing playback service and UI trigger mechanisms.
 
 ### Usage Example
 
@@ -369,10 +375,24 @@ using namespace autoinput::ui::editors;
 
 SequenceGraphEditorState editorState;
 
+// Add a new key down event node
+autoinput::RecordedEvent keyEv{
+    .type = autoinput::RecordedEventType::KeyDown,
+    .delay = "20ms",
+    .key = "f5"
+};
+graph::NodeId newId = editorState.addEventNode(keyEv);
+
+// Undo the addition
+if (editorState.canUndo())
+{
+    editorState.undo();
+}
+
 // In UI window render loop:
 if (renderSequenceGraphEditor(selectedSequence, editorState, "SequenceGraphEditor"))
 {
-    // Sequence was modified via compilation/apply
+    // Sequence was successfully modified and compiled from graph
     markDirty();
 }
 ```

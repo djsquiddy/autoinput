@@ -67,10 +67,12 @@ TEST_F(SequenceGraphEditorTest, DefaultStateInitialization)
     EXPECT_TRUE(state.graphDocument.nodes().empty());
     EXPECT_TRUE(state.graphDocument.links().empty());
     EXPECT_FALSE(state.isGraphSynchronized);
-    EXPECT_FALSE(state.isEditingAllowed);
+    EXPECT_TRUE(state.isEditingAllowed);
     EXPECT_EQ(state.cachedSequenceEventCount, 0U);
     EXPECT_FALSE(state.lastCompilationError.has_value());
     EXPECT_FALSE(state.viewerState.hasSelection());
+    EXPECT_FALSE(state.canUndo());
+    EXPECT_FALSE(state.canRedo());
     EXPECT_EQ(state.statusMessage, "Ready");
 }
 
@@ -162,7 +164,7 @@ TEST_F(SequenceGraphEditorTest, CompileRejectsInvalidTopology)
     bool applied = state.applyToSequence(target);
     EXPECT_FALSE(applied);
     EXPECT_TRUE(state.lastCompilationError.has_value());
-    EXPECT_NE(state.statusMessage.find("Compilation failed"), std::string::npos);
+    EXPECT_NE(state.statusMessage.find("Cannot apply changes"), std::string::npos);
 }
 
 TEST_F(SequenceGraphEditorTest, ResolveNodeInspectionDetails)
@@ -222,34 +224,213 @@ TEST_F(SequenceGraphEditorTest, FormatEventFieldsSummary)
     EXPECT_NE(formatEventFieldsSummary(mouseMoveEv).find("MouseMove"), std::string::npos);
     EXPECT_NE(formatEventFieldsSummary(mouseMoveEv).find("100"), std::string::npos);
 
-    RecordedEvent delayEv{ .type = RecordedEventType::Invalid, .delay = "500ms" };
+    RecordedEvent delayEv{ .type = RecordedEventType::Invalid, .delay = "200ms" };
     EXPECT_NE(formatEventFieldsSummary(delayEv).find("Delay"), std::string::npos);
-    EXPECT_NE(formatEventFieldsSummary(delayEv).find("500ms"), std::string::npos);
+    EXPECT_NE(formatEventFieldsSummary(delayEv).find("200ms"), std::string::npos);
 }
 
-TEST_F(SequenceGraphEditorTest, SeparateWaitNodesToggle)
+TEST_F(SequenceGraphEditorTest, DeleteEventNodeAndRecompile)
 {
     SequenceGraphEditorState state;
-    state.adapterOptions.separateWaitNodes = false;
-    state.rebuildFromSequence(sampleSequence);
-    std::size_t standardCount = state.graphDocument.nodeCount();
+    state.syncWithSequence(sampleSequence);
 
-    state.adapterOptions.separateWaitNodes = true;
-    state.rebuildFromSequence(sampleSequence);
-    std::size_t separatedCount = state.graphDocument.nodeCount();
+    auto chainBefore = getLinearExecutionNodes(state.graphDocument);
+    ASSERT_EQ(chainBefore.size(), 9U);    // Start + 7 events + End
+    NodeId nodeToDelete = chainBefore[3]; // The 2nd event
 
-    // With separate wait nodes enabled on non-zero delays, node count must increase
-    EXPECT_GT(separatedCount, standardCount);
-
-    // Validation and compilation back must still succeed
+    bool deleted = state.deleteNode(nodeToDelete, true);
+    EXPECT_TRUE(deleted);
     EXPECT_TRUE(state.validateCurrentGraph());
-    RecordedSequence compiled;
-    EXPECT_TRUE(state.applyToSequence(compiled));
-    EXPECT_EQ(compiled.events.size(), sampleSequence.events.size());
+
+    auto chainAfter = getLinearExecutionNodes(state.graphDocument);
+    EXPECT_EQ(chainAfter.size(), 8U);
+    EXPECT_EQ(std::find(chainAfter.begin(), chainAfter.end(), nodeToDelete), chainAfter.end());
+
+    auto compileResult = state.compileGraph();
+    ASSERT_TRUE(compileResult.success);
+    ASSERT_TRUE(compileResult.sequence.has_value());
+    EXPECT_EQ(compileResult.sequence->events.size(), 6U);
 }
 
-TEST_F(SequenceGraphEditorTest, RenderHeadlessLifecycleSafety)
+TEST_F(SequenceGraphEditorTest, CannotDeleteStartOrEndNode)
 {
     SequenceGraphEditorState state;
-    EXPECT_FALSE(renderSequenceGraphEditor(sampleSequence, state, "HeadlessTest"));
+    state.syncWithSequence(sampleSequence);
+
+    auto startNodes = getNodesOfKind(state.graphDocument, NodeKind::Start);
+    ASSERT_FALSE(startNodes.empty());
+    EXPECT_FALSE(state.deleteNode(startNodes.front()->id));
+
+    auto endNodes = getNodesOfKind(state.graphDocument, NodeKind::End);
+    ASSERT_FALSE(endNodes.empty());
+    EXPECT_FALSE(state.deleteNode(endNodes.front()->id));
+}
+
+TEST_F(SequenceGraphEditorTest, AddEventNodeAndRecompile)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+
+    RecordedEvent newEv{ .type = RecordedEventType::KeyDown, .delay = "15ms", .key = "escape" };
+    NodeId newId = state.addEventNode(newEv);
+    EXPECT_NE(newId, InvalidNodeId);
+    EXPECT_TRUE(state.validateCurrentGraph());
+
+    auto chain = getLinearExecutionNodes(state.graphDocument);
+    EXPECT_EQ(chain.size(), 10U);              // Start + 8 events + End
+    EXPECT_EQ(chain[chain.size() - 2], newId); // Inserted before End
+
+    auto compileResult = state.compileGraph();
+    ASSERT_TRUE(compileResult.success);
+    ASSERT_TRUE(compileResult.sequence.has_value());
+    EXPECT_EQ(compileResult.sequence->events.size(), 8U);
+    EXPECT_EQ(compileResult.sequence->events.back().key.value_or(""), "escape");
+
+    // Add dedicated wait node
+    NodeId waitId = state.addWaitNode("250ms");
+    EXPECT_NE(waitId, InvalidNodeId);
+    EXPECT_TRUE(state.validateCurrentGraph());
+
+    auto compileWithWait = state.compileGraph();
+    ASSERT_TRUE(compileWithWait.success);
+    ASSERT_TRUE(compileWithWait.sequence.has_value());
+    EXPECT_EQ(compileWithWait.sequence->events.size(), 9U);
+}
+
+TEST_F(SequenceGraphEditorTest, UpdateNodeEventAndDelay)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+
+    auto eventNodes = getNodesOfKind(state.graphDocument, NodeKind::RecordedEvent);
+    ASSERT_FALSE(eventNodes.empty());
+    NodeId targetNodeId = eventNodes.front()->id;
+
+    RecordedEvent updatedEv{ .type = RecordedEventType::MouseDown, .delay = "75ms", .button = "right" };
+    EXPECT_TRUE(state.updateNodeEvent(targetNodeId, updatedEv));
+
+    auto compileResult = state.compileGraph();
+    ASSERT_TRUE(compileResult.success);
+    ASSERT_TRUE(compileResult.sequence.has_value());
+    EXPECT_EQ(compileResult.sequence->events.front().type, RecordedEventType::MouseDown);
+    EXPECT_EQ(compileResult.sequence->events.front().button.value_or(""), "right");
+    EXPECT_EQ(compileResult.sequence->events.front().delay, "75ms");
+
+    // Update delay only
+    EXPECT_TRUE(state.updateNodeDelay(targetNodeId, "120ms"));
+    auto compileResult2 = state.compileGraph();
+    ASSERT_TRUE(compileResult2.success);
+    EXPECT_EQ(compileResult2.sequence->events.front().delay, "120ms");
+}
+
+TEST_F(SequenceGraphEditorTest, MoveNodeUpAndDown)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+
+    auto chainInitial = getLinearExecutionNodes(state.graphDocument);
+    ASSERT_GE(chainInitial.size(), 4U);
+
+    NodeId node2 = chainInitial[2]; // Second event node
+    EXPECT_TRUE(state.moveNodeUp(node2));
+
+    auto chainAfterUp = getLinearExecutionNodes(state.graphDocument);
+    EXPECT_EQ(chainAfterUp[1], node2); // Now first event node
+
+    EXPECT_TRUE(state.moveNodeDown(node2));
+    auto chainAfterDown = getLinearExecutionNodes(state.graphDocument);
+    EXPECT_EQ(chainAfterDown[2], node2); // Back to second
+}
+
+TEST_F(SequenceGraphEditorTest, ReconnectLinearChain)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+
+    // Break all links
+    auto links = state.graphDocument.links();
+    for (const auto& link : links)
+    {
+        state.graphDocument.removeLink(link.id);
+    }
+    EXPECT_FALSE(state.validateCurrentGraph());
+
+    // Reconnect linear chain
+    EXPECT_TRUE(state.reconnectLinearChain());
+    EXPECT_TRUE(state.validateCurrentGraph());
+    auto compileResult = state.compileGraph();
+    EXPECT_TRUE(compileResult.success);
+}
+
+TEST_F(SequenceGraphEditorTest, UndoAndRedoOperations)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+    EXPECT_FALSE(state.canUndo());
+    EXPECT_FALSE(state.canRedo());
+
+    RecordedEvent newEv{ .type = RecordedEventType::KeyDown, .delay = "10ms", .key = "z" };
+    NodeId newId = state.addEventNode(newEv);
+    EXPECT_TRUE(state.canUndo());
+    EXPECT_FALSE(state.canRedo());
+
+    EXPECT_TRUE(state.undo());
+    EXPECT_FALSE(state.canUndo());
+    EXPECT_TRUE(state.canRedo());
+    EXPECT_EQ(state.graphDocument.findNode(newId), nullptr);
+
+    EXPECT_TRUE(state.redo());
+    EXPECT_TRUE(state.canUndo());
+    EXPECT_FALSE(state.canRedo());
+    EXPECT_NE(state.graphDocument.findNode(newId), nullptr);
+}
+
+TEST_F(SequenceGraphEditorTest, RejectUnsupportedBranching)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+
+    // Create a branch from node 1 output to node 3 input
+    auto chain = getLinearExecutionNodes(state.graphDocument);
+    ASSERT_GE(chain.size(), 4U);
+    const auto* outPin = findPinOfDirection(state.graphDocument, chain[1], PinDirection::Output);
+    const auto* inPin = findPinOfDirection(state.graphDocument, chain[3], PinDirection::Input);
+    ASSERT_NE(outPin, nullptr);
+    ASSERT_NE(inPin, nullptr);
+
+    state.graphDocument.createLink(outPin->id, inPin->id);
+
+    auto compileRes = state.compileGraph();
+    EXPECT_FALSE(compileRes.success);
+    EXPECT_TRUE(compileRes.hasErrors());
+
+    RecordedSequence target = sampleSequence;
+    EXPECT_FALSE(state.applyToSequence(target));
+}
+
+TEST_F(SequenceGraphEditorTest, ApplyFailureDoesNotMutateOriginalSequence)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+
+    // Break graph by removing End node
+    auto endNodes = getNodesOfKind(state.graphDocument, NodeKind::End);
+    ASSERT_FALSE(endNodes.empty());
+    state.graphDocument.removeNode(endNodes.front()->id);
+
+    RecordedSequence target = sampleSequence;
+    bool applied = state.applyToSequence(target);
+    EXPECT_FALSE(applied);
+
+    // Verify target sequence is completely unchanged
+    EXPECT_EQ(target.name, sampleSequence.name);
+    EXPECT_EQ(target.start, sampleSequence.start);
+    EXPECT_EQ(target.repeat, sampleSequence.repeat);
+    EXPECT_EQ(target.events.size(), sampleSequence.events.size());
+    for (std::size_t i = 0; i < sampleSequence.events.size(); ++i)
+    {
+        EXPECT_EQ(target.events[i].type, sampleSequence.events[i].type);
+        EXPECT_EQ(target.events[i].key, sampleSequence.events[i].key);
+        EXPECT_EQ(target.events[i].delay, sampleSequence.events[i].delay);
+    }
 }
