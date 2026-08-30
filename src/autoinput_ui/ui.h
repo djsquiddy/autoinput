@@ -12,6 +12,7 @@
 #include "core/uiWindow.h"
 #include "core/windowManager.h"
 #include "editors/sequenceGraphEditor.h"
+#include "graph/configGraphAdapter.h"
 #include "graph/fallbackGraphViewer.h"
 #include "graph/graphModel.h"
 #include "graph/graphValidator.h"

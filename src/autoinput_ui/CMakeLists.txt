@@ -46,6 +46,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/graph/sequenceGraphAdapter.h
             ${CMAKE_CURRENT_LIST_DIR}/graph/sequenceGraphCompiler.cpp
             ${CMAKE_CURRENT_LIST_DIR}/graph/sequenceGraphCompiler.h
+            ${CMAKE_CURRENT_LIST_DIR}/graph/configGraphAdapter.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/graph/configGraphAdapter.h
             ${CMAKE_CURRENT_LIST_DIR}/graph/nodeEditorBackend.cpp
             ${CMAKE_CURRENT_LIST_DIR}/graph/nodeEditorBackend.h
             ${CMAKE_CURRENT_LIST_DIR}/graph/fallbackGraphViewer.cpp

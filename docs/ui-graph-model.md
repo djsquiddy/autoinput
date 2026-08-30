@@ -397,6 +397,61 @@ if (renderSequenceGraphEditor(selectedSequence, editorState, "SequenceGraphEdito
 }
 ```
 
+## Configuration Graph Adapter (`ConfigGraphAdapter`)
+
+The Configuration Graph Adapter (`autoinput_ui/graph/configGraphAdapter.h`) provides internal read-only conversion from `autoinput::ConfigData` into a `GraphDocument` representation, backing future visual configuration and dependency viewers.
+
+### Key Capabilities & Representation
+
+- **Global Configuration Elements**:
+  - `ApplicationFilter` (`NodeKind::ApplicationFilter`): Captures the application target focus filter.
+  - `BlacklistEntry` (`NodeKind::BlacklistEntry`): Represents application focus exclusion entries.
+  - `GlobalEndKey` (`NodeKind::Input`): Visualizes the global emergency exit / stop hotkey.
+- **Commands & Bindings**:
+  - `Command` (`NodeKind::Command`): Central command node showing the command name, action, press/release timings, and preserved source index.
+  - `StartKey` / `InputKey` / `InputButton` (`NodeKind::Input`): Trigger and modifier key/mouse button inputs mapped to the command.
+  - `Control` (`NodeKind::Control`): Command control bindings showing action and input hotkeys with preserved source index.
+  - `ExclusiveGroup` (`NodeKind::ExclusiveGroup`): Mutual exclusion group nodes with optional automatic deduplication across sharing commands.
+- **Recorded Sequences**:
+  - `Sequence` (`NodeKind::Sequence`): High-level sequence node showing name, event count, repeat mode, and preserved source index.
+  - `SequenceStartKey` (`NodeKind::Input`): Sequence start key trigger node linked to the sequence.
+- **Topological Relationships**:
+  - `Input -> Command`: Directed links from start keys, input keys, and mouse buttons to their associated command.
+  - `Command -> Control`: Directed links from commands to attached control actions.
+  - `Command -> ExclusiveGroup`: Directed links from commands to exclusive group nodes.
+  - `Sequence Start Key -> Sequence`: Directed links from sequence trigger keys to sequence nodes.
+  - `Global Settings -> Targets`: Optional directed links connecting global application filters, blacklist rules, and global end keys to affected commands and sequences.
+- **Deterministic 3-Column Layout**:
+  - Column 0: Inputs & Global Settings (`startX`)
+  - Column 1: Core Commands & Sequences (`startX + columnSpacing`)
+  - Column 2: Controls & Exclusive Groups (`startX + 2 * columnSpacing`)
+- **Configurable Conversion Options (`ConfigGraphOptions`)**:
+  - `startX`, `startY`: Canvas placement coordinates.
+  - `columnSpacing`, `rowSpacing`, `blockSpacing`: Layout spacing configuration.
+  - `includeGlobalSettings`: Toggle global setting node generation.
+  - `linkGlobalSettingsToTargets`: Toggle links from global settings to all commands and sequences.
+  - `deduplicateExclusiveGroups`: Group shared exclusive group names into single shared nodes.
+
+### Usage Example
+
+```cpp
+#include "autoinput_ui/graph/configGraphAdapter.h"
+#include "autoinput_ui/graph/fallbackGraphViewer.h"
+
+using namespace autoinput::ui::graph;
+
+// Convert ConfigData to GraphDocument
+ConfigGraphOptions options = ConfigGraphOptions::defaults();
+options.deduplicateExclusiveGroups = true;
+options.linkGlobalSettingsToTargets = true;
+
+GraphDocument configGraph = configToGraphDocument(configData, options);
+
+// Inspect or render via graph viewer
+FallbackGraphViewerState viewerState;
+renderFallbackGraphViewer(configGraph, viewerState);
+```
+
 ## Usage Example
 
 ```cpp
