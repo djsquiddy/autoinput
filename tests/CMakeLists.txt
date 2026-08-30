@@ -50,8 +50,10 @@ set(AUTOINPUT_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/localizationTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/controlBindingTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/graphModelTest.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/autoinput/graphValidatorTest.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/core/localization.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/graphModel.cpp
+        ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/graphValidator.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/testEnvironment.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/backendTestLinux.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/backendCapabilitiesTest.cpp

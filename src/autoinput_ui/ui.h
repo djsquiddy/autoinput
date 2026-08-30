@@ -12,6 +12,7 @@
 #include "core/uiWindow.h"
 #include "core/windowManager.h"
 #include "graph/graphModel.h"
+#include "graph/graphValidator.h"
 #include "widgets/basicWidgets.h"
 #include "widgets/formWidgets.h"
 #include "widgets/modalWidgets.h"

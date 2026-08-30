@@ -2,16 +2,17 @@
 
 ## Overview
 
-The AutoInput UI Graph module (`autoinput::ui::graph`) provides an internal, dependency-free graph document representation for future visual editors within the AutoInput UI.
+The AutoInput UI Graph module (`autoinput::ui::graph`) provides an internal, dependency-free graph document representation and validation engine for future visual editors within the AutoInput UI.
 
-> **Note**: This is an internal developer-facing graph data model. It is not yet a user-visible feature in the application frontend.
+> **Note**: This is an internal developer-facing graph data model and validation engine. It is not yet a user-visible feature in the application frontend.
 
 ## Goals and Design Principles
 
-1. **Zero External Dependencies**: The graph document model is completely decoupled from rendering toolkits and third-party node editor libraries (such as Dear ImGui, raylib, imnodes, or imgui-node-editor), as well as core automation playback engines.
-2. **Deterministic and Testable**: The model can be constructed, manipulated, validated, serialized, and tested in pure unit test environments without initializing a graphic window or OpenGL/raylib backend.
-3. **Stable Identifiers**: Elements use stable `NodeId`, `PinId`, and `LinkId` identifiers (`uint64_t`). ID lookups do not rely on container indices or vector ordering, guaranteeing stability during element deletions and additions.
+1. **Zero External Dependencies**: The graph document model and validation rules are completely decoupled from rendering toolkits and third-party node editor libraries (such as Dear ImGui, raylib, imnodes, or imgui-node-editor), as well as core automation playback engines.
+2. **Deterministic and Testable**: The model and its validation engine can be constructed, manipulated, validated, serialized, and tested in pure unit test environments without initializing a graphic window or OpenGL/raylib backend.
+3. **Stable Identifiers**: Elements use stable `NodeId`, `PinId`, and `LinkId` identifiers (`uint64_t`). ID lookups do not rely on container indices or vector ordering, guaranteeing stability during element deletions, additions, and validation passes.
 4. **Visual Foundation**: Supports 2D coordinate positions (`NodePosition`) and metadata (`NodeMetadata`) for future node editors (such as sequence flow editors and configuration dependency visualizers).
+5. **Configurable Validation Engine**: Provides topology and structural validation rules with customizable profiles for strict execution sequence graphs vs. permissive read-only configuration graphs.
 
 ## Core Structures
 
@@ -28,7 +29,7 @@ Represents the functional role of a graph node:
 - `ExclusiveGroup`: Mutual exclusion container.
 - `ApplicationFilter`: Target application focus allowlist filter.
 - `BlacklistEntry`: Application focus exclusion rule.
-- `Comment`: Visual annotation or note.
+- `Comment`: Visual annotation or note (ignored by execution flow validation).
 - `Unknown`: Fallback / unrecognized node kind.
 
 ### `PinDirection`
@@ -126,10 +127,58 @@ The `GraphDocument` (aliased as `GraphModel`) manages the nodes, pins, and links
 - `empty()`: Checks if the document contains no nodes.
 - `clear()`: Empties all elements and resets internal ID allocators.
 
+## Graph Validation Engine
+
+Graph validation utilities are declared in `autoinput_ui/graph/graphValidator.h`.
+
+### Severity Levels (`ValidationSeverity`)
+- `Info`: Informational suggestions or status annotations.
+- `Warning`: Non-fatal issues (e.g., disconnected / unused nodes in canvas).
+- `Error`: Fatal structural issues preventing graph execution or compilation.
+
+### Validation Finding (`ValidationIssue` / `ValidationMessage`)
+Each finding includes:
+- `severity`: `ValidationSeverity`
+- `message`: Detailed diagnostic description
+- `nodeId`: Optional `NodeId` indicating the affected node
+- `linkId`: Optional `LinkId` indicating the affected link
+
+### Configurable Profiles (`ValidationOptions`)
+Validation rules are configurable via `ValidationOptions`:
+- `requireStartNode`: Enforces presence of at least one `Start` node.
+- `allowMultipleStartNodes`: Enforces uniqueness of `Start` node.
+- `requireEndNode`: Enforces presence of at least one `End` node.
+- `allowDisconnectedNodes`: Controls whether unlinked nodes emit warnings/errors.
+- `requireAcyclic`: Runs cycle detection algorithms to ensure directed acyclic flow.
+- `allowSelfLinks`: Prohibits links connecting pins on the same node.
+- `treatDisconnectedAsError`: Escalates disconnected nodes from `Warning` to `Error`.
+
+Presets:
+- `ValidationOptions::sequenceGraph()`: Strict execution mode (requires single Start, at least one End, no cycles, no self-links, warns on disconnected nodes).
+- `ValidationOptions::configGraph()`: Permissive visualization mode (allows multiple roots, optional start/end, allows cycles and disconnected nodes).
+
+### Individual Rule Checkers
+- `validateStartNodes(doc, requireStart, allowMultiple)`
+- `validateEndNodes(doc, requireEnd)`
+- `validateDisconnectedNodes(doc, severity)` (Comment nodes are automatically excluded)
+- `validateLinkReferences(doc)` (Verifies pin existence)
+- `validateLinkDirections(doc, allowSelfLinks)` (Detects invalid directions like output-to-output, input-to-input, input-to-output, and self-links)
+- `validateAcyclic(doc)` (Directed cycle detection using DFS coloring)
+- `validateGraph(doc, options)` (Comprehensive validation aggregation returning `ValidationResult`)
+
+### Consuming Validation Messages in Visual Editors
+
+Future visual node editors and graph viewers consume validation messages to provide real-time UI feedback:
+
+1. **Node and Link Badging**: Visual editors look up `issue.nodeId` or `issue.linkId` to render visual error icons, warning badges, or highlight offending connection wires in red/amber.
+2. **Inspector Problem Pane**: Display a structured list of issues sorted by severity, allowing users to double-click a message to pan the canvas camera directly to the relevant node or link.
+3. **Execution Guarding**: Sequence playback and export routines query `result.isValid()` / `result.hasErrors()` to prevent compiling or executing structurally invalid sequence graphs.
+
 ## Usage Example
 
 ```cpp
 #include "autoinput_ui/graph/graphModel.h"
+#include "autoinput_ui/graph/graphValidator.h"
 
 using namespace autoinput::ui::graph;
 
@@ -138,15 +187,30 @@ GraphDocument graph;
 // Create nodes
 auto& startNode = graph.createNode(NodeKind::Start, "Start Trigger", { .x = 100.0F, .y = 150.0F });
 auto& waitNode  = graph.createNode(NodeKind::Wait, "Wait 500ms", { .x = 300.0F, .y = 150.0F });
+auto& endNode   = graph.createNode(NodeKind::End, "End", { .x = 500.0F, .y = 150.0F });
 
 // Add pins
 auto* startOut = graph.createPin(startNode.id, PinDirection::Output, "Out");
 auto* waitIn   = graph.createPin(waitNode.id, PinDirection::Input, "In");
+auto* waitOut  = graph.createPin(waitNode.id, PinDirection::Output, "Out");
+auto* endIn    = graph.createPin(endNode.id, PinDirection::Input, "In");
 
-// Connect pins with a link
-auto* link = graph.createLink(startOut->id, waitIn->id);
+// Connect pins with links
+graph.createLink(startOut->id, waitIn->id);
+graph.createLink(waitOut->id, endIn->id);
 
-// Removing a node cleans up attached pins and links
-graph.removeNode(startNode.id);
-// startOut pin and the connecting link are now automatically removed
+// Validate graph for sequence execution
+const ValidationResult result = validateGraph(graph, ValidationOptions::sequenceGraph());
+
+if (result.isValid())
+{
+    // Graph is structurally sound and ready for playback/export
+}
+else
+{
+    for (const auto& issue : result.issues)
+    {
+        // Display issue in editor problem pane and badge affected node/link
+    }
+}
 ```
