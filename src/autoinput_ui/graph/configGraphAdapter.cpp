@@ -29,7 +29,7 @@ namespace autoinput::ui::graph
             const float col0X = options.startX;
             bool addedGlobalNode = false;
 
-            if (!config.application.empty())
+            if (options.includeApplicationFilter && !config.application.empty())
             {
                 auto& appNode = doc.createNode(NodeKind::ApplicationFilter, "Application Filter", { col0X, currentY });
                 appNode.subtitle = config.application;
@@ -42,20 +42,23 @@ namespace autoinput::ui::graph
                 addedGlobalNode = true;
             }
 
-            for (const auto& blacklistEntry : config.blacklist)
+            if (options.includeBlacklist)
             {
-                auto& blNode = doc.createNode(NodeKind::BlacklistEntry, "Blacklist Entry", { col0X, currentY });
-                blNode.subtitle = blacklistEntry;
-                auto* blockedPin = doc.createPin(blNode.id, PinDirection::Output, "Blocked");
-                if (blockedPin != nullptr)
+                for (const auto& blacklistEntry : config.blacklist)
                 {
-                    globalOutputPins.push_back(blockedPin->id);
+                    auto& blNode = doc.createNode(NodeKind::BlacklistEntry, "Blacklist Entry", { col0X, currentY });
+                    blNode.subtitle = blacklistEntry;
+                    auto* blockedPin = doc.createPin(blNode.id, PinDirection::Output, "Blocked");
+                    if (blockedPin != nullptr)
+                    {
+                        globalOutputPins.push_back(blockedPin->id);
+                    }
+                    currentY += options.rowSpacing;
+                    addedGlobalNode = true;
                 }
-                currentY += options.rowSpacing;
-                addedGlobalNode = true;
             }
 
-            if (!config.endKey.empty())
+            if (options.includeInputs && !config.endKey.empty())
             {
                 auto& endNode = doc.createNode(NodeKind::Input, "Global End Key", { col0X, currentY });
                 endNode.subtitle = config.endKey;
@@ -78,6 +81,11 @@ namespace autoinput::ui::graph
                                             std::size_t cmdIdx, PinId cmdInPinId, const ConfigGraphOptions& options,
                                             float blockStartY)
         {
+            if (!options.includeInputs)
+            {
+                return 0;
+            }
+
             const float col0X = options.startX;
             float inputY = blockStartY;
             std::size_t inputCount = 0;
@@ -131,6 +139,12 @@ namespace autoinput::ui::graph
                                               PinId cmdCtrlPinId, const ConfigGraphOptions& options, float blockStartY,
                                               float& controlEndY)
         {
+            if (!options.includeControls)
+            {
+                controlEndY = blockStartY;
+                return 0;
+            }
+
             const float col2X = options.startX + 2.0F * options.columnSpacing;
             float controlY = blockStartY;
             std::size_t controlCount = 0;
@@ -161,7 +175,7 @@ namespace autoinput::ui::graph
             const ConfigGraphOptions& options, float blockStartY, float controlEndY,
             std::unordered_map<std::string, std::pair<NodeId, PinId>>& sharedExclusiveGroups)
         {
-            if (command.exclusiveGroup.empty())
+            if (!options.includeExclusiveGroups || command.exclusiveGroup.empty())
             {
                 return 0;
             }
@@ -199,6 +213,11 @@ namespace autoinput::ui::graph
                                 const ConfigGraphOptions& options, float& currentY,
                                 const std::vector<PinId>& globalOutputPins)
         {
+            if (!options.includeCommands)
+            {
+                return;
+            }
+
             const float col1X = options.startX + options.columnSpacing;
             std::unordered_map<std::string, std::pair<NodeId, PinId>> sharedExclusiveGroups;
 
@@ -250,6 +269,11 @@ namespace autoinput::ui::graph
                                  const ConfigGraphOptions& options, float& currentY,
                                  const std::vector<PinId>& globalOutputPins)
         {
+            if (!options.includeSequences)
+            {
+                return;
+            }
+
             const float col0X = options.startX;
             const float col1X = options.startX + options.columnSpacing;
 
@@ -266,7 +290,7 @@ namespace autoinput::ui::graph
                 auto* sInPin = doc.createPin(seqNode.id, PinDirection::Input, "Trigger");
                 const PinId seqInPinId = sInPin != nullptr ? sInPin->id : InvalidPinId;
 
-                if (!sequence.start.empty())
+                if (options.includeInputs && !sequence.start.empty())
                 {
                     auto& skNode = doc.createNode(NodeKind::Input, "Sequence Start Key", { col0X, blockStartY });
                     skNode.subtitle = sequence.start;

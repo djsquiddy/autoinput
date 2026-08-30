@@ -452,6 +452,51 @@ FallbackGraphViewerState viewerState;
 renderFallbackGraphViewer(configGraph, viewerState);
 ```
 
+## Read-Only Visual Configuration Graph Viewer (`ConfigGraphViewer`)
+
+The Read-Only Visual Configuration Graph Viewer (`autoinput_ui/editors/configGraphViewer.h`) provides an interactive Dear ImGui component to visually inspect configuration topology, node attributes, and potential configuration conflicts/anomalies in `ConfigData`.
+
+### Key Features
+
+1. **Integrated Visual Configuration View**: Accessible directly via the `[Visual Graph]` tab in the Configuration Editor window (`ConfigEditorWindow`).
+2. **Interactive Element Filtering**: Real-time toolbar toggles allowing users to filter specific graph layers:
+   - Commands
+   - Command Controls
+   - Recorded Sequences
+   - Input Triggers (Start keys, keys, mouse buttons, sequence starts, global end keys)
+   - Exclusive Groups
+   - Global Settings (Application filter, blacklist entries)
+3. **Comprehensive Diagnostics Panel**:
+   - Detects duplicate start inputs across commands and sequences.
+   - Highlights commands sharing input keys or mouse buttons.
+   - Flags commands with empty names or missing actions.
+   - Identifies command controls with missing input bindings or empty actions.
+   - Warns on recorded sequences missing names or start triggers.
+   - Color-coded severity indicators (Error, Warning, Info) with suggested resolution steps.
+   - Clickable "Select Node" navigation to highlight and jump to the affected element in the graph.
+4. **Node Inspector Panel**:
+   - Displays detailed metadata for the selected node (Kind, Title, Subtitle, Source Index).
+   - Lists connected inputs, attached controls, exclusive group memberships, and targeted entities.
+   - Correlates and displays diagnostics specific to the selected node.
+5. **Safe Read-Only Inspection Boundary**:
+   - Inspection operations are completely non-destructive and do not mutate configuration or sequence data.
+
+### Usage Example
+
+```cpp
+#include "autoinput_ui/editors/configGraphViewer.h"
+
+using namespace autoinput::ui::editors;
+
+ConfigGraphViewerState viewerState;
+
+// Synchronize and run diagnostics on configuration
+viewerState.syncWithConfig(configData);
+
+// In UI window render loop:
+renderConfigGraphViewer(configData, viewerState, "ConfigViewer");
+```
+
 ## Usage Example
 
 ```cpp

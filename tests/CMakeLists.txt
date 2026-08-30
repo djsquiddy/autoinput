@@ -57,6 +57,7 @@ set(AUTOINPUT_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/fallbackGraphViewerTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/sequenceGraphEditorTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/configGraphAdapterTest.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/autoinput/configGraphViewerTest.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/core/localization.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/graphModel.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/graphValidator.cpp
@@ -66,6 +67,7 @@ set(AUTOINPUT_TEST_SOURCES
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/nodeEditorBackend.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/fallbackGraphViewer.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/editors/sequenceGraphEditor.cpp
+        ${CMAKE_SOURCE_DIR}/src/autoinput_ui/editors/configGraphViewer.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/testEnvironment.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/backendTestLinux.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/backendCapabilitiesTest.cpp

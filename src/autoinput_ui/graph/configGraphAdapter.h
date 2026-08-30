@@ -47,9 +47,44 @@ namespace autoinput::ui::graph
         float blockSpacing{ 40.0F };
 
         /**
+         * @brief Whether to generate nodes for commands.
+         */
+        bool includeCommands{ true };
+
+        /**
+         * @brief Whether to generate nodes for command controls.
+         */
+        bool includeControls{ true };
+
+        /**
+         * @brief Whether to generate nodes for recorded sequences.
+         */
+        bool includeSequences{ true };
+
+        /**
+         * @brief Whether to generate nodes for inputs (start keys, input keys, buttons, sequence start keys).
+         */
+        bool includeInputs{ true };
+
+        /**
+         * @brief Whether to generate nodes for exclusive groups.
+         */
+        bool includeExclusiveGroups{ true };
+
+        /**
          * @brief Whether to generate nodes for global settings (application filter, blacklist, global end key).
          */
         bool includeGlobalSettings{ true };
+
+        /**
+         * @brief Whether to include application filter node when global settings are enabled.
+         */
+        bool includeApplicationFilter{ true };
+
+        /**
+         * @brief Whether to include blacklist entry nodes when global settings are enabled.
+         */
+        bool includeBlacklist{ true };
 
         /**
          * @brief Whether to link global setting nodes (app filter, blacklist, end key) to affected commands/sequences.

@@ -11,6 +11,7 @@
 #include "core/imguiScope.h"
 #include "core/uiWindow.h"
 #include "core/windowManager.h"
+#include "editors/configGraphViewer.h"
 #include "editors/sequenceGraphEditor.h"
 #include "graph/configGraphAdapter.h"
 #include "graph/fallbackGraphViewer.h"

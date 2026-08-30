@@ -4,17 +4,17 @@
  * @date August 2026
  */
 #include "configEditorWindow.h"
-#include "../widgets/basicWidgets.h"
-#include "../widgets/formWidgets.h"
+#include "../core/localization.h"
 #include "../editors/commandEditor.h"
 #include "../editors/globalSettingsEditor.h"
 #include "../editors/sequenceViewer.h"
-#include "../core/localization.h"
+#include "../widgets/basicWidgets.h"
+#include "../widgets/formWidgets.h"
 #include "autoinput/config/configValidator.h"
 #include "autoinput/support/logger.h"
+#include <algorithm>
 #include <imgui.h>
 #include <imgui_stdlib.h>
-#include <algorithm>
 
 namespace autoinput::ui
 {
@@ -50,7 +50,7 @@ namespace autoinput::ui
                         {
                             std::string k = *event.key;
                             if (bestKey.empty()) bestKey = k;
-                            if (k.find('+') != std::string::npos || 
+                            if (k.find('+') != std::string::npos ||
                                 (k.size() >= 2 && k[0] == 'f' && std::isdigit(k[1])) ||
                                 (!k.empty() && std::isprint(static_cast<unsigned char>(k.back()))))
                             {
@@ -86,19 +86,22 @@ namespace autoinput::ui
         else if (m_captureCommandIndex >= 0 && m_captureCommandIndex < static_cast<int>(m_draft.commands.size()))
         {
             auto& cmd = m_draft.commands[m_captureCommandIndex];
-            if (!bestKey.empty() && m_captureStartKeyIndex >= 0 && m_captureStartKeyIndex < static_cast<int>(cmd.startKeys.size()))
+            if (!bestKey.empty() && m_captureStartKeyIndex >= 0 &&
+                m_captureStartKeyIndex < static_cast<int>(cmd.startKeys.size()))
             {
                 cmd.startKeys[m_captureStartKeyIndex] = bestKey;
                 m_statusMessage = loc.format("status.capturedKey", bestKey);
                 applied = true;
             }
-            else if (!bestKey.empty() && m_captureKeyIndex >= 0 && m_captureKeyIndex < static_cast<int>(cmd.keys.size()))
+            else if (!bestKey.empty() && m_captureKeyIndex >= 0 &&
+                     m_captureKeyIndex < static_cast<int>(cmd.keys.size()))
             {
                 cmd.keys[m_captureKeyIndex] = bestKey;
                 m_statusMessage = loc.format("status.capturedKey", bestKey);
                 applied = true;
             }
-            else if (!bestButton.empty() && m_captureButtonIndex >= 0 && m_captureButtonIndex < static_cast<int>(cmd.buttons.size()))
+            else if (!bestButton.empty() && m_captureButtonIndex >= 0 &&
+                     m_captureButtonIndex < static_cast<int>(cmd.buttons.size()))
             {
                 cmd.buttons[m_captureButtonIndex] = bestButton;
                 m_statusMessage = loc.format("status.capturedKey", bestButton);
@@ -268,31 +271,32 @@ namespace autoinput::ui
     {
         auto& loc = Localization::get();
         renderToolbar();
-        
+
         ImGui::Separator();
- 
+
         if (isDirty())
         {
-            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", loc.format("status.unsavedChangesIn", m_currentConfigName).c_str());
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s",
+                               loc.format("status.unsavedChangesIn", m_currentConfigName).c_str());
         }
         else if (!m_currentConfigName.empty())
         {
             ImGui::Text("%s", loc.format("status.editingConfig", m_currentConfigName).c_str());
         }
- 
+
         if (widgets::StringInput(loc.text("labels.configName").data(), m_currentConfigName))
         {
             markDirty();
         }
 
         renderTabs();
- 
+
         ImGui::Separator();
         if (ImGui::Button(loc.text("labels.actions").data()))
         {
             ImGui::OpenPopup("ConfigActionsPopup");
         }
-        
+
         if (ImGui::BeginPopup("ConfigActionsPopup"))
         {
             if (ImGui::MenuItem(loc.text("buttons.save").data())) saveConfig(false);
@@ -362,6 +366,11 @@ namespace autoinput::ui
                 renderSequencesTab();
                 ImGui::EndTabItem();
             }
+            if (ImGui::BeginTabItem("Visual Graph"))
+            {
+                renderConfigGraphTab();
+                ImGui::EndTabItem();
+            }
             ImGui::EndTabBar();
         }
     }
@@ -406,7 +415,7 @@ namespace autoinput::ui
         {
             ImGui::OpenPopup("AddElementPopup");
         }
-        
+
         if (ImGui::BeginPopup("AddElementPopup"))
         {
             if (ImGui::MenuItem(loc.text("labels.command").data()))
@@ -482,7 +491,7 @@ namespace autoinput::ui
                 {
                     ImGui::OpenPopup("CommandActionsPopup");
                 }
-                
+
                 if (ImGui::BeginPopup("CommandActionsPopup"))
                 {
                     if (ImGui::MenuItem(loc.text("buttons.duplicate").data()))
@@ -501,12 +510,12 @@ namespace autoinput::ui
                     ImGui::Separator();
                     if (i > 0 && ImGui::MenuItem(loc.text("buttons.moveUp").data()))
                     {
-                        std::swap(m_draft.commands[i], m_draft.commands[i-1]);
+                        std::swap(m_draft.commands[i], m_draft.commands[i - 1]);
                         markDirty();
                     }
                     if (i < m_draft.commands.size() - 1 && ImGui::MenuItem(loc.text("buttons.moveDown").data()))
                     {
-                        std::swap(m_draft.commands[i], m_draft.commands[i+1]);
+                        std::swap(m_draft.commands[i], m_draft.commands[i + 1]);
                         markDirty();
                     }
                     ImGui::EndPopup();
@@ -521,4 +530,9 @@ namespace autoinput::ui
     {
         editors::renderSequenceViewer(m_draft.sequences);
     }
-}
+
+    void ConfigEditorWindow::renderConfigGraphTab()
+    {
+        editors::renderConfigGraphViewer(m_draft, m_graphViewerState, "ConfigEditorGraphViewer");
+    }
+} // namespace autoinput::ui

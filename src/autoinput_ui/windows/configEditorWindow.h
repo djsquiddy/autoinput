@@ -9,11 +9,12 @@
 #pragma once
 
 #include "../core/uiWindow.h"
+#include "../editors/configGraphViewer.h"
 #include "autoinput/config/config.h"
 #include "autoinput/services/automationRuntimeClient.h"
-#include <vector>
-#include <string>
 #include <filesystem>
+#include <string>
+#include <vector>
 
 namespace autoinput
 {
@@ -77,7 +78,7 @@ namespace autoinput::ui
          * @brief Starts hotkey capture for a specific location.
          */
         void startCapture();
-        
+
         /**
          * @brief Stops hotkey capture.
          */
@@ -97,7 +98,7 @@ namespace autoinput::ui
         autoinput::ConfigData m_draft;
         std::string m_currentConfigName;
         std::filesystem::path m_currentConfigPath;
-        
+
         std::vector<std::string> m_availableConfigs;
         std::vector<autoinput::ValidationError> m_validationErrors;
         std::string m_statusMessage;
@@ -141,7 +142,14 @@ namespace autoinput::ui
          * @brief Renders the sequence viewer tab content.
          */
         void renderSequencesTab();
+
+        /**
+         * @brief Renders the visual configuration relationship graph tab content.
+         */
+        void renderConfigGraphTab();
+
+        editors::ConfigGraphViewerState m_graphViewerState;
     };
-}
+} // namespace autoinput::ui
 
 #endif // INCLUDE_AUTOINPUT_UI_WINDOWS_CONFIG_EDITOR_WINDOW_H
