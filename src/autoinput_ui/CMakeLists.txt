@@ -37,6 +37,9 @@ if(AUTOINPUT_BUILD_UI)
             # Generated localization files
             ${LOCALIZATION_IDS_HEADER}
             ${LOCALIZATION_IDS_SOURCE}
+            # Graph
+            ${CMAKE_CURRENT_LIST_DIR}/graph/graphModel.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/graph/graphModel.h
             # Widgets
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.cpp
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.h

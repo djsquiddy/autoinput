@@ -8,9 +8,10 @@
 #define INCLUDE_AUTOINPUT_UI_H
 #pragma once
 
+#include "core/imguiScope.h"
 #include "core/uiWindow.h"
 #include "core/windowManager.h"
-#include "core/imguiScope.h"
+#include "graph/graphModel.h"
 #include "widgets/basicWidgets.h"
 #include "widgets/formWidgets.h"
 #include "widgets/modalWidgets.h"
