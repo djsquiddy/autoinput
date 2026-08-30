@@ -9,12 +9,12 @@
 #pragma once
 
 #include "../core/uiWindow.h"
+#include "../editors/sequenceGraphEditor.h"
 #include "autoinput/config/config.h"
 #include "autoinput/config/configValidator.h"
-#include <vector>
-#include <string>
 #include <filesystem>
-
+#include <string>
+#include <vector>
 
 namespace autoinput::ui
 {
@@ -47,14 +47,15 @@ namespace autoinput::ui
         std::vector<std::string> m_availableConfigs;
         std::vector<ValidationError> m_validationErrors;
         std::string m_statusMessage;
+        editors::SequenceGraphEditorState m_graphEditorState;
 
         void renderToolbar();
         void renderSequenceSelector();
         void renderSequenceEditor();
         void renderStepEditor(RecordedEvent& event, size_t index);
-        
+
         void insertEvent(RecordedEventType type, size_t index);
     };
-}
+} // namespace autoinput::ui
 
 #endif // INCLUDE_AUTOINPUT_UI_WINDOWS_SEQUENCE_EDITOR_WINDOW_H

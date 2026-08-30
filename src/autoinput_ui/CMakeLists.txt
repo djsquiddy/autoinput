@@ -66,6 +66,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/editors/commandEditor.h
             ${CMAKE_CURRENT_LIST_DIR}/editors/sequenceViewer.cpp
             ${CMAKE_CURRENT_LIST_DIR}/editors/sequenceViewer.h
+            ${CMAKE_CURRENT_LIST_DIR}/editors/sequenceGraphEditor.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/editors/sequenceGraphEditor.h
             # Windows
             ${CMAKE_CURRENT_LIST_DIR}/windows/mainWindow.cpp
             ${CMAKE_CURRENT_LIST_DIR}/windows/mainWindow.h

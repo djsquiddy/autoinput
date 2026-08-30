@@ -335,6 +335,48 @@ FallbackGraphViewerState viewerState;
 renderFallbackGraphViewer(doc, viewerState);
 ```
 
+## Sequence Graph Viewer / Editor UI (`SequenceGraphEditor`)
+
+The Sequence Graph Editor (`autoinput_ui/editors/sequenceGraphEditor.h`) provides a high-level UI component and non-UI state controller exposing sequence-to-graph conversion directly within the AutoInput UI.
+
+### Key Capabilities & Workflow
+
+- **Sequence Visualization**:
+  - Automatically converts active `RecordedSequence` data into a linear `GraphDocument` representation (`Start -> RecordedEvent / Wait -> End`).
+  - Integrated into `SequenceEditorWindow` with a tabbed interface allowing instant switching between the tabular `Steps Table` and the `Visual Graph`.
+- **Toolbar & Controls**:
+  - **Rebuild Graph**: Re-synchronizes and reconstructs the graph document from the latest sequence events.
+  - **Validate**: Executes sequence topology validation rules (`ValidationOptions::sequenceGraph()`) and displays status feedback.
+  - **Apply to Sequence / Compile**: Compiles the graph back into the target `RecordedSequence` using topological sorting and source mapping.
+  - **Separate Wait Nodes**: Toggles explicit decomposition of non-zero event delays into standalone `Wait` nodes.
+  - **View Mode Switching**: Quickly switches between `Split`, `List`, and `Canvas` layout modes.
+- **Selected Node Inspector Panel**:
+  - Displays detailed properties for selected nodes (Node ID, Kind, Title, and Subtitle).
+  - Inspects underlying `RecordedEvent` data via `sourceIndex` mapping, displaying event type, delay, key, button, and mouse coordinates.
+- **Validation Panel**:
+  - Highlights topological findings and execution issues.
+  - Interactive "Select" action buttons jump directly to offending nodes in the graph canvas/list.
+- **Safe Inspection Boundaries**:
+  - Graph editing is currently kept in safe inspection mode to prevent sequence data corruption while full drag-and-drop link editing backends are being integrated.
+  - Step parameters and ordering can be safely modified in the Steps Table and viewed in the Visual Graph.
+
+### Usage Example
+
+```cpp
+#include "autoinput_ui/editors/sequenceGraphEditor.h"
+
+using namespace autoinput::ui::editors;
+
+SequenceGraphEditorState editorState;
+
+// In UI window render loop:
+if (renderSequenceGraphEditor(selectedSequence, editorState, "SequenceGraphEditor"))
+{
+    // Sequence was modified via compilation/apply
+    markDirty();
+}
+```
+
 ## Usage Example
 
 ```cpp
