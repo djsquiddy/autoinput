@@ -42,6 +42,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/graph/graphModel.h
             ${CMAKE_CURRENT_LIST_DIR}/graph/graphValidator.cpp
             ${CMAKE_CURRENT_LIST_DIR}/graph/graphValidator.h
+            ${CMAKE_CURRENT_LIST_DIR}/graph/sequenceGraphAdapter.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/graph/sequenceGraphAdapter.h
             # Widgets
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.cpp
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.h

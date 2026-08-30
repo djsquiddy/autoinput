@@ -824,7 +824,7 @@ python scripts/build.py --preset debug-tests
 
 Additional documentation is available in the [`docs/`](docs/) directory:
 - [Localization Guide](docs/localization.md) — Localization architecture, TOML conventions, and ID generation tooling.
-- [UI Graph Document Model](docs/ui-graph-model.md) — Internal dependency-free graph model and validation engine for future visual editors.
+- [UI Graph Document Model](docs/ui-graph-model.md) — Internal dependency-free graph model, sequence adapter, and validation engine for future visual editors.
 - [Responsible Use Policy](docs/responsible-use.md) — Ethical guidelines and policies for automated inputs.
 
 ### License
