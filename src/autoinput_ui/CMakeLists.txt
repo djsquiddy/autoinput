@@ -129,6 +129,14 @@ if(AUTOINPUT_BUILD_UI)
         )
     endif()
 
+    if(AUTOINPUT_UI_WITH_IMGUI_NODE_EDITOR AND IMGUI_NODE_EDITOR_FOUND)
+        list(APPEND AUTOINPUT_UI_SOURCES
+            ${CMAKE_CURRENT_LIST_DIR}/graph/imguiNodeEditorBackend.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/graph/imguiNodeEditorBackend.h
+            ${IMGUI_NODE_EDITOR_SOURCES}
+        )
+    endif()
+
     autoinput_group_sources_by_directory("${CMAKE_CURRENT_LIST_DIR}" ${AUTOINPUT_UI_SOURCES})
     add_executable(${PROJECT_NAME_UI} ${AUTOINPUT_UI_SOURCES})
 
@@ -142,6 +150,11 @@ if(AUTOINPUT_BUILD_UI)
     if(AUTOINPUT_UI_WITH_IMNODES AND IMNODES_FOUND)
         target_compile_definitions(${PROJECT_NAME_UI} PRIVATE AUTOINPUT_HAS_IMNODES=1)
         target_include_directories(${PROJECT_NAME_UI} PRIVATE ${IMNODES_INCLUDE_DIR})
+    endif()
+
+    if(AUTOINPUT_UI_WITH_IMGUI_NODE_EDITOR AND IMGUI_NODE_EDITOR_FOUND)
+        target_compile_definitions(${PROJECT_NAME_UI} PRIVATE AUTOINPUT_HAS_IMGUI_NODE_EDITOR=1)
+        target_include_directories(${PROJECT_NAME_UI} PRIVATE ${IMGUI_NODE_EDITOR_INCLUDE_DIR})
     endif()
 
     target_link_libraries(${PROJECT_NAME_UI} PRIVATE ${PROJECT_NAME_CORE} raylib)

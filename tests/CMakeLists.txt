@@ -89,6 +89,13 @@ if(AUTOINPUT_UI_WITH_IMNODES AND IMNODES_FOUND)
     )
 endif()
 
+if(AUTOINPUT_UI_WITH_IMGUI_NODE_EDITOR AND IMGUI_NODE_EDITOR_FOUND)
+    list(APPEND AUTOINPUT_TEST_SOURCES
+            ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/imguiNodeEditorBackend.cpp
+            ${IMGUI_NODE_EDITOR_SOURCES}
+    )
+endif()
+
 add_executable(${PROJECT_NAME_TEST}
         ${AUTOINPUT_TEST_SOURCES}
 )
@@ -96,6 +103,11 @@ add_executable(${PROJECT_NAME_TEST}
 if(AUTOINPUT_UI_WITH_IMNODES AND IMNODES_FOUND)
     target_compile_definitions(${PROJECT_NAME_TEST} PRIVATE AUTOINPUT_HAS_IMNODES=1)
     target_include_directories(${PROJECT_NAME_TEST} PRIVATE ${IMNODES_INCLUDE_DIR})
+endif()
+
+if(AUTOINPUT_UI_WITH_IMGUI_NODE_EDITOR AND IMGUI_NODE_EDITOR_FOUND)
+    target_compile_definitions(${PROJECT_NAME_TEST} PRIVATE AUTOINPUT_HAS_IMGUI_NODE_EDITOR=1)
+    target_include_directories(${PROJECT_NAME_TEST} PRIVATE ${IMGUI_NODE_EDITOR_INCLUDE_DIR})
 endif()
 
 target_link_libraries(${PROJECT_NAME_TEST}

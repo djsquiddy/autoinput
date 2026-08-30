@@ -23,7 +23,8 @@ namespace autoinput::ui::graph
     enum class NodeEditorBackendType : std::uint8_t
     {
         Fallback,
-        ImNodes
+        ImNodes,
+        ImguiNodeEditor
     };
 
     /**
@@ -35,6 +36,7 @@ namespace autoinput::ui::graph
         {
         case NodeEditorBackendType::Fallback: return "Fallback";
         case NodeEditorBackendType::ImNodes: return "ImNodes";
+        case NodeEditorBackendType::ImguiNodeEditor: return "ImguiNodeEditor";
         default: return "Unknown";
         }
     }

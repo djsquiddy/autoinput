@@ -10,6 +10,10 @@
 #include "imnodesBackend.h"
 #endif
 
+#ifdef AUTOINPUT_HAS_IMGUI_NODE_EDITOR
+#include "imguiNodeEditorBackend.h"
+#endif
+
 namespace autoinput::ui::graph
 {
     FallbackNodeEditorBackend::FallbackNodeEditorBackend()
@@ -89,6 +93,9 @@ namespace autoinput::ui::graph
 #ifdef AUTOINPUT_HAS_IMNODES
         case NodeEditorBackendType::ImNodes: return true;
 #endif
+#ifdef AUTOINPUT_HAS_IMGUI_NODE_EDITOR
+        case NodeEditorBackendType::ImguiNodeEditor: return true;
+#endif
         default: return false;
         }
     }
@@ -97,6 +104,8 @@ namespace autoinput::ui::graph
     {
 #ifdef AUTOINPUT_HAS_IMNODES
         return NodeEditorBackendType::ImNodes;
+#elif defined(AUTOINPUT_HAS_IMGUI_NODE_EDITOR)
+        return NodeEditorBackendType::ImguiNodeEditor;
 #else
         return NodeEditorBackendType::Fallback;
 #endif
@@ -109,6 +118,9 @@ namespace autoinput::ui::graph
         case NodeEditorBackendType::Fallback: return std::make_unique<FallbackNodeEditorBackend>();
 #ifdef AUTOINPUT_HAS_IMNODES
         case NodeEditorBackendType::ImNodes: return createImnodesBackend();
+#endif
+#ifdef AUTOINPUT_HAS_IMGUI_NODE_EDITOR
+        case NodeEditorBackendType::ImguiNodeEditor: return createImguiNodeEditorBackend();
 #endif
         default: return nullptr;
         }

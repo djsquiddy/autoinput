@@ -538,6 +538,33 @@ GraphDocument doc = configToGraphDocument(configData);
 mapDiagnosticsToGraphNodes(result, doc);
 ```
 
+## Node Editor Backend Abstraction (`INodeEditorBackend`)
+
+The Node Editor Backend Abstraction (`autoinput_ui/graph/nodeEditorBackend.h`) decouples graph document visualization and interaction logic from specific rendering libraries.
+
+### Backend Types & Selection Hierarchy
+
+- `NodeEditorBackendType::Fallback`: Lightweight no-op backend and default Dear ImGui fallback viewer. Guaranteed to be available in all builds without external dependencies.
+- `NodeEditorBackendType::ImNodes`: Optional integration using the immediate-mode [imnodes](https://github.com/Nelarius/imnodes) library.
+- `NodeEditorBackendType::ImguiNodeEditor`: Optional integration using the advanced canvas [imgui-node-editor](https://github.com/thedmd/imgui-node-editor) library.
+
+The backend factory selects the most capable enabled backend automatically:
+1. `ImNodes` (if compiled with `AUTOINPUT_HAS_IMNODES`)
+2. `ImguiNodeEditor` (if compiled with `AUTOINPUT_HAS_IMGUI_NODE_EDITOR`)
+3. `Fallback` (default dependency-free fallback)
+
+### Build Configuration & Optional Flags
+
+Both third-party backends are completely optional and disabled (`OFF`) by default to ensure default builds and CI remain completely dependency-free:
+
+- `-DAUTOINPUT_UI_WITH_IMNODES=ON`: Enables imnodes backend compilation.
+- `-DAUTOINPUT_UI_WITH_IMGUI_NODE_EDITOR=ON`: Enables imgui-node-editor backend compilation.
+
+> **Important**: Build scripts and CMake do **not** fetch or vendor third-party libraries automatically. If either option is enabled, the dependency must be provided locally via:
+> - Search paths: `third_party/imnodes`, `extern/imnodes`, or `-DIMNODES_DIR=/path/to/imnodes`
+> - Search paths: `third_party/imgui-node-editor`, `extern/imgui-node-editor`, or `-DIMGUI_NODE_EDITOR_DIR=/path/to/imgui-node-editor`
+> If an option is enabled but the dependency files are not found, CMake emits an explicit, actionable configuration error.
+
 ## Usage Example
 
 ```cpp

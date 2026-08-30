@@ -47,6 +47,10 @@ if(AUTOINPUT_UI_WITH_IMNODES)
     include(configure_imnodes)
 endif()
 
+if(AUTOINPUT_UI_WITH_IMGUI_NODE_EDITOR)
+    include(configure_imgui_node_editor)
+endif()
+
 add_subdirectory(src)
 
 if(AUTOINPUT_BUILD_TESTS)

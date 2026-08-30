@@ -20,6 +20,7 @@ TEST_F(NodeEditorBackendTest, BackendTypeToStringConversions)
 {
     EXPECT_EQ(backendTypeToString(NodeEditorBackendType::Fallback), "Fallback");
     EXPECT_EQ(backendTypeToString(NodeEditorBackendType::ImNodes), "ImNodes");
+    EXPECT_EQ(backendTypeToString(NodeEditorBackendType::ImguiNodeEditor), "ImguiNodeEditor");
     EXPECT_EQ(backendTypeToString(static_cast<NodeEditorBackendType>(99)), "Unknown");
 }
 
@@ -33,6 +34,12 @@ TEST_F(NodeEditorBackendTest, BackendAvailabilityCheck)
     EXPECT_FALSE(isBackendAvailable(NodeEditorBackendType::ImNodes));
 #endif
 
+#ifdef AUTOINPUT_HAS_IMGUI_NODE_EDITOR
+    EXPECT_TRUE(isBackendAvailable(NodeEditorBackendType::ImguiNodeEditor));
+#else
+    EXPECT_FALSE(isBackendAvailable(NodeEditorBackendType::ImguiNodeEditor));
+#endif
+
     EXPECT_FALSE(isBackendAvailable(static_cast<NodeEditorBackendType>(99)));
 }
 
@@ -42,6 +49,8 @@ TEST_F(NodeEditorBackendTest, PreferredBackendSelection)
 
 #ifdef AUTOINPUT_HAS_IMNODES
     EXPECT_EQ(preferred, NodeEditorBackendType::ImNodes);
+#elif defined(AUTOINPUT_HAS_IMGUI_NODE_EDITOR)
+    EXPECT_EQ(preferred, NodeEditorBackendType::ImguiNodeEditor);
 #else
     EXPECT_EQ(preferred, NodeEditorBackendType::Fallback);
 #endif
@@ -122,6 +131,11 @@ TEST_F(NodeEditorBackendTest, CreateInvalidOrDisabledBackend)
     auto imnodesBackend = createNodeEditorBackend(NodeEditorBackendType::ImNodes);
     EXPECT_EQ(imnodesBackend, nullptr);
 #endif
+
+#ifndef AUTOINPUT_HAS_IMGUI_NODE_EDITOR
+    auto imguiNodeEditorBackend = createNodeEditorBackend(NodeEditorBackendType::ImguiNodeEditor);
+    EXPECT_EQ(imguiNodeEditorBackend, nullptr);
+#endif
 }
 
 #ifdef AUTOINPUT_HAS_IMNODES
@@ -144,5 +158,28 @@ TEST_F(NodeEditorBackendTest, ImnodesBackendCapabilitiesWhenEnabled)
     EXPECT_FALSE(caps.supportsZoom);
     EXPECT_TRUE(caps.supportsMultiSelect);
     EXPECT_EQ(caps.backendName, "imnodes");
+}
+#endif
+
+#ifdef AUTOINPUT_HAS_IMGUI_NODE_EDITOR
+TEST_F(NodeEditorBackendTest, ImguiNodeEditorBackendCapabilitiesWhenEnabled)
+{
+    auto backend = createNodeEditorBackend(NodeEditorBackendType::ImguiNodeEditor);
+    ASSERT_NE(backend, nullptr);
+    EXPECT_EQ(backend->backendType(), NodeEditorBackendType::ImguiNodeEditor);
+
+    const auto& caps = backend->capabilities();
+    EXPECT_TRUE(caps.isAvailable);
+    EXPECT_TRUE(caps.supportsCanvas);
+    EXPECT_TRUE(caps.supportsPositions);
+    EXPECT_TRUE(caps.supportsLinkCreationQuery);
+    EXPECT_TRUE(caps.supportsLinkDeletionQuery);
+    EXPECT_TRUE(caps.supportsSelectionQuery);
+    EXPECT_TRUE(caps.supportsGroups);
+    EXPECT_TRUE(caps.supportsComments);
+    EXPECT_FALSE(caps.supportsMinimap);
+    EXPECT_TRUE(caps.supportsZoom);
+    EXPECT_TRUE(caps.supportsMultiSelect);
+    EXPECT_EQ(caps.backendName, "imgui-node-editor");
 }
 #endif
