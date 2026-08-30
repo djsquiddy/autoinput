@@ -8,13 +8,13 @@
 #define INCLUDE_AUTOINPUT_INPUT_MOUSE_H
 #pragma once
 
+#include "autoinput/support/types.h"
+#include "autoinput/app/handlerState.h"
+
 #include <string>
 #include <shared_mutex>
 #include <mutex>
 #include <utility>
-
-#include "autoinput/support/types.h"
-#include "autoinput/app/handlerState.h"
 
 namespace autoinput
 {
@@ -129,25 +129,29 @@ namespace autoinput
         /**
          * @brief Virtual destructor.
          */
-        ~MouseHandler() override {
-            m_autoclickerThread.request_stop();
-            m_cv.notify_all();
-            if (m_autoclickerThread.joinable()) m_autoclickerThread.join();
-        }
+        ~MouseHandler() override;
 
         /**
          * @brief Constructs a MouseHandler for a specific Mouse object.
          * @param mouse The mouse button and modifiers.
          * @param backend Pointer to the platform backend.
          */
-        explicit MouseHandler(const Mouse mouse, IPlatformBackend* backend = nullptr) : InputHandler(backend), m_mouse{mouse} { }
+        explicit MouseHandler(const Mouse mouse, IPlatformBackend* backend = nullptr)
+            : InputHandler(backend)
+            , m_mouse{mouse}
+        {
+        }
 
         /**
          * @brief Constructs a MouseHandler for a specific MouseButton.
          * @param mouseButton The mouse button.
          * @param backend Pointer to the platform backend.
          */
-        explicit MouseHandler(const MouseButton mouseButton, IPlatformBackend* backend = nullptr) : InputHandler(backend), m_mouse{mouseButton} { }
+        explicit MouseHandler(const MouseButton mouseButton, IPlatformBackend* backend = nullptr)
+            : InputHandler(backend)
+            , m_mouse{mouseButton}
+        {
+        }
 
         /**
          * @brief Copy constructor.
@@ -232,7 +236,7 @@ namespace autoinput
         void release() override;
 
     private:
-        Mouse m_mouse{};
+        Mouse m_mouse;
         mutable std::shared_mutex m_mouseMutex;
     };
 
@@ -245,18 +249,28 @@ namespace autoinput
         }
     };
 
+    inline MouseHandler::~MouseHandler()
+    {
+        m_autoclickerThread.request_stop();
+        m_cv.notify_all();
+        if (m_autoclickerThread.joinable())
+        {
+            m_autoclickerThread.join();
+        }
+    }
+
     inline MouseHandler::MouseHandler(const MouseHandler& rhs)
         : InputHandler(rhs)
     {
         std::shared_lock lock(rhs.m_mouseMutex);
-        m_mouse = rhs.m_mouse;
+        m_mouse = rhs.m_mouse; // NOLINT(*-prefer-member-initializer)
     }
 
     inline MouseHandler::MouseHandler(MouseHandler&& rhs) noexcept
         : InputHandler(std::move(rhs))
     {
         std::unique_lock lock(rhs.m_mouseMutex);
-        m_mouse = std::move(rhs.m_mouse);
+        m_mouse = rhs.m_mouse; // NOLINT(*-prefer-member-initializer)
     }
 
     inline MouseHandler& MouseHandler::operator=(MouseHandler&& rhs) noexcept
@@ -271,7 +285,7 @@ namespace autoinput
         std::lock(lock1, lock2);
 
         InputHandler::operator=(std::move(rhs));
-        this->m_mouse = std::move(rhs.m_mouse);
+        this->m_mouse = rhs.m_mouse;
         return *this;
     }
 

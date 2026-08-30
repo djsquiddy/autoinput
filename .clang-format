@@ -42,7 +42,7 @@ SpacesInParentheses: false
 SpacesInSquareBrackets: false
 SpacesInAngles: Never
 
-Cpp11BracedListStyle: true
+Cpp11BracedListStyle: Block
 SpaceBeforeCpp11BracedList: false
 
 BinPackArguments: true
@@ -58,13 +58,24 @@ AlwaysBreakTemplateDeclarations: Yes
 IncludeBlocks: Preserve
 SortIncludes: CaseSensitive
 IncludeCategories:
-  - Regex: '^"'
+  # Local same-directory header, typically the .cpp's matching header
+  - Regex: '^"[^/]+\.h"$'
     Priority: 1
-  - Regex: '^<'
+  # Project and relative include
+  - Regex: '^["<](autoinput/|\.\./)'
     Priority: 2
+  # Third party libraries
+  - Regex: "^<(raylib|imgui|gsl|toml++)"
+    Priority: 3
+  # Standard library (no subdirectory)
+  - Regex:           '^<[a-z_]+>$'
+    Priority:        4
+  # Catch-all fallback
+  - Regex:           '.*'
+    Priority:        5
 
 ReflowComments: false
-SortUsingDeclarations: true
+SortUsingDeclarations: LexicographicNumeric
 
 KeepEmptyLinesAtTheStartOfBlocks: false
 MaxEmptyLinesToKeep: 1

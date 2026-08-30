@@ -160,7 +160,7 @@ namespace autoinput
         return std::format("{}ms", diff.count());
     }
 
-    bool SequenceRecorder::save(const std::filesystem::path& path, const bool force)
+    bool SequenceRecorder::save(const std::filesystem::path& path, const bool force)const
     {
         if (std::filesystem::exists(path) && !force)
         {

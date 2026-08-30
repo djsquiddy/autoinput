@@ -8,9 +8,9 @@
 #define INCLUDE_AUTOINPUT_INPUT_SEQUENCE_H
 #pragma once
 
+#include "autoinput/support/types.h"
 #include "autoinput/app/handlerState.h"
 #include "autoinput/config/config.h"
-#include "autoinput/support/types.h"
 #include <chrono>
 #include <vector>
 
@@ -27,11 +27,8 @@ namespace autoinput
         /**
          * @brief Virtual destructor.
          */
-        ~SequenceHandler() override {
-            m_autoclickerThread.request_stop();
-            m_cv.notify_all();
-            if (m_autoclickerThread.joinable()) m_autoclickerThread.join();
-        }
+        ~SequenceHandler() override
+        ;
 
         /**
          * @brief Constructs a SequenceHandler from a recorded sequence.

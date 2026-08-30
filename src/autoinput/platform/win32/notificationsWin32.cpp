@@ -11,6 +11,7 @@
 #include <shellapi.h>
 #include <string>
 
+
 namespace autoinput
 {
     namespace
@@ -20,7 +21,7 @@ namespace autoinput
         constexpr UINT WM_NOTIFICATION_CALLBACK = WM_APP + 1;
         constexpr auto NOTIFICATION_CLASS_NAME = "AutoInputNotificationWindow";
 
-        LRESULT CALLBACK NotificationWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+        LRESULT CALLBACK NotificationWindowProc(const HWND hwnd, const UINT uMsg, const WPARAM wParam, const LPARAM lParam)
         {
             return DefWindowProcA(hwnd, uMsg, wParam, lParam);
         }
@@ -29,9 +30,7 @@ namespace autoinput
         {
         public:
             WindowsDesktopNotificationSink()
-                : m_hwnd{ nullptr }, m_iconAdded{ false }
             {
-                m_nid = {};
                 m_nid.cbSize = sizeof(m_nid);
                 
                 if (initializeWindow())
@@ -41,7 +40,7 @@ namespace autoinput
                     m_nid.uFlags = NIF_INFO | NIF_ICON | NIF_MESSAGE;
                     m_nid.uCallbackMessage = WM_NOTIFICATION_CALLBACK;
                     // ReSharper disable once CppZeroConstantCanBeReplacedWithNullptr
-                    m_nid.hIcon = LoadIconA(NULL, (LPCSTR)IDI_APPLICATION);
+                    m_nid.hIcon = LoadIconA(nullptr, IDI_APPLICATION);
                 }
             }
 
@@ -58,10 +57,10 @@ namespace autoinput
                 }
 
                 // ReSharper disable once CppZeroConstantCanBeReplacedWithNullptr
-                UnregisterClassA(NOTIFICATION_CLASS_NAME, GetModuleHandleA(NULL));
+                UnregisterClassA(NOTIFICATION_CLASS_NAME, GetModuleHandleA(nullptr));
             }
 
-            void notify(const std::string& title, const std::string& body, NotificationSeverity severity) override
+            void notify(const std::string& title, const std::string& body, const NotificationSeverity severity) override
             {
                 if (!m_hwnd)
                 {
@@ -106,7 +105,7 @@ namespace autoinput
             bool initializeWindow()
             {
                 // ReSharper disable once CppZeroConstantCanBeReplacedWithNullptr
-                HINSTANCE hInst = GetModuleHandleA(NULL);
+                HINSTANCE hInst = GetModuleHandleA(nullptr);
 
                 WNDCLASSA wc = {};
                 wc.lpfnWndProc = NotificationWindowProc;
@@ -127,9 +126,9 @@ namespace autoinput
                     0,
                     0, 0, 0, 0,
                     HWND_MESSAGE,
-                    NULL,
+                    nullptr,
                     hInst,
-                    NULL
+                    nullptr
                 );
                 // ReSharper restore CppZeroConstantCanBeReplacedWithNullptr
 
@@ -142,9 +141,9 @@ namespace autoinput
                 return true;
             }
 
-            NOTIFYICONDATAA m_nid;
-            HWND m_hwnd;
-            bool m_iconAdded;
+            NOTIFYICONDATAA m_nid{};
+            HWND m_hwnd{ nullptr };
+            bool m_iconAdded{ false };
         };
     }
 

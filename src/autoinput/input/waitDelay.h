@@ -5,8 +5,8 @@
  * @date August 2026
  */
 
-#ifndef INCLUDE_AUTOINPUT_INPUT_WAITDELAY_H
-#define INCLUDE_AUTOINPUT_INPUT_WAITDELAY_H
+#ifndef INCLUDE_AUTOINPUT_INPUT_WAIT_DELAY_H
+#define INCLUDE_AUTOINPUT_INPUT_WAIT_DELAY_H
 #pragma once
 
 #include <chrono>
@@ -83,4 +83,4 @@ namespace autoinput
     std::chrono::milliseconds waitDelayInputToMilliseconds(double value, std::string_view durationType);
 }
 
-#endif // INCLUDE_AUTOINPUT_INPUT_WAITDELAY_H
+#endif // INCLUDE_AUTOINPUT_INPUT_WAIT_DELAY_H

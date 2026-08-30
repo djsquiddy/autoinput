@@ -6,10 +6,10 @@ import logging
 import pathlib
 import sys
 
-# Support direct script execution without PYTHONPATH set
-_SCRIPTS_DIR = pathlib.Path(__file__).resolve().parent.parent
-if str(_SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS_DIR))
+try:
+    import _bootstrap  # noqa: F401
+except ImportError:
+    from . import _bootstrap  # noqa: F401
 
 from autoinput_tools.icon.generate import generate
 from autoinput_tools.paths import (

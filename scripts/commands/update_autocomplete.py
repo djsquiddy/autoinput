@@ -11,9 +11,10 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 
-_SCRIPTS_DIR = pathlib.Path(__file__).resolve().parent.parent
-if str(_SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS_DIR))
+try:
+    import _bootstrap  # noqa: F401
+except ImportError:
+    from . import _bootstrap  # noqa: F401
 
 from autoinput_tools.cli.model import (
     CliCommand as ToolCliCommand,

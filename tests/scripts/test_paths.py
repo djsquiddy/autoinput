@@ -16,7 +16,11 @@ from autoinput_tools.paths import (
     AUTOCOMPLETE_LUA_FILE,
     AUTOCOMPLETE_ZSH_FILE,
     BUILD_DIR,
+    CLANG_FORMAT_CONFIG_FILE,
+    CLANG_TIDY_CONFIG_FILE,
     CLI_RESOURCES_DIR,
+    CMAKE_PRESETS_FILE,
+    CMAKE_USER_PRESETS_FILE,
     COMMANDS_DIR,
     CONFIGS_DIR,
     DEFAULT_APP_ICON_FILE,
@@ -108,6 +112,12 @@ def test_file_constants() -> None:
     assert AUTOCOMPLETE_ZSH_FILE == AUTOCOMPLETE_DIR / "_autoinput"
     assert AUTOCOMPLETE_BASH_FILE == AUTOCOMPLETE_DIR / "autoinput_completion.bash"
     assert AUTOCOMPLETE_LUA_FILE == AUTOCOMPLETE_DIR / "autoinput_completion.lua"
+
+    # Verify tool config and CMake preset file paths
+    assert CLANG_FORMAT_CONFIG_FILE == PROJECT_ROOT / ".clang-format"
+    assert CLANG_TIDY_CONFIG_FILE == PROJECT_ROOT / ".clang-tidy"
+    assert CMAKE_PRESETS_FILE == PROJECT_ROOT / "CMakePresets.json"
+    assert CMAKE_USER_PRESETS_FILE == PROJECT_ROOT / "CMakeUserPresets.json"
 
 
 def test_helper_path_functions() -> None:

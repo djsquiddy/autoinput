@@ -4,8 +4,8 @@
  * @author djsquiddy
  * @date August 2026
  */
-#ifndef INCLUDE_AUTOINPUT_INPUT_SEQUENCERECORDER_H
-#define INCLUDE_AUTOINPUT_INPUT_SEQUENCERECORDER_H
+#ifndef INCLUDE_AUTOINPUT_INPUT_SEQUENCE_RECORDER_H
+#define INCLUDE_AUTOINPUT_INPUT_SEQUENCE_RECORDER_H
 #pragma once
 
 #include "autoinput/config/config.h"
@@ -18,9 +18,9 @@
 
 namespace autoinput
 {
-    enum class RecorderState
+    enum class RecorderState : int8_t
     {
-        Waiting,
+        Waiting = 0,
         Recording,
         Paused,
         Finished,
@@ -33,11 +33,11 @@ namespace autoinput
         bool recordMouseClicks{ true };
         bool recordKeyboardEvents{ true };
         bool recordDelays{ true };
-        std::string name{};
-        std::string startKey{};
-        std::string endKey{};
-        std::string playStartKey{};
-        std::string mouseSampleDelay{};
+        std::string name;
+        std::string startKey;
+        std::string endKey;
+        std::string playStartKey;
+        std::string mouseSampleDelay;
     };
 
     class SequenceRecorder
@@ -118,7 +118,7 @@ namespace autoinput
          * @param force Whether to overwrite an existing file.
          * @return True if successful.
          */
-        bool save(const std::filesystem::path& path, bool force);
+        bool save(const std::filesystem::path& path, bool force)const;
 
     private:
         SequenceConfig m_config;
@@ -136,4 +136,4 @@ namespace autoinput
     };
 }
 
-#endif // INCLUDE_AUTOINPUT_INPUT_SEQUENCERECORDER_H
+#endif // INCLUDE_AUTOINPUT_INPUT_SEQUENCE_RECORDER_H

@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <shellapi.h>
 
+// NOLINTBEGIN(*-pro-type-union-access)
 namespace autoinput
 {
     namespace
@@ -551,7 +552,7 @@ namespace autoinput
             {
                 platform::g_mainThreadId = GetCurrentThreadId();
                 MSG msg;
-                while (GetMessage(&msg, NULL, 0, 0))
+                while (GetMessage(&msg, nullptr, 0, 0))
                 {
                     TranslateMessage(&msg);
                     DispatchMessage(&msg);
@@ -916,6 +917,25 @@ namespace autoinput
         std::string type = "???";
         std::string button = "None";
 
+        const ButtonState buttonState = getButtonState();
+        type = buttonState.isDown ? "DOWN" : "UP";
+        switch (buttonState.button)
+        {
+        case MouseButton::None:
+            break;
+            case MouseButton::Left: break;
+            case MouseButton::Middle: break;
+            case MouseButton::Right: break;
+            case MouseButton::Back: break;
+            case MouseButton::Forward:
+            button = "Forward";
+            break;
+
+            case MouseButton::All:
+        default:
+            button = "None";
+        }
+
         if (isLeftButtonDown()) { type = "DOWN"; button = "Left"; }
         else if (isLeftButtonUp()) { type = "UP"; button = "Left"; }
         else if (isRightButtonDown()) { type = "DOWN"; button = "Right"; }
@@ -941,16 +961,19 @@ namespace autoinput
         const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
         return winData && (winData->wParam == WM_KEYDOWN || winData->wParam == WM_SYSKEYDOWN); 
     }
+
     bool KeyboardInput::isKeyUp() const 
     { 
         const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
         return winData && (winData->wParam == WM_KEYUP || winData->wParam == WM_SYSKEYUP); 
     }
+
     bool KeyboardInput::isSysKey() const 
     { 
         const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
         return winData && (winData->wParam == WM_SYSKEYDOWN || winData->wParam == WM_SYSKEYUP); 
     }
+
     bool KeyboardInput::isSynthetic() const
     {
         const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
@@ -997,9 +1020,24 @@ namespace autoinput
         }
 
         const auto* winData = std::any_cast<WindowsKeyboardData>(&data.internal);
-        if (!winData) return;
+        if (!winData)
+        {
+            return;
+        }
 
-        std::string type = isKeyDown() ? "DOWN" : isKeyUp() ? "UP" : "???";
+        std::string type;
+        if (isKeyDown())
+        {
+            type = "DOWN";
+        }
+        else if (isKeyUp())
+        {
+            type = "UP";
+        }
+        else
+        {
+            type = "???";
+        }
         if (isSysKey())
         {
             type += " (sys)";
@@ -1022,3 +1060,4 @@ namespace autoinput
         Logger::debug(info + "\n");
     }
 }
+// NOLINTEND(*-pro-type-union-access)

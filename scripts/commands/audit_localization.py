@@ -8,9 +8,10 @@ import pathlib
 import re
 import sys
 
-_SCRIPTS_DIR = pathlib.Path(__file__).resolve().parent.parent
-if str(_SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS_DIR))
+try:
+    import _bootstrap  # noqa: F401
+except ImportError:
+    from . import _bootstrap  # noqa: F401
 
 from autoinput_tools.localization.toml import LocalizationFile
 from autoinput_tools.paths import PROJECT_ROOT, UI_SRC_DIR

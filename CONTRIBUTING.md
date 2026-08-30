@@ -46,17 +46,38 @@ You can also use the scripts in the `scripts/` directory.
 
 The project uses `clang-format` to maintain a consistent code style. Formatting rules are defined in `.clang-format`.
 
-You can format the codebase using the `format` target:
+You can format the codebase using the Python helper tool:
+
+```bash
+# In-place formatting
+python scripts/commands/format.py
+
+# Check formatting without modifying files (e.g. in CI)
+python scripts/commands/format.py --check
+```
+
+Alternatively, you can run the CMake targets directly:
 
 ```bash
 cmake --build build --target format
+cmake --build build --target format-check
 ```
 
 ### Linting
 
 The project uses `clang-tidy` for static analysis. Rules are defined in `.clang-tidy`.
 
-You can run linting using:
+You can run linting using the Python helper tool:
+
+```bash
+# Run clang-tidy analysis
+python scripts/commands/clang_tidy.py
+
+# Run clang-tidy with a specific preset
+python scripts/commands/clang_tidy.py --preset debug
+```
+
+Alternatively, you can run the CMake target directly:
 
 ```bash
 cmake --build build --target clang-tidy-check

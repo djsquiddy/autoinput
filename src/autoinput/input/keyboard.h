@@ -8,6 +8,9 @@
 #define INCLUDE_AUTOINPUT_INPUT_KEYBOARD_H
 #pragma once
 
+#include "autoinput/support/types.h"
+#include "autoinput/app/handlerState.h"
+
 #include <string>
 #include <shared_mutex>
 #include <mutex>
@@ -15,8 +18,6 @@
 #include <utility>
 #include <functional>
 
-#include "autoinput/support/types.h"
-#include "autoinput/app/handlerState.h"
 
 namespace autoinput
 {
@@ -90,11 +91,7 @@ namespace autoinput
         /**
          * @brief Virtual destructor.
          */
-        ~KeyHandler() override {
-            m_autoclickerThread.request_stop();
-            m_cv.notify_all();
-            if (m_autoclickerThread.joinable()) m_autoclickerThread.join();
-        }
+        ~KeyHandler() override;
 
         /**
          * @brief Constructs a KeyHandler for a specific key.
@@ -190,18 +187,29 @@ namespace autoinput
         }
     };
 
+
+    inline KeyHandler::~KeyHandler()
+    {
+        m_autoclickerThread.request_stop();
+        m_cv.notify_all();
+        if (m_autoclickerThread.joinable())
+        {
+            m_autoclickerThread.join();
+        }
+    }
+
     inline KeyHandler::KeyHandler(const KeyHandler& rhs)
         : InputHandler(rhs)
     {
         std::shared_lock lock(rhs.m_keyMutex);
-        m_key = rhs.m_key;
+        m_key = rhs.m_key; // NOLINT(*-prefer-member-initializer)
     }
 
     inline KeyHandler::KeyHandler(KeyHandler&& rhs) noexcept
         : InputHandler(std::move(rhs))
     {
         std::unique_lock lock(rhs.m_keyMutex);
-        m_key = std::move(rhs.m_key);
+        m_key = std::move(rhs.m_key); // NOLINT(*-prefer-member-initializer)
     }
 
     inline KeyHandler& KeyHandler::operator=(KeyHandler&& rhs) noexcept

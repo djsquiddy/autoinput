@@ -238,14 +238,14 @@ namespace autoinput
     /**
      * @brief Types of events that can be recorded.
      */
-    enum class RecordedEventType
+    enum class RecordedEventType : uint8_t
     {
         Invalid = 0,
         KeyDown,
         KeyUp,
         MouseDown,
         MouseUp,
-        MouseMove
+        MouseMove,
     };
 
     std::string_view recordedEventTypeToString(RecordedEventType type);

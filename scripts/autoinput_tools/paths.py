@@ -42,6 +42,11 @@ AUTOCOMPLETE_ZSH_FILE: pathlib.Path = AUTOCOMPLETE_DIR / "_autoinput"
 AUTOCOMPLETE_BASH_FILE: pathlib.Path = AUTOCOMPLETE_DIR / "autoinput_completion.bash"
 AUTOCOMPLETE_LUA_FILE: pathlib.Path = AUTOCOMPLETE_DIR / "autoinput_completion.lua"
 
+CLANG_FORMAT_CONFIG_FILE: pathlib.Path = PROJECT_ROOT / ".clang-format"
+CLANG_TIDY_CONFIG_FILE: pathlib.Path = PROJECT_ROOT / ".clang-tidy"
+CMAKE_PRESETS_FILE: pathlib.Path = PROJECT_ROOT / "CMakePresets.json"
+CMAKE_USER_PRESETS_FILE: pathlib.Path = PROJECT_ROOT / "CMakeUserPresets.json"
+
 
 def project_path(*parts: str) -> pathlib.Path:
     return PROJECT_ROOT.joinpath(*parts)
