@@ -211,6 +211,49 @@ ValidationResult result = validateGraph(doc, ValidationOptions::sequenceGraph())
 assert(result.isValid());
 ```
 
+## Sequence Graph Compiler
+
+The Sequence Graph Compiler (`autoinput_ui/graph/sequenceGraphCompiler.h`) compiles a visual `GraphDocument` representation back into an `autoinput::RecordedSequence` data model.
+
+### Compilation Workflow & Topology Rules
+
+The compiler validates and reconstructs the sequence by tracing directed execution links:
+1. **Single Entry & Single Exit**: Rejects graphs without exactly one `Start` node or without a reachable `End` node.
+2. **Topological Ordering**: Uses graph links (rather than node storage order) to determine the exact execution sequence from `Start` to `End`.
+3. **No Unsupported Branching / Merging**: Rejects graphs where execution nodes have multiple outgoing or incoming links.
+4. **No Directed Cycles**: Rejects circular execution loops.
+5. **No Disconnected Required Nodes**: Rejects graphs containing unlinked/unreachable execution nodes (`RecordedEvent`, `Wait`, `Start`, `End`).
+6. **Valid Link Directions**: Rejects links with invalid pin directions (e.g. output-to-output or input-to-input).
+7. **Metadata & Sequence Fidelity**: Preserves sequence-level properties (`name`, `start`, `repeat`) and source event details via `SequenceCompileOptions` (or an optional source sequence context).
+
+### Current Limitations
+
+- **Linear Sequences Only**: In this phase, the compiler only supports compiling linear sequence graphs (`Start -> Event... -> End`). Advanced control-flow constructs (conditionals, loops, branching) are rejected until the runtime sequence execution engine supports non-linear control flow.
+
+### Sequence Compilation Example
+
+```cpp
+#include "autoinput_ui/graph/sequenceGraphCompiler.h"
+
+using namespace autoinput::ui::graph;
+
+// Compile a GraphDocument back into a RecordedSequence
+SequenceCompileResult result = compileGraphToSequence(doc, originalSequence);
+
+if (result.isSuccess())
+{
+    const RecordedSequence& compiled = *result.sequence;
+    // Save to configuration or use in sequence player
+}
+else
+{
+    for (const auto& issue : result.issues)
+    {
+        // Display compilation error in problem inspector
+    }
+}
+```
+
 ## Usage Example
 
 ```cpp

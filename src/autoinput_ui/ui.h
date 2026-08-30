@@ -14,6 +14,7 @@
 #include "graph/graphModel.h"
 #include "graph/graphValidator.h"
 #include "graph/sequenceGraphAdapter.h"
+#include "graph/sequenceGraphCompiler.h"
 #include "widgets/basicWidgets.h"
 #include "widgets/formWidgets.h"
 #include "widgets/modalWidgets.h"
