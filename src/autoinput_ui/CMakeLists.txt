@@ -46,6 +46,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/graph/sequenceGraphAdapter.h
             ${CMAKE_CURRENT_LIST_DIR}/graph/sequenceGraphCompiler.cpp
             ${CMAKE_CURRENT_LIST_DIR}/graph/sequenceGraphCompiler.h
+            ${CMAKE_CURRENT_LIST_DIR}/graph/nodeEditorBackend.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/graph/nodeEditorBackend.h
             # Widgets
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.cpp
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.h
@@ -109,6 +111,14 @@ if(AUTOINPUT_BUILD_UI)
             ${IMGUI_SOURCES}
     )
 
+    if(AUTOINPUT_UI_WITH_IMNODES AND IMNODES_FOUND)
+        list(APPEND AUTOINPUT_UI_SOURCES
+            ${CMAKE_CURRENT_LIST_DIR}/graph/imnodesBackend.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/graph/imnodesBackend.h
+            ${IMNODES_SOURCES}
+        )
+    endif()
+
     autoinput_group_sources_by_directory("${CMAKE_CURRENT_LIST_DIR}" ${AUTOINPUT_UI_SOURCES})
     add_executable(${PROJECT_NAME_UI} ${AUTOINPUT_UI_SOURCES})
 
@@ -118,6 +128,11 @@ if(AUTOINPUT_BUILD_UI)
             ${imgui_SOURCE_DIR}
             ${imgui_SOURCE_DIR}/misc/cpp
     )
+
+    if(AUTOINPUT_UI_WITH_IMNODES AND IMNODES_FOUND)
+        target_compile_definitions(${PROJECT_NAME_UI} PRIVATE AUTOINPUT_HAS_IMNODES=1)
+        target_include_directories(${PROJECT_NAME_UI} PRIVATE ${IMNODES_INCLUDE_DIR})
+    endif()
 
     target_link_libraries(${PROJECT_NAME_UI} PRIVATE ${PROJECT_NAME_CORE} raylib)
 

@@ -53,11 +53,13 @@ set(AUTOINPUT_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/graphValidatorTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/sequenceGraphAdapterTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/sequenceGraphCompilerTest.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/autoinput/nodeEditorBackendTest.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/core/localization.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/graphModel.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/graphValidator.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/sequenceGraphAdapter.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/sequenceGraphCompiler.cpp
+        ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/nodeEditorBackend.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/testEnvironment.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/backendTestLinux.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/backendCapabilitiesTest.cpp
@@ -70,9 +72,21 @@ if(UNIX AND NOT APPLE)
     )
 endif()
 
+if(AUTOINPUT_UI_WITH_IMNODES AND IMNODES_FOUND)
+    list(APPEND AUTOINPUT_TEST_SOURCES
+            ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/imnodesBackend.cpp
+            ${IMNODES_SOURCES}
+    )
+endif()
+
 add_executable(${PROJECT_NAME_TEST}
         ${AUTOINPUT_TEST_SOURCES}
 )
+
+if(AUTOINPUT_UI_WITH_IMNODES AND IMNODES_FOUND)
+    target_compile_definitions(${PROJECT_NAME_TEST} PRIVATE AUTOINPUT_HAS_IMNODES=1)
+    target_include_directories(${PROJECT_NAME_TEST} PRIVATE ${IMNODES_INCLUDE_DIR})
+endif()
 
 target_link_libraries(${PROJECT_NAME_TEST}
         PRIVATE

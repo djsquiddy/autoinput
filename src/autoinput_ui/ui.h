@@ -13,6 +13,7 @@
 #include "core/windowManager.h"
 #include "graph/graphModel.h"
 #include "graph/graphValidator.h"
+#include "graph/nodeEditorBackend.h"
 #include "graph/sequenceGraphAdapter.h"
 #include "graph/sequenceGraphCompiler.h"
 #include "widgets/basicWidgets.h"

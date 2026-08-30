@@ -43,6 +43,10 @@ include(configure_cli_help)
 include(configure_app_icon)
 include(configure_clang_tidy)
 
+if(AUTOINPUT_UI_WITH_IMNODES)
+    include(configure_imnodes)
+endif()
+
 add_subdirectory(src)
 
 if(AUTOINPUT_BUILD_TESTS)

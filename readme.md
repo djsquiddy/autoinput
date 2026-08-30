@@ -83,6 +83,7 @@ You can customize the build by passing the following options to `cmake`:
 - `AUTOINPUT_BUILD_TESTS`: Build unit and integration tests (defaults to `OFF`).
 - `AUTOINPUT_BUILD_TRAY`: Build the optional system tray frontend for Windows (defaults to `OFF`).
 - `AUTOINPUT_BUILD_UI`: Build the optional graphical UI frontend (defaults to `OFF`).
+- `AUTOINPUT_UI_WITH_IMNODES`: Enable optional imnodes backend for UI node editors (defaults to `OFF`).
 - `ENABLE_KEYBOARD_HOOK`: Enable low-level keyboard hook support for global hotkeys (defaults to `ON`).
 - `ENABLE_MOUSE_HOOK`: Enable low-level mouse hook support for global hotkeys (defaults to `ON`).
 - `ENABLE_FAKE_HOOK`: Use a dummy hook implementation for development or restricted environments (defaults to `OFF`).
@@ -824,7 +825,7 @@ python scripts/build.py --preset debug-tests
 
 Additional documentation is available in the [`docs/`](docs/) directory:
 - [Localization Guide](docs/localization.md) — Localization architecture, TOML conventions, and ID generation tooling.
-- [UI Graph Document Model](docs/ui-graph-model.md) — Internal dependency-free graph model, sequence adapter/compiler, and validation engine for future visual editors.
+- [UI Graph Document Model](docs/ui-graph-model.md) — Internal graph model, sequence adapter/compiler, validation engine, and optional imnodes rendering backend for future visual editors.
 - [Responsible Use Policy](docs/responsible-use.md) — Ethical guidelines and policies for automated inputs.
 
 ### License

@@ -254,6 +254,43 @@ else
 }
 ```
 
+## Node Editor Backend Abstraction
+
+The Node Editor Backend Abstraction (`autoinput_ui/graph/nodeEditorBackend.h`) provides a decoupled interface between AutoInput's graph document model and underlying immediate-mode graph rendering libraries.
+
+### Core Interface (`INodeEditorBackend`)
+
+The abstraction standardizes common visual canvas interactions without exposing third-party headers to public AutoInput consumers:
+
+- **Lifecycle & Canvas Management**: `initialize()`, `shutdown()`, `beginCanvas(editorId)`, `endCanvas()`.
+- **Node & Pin Layout**: `beginNode(nodeId)`, `endNode()`, `beginNodeTitle()`, `endNodeTitle()`, `beginInputPin(pinId)`, `endInputPin()`, `beginOutputPin(pinId)`, `endOutputPin()`.
+- **Links & Topology**: `drawLink(linkId, startPinId, endPinId)`.
+- **User Interaction Queries**: `queryCreatedLink()`, `queryDeletedLink()`, `querySelectedNodes()`, `querySelectedLinks()`.
+- **Coordinate Synchronization**: `setNodePosition(nodeId, pos)`, `getNodePosition(nodeId)`.
+- **Capability Introspection**: `capabilities()` reports supported features and backend description.
+
+### Fallback Backend (`FallbackNodeEditorBackend`)
+
+- The fallback backend is active by default in all standard builds and CI pipelines.
+- Implements a completely dependency-free no-op implementation ensuring graph data models, validation, and conversion remain testable without third-party graphics dependencies.
+
+### Optional `imnodes` Backend (`AUTOINPUT_UI_WITH_IMNODES`)
+
+The project supports `imnodes` (by Nelarius) as an optional visual rendering backend for experimentation:
+
+- **Disabled by Default**: `AUTOINPUT_UI_WITH_IMNODES` defaults to `OFF`. Default builds and CI do not require or download `imnodes`.
+- **Enabling via CMake**:
+  ```bash
+  python scripts/commands/build.py ui -DAUTOINPUT_UI_WITH_IMNODES=ON -DIMNODES_DIR=/path/to/imnodes
+  ```
+- **Providing the Dependency Locally**:
+  - Pass `-DIMNODES_DIR=/path/to/imnodes` pointing to the folder containing `imnodes.h` and `imnodes.cpp`.
+  - Or place the repository directly in `third_party/imnodes` or `extern/imnodes`.
+  - If `AUTOINPUT_UI_WITH_IMNODES` is `ON` and `imnodes` is not found, CMake will halt with an informative configuration error.
+- **Backend Capabilities & Limitations**:
+  - **Capabilities**: Full immediate-mode node rendering, title bars, input/output pins, connection linking, interactive link creation/destruction reporting, selection queries, and 2D canvas position synchronization.
+  - **Limitations**: `imnodes` uses integer identifiers (`int`); public AutoInput `NodeId`/`PinId`/`LinkId` are cast accordingly. `imgui-node-editor` is not part of this backend.
+
 ## Usage Example
 
 ```cpp
