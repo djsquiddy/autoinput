@@ -11,6 +11,7 @@
 #include "core/imguiScope.h"
 #include "core/uiWindow.h"
 #include "core/windowManager.h"
+#include "graph/fallbackGraphViewer.h"
 #include "graph/graphModel.h"
 #include "graph/graphValidator.h"
 #include "graph/nodeEditorBackend.h"

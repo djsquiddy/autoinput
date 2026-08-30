@@ -291,6 +291,50 @@ The project supports `imnodes` (by Nelarius) as an optional visual rendering bac
   - **Capabilities**: Full immediate-mode node rendering, title bars, input/output pins, connection linking, interactive link creation/destruction reporting, selection queries, and 2D canvas position synchronization.
   - **Limitations**: `imnodes` uses integer identifiers (`int`); public AutoInput `NodeId`/`PinId`/`LinkId` are cast accordingly. `imgui-node-editor` is not part of this backend.
 
+## Fallback Graph Viewer (`FallbackGraphViewer`)
+
+The Fallback Graph Viewer (`autoinput_ui/graph/fallbackGraphViewer.h`) provides a simple, dependency-free Dear ImGui visualization for `GraphDocument` instances without requiring `imnodes` or `imgui-node-editor`.
+
+### Key Features
+
+- **Multi-Panel Layout Modes**:
+  - `Split`: Side-by-side view with topology list/canvas tabs on the left and inspector/validation on the right.
+  - `ListOnly`: Compact tabular overview of nodes, links, inspector, and validation findings.
+  - `Canvas`: Direct 2D interactive canvas preview rendered using Dear ImGui `ImDrawList` primitives.
+- **Node & Link Visualization**:
+  - Node headers with color-coded badges per `NodeKind` (e.g. Green for Start, Red for End, Blue for Events, Orange for Wait delays).
+  - Displays titles, subtitles, source indices, and pin labels (`[In]` / `[Out]`).
+  - Renders directional Bézier connection curves between linked pins.
+- **Interactive Node & Link Selection**:
+  - Click any node or link in the table, list, or 2D canvas to inspect its metadata and connections.
+  - Selected elements are highlighted on the canvas and in tables with persistent state in `FallbackGraphViewerState`.
+- **Integrated Validation Badging & Navigation**:
+  - Displays validation status (`[Valid]` or error/warning counts) in the toolbar.
+  - Attaches validation issue badges (`[!] Error`, `[!] Warn`) directly to affected nodes and links.
+  - Clicking any validation message in the issues list immediately navigates to and selects the offending node or link.
+- **Filtering & Search**:
+  - Real-time text filter matching node titles, subtitles, IDs, and kind strings.
+  - Toggle to filter exclusively to problematic nodes with validation errors/warnings.
+
+### Limitations
+
+- **Read-Only Inspection**: The fallback viewer is primarily designed for graph visualization, inspection, and validation triage; it does not support interactive drag-and-drop link creation or pin disconnection (which will be handled by dedicated visual node editor backends).
+- **Basic 2D Canvas**: Canvas rendering is a lightweight preview using Dear ImGui draw lists; complex node graphs with hundreds of nodes should be viewed using list mode or a dedicated node editor backend.
+
+### Viewer Usage Example
+
+```cpp
+#include "autoinput_ui/graph/fallbackGraphViewer.h"
+#include "autoinput_ui/graph/graphValidator.h"
+
+using namespace autoinput::ui::graph;
+
+FallbackGraphViewerState viewerState;
+
+// Render fallback viewer with automatic validation
+renderFallbackGraphViewer(doc, viewerState);
+```
+
 ## Usage Example
 
 ```cpp

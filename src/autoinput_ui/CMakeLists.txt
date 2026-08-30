@@ -48,6 +48,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/graph/sequenceGraphCompiler.h
             ${CMAKE_CURRENT_LIST_DIR}/graph/nodeEditorBackend.cpp
             ${CMAKE_CURRENT_LIST_DIR}/graph/nodeEditorBackend.h
+            ${CMAKE_CURRENT_LIST_DIR}/graph/fallbackGraphViewer.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/graph/fallbackGraphViewer.h
             # Widgets
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.cpp
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.h
