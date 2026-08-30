@@ -93,7 +93,8 @@ TEST_F(ConfigGraphViewerTest, DetectDuplicateStartKeysAcrossCommands)
     bool foundConflict = false;
     for (const auto& issue : result.issues)
     {
-        if (issue.category == "Input Conflict" && issue.message.find("Duplicate start input") != std::string::npos)
+        if (issue.category == "Input Conflict" &&
+            issue.message.find("Duplicate command start input") != std::string::npos)
         {
             foundConflict = true;
             EXPECT_EQ(issue.severity, ConfigDiagnosticSeverity::Warning);
@@ -126,7 +127,8 @@ TEST_F(ConfigGraphViewerTest, DetectDuplicateStartKeysBetweenCommandAndSequence)
     bool foundConflict = false;
     for (const auto& issue : result.issues)
     {
-        if (issue.category == "Input Conflict" && issue.message.find("Duplicate start input") != std::string::npos)
+        if (issue.category == "Input Conflict" &&
+            issue.message.find("Command and sequence start conflict") != std::string::npos)
         {
             foundConflict = true;
             EXPECT_NE(issue.message.find("PrimaryCmd"), std::string::npos);

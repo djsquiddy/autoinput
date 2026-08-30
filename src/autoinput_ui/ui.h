@@ -13,6 +13,7 @@
 #include "core/windowManager.h"
 #include "editors/configGraphViewer.h"
 #include "editors/sequenceGraphEditor.h"
+#include "graph/configDiagnostics.h"
 #include "graph/configGraphAdapter.h"
 #include "graph/fallbackGraphViewer.h"
 #include "graph/graphModel.h"

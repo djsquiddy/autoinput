@@ -58,12 +58,14 @@ set(AUTOINPUT_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/sequenceGraphEditorTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/configGraphAdapterTest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/autoinput/configGraphViewerTest.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/autoinput/configDiagnosticsTest.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/core/localization.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/graphModel.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/graphValidator.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/sequenceGraphAdapter.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/sequenceGraphCompiler.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/configGraphAdapter.cpp
+        ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/configDiagnostics.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/nodeEditorBackend.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/graph/fallbackGraphViewer.cpp
         ${CMAKE_SOURCE_DIR}/src/autoinput_ui/editors/sequenceGraphEditor.cpp

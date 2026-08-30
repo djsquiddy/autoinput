@@ -467,12 +467,8 @@ The Read-Only Visual Configuration Graph Viewer (`autoinput_ui/editors/configGra
    - Exclusive Groups
    - Global Settings (Application filter, blacklist entries)
 3. **Comprehensive Diagnostics Panel**:
-   - Detects duplicate start inputs across commands and sequences.
-   - Highlights commands sharing input keys or mouse buttons.
-   - Flags commands with empty names or missing actions.
-   - Identifies command controls with missing input bindings or empty actions.
-   - Warns on recorded sequences missing names or start triggers.
-   - Color-coded severity indicators (Error, Warning, Info) with suggested resolution steps.
+   - Backed by reusable non-UI diagnostics engine (`ConfigDiagnostics`).
+   - Color-coded severity indicators (Error, Warning, Info) with structured categories and suggested resolution steps.
    - Clickable "Select Node" navigation to highlight and jump to the affected element in the graph.
 4. **Node Inspector Panel**:
    - Displays detailed metadata for the selected node (Kind, Title, Subtitle, Source Index).
@@ -481,20 +477,65 @@ The Read-Only Visual Configuration Graph Viewer (`autoinput_ui/editors/configGra
 5. **Safe Read-Only Inspection Boundary**:
    - Inspection operations are completely non-destructive and do not mutate configuration or sequence data.
 
-### Usage Example
+## Reusable Configuration Diagnostics (`ConfigDiagnostics`)
+
+The Reusable Configuration Diagnostics module (`autoinput_ui/graph/configDiagnostics.h`) provides headless, non-UI validation and diagnostic analysis for `autoinput::ConfigData`.
+
+### Diagnostic Structured Fields (`ConfigDiagnosticIssue`)
+
+Every diagnostic issue contains:
+- `severity`: `ConfigDiagnosticSeverity` (`Info`, `Warning`, `Error`)
+- `message`: Detailed diagnostic description
+- `category`: Category string (e.g. `"Command"`, `"Control"`, `"Sequence"`, `"Input Conflict"`, `"Wildcard Control"`, `"Configuration"`)
+- `commandIndex`: Optional 0-based index of the affected command in `ConfigData::commands`
+- `controlIndex`: Optional 0-based index of the affected control within the parent command
+- `sequenceIndex`: Optional 0-based index of the affected sequence in `ConfigData::sequences`
+- `relatedInput`: Optional input trigger string (e.g. `"f1"`, `"mouse.all"`, `"space"`)
+- `associatedNodeId`: Optional `NodeId` linking the issue directly to visual graph elements
+- `suggestedFix`: Actionable recommendation to resolve the issue
+
+### Diagnostic Categories & Rules
+
+| Category | Finding | Severity | Description & Meaning |
+| :--- | :--- | :--- | :--- |
+| **Command** | Empty Command Name | `Warning` | Command has an empty or whitespace name; recommends assigning a descriptive name. |
+| **Command** | Duplicate Command Name | `Warning` | Multiple commands define identical names; flags naming ambiguity. |
+| **Command** | Empty Command Action | `Error` | Command has no action specified (`click`, `hold`, etc.); automation cannot execute without an action. |
+| **Command** | Invalid Command Action | `Error` | Command action is not recognized by `ConfigMetadata`; must be corrected to a valid action. |
+| **Command** | Duplicate Intra-Command Start Keys | `Warning` | A single command defines redundant identical start triggers in its `startKeys` list. |
+| **Control** | Empty Control Binding | `Error` | Command control is missing both input binding and action. |
+| **Control** | Empty Control Input Binding | `Error` | Command control has an action but no input trigger specified. |
+| **Control** | Empty Control Action | `Warning` | Command control has an input trigger but no control action (`pause`, `cancel`, `toggle`, etc.). |
+| **Control** | Invalid Control Action | `Error` | Control action does not match valid choices in `ConfigMetadata::validControlActionChoices()`. |
+| **Wildcard Control** | Broad Wildcard Trigger | `Info` | Control uses a wildcard trigger (`input.all`, `mouse.all`, `keys.all`) that will intercept broad input sets. |
+| **Sequence** | Empty Sequence Name | `Warning` | Sequence has an empty name; recommends assigning a descriptive identifier. |
+| **Sequence** | Duplicate Sequence Name | `Warning` | Multiple sequences share the same name. |
+| **Sequence** | Empty Sequence Start Trigger | `Warning` | Sequence has no start key configured, meaning it cannot be triggered via hotkey. |
+| **Input Conflict** | Duplicate Command Start Keys | `Warning` | Multiple distinct commands share the same start key. |
+| **Input Conflict** | Duplicate Sequence Start Keys | `Warning` | Multiple distinct sequences share the same start key. |
+| **Input Conflict** | Command & Sequence Start Conflict | `Warning` | A command and a recorded sequence share the same trigger key, causing activation ambiguity. |
+| **Input Conflict** | Shared Input Keys/Buttons | `Info` | Multiple commands trigger or listen for the same key/button without exclusive group isolation. |
+| **Configuration** | Core Validation Errors | `Error`/`Warning` | Incorporates standard validation findings (e.g., duration formatting, invalid hotkeys, application filters). |
+
+### Diagnostics Usage Example
 
 ```cpp
-#include "autoinput_ui/editors/configGraphViewer.h"
+#include "autoinput_ui/graph/configDiagnostics.h"
+#include "autoinput_ui/graph/configGraphAdapter.h"
 
-using namespace autoinput::ui::editors;
+using namespace autoinput::ui::graph;
 
-ConfigGraphViewerState viewerState;
+// Analyze configuration diagnostics in headless mode
+ConfigDiagnosticsResult result = analyzeConfigDiagnostics(configData);
 
-// Synchronize and run diagnostics on configuration
-viewerState.syncWithConfig(configData);
+if (result.hasErrors())
+{
+    // Handle configuration errors
+}
 
-// In UI window render loop:
-renderConfigGraphViewer(configData, viewerState, "ConfigViewer");
+// Optionally correlate with GraphDocument nodes for visual editor badging
+GraphDocument doc = configToGraphDocument(configData);
+mapDiagnosticsToGraphNodes(result, doc);
 ```
 
 ## Usage Example

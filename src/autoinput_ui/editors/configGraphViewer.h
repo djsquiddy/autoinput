@@ -8,6 +8,7 @@
 #define INCLUDE_AUTOINPUT_UI_EDITORS_CONFIG_GRAPH_VIEWER_H
 
 #include "autoinput/config/config.h"
+#include "autoinput_ui/graph/configDiagnostics.h"
 #include "autoinput_ui/graph/configGraphAdapter.h"
 #include "autoinput_ui/graph/fallbackGraphViewer.h"
 #include "autoinput_ui/graph/graphModel.h"
@@ -22,83 +23,12 @@
 
 namespace autoinput::ui::editors
 {
-    /**
-     * @brief Severity levels for configuration diagnostic and validation findings.
-     */
-    enum class ConfigDiagnosticSeverity : std::uint8_t
-    {
-        Info,
-        Warning,
-        Error
-    };
-
-    /**
-     * @brief Converts diagnostic severity enum to human-readable string.
-     */
-    [[nodiscard]] constexpr std::string_view configDiagnosticSeverityToString(
-        ConfigDiagnosticSeverity severity) noexcept
-    {
-        switch (severity)
-        {
-        case ConfigDiagnosticSeverity::Info: return "Info";
-        case ConfigDiagnosticSeverity::Warning: return "Warning";
-        case ConfigDiagnosticSeverity::Error: return "Error";
-        default: return "Unknown";
-        }
-    }
-
-    /**
-     * @brief A single diagnostic issue detected in configuration data or graph relationships.
-     */
-    struct ConfigDiagnosticIssue
-    {
-        ConfigDiagnosticSeverity severity{ ConfigDiagnosticSeverity::Warning };
-        std::string message;
-        std::string category; ///< e.g. "Command", "Control", "Sequence", "Input Conflict", "Global Settings"
-        std::optional<std::size_t> commandIndex{ std::nullopt };
-        std::optional<std::size_t> controlIndex{ std::nullopt };
-        std::optional<std::size_t> sequenceIndex{ std::nullopt };
-        std::optional<graph::NodeId> associatedNodeId{ std::nullopt };
-        std::string suggestedFix;
-    };
-
-    /**
-     * @brief Aggregate result of configuration diagnostics analysis.
-     */
-    struct ConfigDiagnosticsResult
-    {
-        std::vector<ConfigDiagnosticIssue> issues;
-
-        [[nodiscard]] bool hasErrors() const noexcept
-        {
-            return std::ranges::any_of(issues, [](const auto& issue)
-                                       { return issue.severity == ConfigDiagnosticSeverity::Error; });
-        }
-
-        [[nodiscard]] bool hasWarnings() const noexcept
-        {
-            return std::ranges::any_of(issues, [](const auto& issue)
-                                       { return issue.severity == ConfigDiagnosticSeverity::Warning; });
-        }
-
-        [[nodiscard]] std::size_t errorCount() const noexcept
-        {
-            return static_cast<std::size_t>(std::ranges::count_if(
-                issues, [](const auto& issue) { return issue.severity == ConfigDiagnosticSeverity::Error; }));
-        }
-
-        [[nodiscard]] std::size_t warningCount() const noexcept
-        {
-            return static_cast<std::size_t>(std::ranges::count_if(
-                issues, [](const auto& issue) { return issue.severity == ConfigDiagnosticSeverity::Warning; }));
-        }
-
-        [[nodiscard]] std::size_t infoCount() const noexcept
-        {
-            return static_cast<std::size_t>(std::ranges::count_if(
-                issues, [](const auto& issue) { return issue.severity == ConfigDiagnosticSeverity::Info; }));
-        }
-    };
+    // Re-export core diagnostics types into editors namespace for backwards compatibility
+    using graph::analyzeConfigDiagnostics;
+    using graph::ConfigDiagnosticIssue;
+    using graph::ConfigDiagnosticSeverity;
+    using graph::configDiagnosticSeverityToString;
+    using graph::ConfigDiagnosticsResult;
 
     /**
      * @brief Detailed inspection properties for a selected node in the config graph.
@@ -122,25 +52,6 @@ namespace autoinput::ui::editors
 
         std::vector<ConfigDiagnosticIssue> diagnosticIssues;
     };
-
-    /**
-     * @brief Analyzes ConfigData for potential configuration conflicts, missing fields, and anomalies.
-     *
-     * Detects:
-     * - Duplicate start inputs across commands and sequences
-     * - Commands sharing key or button input triggers
-     * - Empty command names
-     * - Missing command actions
-     * - Controls with empty input bindings or actions
-     * - Sequences with empty start keys or names
-     * - Standard configuration validator warnings/errors
-     *
-     * @param config The configuration to evaluate.
-     * @param doc Optional generated graph document used to map issues directly to NodeIds.
-     * @return Aggregate diagnostic result.
-     */
-    [[nodiscard]] ConfigDiagnosticsResult analyzeConfigDiagnostics(const autoinput::ConfigData& config,
-                                                                   const graph::GraphDocument* doc = nullptr);
 
     /**
      * @brief Extracts inspection details and relationship information for a specific node.
