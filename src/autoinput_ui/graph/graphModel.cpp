@@ -321,7 +321,8 @@ namespace autoinput::ui::graph
             return nullptr;
         }
 
-        const auto it = std::ranges::find_if(m_links, [fromPinId, toPinId](const GraphLink& link) noexcept
+        const auto it = std::ranges::find_if(m_links,
+                                             [fromPinId, toPinId](const GraphLink& link) noexcept
                                              { return link.fromPinId == fromPinId && link.toPinId == toPinId; });
 
         return it != m_links.end() ? &(*it) : nullptr;
@@ -334,7 +335,8 @@ namespace autoinput::ui::graph
             return nullptr;
         }
 
-        const auto it = std::ranges::find_if(m_links, [fromPinId, toPinId](const GraphLink& link) noexcept
+        const auto it = std::ranges::find_if(m_links,
+                                             [fromPinId, toPinId](const GraphLink& link) noexcept
                                              { return link.fromPinId == fromPinId && link.toPinId == toPinId; });
 
         return it != m_links.end() ? &(*it) : nullptr;
@@ -365,7 +367,8 @@ namespace autoinput::ui::graph
             return 0;
         }
 
-        return std::erase_if(m_links, [pinId](const GraphLink& link) noexcept
+        return std::erase_if(m_links,
+                             [pinId](const GraphLink& link) noexcept
                              { return link.fromPinId == pinId || link.toPinId == pinId; });
     }
 

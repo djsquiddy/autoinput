@@ -72,20 +72,20 @@ namespace autoinput::ui::graph
 
         [[nodiscard]] bool hasErrors() const noexcept
         {
-            return std::ranges::any_of(issues, [](const auto& issue)
-                                       { return issue.severity == ConfigDiagnosticSeverity::Error; });
+            return std::ranges::any_of(
+                issues, [](const auto& issue) { return issue.severity == ConfigDiagnosticSeverity::Error; });
         }
 
         [[nodiscard]] bool hasWarnings() const noexcept
         {
-            return std::ranges::any_of(issues, [](const auto& issue)
-                                       { return issue.severity == ConfigDiagnosticSeverity::Warning; });
+            return std::ranges::any_of(
+                issues, [](const auto& issue) { return issue.severity == ConfigDiagnosticSeverity::Warning; });
         }
 
         [[nodiscard]] bool hasInfo() const noexcept
         {
-            return std::ranges::any_of(issues, [](const auto& issue)
-                                       { return issue.severity == ConfigDiagnosticSeverity::Info; });
+            return std::ranges::any_of(
+                issues, [](const auto& issue) { return issue.severity == ConfigDiagnosticSeverity::Info; });
         }
 
         [[nodiscard]] std::size_t errorCount() const noexcept

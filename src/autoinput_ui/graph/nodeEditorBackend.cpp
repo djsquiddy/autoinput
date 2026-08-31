@@ -90,14 +90,13 @@ namespace autoinput::ui::graph
     {
         // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
         std::optional<NodeEditorBackendType> s_userPreferredBackend{ std::nullopt };
-    }
+    } // namespace
 
     bool isBackendAvailable(NodeEditorBackendType type) noexcept
     {
         switch (type)
         {
-        case NodeEditorBackendType::Fallback:
-            [[fallthrough]];
+        case NodeEditorBackendType::Fallback: [[fallthrough]];
         case NodeEditorBackendType::CustomCanvas: return true;
 #ifdef AUTOINPUT_HAS_IMNODES
         case NodeEditorBackendType::ImNodes: return true;

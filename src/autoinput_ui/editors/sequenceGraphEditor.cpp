@@ -568,7 +568,8 @@ namespace autoinput::ui::editors
 
         pushUndoSnapshot();
 
-        std::sort(eventNodes.begin(), eventNodes.end(),
+        std::sort(eventNodes.begin(),
+                  eventNodes.end(),
                   [](const graph::GraphNode* a, const graph::GraphNode* b)
                   {
                       if (a->position.x != b->position.x)
@@ -770,14 +771,14 @@ namespace autoinput::ui::editors
         case RecordedEventType::KeyUp:
             return std::format("Type: KeyUp | Key: \"{}\" | Delay: {}", event.key.value_or(""), event.delay);
         case RecordedEventType::MouseDown:
-            return std::format("Type: MouseDown | Button: \"{}\" | Delay: {}", event.button.value_or("left"),
-                               event.delay);
+            return std::format(
+                "Type: MouseDown | Button: \"{}\" | Delay: {}", event.button.value_or("left"), event.delay);
         case RecordedEventType::MouseUp:
-            return std::format("Type: MouseUp | Button: \"{}\" | Delay: {}", event.button.value_or("left"),
-                               event.delay);
+            return std::format(
+                "Type: MouseUp | Button: \"{}\" | Delay: {}", event.button.value_or("left"), event.delay);
         case RecordedEventType::MouseMove:
-            return std::format("Type: MouseMove | Pos: ({}, {}) | Delay: {}", event.x.value_or(0), event.y.value_or(0),
-                               event.delay);
+            return std::format(
+                "Type: MouseMove | Pos: ({}, {}) | Delay: {}", event.x.value_or(0), event.y.value_or(0), event.delay);
         case RecordedEventType::Invalid:
         default: return std::format("Type: Delay/Wait | Delay: {}", event.delay);
         }
@@ -1110,21 +1111,23 @@ namespace autoinput::ui::editors
                 ImGui::TextColored(ImVec4(0.3F, 0.9F, 0.3F, 1.0F), "Graph topology is valid linear sequence.");
                 if (state.validationResult.hasWarnings())
                 {
-                    ImGui::TextColored(ImVec4(0.95F, 0.8F, 0.2F, 1.0F), "%zu warning(s) present.",
+                    ImGui::TextColored(ImVec4(0.95F, 0.8F, 0.2F, 1.0F),
+                                       "%zu warning(s) present.",
                                        state.validationResult.warningCount());
                 }
             }
             else
             {
-                ImGui::TextColored(ImVec4(0.95F, 0.3F, 0.3F, 1.0F), "Validation failed: %zu error(s).",
+                ImGui::TextColored(ImVec4(0.95F, 0.3F, 0.3F, 1.0F),
+                                   "Validation failed: %zu error(s).",
                                    state.validationResult.errorCount());
             }
 
             if (state.lastCompilationError.has_value())
             {
                 ImGui::Spacing();
-                ImGui::TextColored(ImVec4(0.95F, 0.2F, 0.2F, 1.0F), "Compilation Error: %s",
-                                   state.lastCompilationError->c_str());
+                ImGui::TextColored(
+                    ImVec4(0.95F, 0.2F, 0.2F, 1.0F), "Compilation Error: %s", state.lastCompilationError->c_str());
             }
 
             if (!state.validationResult.issues.empty())
@@ -1172,8 +1175,8 @@ namespace autoinput::ui::editors
         if (mainViewerWidth > 0.0F)
         {
             ImGui::BeginChild("MainGraphViewerRegion", ImVec2(mainViewerWidth, 0), false);
-            graph::renderFallbackGraphViewer(state.graphDocument, state.validationResult, state.viewerState,
-                                             "SequenceGraphCanvas");
+            graph::renderFallbackGraphViewer(
+                state.graphDocument, state.validationResult, state.viewerState, "SequenceGraphCanvas");
             ImGui::EndChild();
 
             ImGui::SameLine();
@@ -1188,8 +1191,8 @@ namespace autoinput::ui::editors
         }
         else
         {
-            graph::renderFallbackGraphViewer(state.graphDocument, state.validationResult, state.viewerState,
-                                             "SequenceGraphCanvas");
+            graph::renderFallbackGraphViewer(
+                state.graphDocument, state.validationResult, state.viewerState, "SequenceGraphCanvas");
             ImGui::Separator();
             renderInspectorPanel(sequence, state);
             ImGui::Separator();

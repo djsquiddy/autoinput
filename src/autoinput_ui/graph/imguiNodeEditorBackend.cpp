@@ -102,8 +102,8 @@ namespace autoinput::ui::graph
 
         void drawLink(LinkId linkId, PinId startPinId, PinId endPinId) override
         {
-            ed::Link(static_cast<ed::LinkId>(linkId), static_cast<ed::PinId>(startPinId),
-                     static_cast<ed::PinId>(endPinId));
+            ed::Link(
+                static_cast<ed::LinkId>(linkId), static_cast<ed::PinId>(startPinId), static_cast<ed::PinId>(endPinId));
         }
 
         [[nodiscard]] std::optional<CreatedLinkEvent> queryCreatedLink() override

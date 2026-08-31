@@ -150,7 +150,8 @@ namespace autoinput::ui
 
         if (isDirty())
         {
-            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s",
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f),
+                               "%s",
                                loc.format("status.unsavedChangesIn", m_currentConfigName).c_str());
         }
         else if (!m_currentConfigName.empty())
@@ -304,15 +305,16 @@ namespace autoinput::ui
 
                 ImGui::BeginChild("StepsList", ImVec2(0, -ImGui::GetFrameHeightWithSpacing() * 2), true);
 
-                if (ImGui::BeginTable("StepsTable", 4,
+                if (ImGui::BeginTable("StepsTable",
+                                      4,
                                       ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable |
                                           ImGuiTableFlags_Reorderable))
                 {
                     ImGui::TableSetupColumn(loc.text("labels.type").data(), ImGuiTableColumnFlags_WidthFixed, 100.0f);
                     ImGui::TableSetupColumn(loc.text("labels.delay").data(), ImGuiTableColumnFlags_WidthFixed, 100.0f);
                     ImGui::TableSetupColumn(loc.text("labels.details").data(), ImGuiTableColumnFlags_WidthStretch);
-                    ImGui::TableSetupColumn(loc.text("labels.actions").data(), ImGuiTableColumnFlags_WidthFixed,
-                                            220.0f);
+                    ImGui::TableSetupColumn(
+                        loc.text("labels.actions").data(), ImGuiTableColumnFlags_WidthFixed, 220.0f);
                     ImGui::TableHeadersRow();
 
                     for (size_t i = 0; i < seq.events.size(); ++i)

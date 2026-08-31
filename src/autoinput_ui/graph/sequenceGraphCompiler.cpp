@@ -186,20 +186,20 @@ namespace autoinput::ui::graph
 
             if (outgoing.size() > 1)
             {
-                result.issues.push_back(
-                    ValidationIssue{ .severity = ValidationSeverity::Error,
-                                     .message = std::format("Unsupported branching: node '{}' has {} outgoing links.",
-                                                            node.title, outgoing.size()),
-                                     .nodeId = node.id,
-                                     .linkId = outgoing[0]->id });
+                result.issues.push_back(ValidationIssue{
+                    .severity = ValidationSeverity::Error,
+                    .message = std::format(
+                        "Unsupported branching: node '{}' has {} outgoing links.", node.title, outgoing.size()),
+                    .nodeId = node.id,
+                    .linkId = outgoing[0]->id });
             }
 
             if (incoming.size() > 1)
             {
                 result.issues.push_back(ValidationIssue{
                     .severity = ValidationSeverity::Error,
-                    .message = std::format("Unsupported branching/merging: node '{}' has {} incoming links.",
-                                           node.title, incoming.size()),
+                    .message = std::format(
+                        "Unsupported branching/merging: node '{}' has {} incoming links.", node.title, incoming.size()),
                     .nodeId = node.id,
                     .linkId = incoming[0]->id });
             }
@@ -324,7 +324,8 @@ namespace autoinput::ui::graph
                         ValidationIssue{ .severity = ValidationSeverity::Error,
                                          .message = std::format("Disconnected execution node '{}' of kind '{}' is not "
                                                                 "connected to sequence execution path.",
-                                                                node.title, nodeKindToString(node.kind)),
+                                                                node.title,
+                                                                nodeKindToString(node.kind)),
                                          .nodeId = node.id,
                                          .linkId = std::nullopt });
                 }

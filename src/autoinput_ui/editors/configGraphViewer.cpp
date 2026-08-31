@@ -228,8 +228,8 @@ namespace autoinput::ui::editors
         cachedEndKey = config.endKey;
         isGraphSynchronized = true;
 
-        statusMessage = std::format("Config graph ready ({} nodes, {} links).", graphDocument.nodeCount(),
-                                    graphDocument.linkCount());
+        statusMessage = std::format(
+            "Config graph ready ({} nodes, {} links).", graphDocument.nodeCount(), graphDocument.linkCount());
     }
 
     void ConfigGraphViewerState::runDiagnostics(const autoinput::ConfigData& config)
@@ -330,13 +330,13 @@ namespace autoinput::ui::editors
             ImGui::SameLine();
             if (state.diagnosticsResult.hasErrors())
             {
-                ImGui::TextColored(ImVec4(0.95F, 0.3F, 0.3F, 1.0F), "[Errors: %zu]",
-                                   state.diagnosticsResult.errorCount());
+                ImGui::TextColored(
+                    ImVec4(0.95F, 0.3F, 0.3F, 1.0F), "[Errors: %zu]", state.diagnosticsResult.errorCount());
             }
             else if (state.diagnosticsResult.hasWarnings())
             {
-                ImGui::TextColored(ImVec4(0.95F, 0.75F, 0.2F, 1.0F), "[Warnings: %zu]",
-                                   state.diagnosticsResult.warningCount());
+                ImGui::TextColored(
+                    ImVec4(0.95F, 0.75F, 0.2F, 1.0F), "[Warnings: %zu]", state.diagnosticsResult.warningCount());
             }
             else
             {
@@ -360,8 +360,8 @@ namespace autoinput::ui::editors
 
             if (state.viewerState.selectedNodeId != graph::InvalidNodeId)
             {
-                const auto details = inspectConfigGraphNode(config, state.graphDocument,
-                                                            state.viewerState.selectedNodeId, &state.diagnosticsResult);
+                const auto details = inspectConfigGraphNode(
+                    config, state.graphDocument, state.viewerState.selectedNodeId, &state.diagnosticsResult);
                 if (details.has_value())
                 {
                     const std::string kindStr(graph::nodeKindToString(details->kind));
@@ -419,8 +419,8 @@ namespace autoinput::ui::editors
                     if (!details->diagnosticIssues.empty())
                     {
                         ImGui::Spacing();
-                        ImGui::TextColored(ImVec4(0.95F, 0.4F, 0.3F, 1.0F),
-                                           "Diagnostics (%zu):", details->diagnosticIssues.size());
+                        ImGui::TextColored(
+                            ImVec4(0.95F, 0.4F, 0.3F, 1.0F), "Diagnostics (%zu):", details->diagnosticIssues.size());
                         for (const auto& issue : details->diagnosticIssues)
                         {
                             const std::string sevStr(configDiagnosticSeverityToString(issue.severity));
@@ -522,8 +522,8 @@ namespace autoinput::ui::editors
 
         ImGui::BeginChild("ConfigGraphCanvasChild", ImVec2(canvasWidth, 0.0F), true);
         {
-            graph::renderFallbackGraphViewer(state.graphDocument, state.viewerState,
-                                             graph::ValidationOptions::configGraph(), "ConfigGraphCanvas");
+            graph::renderFallbackGraphViewer(
+                state.graphDocument, state.viewerState, graph::ValidationOptions::configGraph(), "ConfigGraphCanvas");
         }
         ImGui::EndChild();
 

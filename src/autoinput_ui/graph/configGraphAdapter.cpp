@@ -248,8 +248,8 @@ namespace autoinput::ui::graph
                 const std::size_t controlCount =
                     appendCommandControlNodes(doc, command, cmdCtrlPinId, options, blockStartY, controlEndY);
 
-                const std::size_t groupCount = appendExclusiveGroupNode(doc, command, cmdGrpPinId, options, blockStartY,
-                                                                        controlEndY, sharedExclusiveGroups);
+                const std::size_t groupCount = appendExclusiveGroupNode(
+                    doc, command, cmdGrpPinId, options, blockStartY, controlEndY, sharedExclusiveGroups);
 
                 if (options.linkGlobalSettingsToTargets && cmdInPinId != InvalidPinId)
                 {
@@ -282,8 +282,8 @@ namespace autoinput::ui::graph
                 const auto& sequence = config.sequences[seqIdx];
                 const float blockStartY = currentY;
 
-                auto& seqNode = doc.createNode(NodeKind::Sequence, formatConfigSequenceTitle(sequence, seqIdx),
-                                               { col1X, blockStartY });
+                auto& seqNode = doc.createNode(
+                    NodeKind::Sequence, formatConfigSequenceTitle(sequence, seqIdx), { col1X, blockStartY });
                 seqNode.subtitle = formatConfigSequenceSubtitle(sequence);
                 seqNode.sourceIndex = seqIdx;
 
@@ -330,7 +330,8 @@ namespace autoinput::ui::graph
 
         if (!command.pressWait.empty() || !command.releaseWait.empty())
         {
-            result += std::format(" | Press: {} | Release: {}", command.pressWait.empty() ? "0ms" : command.pressWait,
+            result += std::format(" | Press: {} | Release: {}",
+                                  command.pressWait.empty() ? "0ms" : command.pressWait,
                                   command.releaseWait.empty() ? "0ms" : command.releaseWait);
         }
 
@@ -353,7 +354,8 @@ namespace autoinput::ui::graph
 
     std::string formatControlSubtitle(const autoinput::CommandControlData& control)
     {
-        return std::format("Action: {} | Input: {}", control.action.empty() ? "None" : control.action,
+        return std::format("Action: {} | Input: {}",
+                           control.action.empty() ? "None" : control.action,
                            control.input.empty() ? "None" : control.input);
     }
 

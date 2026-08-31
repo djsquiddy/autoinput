@@ -276,7 +276,8 @@ namespace autoinput::ui
 
         if (isDirty())
         {
-            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s",
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f),
+                               "%s",
                                loc.format("status.unsavedChangesIn", m_currentConfigName).c_str());
         }
         else if (!m_currentConfigName.empty())

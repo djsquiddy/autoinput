@@ -146,8 +146,10 @@ namespace autoinput::ui::graph
                 // Invalid command action check using existing metadata
                 result.issues.push_back(ConfigDiagnosticIssue{
                     .severity = ConfigDiagnosticSeverity::Error,
-                    .message = std::format("Command '{}' has invalid action '{}'. Valid choices: {}.", cmdName,
-                                           cmd.action, autoinput::ConfigMetadata::validActionChoices()),
+                    .message = std::format("Command '{}' has invalid action '{}'. Valid choices: {}.",
+                                           cmdName,
+                                           cmd.action,
+                                           autoinput::ConfigMetadata::validActionChoices()),
                     .category = "Command",
                     .commandIndex = cmdIdx,
                     .suggestedFix = "Use a valid action name such as 'click' or 'hold'." });
@@ -164,8 +166,8 @@ namespace autoinput::ui::graph
                 {
                     result.issues.push_back(ConfigDiagnosticIssue{
                         .severity = ConfigDiagnosticSeverity::Error,
-                        .message = std::format("Command '{}' control {} is empty (no input binding or action).",
-                                               cmdName, ctrlIdx + 1),
+                        .message = std::format(
+                            "Command '{}' control {} is empty (no input binding or action).", cmdName, ctrlIdx + 1),
                         .category = "Control",
                         .commandIndex = cmdIdx,
                         .controlIndex = ctrlIdx,
@@ -200,7 +202,9 @@ namespace autoinput::ui::graph
                     result.issues.push_back(ConfigDiagnosticIssue{
                         .severity = ConfigDiagnosticSeverity::Error,
                         .message = std::format("Command '{}' control {} has invalid action '{}'. Valid choices: {}.",
-                                               cmdName, ctrlIdx + 1, ctrl.action,
+                                               cmdName,
+                                               ctrlIdx + 1,
+                                               ctrl.action,
                                                autoinput::ConfigMetadata::validControlActionChoices()),
                         .category = "Control",
                         .commandIndex = cmdIdx,
@@ -217,7 +221,9 @@ namespace autoinput::ui::graph
                         .severity = ConfigDiagnosticSeverity::Info,
                         .message = std::format("Command '{}' control {} uses wildcard input trigger '{}' which "
                                                "intercepts multiple inputs.",
-                                               cmdName, ctrlIdx + 1, ctrl.input),
+                                               cmdName,
+                                               ctrlIdx + 1,
+                                               ctrl.input),
                         .category = "Wildcard Control",
                         .commandIndex = cmdIdx,
                         .controlIndex = ctrlIdx,
@@ -288,7 +294,8 @@ namespace autoinput::ui::graph
                     result.issues.push_back(ConfigDiagnosticIssue{
                         .severity = ConfigDiagnosticSeverity::Warning,
                         .message = std::format("Duplicate command name '{}' is used across {} commands.",
-                                               config.commands[ci].name, indices.size()),
+                                               config.commands[ci].name,
+                                               indices.size()),
                         .category = "Command",
                         .commandIndex = ci,
                         .suggestedFix = "Assign unique names to each command." });
@@ -345,7 +352,8 @@ namespace autoinput::ui::graph
                     result.issues.push_back(ConfigDiagnosticIssue{
                         .severity = ConfigDiagnosticSeverity::Warning,
                         .message = std::format("Duplicate sequence name '{}' is used across {} sequences.",
-                                               config.sequences[si].name, indices.size()),
+                                               config.sequences[si].name,
+                                               indices.size()),
                         .category = "Sequence",
                         .sequenceIndex = si,
                         .suggestedFix = "Assign unique names to each sequence." });
@@ -381,13 +389,15 @@ namespace autoinput::ui::graph
                 {
                     conflictMessage =
                         std::format("Duplicate command start input '{}' is configured across multiple commands: {}.",
-                                    inputKey, sources);
+                                    inputKey,
+                                    sources);
                 }
                 else
                 {
                     conflictMessage =
                         std::format("Duplicate sequence start input '{}' is configured across multiple sequences: {}.",
-                                    inputKey, sources);
+                                    inputKey,
+                                    sources);
                 }
 
                 result.issues.push_back(ConfigDiagnosticIssue{

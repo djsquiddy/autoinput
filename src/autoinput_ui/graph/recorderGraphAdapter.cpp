@@ -71,8 +71,10 @@ namespace autoinput::ui::graph
                 if (!ev.x.has_value() || !ev.y.has_value())
                 {
                     result.warnings.push_back(
-                        std::format("Event #{}: Mouse move event has incomplete coordinates (x={}, y={}).", i,
-                                    ev.x.value_or(0), ev.y.value_or(0)));
+                        std::format("Event #{}: Mouse move event has incomplete coordinates (x={}, y={}).",
+                                    i,
+                                    ev.x.value_or(0),
+                                    ev.y.value_or(0)));
                 }
             }
         }
@@ -89,7 +91,8 @@ namespace autoinput::ui::graph
         if (result.success)
         {
             result.statusMessage = std::format("Graph generated successfully ({} nodes, {} links).",
-                                               result.graphDocument.nodeCount(), result.graphDocument.linkCount());
+                                               result.graphDocument.nodeCount(),
+                                               result.graphDocument.linkCount());
         }
         else
         {

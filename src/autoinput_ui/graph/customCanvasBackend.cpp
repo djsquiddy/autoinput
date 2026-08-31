@@ -85,7 +85,8 @@ namespace autoinput::ui::graph
         ImVec2 p1 = ImVec2(p0.x + avail.x, p0.y + avail.y);
 
         // Create an invisible button covering the canvas for mouse input hit-testing
-        ImGui::InvisibleButton("CanvasBackgroundArea", avail,
+        ImGui::InvisibleButton("CanvasBackgroundArea",
+                               avail,
                                ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonMiddle |
                                    ImGuiButtonFlags_MouseButtonRight);
         const bool isCanvasHovered = ImGui::IsItemHovered();
@@ -245,8 +246,8 @@ namespace autoinput::ui::graph
         for (std::size_t i = 0; i < node.inputPins.size(); ++i)
         {
             const PinId pid = node.inputPins[i];
-            const NodePosition pinPos = computePinPosition(node.screenPos, nodeWidth, PinDirection::Input, i,
-                                                           node.inputPins.size(), headerHeight, pinSpacing);
+            const NodePosition pinPos = computePinPosition(
+                node.screenPos, nodeWidth, PinDirection::Input, i, node.inputPins.size(), headerHeight, pinSpacing);
 
             PinRecord pinRec;
             pinRec.pinId = pid;
@@ -264,8 +265,8 @@ namespace autoinput::ui::graph
         for (std::size_t i = 0; i < node.outputPins.size(); ++i)
         {
             const PinId pid = node.outputPins[i];
-            const NodePosition pinPos = computePinPosition(node.screenPos, nodeWidth, PinDirection::Output, i,
-                                                           node.outputPins.size(), headerHeight, pinSpacing);
+            const NodePosition pinPos = computePinPosition(
+                node.screenPos, nodeWidth, PinDirection::Output, i, node.outputPins.size(), headerHeight, pinSpacing);
 
             PinRecord pinRec;
             pinRec.pinId = pid;
@@ -352,8 +353,12 @@ namespace autoinput::ui::graph
         const float thickness = (isSelected ? 3.0F : 2.0F) * m_canvasZoom;
 
         ImDrawList* drawList = ImGui::GetWindowDrawList();
-        drawList->AddBezierCubic(ImVec2(startPos.x, startPos.y), ImVec2(cp1.x, cp1.y), ImVec2(cp2.x, cp2.y),
-                                 ImVec2(endPos.x, endPos.y), linkColor, thickness);
+        drawList->AddBezierCubic(ImVec2(startPos.x, startPos.y),
+                                 ImVec2(cp1.x, cp1.y),
+                                 ImVec2(cp2.x, cp2.y),
+                                 ImVec2(endPos.x, endPos.y),
+                                 linkColor,
+                                 thickness);
 #endif
     }
 

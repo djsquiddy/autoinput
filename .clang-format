@@ -45,7 +45,7 @@ SpacesInAngles: Never
 Cpp11BracedListStyle: Block
 SpaceBeforeCpp11BracedList: false
 
-BinPackArguments: true
+BinPackArguments: false
 BinPackParameters: true
 AllowAllArgumentsOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true

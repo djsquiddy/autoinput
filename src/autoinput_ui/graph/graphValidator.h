@@ -111,35 +111,37 @@ namespace autoinput::ui::graph
 
         [[nodiscard]] bool hasErrors() const noexcept
         {
-            return std::ranges::any_of(issues, [](const ValidationIssue& issue) noexcept
+            return std::ranges::any_of(issues,
+                                       [](const ValidationIssue& issue) noexcept
                                        { return issue.severity == ValidationSeverity::Error; });
         }
 
         [[nodiscard]] bool hasWarnings() const noexcept
         {
-            return std::ranges::any_of(issues, [](const ValidationIssue& issue) noexcept
+            return std::ranges::any_of(issues,
+                                       [](const ValidationIssue& issue) noexcept
                                        { return issue.severity == ValidationSeverity::Warning; });
         }
 
         [[nodiscard]] std::size_t errorCount() const noexcept
         {
-            return static_cast<std::size_t>(
-                std::ranges::count_if(issues, [](const ValidationIssue& issue) noexcept
-                                      { return issue.severity == ValidationSeverity::Error; }));
+            return static_cast<std::size_t>(std::ranges::count_if(
+                issues,
+                [](const ValidationIssue& issue) noexcept { return issue.severity == ValidationSeverity::Error; }));
         }
 
         [[nodiscard]] std::size_t warningCount() const noexcept
         {
-            return static_cast<std::size_t>(
-                std::ranges::count_if(issues, [](const ValidationIssue& issue) noexcept
-                                      { return issue.severity == ValidationSeverity::Warning; }));
+            return static_cast<std::size_t>(std::ranges::count_if(
+                issues,
+                [](const ValidationIssue& issue) noexcept { return issue.severity == ValidationSeverity::Warning; }));
         }
 
         [[nodiscard]] std::size_t infoCount() const noexcept
         {
-            return static_cast<std::size_t>(
-                std::ranges::count_if(issues, [](const ValidationIssue& issue) noexcept
-                                      { return issue.severity == ValidationSeverity::Info; }));
+            return static_cast<std::size_t>(std::ranges::count_if(
+                issues,
+                [](const ValidationIssue& issue) noexcept { return issue.severity == ValidationSeverity::Info; }));
         }
 
         constexpr auto operator<=>(const ValidationResult&) const = default;

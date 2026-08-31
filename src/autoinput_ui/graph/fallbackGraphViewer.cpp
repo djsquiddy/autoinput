@@ -404,10 +404,11 @@ namespace autoinput::ui::graph
         void renderNodesTable(const GraphDocument& doc, const ValidationResult& validationResult,
                               FallbackGraphViewerState& state)
         {
-            auto filteredNodeIds = filterGraphNodes(doc, state.searchFilter, state.filterKind, &validationResult,
-                                                    state.showOnlyProblematicNodes);
+            auto filteredNodeIds = filterGraphNodes(
+                doc, state.searchFilter, state.filterKind, &validationResult, state.showOnlyProblematicNodes);
 
-            if (ImGui::BeginTable("FallbackNodesTable", 5,
+            if (ImGui::BeginTable("FallbackNodesTable",
+                                  5,
                                   ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable |
                                       ImGuiTableFlags_ScrollY))
             {
@@ -432,7 +433,8 @@ namespace autoinput::ui::graph
                     // ID Column
                     ImGui::TableSetColumnIndex(0);
                     std::string selectIdStr = std::format("##NodeRow_{}", node->id);
-                    if (ImGui::Selectable(selectIdStr.c_str(), isSelected,
+                    if (ImGui::Selectable(selectIdStr.c_str(),
+                                          isSelected,
                                           ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap))
                     {
                         state.selectNode(node->id);
@@ -511,7 +513,8 @@ namespace autoinput::ui::graph
         void renderLinksTable(const GraphDocument& doc, const ValidationResult& validationResult,
                               FallbackGraphViewerState& state)
         {
-            if (ImGui::BeginTable("FallbackLinksTable", 4,
+            if (ImGui::BeginTable("FallbackLinksTable",
+                                  4,
                                   ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable |
                                       ImGuiTableFlags_ScrollY))
             {
@@ -528,7 +531,8 @@ namespace autoinput::ui::graph
 
                     ImGui::TableSetColumnIndex(0);
                     std::string linkSelectId = std::format("##LinkRow_{}", link.id);
-                    if (ImGui::Selectable(linkSelectId.c_str(), isSelected,
+                    if (ImGui::Selectable(linkSelectId.c_str(),
+                                          isSelected,
                                           ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap))
                     {
                         state.selectLink(link.id);
@@ -552,7 +556,8 @@ namespace autoinput::ui::graph
                     ImGui::Text("%s -> %s", srcText.c_str(), dstText.c_str());
 
                     ImGui::TableSetColumnIndex(2);
-                    ImGui::Text("Pin #%llu -> Pin #%llu", static_cast<unsigned long long>(link.fromPinId),
+                    ImGui::Text("Pin #%llu -> Pin #%llu",
+                                static_cast<unsigned long long>(link.fromPinId),
                                 static_cast<unsigned long long>(link.toPinId));
 
                     ImGui::TableSetColumnIndex(3);
@@ -588,13 +593,13 @@ namespace autoinput::ui::graph
             const float GRID_STEP = 32.0F * state.canvasZoom;
             for (float x = std::fmod(state.canvasOffset.x, GRID_STEP); x < canvasSize.x; x += GRID_STEP)
             {
-                drawList->AddLine(ImVec2(canvasP0.x + x, canvasP0.y), ImVec2(canvasP0.x + x, canvasP1.y),
-                                  IM_COL32(45, 45, 52, 255));
+                drawList->AddLine(
+                    ImVec2(canvasP0.x + x, canvasP0.y), ImVec2(canvasP0.x + x, canvasP1.y), IM_COL32(45, 45, 52, 255));
             }
             for (float y = std::fmod(state.canvasOffset.y, GRID_STEP); y < canvasSize.y; y += GRID_STEP)
             {
-                drawList->AddLine(ImVec2(canvasP0.x, canvasP0.y + y), ImVec2(canvasP1.x, canvasP0.y + y),
-                                  IM_COL32(45, 45, 52, 255));
+                drawList->AddLine(
+                    ImVec2(canvasP0.x, canvasP0.y + y), ImVec2(canvasP1.x, canvasP0.y + y), IM_COL32(45, 45, 52, 255));
             }
 
             // Draw links first so nodes render on top
@@ -660,20 +665,20 @@ namespace autoinput::ui::graph
                 {
                     headerText = headerText.substr(0, 16) + "...";
                 }
-                drawList->AddText(ImVec2(nodeMin.x + 6.0F, nodeMin.y + 4.0F), IM_COL32(255, 255, 255, 255),
-                                  headerText.c_str());
+                drawList->AddText(
+                    ImVec2(nodeMin.x + 6.0F, nodeMin.y + 4.0F), IM_COL32(255, 255, 255, 255), headerText.c_str());
 
                 // Subtitle text / Kind
                 std::string kindStr = std::string(nodeKindToString(node.kind));
-                drawList->AddText(ImVec2(nodeMin.x + 6.0F, nodeMin.y + 26.0F), IM_COL32(180, 180, 190, 255),
-                                  kindStr.c_str());
+                drawList->AddText(
+                    ImVec2(nodeMin.x + 6.0F, nodeMin.y + 26.0F), IM_COL32(180, 180, 190, 255), kindStr.c_str());
 
                 if (!node.subtitle.empty())
                 {
                     std::string sub = node.subtitle;
                     if (sub.size() > 20) sub = sub.substr(0, 18) + "..";
-                    drawList->AddText(ImVec2(nodeMin.x + 6.0F, nodeMin.y + 42.0F), IM_COL32(140, 140, 150, 255),
-                                      sub.c_str());
+                    drawList->AddText(
+                        ImVec2(nodeMin.x + 6.0F, nodeMin.y + 42.0F), IM_COL32(140, 140, 150, 255), sub.c_str());
                 }
 
                 // Pins indicators
@@ -766,8 +771,10 @@ namespace autoinput::ui::graph
             }
             else
             {
-                ImGui::TextColored(ImVec4(1.0F, 0.35F, 0.35F, 1.0F), "[Validation: %zu error(s), %zu warning(s)]",
-                                   validationResult.errorCount(), validationResult.warningCount());
+                ImGui::TextColored(ImVec4(1.0F, 0.35F, 0.35F, 1.0F),
+                                   "[Validation: %zu error(s), %zu warning(s)]",
+                                   validationResult.errorCount(),
+                                   validationResult.warningCount());
             }
 
             ImGui::SameLine(ImGui::GetWindowWidth() - 260.0F);

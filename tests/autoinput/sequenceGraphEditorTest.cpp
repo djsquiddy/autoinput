@@ -175,8 +175,8 @@ TEST_F(SequenceGraphEditorTest, ResolveNodeInspectionDetails)
     // 1. Inspect Start Node
     auto startNodes = getNodesOfKind(state.graphDocument, NodeKind::Start);
     ASSERT_FALSE(startNodes.empty());
-    auto startDetails = resolveNodeInspectionDetails(state.graphDocument, startNodes.front()->id, sampleSequence,
-                                                     state.validationResult);
+    auto startDetails = resolveNodeInspectionDetails(
+        state.graphDocument, startNodes.front()->id, sampleSequence, state.validationResult);
     ASSERT_TRUE(startDetails.has_value());
     EXPECT_EQ(startDetails->kind, NodeKind::Start);
     EXPECT_FALSE(startDetails->hasAssociatedEvent);
@@ -185,8 +185,8 @@ TEST_F(SequenceGraphEditorTest, ResolveNodeInspectionDetails)
     // 2. Inspect First Recorded Event Node
     auto eventNodes = getNodesOfKind(state.graphDocument, NodeKind::RecordedEvent);
     ASSERT_FALSE(eventNodes.empty());
-    auto eventDetails = resolveNodeInspectionDetails(state.graphDocument, eventNodes.front()->id, sampleSequence,
-                                                     state.validationResult);
+    auto eventDetails = resolveNodeInspectionDetails(
+        state.graphDocument, eventNodes.front()->id, sampleSequence, state.validationResult);
     ASSERT_TRUE(eventDetails.has_value());
     EXPECT_EQ(eventDetails->kind, NodeKind::RecordedEvent);
     EXPECT_TRUE(eventDetails->hasAssociatedEvent);

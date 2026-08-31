@@ -235,8 +235,8 @@ namespace autoinput::ui
                 {
                     if (m_recordedSequence)
                     {
-                        if (editors::renderSequenceGraphEditor(*m_recordedSequence, m_graphEditorState,
-                                                               "SequenceRecorderGraph"))
+                        if (editors::renderSequenceGraphEditor(
+                                *m_recordedSequence, m_graphEditorState, "SequenceRecorderGraph"))
                         {
                             m_eventCount = static_cast<uint32_t>(m_recordedSequence->events.size());
                             markDirty();
@@ -303,8 +303,8 @@ namespace autoinput::ui
             }
         }
 
-        if (ImGui::BeginPopupModal(loc.text("modals.discardRecordingTitle").data(), nullptr,
-                                   ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::BeginPopupModal(
+                loc.text("modals.discardRecordingTitle").data(), nullptr, ImGuiWindowFlags_AlwaysAutoResize))
         {
             ImGui::Text("%s", loc.text("modals.discardRecordingMessage").data());
             ImGui::Separator();
@@ -399,13 +399,19 @@ namespace autoinput::ui
                     break;
                 case RecordedEventType::MouseDown:
                     color = ImVec4(0.4f, 1.0f, 0.4f, 1.0f);
-                    text = loc.format("labels.mouseDown", event.button.value_or("?"), event.x.value_or(0),
-                                      event.y.value_or(0), event.delay);
+                    text = loc.format("labels.mouseDown",
+                                      event.button.value_or("?"),
+                                      event.x.value_or(0),
+                                      event.y.value_or(0),
+                                      event.delay);
                     break;
                 case RecordedEventType::MouseUp:
                     color = ImVec4(0.2f, 0.8f, 0.2f, 1.0f);
-                    text = loc.format("labels.mouseUp", event.button.value_or("?"), event.x.value_or(0),
-                                      event.y.value_or(0), event.delay);
+                    text = loc.format("labels.mouseUp",
+                                      event.button.value_or("?"),
+                                      event.x.value_or(0),
+                                      event.y.value_or(0),
+                                      event.delay);
                     break;
                 case RecordedEventType::MouseMove:
                     color = ImVec4(0.7f, 0.7f, 0.7f, 1.0f);
