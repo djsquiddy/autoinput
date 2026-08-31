@@ -432,8 +432,8 @@ The graphical UI provides visual management of automation, configurations, runti
 - Settings editor.
 - Command runner.
 - Command palette.
-- Sequence editor.
-- Sequence recorder.
+- Sequence editor with steps table and visual graph views.
+- Sequence recorder with live events list and visual sequence graph synchronization.
 - Runtime dashboard.
 - Advanced runtime controls with start/stop/pause/resume.
 - Hotkey manager.

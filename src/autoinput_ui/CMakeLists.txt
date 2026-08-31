@@ -44,6 +44,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/graph/graphValidator.h
             ${CMAKE_CURRENT_LIST_DIR}/graph/sequenceGraphAdapter.cpp
             ${CMAKE_CURRENT_LIST_DIR}/graph/sequenceGraphAdapter.h
+            ${CMAKE_CURRENT_LIST_DIR}/graph/recorderGraphAdapter.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/graph/recorderGraphAdapter.h
             ${CMAKE_CURRENT_LIST_DIR}/graph/sequenceGraphCompiler.cpp
             ${CMAKE_CURRENT_LIST_DIR}/graph/sequenceGraphCompiler.h
             ${CMAKE_CURRENT_LIST_DIR}/graph/configGraphAdapter.cpp

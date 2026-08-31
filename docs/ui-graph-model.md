@@ -796,6 +796,49 @@ saveGraphMetadataFile(metadataPath, configMetadataDoc);
 auto loadedDoc = loadGraphMetadataForConfig(configFilePath);
 ```
 
+---
+
+## Sequence Recorder Graph Integration
+
+The Sequence Recorder component (`SequenceRecorderWindow`) integrates directly with the visual sequence graph editor and workflow adapter (`RecorderGraphWorkflow` in `autoinput::ui::graph`).
+
+### Workflow & Architecture
+
+1. **Dual Inspection Tabs**: The Sequence Recorder window provides two synchronized views:
+   - `[Events List]`: Raw chronological list of captured events with timestamp and type badging.
+   - `[Visual Graph]`: Interactive sequence graph representation powered by `SequenceGraphEditor`.
+2. **Post-Recording & Real-time Graph Generation**: As events arrive from the automation runtime or when recording is paused/stopped, `generateGraphFromRecordedSequence()` converts the captured `RecordedSequence` into a linear `GraphDocument`.
+3. **Graceful Handling of Partial/Invalid Events**: During active or interrupted recording sessions, incomplete events (such as missing key names, incomplete mouse coordinates, or non-standard delay strings) are gracefully preserved, categorized, and accompanied by actionable warnings rather than causing failures.
+4. **Graph Edits & Config Persistence**: Users can perform visual edits (inserting delays, reordering steps, adjusting parameters) on the recorded sequence directly within the recorder's graph tab before saving it to configuration.
+5. **Strict Playback Semantics Isolation**: The graph generation and visual editor layers are strictly decoupled from core input playback; recording data and saved config files retain exact automation playback semantics.
+
+### Key API Functions (`recorderGraphAdapter.h`)
+
+```cpp
+#include "autoinput_ui/graph/recorderGraphAdapter.h"
+
+using namespace autoinput::ui::graph;
+
+// Generate and validate a GraphDocument from recorded sequence data
+auto result = generateGraphFromRecordedSequence(recordedSeq);
+if (result.success)
+{
+    // Render result.graphDocument in visual canvas
+}
+
+// Manage lifecycle through RecorderGraphWorkflow
+RecorderGraphWorkflow workflow;
+workflow.onRecordingStarted("MyMacro", "f2", "f3");
+workflow.onRecordingUpdated(true, false, eventCount, currentSeq);
+workflow.onRecordingStopped(finalSeq);
+
+// Apply visual graph edits back to recorded sequence
+workflow.applyGraphEdits();
+
+// Save to config
+workflow.saveToConfig(configData);
+```
+
 ## Usage Example
 
 ```cpp

@@ -4,18 +4,21 @@
  * @date August 2026
  */
 #include "sequenceRecorderWindow.h"
-#include "../widgets/basicWidgets.h"
 #include "../core/localization.h"
+#include "../widgets/basicWidgets.h"
 #include "autoinput/services/configService.h"
 #include "autoinput/support/logger.h"
-#include <imgui.h>
-#include <format>
 #include <algorithm>
+#include <format>
+#include <imgui.h>
 
 namespace autoinput::ui
 {
-    SequenceRecorderWindow::SequenceRecorderWindow(services::IAutomationRuntimeClient& runtimeClient, const IEnvironment& environment)
-        : UiWindow("Sequence Recorder", "windows.sequenceRecorder"), m_runtimeClient(runtimeClient), m_environment(environment)
+    SequenceRecorderWindow::SequenceRecorderWindow(services::IAutomationRuntimeClient& runtimeClient,
+                                                   const IEnvironment& environment)
+        : UiWindow("Sequence Recorder", "windows.sequenceRecorder")
+        , m_runtimeClient(runtimeClient)
+        , m_environment(environment)
     {
         refreshConfigs();
     }
@@ -32,7 +35,7 @@ namespace autoinput::ui
         {
             m_availableConfigs.push_back("default");
         }
-        
+
         // Ensure selected index is valid
         if (m_selectedConfigIndex >= static_cast<int>(m_availableConfigs.size()))
         {
@@ -45,11 +48,11 @@ namespace autoinput::ui
         m_isRecording = m_runtimeClient.isRecording();
         m_isPaused = m_runtimeClient.isRecordingPaused();
         uint32_t newCount = m_runtimeClient.getRecordedEventCount();
-        
+
         if (newCount != m_eventCount)
         {
             m_eventCount = newCount;
-            // If recording, we might want to fetch the new events, 
+            // If recording, we might want to fetch the new events,
             // but for simplicity we fetch the whole sequence when it changes or finished.
             if (m_isRecording)
             {
@@ -57,6 +60,7 @@ namespace autoinput::ui
                 if (seq)
                 {
                     m_recordedSequence = std::move(seq);
+                    m_graphEditorState.syncWithSequence(*m_recordedSequence);
                     markDirty();
                 }
             }
@@ -66,18 +70,16 @@ namespace autoinput::ui
     void SequenceRecorderWindow::startRecording()
     {
         auto& loc = Localization::get();
-        SequenceConfig config{
-            .recordMouseMoves = m_recordMouseMoves,
-            .recordMouseClicks = m_recordMouseClicks,
-            .recordKeyboardEvents = m_recordKeyboardEvents,
-            .recordDelays = m_recordDelays,
-            .name = m_sequenceName,
-            .startKey = m_startKey,
-            .endKey = m_endKey,
-            .playStartKey = m_startKey, // Default play key same as record start
-            .mouseSampleDelay = m_mouseSampleDelay
-        };
-        
+        SequenceConfig config{ .recordMouseMoves = m_recordMouseMoves,
+                               .recordMouseClicks = m_recordMouseClicks,
+                               .recordKeyboardEvents = m_recordKeyboardEvents,
+                               .recordDelays = m_recordDelays,
+                               .name = m_sequenceName,
+                               .startKey = m_startKey,
+                               .endKey = m_endKey,
+                               .playStartKey = m_startKey, // Default play key same as record start
+                               .mouseSampleDelay = m_mouseSampleDelay };
+
         auto res = m_runtimeClient.startRecording(config);
         if (res.success)
         {
@@ -85,6 +87,7 @@ namespace autoinput::ui
             m_recordingStartTime = std::chrono::steady_clock::now();
             m_eventCount = 0;
             m_recordedSequence = std::nullopt;
+            m_graphEditorState = editors::SequenceGraphEditorState{};
             markDirty();
         }
         else
@@ -105,6 +108,7 @@ namespace autoinput::ui
             if (seq)
             {
                 m_recordedSequence = std::move(seq);
+                m_graphEditorState.rebuildFromSequence(*m_recordedSequence);
             }
         }
         else
@@ -139,6 +143,7 @@ namespace autoinput::ui
             m_statusMessage = Localization::get().text("status.recordingDiscarded");
             m_recordedSequence = std::nullopt;
             m_eventCount = 0;
+            m_graphEditorState = editors::SequenceGraphEditorState{};
             clearDirty();
         }
     }
@@ -162,23 +167,23 @@ namespace autoinput::ui
             m_statusMessage = loc.text("status.noSequenceToSave");
             return;
         }
- 
+
         if (m_selectedConfigIndex >= static_cast<int>(m_availableConfigs.size()))
         {
             m_statusMessage = loc.text("status.invalidConfigSelected");
             return;
         }
- 
+
         std::string configName = m_availableConfigs[m_selectedConfigIndex];
         const auto configPath = getConfigFilePath(configName, m_environment);
-        
+
         auto configDataOpt = loadConfigData(configPath);
         ConfigData configData;
         if (configDataOpt)
         {
             configData = *configDataOpt;
         }
- 
+
         // Add or update sequence
         bool found = false;
         for (auto& seq : configData.sequences)
@@ -190,12 +195,12 @@ namespace autoinput::ui
                 break;
             }
         }
-        
+
         if (!found)
         {
             configData.sequences.push_back(*m_recordedSequence);
         }
- 
+
         if (saveConfigData(configData, configPath))
         {
             m_statusMessage = loc.format("status.sequenceSaved", m_recordedSequence->name, configName);
@@ -211,16 +216,43 @@ namespace autoinput::ui
     {
         renderRecorderControls();
         ImGui::Separator();
-        
+
         if (!m_isRecording && !m_isPaused && (!m_recordedSequence || m_recordedSequence->events.empty()))
         {
             renderSettings();
         }
         else
         {
-            renderEventList();
+            if (ImGui::BeginTabBar("SequenceRecorderTabs"))
+            {
+                if (ImGui::BeginTabItem("Events List"))
+                {
+                    renderEventList();
+                    ImGui::EndTabItem();
+                }
+
+                if (ImGui::BeginTabItem("Visual Graph"))
+                {
+                    if (m_recordedSequence)
+                    {
+                        if (editors::renderSequenceGraphEditor(*m_recordedSequence, m_graphEditorState,
+                                                               "SequenceRecorderGraph"))
+                        {
+                            m_eventCount = static_cast<uint32_t>(m_recordedSequence->events.size());
+                            markDirty();
+                        }
+                    }
+                    else
+                    {
+                        ImGui::TextDisabled("No recorded sequence available to display in graph.");
+                    }
+                    ImGui::EndTabItem();
+                }
+
+                ImGui::EndTabBar();
+            }
         }
-        
+
         ImGui::Separator();
         renderStatus();
     }
@@ -257,7 +289,7 @@ namespace autoinput::ui
                 stopRecording();
             }
         }
-        
+
         ImGui::SameLine();
         if (ImGui::Button(loc.text("buttons.discard").data()))
         {
@@ -271,7 +303,8 @@ namespace autoinput::ui
             }
         }
 
-        if (ImGui::BeginPopupModal(loc.text("modals.discardRecordingTitle").data(), nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::BeginPopupModal(loc.text("modals.discardRecordingTitle").data(), nullptr,
+                                   ImGuiWindowFlags_AlwaysAutoResize))
         {
             ImGui::Text("%s", loc.text("modals.discardRecordingMessage").data());
             ImGui::Separator();
@@ -302,8 +335,9 @@ namespace autoinput::ui
         auto& loc = Localization::get();
         ImGui::Text("%s", loc.text("labels.recordingSettings").data());
         ImGui::InputText(loc.text("labels.sequenceName").data(), m_sequenceName, sizeof(m_sequenceName));
-        
-        if (ImGui::BeginCombo(loc.text("labels.saveToConfig").data(), m_availableConfigs[m_selectedConfigIndex].c_str()))
+
+        if (ImGui::BeginCombo(loc.text("labels.saveToConfig").data(),
+                              m_availableConfigs[m_selectedConfigIndex].c_str()))
         {
             for (int i = 0; i < static_cast<int>(m_availableConfigs.size()); i++)
             {
@@ -320,7 +354,7 @@ namespace autoinput::ui
         {
             refreshConfigs();
         }
- 
+
         ImGui::Checkbox(loc.text("labels.recordMouseMoves").data(), &m_recordMouseMoves);
         ImGui::Checkbox(loc.text("labels.recordMouseClicks").data(), &m_recordMouseClicks);
         ImGui::Checkbox(loc.text("labels.recordKeyboardEvents").data(), &m_recordKeyboardEvents);
@@ -335,15 +369,16 @@ namespace autoinput::ui
         auto& loc = Localization::get();
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - m_recordingStartTime);
-        
-        ImGui::Text("%s", loc.format("labels.eventsAndTime", m_eventCount, elapsed.count() / 60, elapsed.count() % 60).c_str());
-        
+
+        ImGui::Text(
+            "%s", loc.format("labels.eventsAndTime", m_eventCount, elapsed.count() / 60, elapsed.count() % 60).c_str());
+
         if (isDirty())
         {
             ImGui::SameLine();
             ImGui::TextColored(ImVec4(1, 1, 0, 1), "%s", loc.text("labels.unsaved").data());
         }
- 
+
         ImGui::BeginChild("EventList", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), true);
         if (m_recordedSequence)
         {
@@ -351,36 +386,36 @@ namespace autoinput::ui
             {
                 ImVec4 color(1, 1, 1, 1);
                 std::string text;
-                
+
                 switch (event.type)
                 {
-                    case RecordedEventType::KeyDown:
-                        color = ImVec4(0.4f, 0.8f, 1.0f, 1.0f);
-                        text = loc.format("labels.keyDown", event.key.value_or("?"), event.delay);
-                        break;
-                    case RecordedEventType::KeyUp:
-                        color = ImVec4(0.4f, 0.6f, 0.9f, 1.0f);
-                        text = loc.format("labels.keyUp", event.key.value_or("?"), event.delay);
-                        break;
-                    case RecordedEventType::MouseDown:
-                        color = ImVec4(0.4f, 1.0f, 0.4f, 1.0f);
-                        text = loc.format("labels.mouseDown", event.button.value_or("?"), event.x.value_or(0), event.y.value_or(0), event.delay);
-                        break;
-                    case RecordedEventType::MouseUp:
-                        color = ImVec4(0.2f, 0.8f, 0.2f, 1.0f);
-                        text = loc.format("labels.mouseUp", event.button.value_or("?"), event.x.value_or(0), event.y.value_or(0), event.delay);
-                        break;
-                    case RecordedEventType::MouseMove:
-                        color = ImVec4(0.7f, 0.7f, 0.7f, 1.0f);
-                        text = loc.format("labels.mouseMove", event.x.value_or(0), event.y.value_or(0), event.delay);
-                        break;
-                    default:
-                        text = loc.text("labels.unknownEvent");
-                        break;
+                case RecordedEventType::KeyDown:
+                    color = ImVec4(0.4f, 0.8f, 1.0f, 1.0f);
+                    text = loc.format("labels.keyDown", event.key.value_or("?"), event.delay);
+                    break;
+                case RecordedEventType::KeyUp:
+                    color = ImVec4(0.4f, 0.6f, 0.9f, 1.0f);
+                    text = loc.format("labels.keyUp", event.key.value_or("?"), event.delay);
+                    break;
+                case RecordedEventType::MouseDown:
+                    color = ImVec4(0.4f, 1.0f, 0.4f, 1.0f);
+                    text = loc.format("labels.mouseDown", event.button.value_or("?"), event.x.value_or(0),
+                                      event.y.value_or(0), event.delay);
+                    break;
+                case RecordedEventType::MouseUp:
+                    color = ImVec4(0.2f, 0.8f, 0.2f, 1.0f);
+                    text = loc.format("labels.mouseUp", event.button.value_or("?"), event.x.value_or(0),
+                                      event.y.value_or(0), event.delay);
+                    break;
+                case RecordedEventType::MouseMove:
+                    color = ImVec4(0.7f, 0.7f, 0.7f, 1.0f);
+                    text = loc.format("labels.mouseMove", event.x.value_or(0), event.y.value_or(0), event.delay);
+                    break;
+                default: text = loc.text("labels.unknownEvent"); break;
                 }
                 ImGui::TextColored(color, "%s", text.c_str());
             }
- 
+
             if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
             {
                 ImGui::SetScrollHereY(1.0f);
@@ -393,4 +428,4 @@ namespace autoinput::ui
     {
         widgets::StatusText(m_statusMessage);
     }
-}
+} // namespace autoinput::ui
