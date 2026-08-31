@@ -553,6 +553,107 @@ The backend factory selects the most capable enabled backend automatically:
 2. `ImguiNodeEditor` (if compiled with `AUTOINPUT_HAS_IMGUI_NODE_EDITOR`)
 3. `Fallback` (default dependency-free fallback)
 
+### `imnodes` Backend Capabilities & Evaluation
+
+When `AUTOINPUT_UI_WITH_IMNODES` is enabled, the `imnodes` backend wraps the immediate-mode [imnodes](https://github.com/Nelarius/imnodes) library behind the `INodeEditorBackend` interface:
+
+#### Feature Capabilities Summary
+
+- **Supported Features**:
+  - `supportsCanvas`: Renders node editor canvas using `imnodes::BeginNodeEditor()` / `imnodes::EndNodeEditor()`.
+  - `supportsPositions`: Synchronizes 2D node coordinates via `imnodes::SetNodeEditorSpacePos()` and `imnodes::GetNodeEditorSpacePos()`.
+  - `supportsLinkCreationQuery`: Detects interactive link creation between pins via `imnodes::IsLinkCreated()`.
+  - `supportsLinkDeletionQuery`: Detects interactive link deletion events via `imnodes::IsLinkDestroyed()`.
+  - `supportsSelectionQuery`: Queries single and multi-node/link selection via `imnodes::GetSelectedNodes()` and `imnodes::GetSelectedLinks()`.
+  - `supportsMultiSelect`: Multi-node box selection and multi-link selection.
+- **Unsupported / Missing Features**:
+  - `supportsZoom`: imnodes does not support smooth canvas zooming or scaling.
+  - `supportsGroups`: imnodes does not support visual hierarchical subgraph containers or grouping frames.
+  - `supportsComments`: imnodes does not provide visual annotation comment boxes.
+  - `supportsMinimap`: imnodes minimap rendering is disabled/unsupported in this integration.
+
+---
+
+### Backend Evaluation Matrix: `imnodes` vs. AutoInput Editor Needs
+
+The following evaluation matrix compares the required visual editor features against the current `imnodes` backend implementation across the **Sequence Graph Editor** (linear execution workflow) and the **Config Graph Viewer** (dense multi-entity relationship workflow):
+
+| Feature / Capability | `imnodes` Support Level | Sequence Graph Editor Fit | Config Graph Viewer Fit | Technical Assessment & Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **Node Rendering** | **Supported** (Full) | Excellent | Good | Clean rectangular nodes with title bars; standard Dear ImGui controls can be embedded directly in the node body. |
+| **Pin Rendering** | **Supported** (Basic) | Good | Adequate | Standard circular input/output pins on left/right edges. Lacks custom glyph icons, diamond pins, or static non-connectable attributes. |
+| **Link Creation** | **Supported** (Interactive) | Excellent | Good | Drag-and-drop link connection between pins detected via `IsLinkCreated()`. Well-suited for sequence step wiring. |
+| **Link Deletion** | **Supported** (Interactive) | Excellent | Good | Link disconnection detected via `IsLinkDestroyed()` (click / Del / Alt-click). Cleanly triggers graph topology updates. |
+| **Node Selection** | **Supported** (Multi-select) | Excellent | Good | Single click, Ctrl+Click, and box-selection marquee. Easily queries selected node sets via `GetSelectedNodes()`. |
+| **Node Positioning** | **Supported** (2D Coordinates) | Good | Good | Direct coordinate synchronization via `GetNodeEditorSpacePos()` / `SetNodeEditorSpacePos()`. Supports auto-layout and manual drags. |
+| **Panning** | **Supported** (Canvas) | Good | Good | Middle-mouse and right-mouse canvas dragging allow navigating across sequence chains and config columns. |
+| **Zoom** | **Unsupported** | Fair (Short sequences) / Poor (Long sequences) | **Poor (Major Bottleneck)** | `imnodes` lacks canvas zoom/scale transformations. Navigating dense multi-command/control configuration graphs is severely hampered without zoom-out overviews. |
+| **Minimap** | **Unsupported** | Low impact | Moderate impact | Minimap support in imnodes is experimental, lacks interactive viewport panning, and exhibits clipping issues in nested child windows. |
+| **Groups & Comments** | **Unsupported** | Low impact | **Poor (Major Gap)** | No visual grouping frames, collapsible containers, or comment boxes. Cannot visually enclose `ExclusiveGroup`s or multi-command macro clusters. |
+| **Keyboard Navigation** | **Minimal** | Basic | Basic | Only supports basic Delete key for selection. No built-in arrow-key traversal or tab-focus navigation between nodes. |
+| **Context Menus** | **Manual Workaround** | Adequate | Adequate | Not built into the node lifecycle; requires manual hit-testing via `IsNodeHovered()` and custom `ImGui::BeginPopupContextWindow()` handling. |
+| **Styling** | **Basic** | Good | Moderate | Scoped color/padding styling via `PushStyleColor` / `PushStyleVar`. Cannot draw animated flow lines, custom dotted link styles, or diagnostic glow badges. |
+| **Ease of Abstraction** | **Excellent** | High | High | Minimalistic immediate-mode API mimicking Dear ImGui paradigm (`BeginNodeEditor` / `BeginNode` / `EndNode` / `EndNodeEditor`). Trivial to wrap in `INodeEditorBackend`. |
+
+---
+
+### Detailed Feature Breakdown
+
+1. **Node Rendering**:
+   - `imnodes` renders discrete nodes with dedicated title bars and content areas (`BeginNode`, `BeginNodeTitleBar`, `EndNodeTitleBar`, `EndNode`).
+   - *Sequence Graph Editor*: Fits the linear step model exceptionally well. Node headers clearly differentiate Start (green), End (red), Wait (yellow), and Event (blue) nodes.
+   - *Config Graph Viewer*: Successfully renders Command, Control, Input, and Sequence nodes, but cannot collapse node sections or render multi-column headers.
+
+2. **Pin Rendering**:
+   - Pins are declared using `BeginInputAttribute(pinId)` and `BeginOutputAttribute(pinId)` and render as circular connection points at node edges.
+   - *Sequence Graph Editor*: Perfectly maps `In` and `Out` execution pins for single-chain sequence flow.
+   - *Config Graph Viewer*: Sufficient for basic `Input -> Command -> Control` wiring, but lacks custom shape differentiation (e.g. key icons for inputs, square sockets for commands) or static attribute labels.
+
+3. **Link Creation & Deletion**:
+   - Dragging between pins automatically renders provisional Bézier curves and emits link creation events via `imnodes::IsLinkCreated(&startPin, &endPin)`.
+   - Link removal is queried via `imnodes::IsLinkDestroyed(&linkId)`.
+   - Both editors leverage these events directly to update underlying `GraphDocument` topology and trigger validation.
+
+4. **Node Selection & Positioning**:
+   - Built-in marquee drag-selection and click-selection provide interactive multi-node operations.
+   - Coordinate synchronization allows deterministic auto-layout (such as the 3-column configuration layout or linear sequence layout) to position nodes cleanly on first load while allowing interactive user adjustments.
+
+5. **Panning vs. Zoom**:
+   - Panning works smoothly using middle-click or right-click canvas dragging.
+   - **Zooming is a critical limitation**: `imnodes` does not support canvas scaling. While short sequence graphs (10–30 nodes) remain manageable, large configuration graphs (50+ nodes across inputs, commands, controls, sequences, and global settings) quickly exceed the visible viewport, forcing excessive panning and losing topological context.
+
+6. **Minimap & Grouping**:
+   - `imnodes` does not support visual container frames (groups) or floating comment boxes.
+   - For `ConfigGraphViewer`, this makes it impossible to visually wrap mutual exclusion groups (`ExclusiveGroup`) in container boundaries or cluster multi-command macro configurations together visually.
+
+7. **Styling & Flow Visualization**:
+   - While `imnodes` allows customizing node/pin/link colors via style stacks, it lacks support for animated link dashes (flow tracing), variable line thicknesses per connection type, or diagnostic glow highlights on invalid nodes.
+
+8. **Ease of Abstraction**:
+   - `imnodes` is remarkably lightweight and follows standard immediate-mode Dear ImGui conventions, making it straightforward to maintain, isolate behind `INodeEditorBackend`, and test.
+
+---
+
+### Recommendations & Next Steps
+
+Based on this evaluation, the following recommendations are established for AutoInput's graph visualization architecture:
+
+1. **Primary Recommendation: Evaluate `imgui-node-editor` for Advanced Visual Editors**
+   - **Why `imgui-node-editor`?**
+     - **Canvas Zoom**: Native support for smooth, high-performance canvas zooming (down to 10% overview), resolving the primary scalability bottleneck of `imnodes`.
+     - **Hierarchical Groups**: True visual group nodes with collapsible boundaries, allowing `ExclusiveGroup`s and command clusters to be rendered as visual containers.
+     - **Floating Comments**: Visual annotation boxes (`NodeKind::Comment`) for developer/user notes.
+     - **Flow Animation**: Built-in link flow animation, enabling future real-time sequence playback and automation execution tracing.
+     - **Rich Pin Glyphs**: Support for custom pin geometries (triangles, diamonds, icons) and inline pin labels.
+   - **Integration Path**: AutoInput's architecture already defines the `AUTOINPUT_UI_WITH_IMGUI_NODE_EDITOR` CMake flag and `ImguiNodeEditor` backend stub in `nodeEditorBackend.h`. Implementing the `imgui-node-editor` backend will provide a direct comparison.
+
+2. **Secondary Recommendation: Retain `imnodes` as a Lightweight Optional Backend**
+   - `imnodes` remains a viable, minimal-footprint backend for simpler workflows (such as the linear `SequenceGraphEditor`), where full zoom and grouping features are not strictly required. Keeping `imnodes` as an optional tier provides flexibility.
+
+3. **Baseline Architecture: Maintain the Dependency-Free Fallback Viewer**
+   - The native Dear ImGui `FallbackGraphViewer` and `FallbackNodeEditorBackend` must remain the default in the codebase, ensuring that core AutoInput builds, CI pipelines, and headless tests remain completely free of external dependencies.
+   - Developing a complex custom canvas from scratch is **not recommended**, as maintaining interactive drag math, link routing, and zoom transformations would duplicate existing mature open-source solutions without providing unique domain value.
+
 ### Build Configuration & Optional Flags
 
 Both third-party backends are completely optional and disabled (`OFF`) by default to ensure default builds and CI remain completely dependency-free:
