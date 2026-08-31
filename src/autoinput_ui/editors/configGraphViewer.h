@@ -1,6 +1,6 @@
 /**
  * @file configGraphViewer.h
- * @brief Read-only visual graph viewer and diagnostics inspector for AutoInput configuration data.
+ * @brief Visual graph viewer, editor, and diagnostics inspector for AutoInput configuration data.
  * @author djsquiddy
  * @date August 2026
  */
@@ -54,6 +54,33 @@ namespace autoinput::ui::editors
     };
 
     /**
+     * @brief Staged draft buffer for editing a command and its associated relationships.
+     */
+    struct CommandEditDraft
+    {
+        std::size_t commandIndex{ 0 };
+        std::string name;
+        std::string exclusiveGroup;
+        std::vector<std::string> startKeys;
+        std::vector<autoinput::CommandControlData> controls;
+        bool isActive{ false };
+        bool isDirty{ false };
+        std::vector<ConfigDiagnosticIssue> draftIssues;
+
+        [[nodiscard]] bool hasErrors() const noexcept
+        {
+            return std::ranges::any_of(
+                draftIssues, [](const auto& issue) { return issue.severity == ConfigDiagnosticSeverity::Error; });
+        }
+
+        [[nodiscard]] bool hasWarnings() const noexcept
+        {
+            return std::ranges::any_of(
+                draftIssues, [](const auto& issue) { return issue.severity == ConfigDiagnosticSeverity::Warning; });
+        }
+    };
+
+    /**
      * @brief Extracts inspection details and relationship information for a specific node.
      *
      * @param config The source configuration.
@@ -67,7 +94,7 @@ namespace autoinput::ui::editors
         const ConfigDiagnosticsResult* diagnostics = nullptr);
 
     /**
-     * @brief State container and controller for the read-only visual configuration graph viewer.
+     * @brief State container and controller for the visual configuration graph viewer and relationship editor.
      */
     struct ConfigGraphViewerState
     {
@@ -75,8 +102,10 @@ namespace autoinput::ui::editors
         graph::FallbackGraphViewerState viewerState;
         graph::ConfigGraphOptions adapterOptions{ graph::ConfigGraphOptions::defaults() };
         ConfigDiagnosticsResult diagnosticsResult;
+        CommandEditDraft editDraft;
         std::string statusMessage{ "Ready" };
         bool isGraphSynchronized{ false };
+        bool isEditingAllowed{ true };
 
         // Visibility / Filter Toggles
         bool showCommands{ true };
@@ -133,10 +162,86 @@ namespace autoinput::ui::editors
          * @brief Returns whether a node or link is currently selected.
          */
         [[nodiscard]] bool hasSelection() const noexcept;
+
+        // --- Editing Operations ---
+
+        /**
+         * @brief Begins staging edits for the command at the specified index.
+         * @return true if command was successfully loaded into the draft buffer.
+         */
+        bool beginCommandEdit(std::size_t commandIndex, const autoinput::ConfigData& config, bool force = false);
+
+        /**
+         * @brief Cancels and discards the active command editing draft.
+         */
+        void cancelCommandEdit();
+
+        /**
+         * @brief Updates the staged command name in the edit draft.
+         */
+        void setCommandName(std::string_view name);
+
+        /**
+         * @brief Updates the staged exclusive group in the edit draft.
+         */
+        void setExclusiveGroup(std::string_view group);
+
+        /**
+         * @brief Adds a start key to the staged command draft.
+         */
+        void addStartKey(std::string_view key);
+
+        /**
+         * @brief Removes a start key by index from the staged command draft.
+         */
+        bool removeStartKey(std::size_t index);
+
+        /**
+         * @brief Updates a start key at a given index in the staged command draft.
+         */
+        bool setStartKey(std::size_t index, std::string_view key);
+
+        /**
+         * @brief Adds a control to the staged command draft.
+         */
+        void addControl(std::string_view action = "start", std::string_view input = "mouse.left");
+
+        /**
+         * @brief Removes a control by index from the staged command draft.
+         */
+        bool removeControl(std::size_t index);
+
+        /**
+         * @brief Updates control action and input at a given index in the staged command draft.
+         */
+        bool updateControl(std::size_t index, std::string_view action, std::string_view input);
+
+        /**
+         * @brief Validates the staged draft against base configuration rules.
+         * @return true if draft is valid without blocking errors.
+         */
+        bool validateDraft(const autoinput::ConfigData& baseConfig);
+
+        /**
+         * @brief Applies staged command changes to the target configuration if validation passes.
+         * @return true if changes were applied, false if rejected due to validation errors.
+         */
+        bool applyCommandEdit(autoinput::ConfigData& targetConfig);
     };
 
     /**
-     * @brief Renders the read-only visual configuration graph viewer.
+     * @brief Renders the visual configuration graph viewer and relationship editor.
+     *
+     * @param config The mutable configuration to inspect and edit.
+     * @param state The viewer/editor state and configuration.
+     * @param viewerId Unique ImGui window/child identifier string.
+     * @return true if configuration changes were applied to config, false otherwise.
+     */
+    bool renderConfigGraphViewer(autoinput::ConfigData& config, ConfigGraphViewerState& state,
+                                 const char* viewerId = "ConfigGraphViewer");
+
+    /**
+     * @brief Renders the visual configuration graph viewer in read-only mode.
      *
      * @param config The configuration to inspect (read-only).
      * @param state The viewer state and configuration.

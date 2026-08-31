@@ -452,9 +452,9 @@ FallbackGraphViewerState viewerState;
 renderFallbackGraphViewer(configGraph, viewerState);
 ```
 
-## Read-Only Visual Configuration Graph Viewer (`ConfigGraphViewer`)
+## Visual Configuration Graph Viewer & Safe Relationship Editor (`ConfigGraphViewer`)
 
-The Read-Only Visual Configuration Graph Viewer (`autoinput_ui/editors/configGraphViewer.h`) provides an interactive Dear ImGui component to visually inspect configuration topology, node attributes, and potential configuration conflicts/anomalies in `ConfigData`.
+The Visual Configuration Graph Viewer and Relationship Editor (`autoinput_ui/editors/configGraphViewer.h`) provides an interactive Dear ImGui component to visually inspect configuration topology, node attributes, potential configuration conflicts, and safely edit low-risk command and control relationships directly from the graph inspector.
 
 ### Key Features
 
@@ -470,12 +470,25 @@ The Read-Only Visual Configuration Graph Viewer (`autoinput_ui/editors/configGra
    - Backed by reusable non-UI diagnostics engine (`ConfigDiagnostics`).
    - Color-coded severity indicators (Error, Warning, Info) with structured categories and suggested resolution steps.
    - Clickable "Select Node" navigation to highlight and jump to the affected element in the graph.
-4. **Node Inspector Panel**:
+4. **Node Inspector & Safe Relationship Editor**:
    - Displays detailed metadata for the selected node (Kind, Title, Subtitle, Source Index).
    - Lists connected inputs, attached controls, exclusive group memberships, and targeted entities.
    - Correlates and displays diagnostics specific to the selected node.
-5. **Safe Read-Only Inspection Boundary**:
-   - Inspection operations are completely non-destructive and do not mutate configuration or sequence data.
+   - **Supported Safe Edits**:
+     - Edit Command Name
+     - Edit Exclusive Group name
+     - Add, edit, or remove Command Start Keys
+     - Add or remove Command Controls
+     - Edit Control Action (with dropdown options from `ConfigMetadata`) and Control Trigger Input (with presets for wildcards and mouse buttons)
+     - Staged draft buffer (`CommandEditDraft`) with live draft validation and explicit `Apply to Config` and `Revert Changes` actions.
+     - Strict pre-apply validation preventing invalid configurations (e.g. empty command names, invalid control actions) from mutating the original config.
+   - **Read-Only Elements in Graph View**:
+     - Sequence event steps (edited via dedicated `[Sequences]` tab or Sequence Node Editor)
+     - Global settings (Application focus filters, blacklist entries, global end keys edited via `[Global Settings]` tab)
+     - Arbitrary link rewiring remains read-only to avoid corrupting command-control topology.
+5. **Safe Validation & State Buffer**:
+   - Changes are staged in a non-destructive edit draft buffer until explicitly applied.
+   - Unsaved changes can be reverted or cancelled at any time without mutating source configuration.
 
 ## Reusable Configuration Diagnostics (`ConfigDiagnostics`)
 

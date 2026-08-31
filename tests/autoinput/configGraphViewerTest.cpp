@@ -383,3 +383,191 @@ TEST_F(ConfigGraphViewerTest, FilterTogglesRebuildGraph)
     state.rebuildFromConfig(config);
     EXPECT_LT(state.graphDocument.nodeCount(), totalNodes);
 }
+
+// =========================================================================
+// Safe Editing and Relationship Controller Tests
+// =========================================================================
+
+TEST_F(ConfigGraphViewerTest, BeginCommandEditAndDraftInitialization)
+{
+    auto config = createCleanConfig();
+    ConfigGraphViewerState state;
+    state.syncWithConfig(config);
+
+    EXPECT_FALSE(state.editDraft.isActive);
+    EXPECT_TRUE(state.beginCommandEdit(0, config));
+    EXPECT_TRUE(state.editDraft.isActive);
+    EXPECT_FALSE(state.editDraft.isDirty);
+    EXPECT_EQ(state.editDraft.commandIndex, 0U);
+    EXPECT_EQ(state.editDraft.name, "FireWeapon");
+    EXPECT_EQ(state.editDraft.exclusiveGroup, "Combat");
+    EXPECT_EQ(state.editDraft.startKeys.size(), 1U);
+    EXPECT_EQ(state.editDraft.startKeys[0], "f1");
+    EXPECT_EQ(state.editDraft.controls.size(), 1U);
+    EXPECT_EQ(state.editDraft.controls[0].action, "pause");
+    EXPECT_EQ(state.editDraft.controls[0].input, "p");
+    EXPECT_FALSE(state.editDraft.hasErrors());
+
+    // Out of bounds index fails gracefully
+    EXPECT_FALSE(state.beginCommandEdit(999, config));
+}
+
+TEST_F(ConfigGraphViewerTest, CommandRenameAndApply)
+{
+    auto config = createCleanConfig();
+    ConfigGraphViewerState state;
+    state.syncWithConfig(config);
+
+    ASSERT_TRUE(state.beginCommandEdit(0, config));
+    state.setCommandName("PrimaryAttack");
+    EXPECT_TRUE(state.editDraft.isDirty);
+    EXPECT_TRUE(state.validateDraft(config));
+    EXPECT_FALSE(state.editDraft.hasErrors());
+
+    EXPECT_TRUE(state.applyCommandEdit(config));
+    EXPECT_EQ(config.commands[0].name, "PrimaryAttack");
+    EXPECT_FALSE(state.editDraft.isDirty);
+    EXPECT_TRUE(state.isGraphSynchronized);
+
+    // Verify graph document has updated node title
+    bool foundUpdatedNode = false;
+    for (const auto& node : state.graphDocument.nodes())
+    {
+        if (node.kind == NodeKind::Command && node.sourceIndex == 0U)
+        {
+            EXPECT_EQ(node.title, "PrimaryAttack");
+            foundUpdatedNode = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(foundUpdatedNode);
+}
+
+TEST_F(ConfigGraphViewerTest, ExclusiveGroupAndStartKeysEdit)
+{
+    auto config = createCleanConfig();
+    ConfigGraphViewerState state;
+    state.syncWithConfig(config);
+
+    ASSERT_TRUE(state.beginCommandEdit(0, config));
+    state.setExclusiveGroup("WeaponsGroup");
+    state.addStartKey("f5");
+    EXPECT_EQ(state.editDraft.startKeys.size(), 2U);
+    EXPECT_TRUE(state.setStartKey(0, "f6"));
+    EXPECT_TRUE(state.removeStartKey(1));
+    EXPECT_EQ(state.editDraft.startKeys.size(), 1U);
+    EXPECT_EQ(state.editDraft.startKeys[0], "f6");
+
+    EXPECT_TRUE(state.applyCommandEdit(config));
+    EXPECT_EQ(config.commands[0].exclusiveGroup, "WeaponsGroup");
+    ASSERT_EQ(config.commands[0].startKeys.size(), 1U);
+    EXPECT_EQ(config.commands[0].startKeys[0], "f6");
+}
+
+TEST_F(ConfigGraphViewerTest, CommandControlAddAndRemove)
+{
+    auto config = createCleanConfig();
+    ConfigGraphViewerState state;
+    state.syncWithConfig(config);
+
+    ASSERT_TRUE(state.beginCommandEdit(0, config));
+    EXPECT_EQ(state.editDraft.controls.size(), 1U);
+
+    // Add control
+    state.addControl("toggle", "t");
+    EXPECT_EQ(state.editDraft.controls.size(), 2U);
+    EXPECT_TRUE(state.applyCommandEdit(config));
+    ASSERT_EQ(config.commands[0].controls.size(), 2U);
+    EXPECT_EQ(config.commands[0].controls[1].action, "toggle");
+    EXPECT_EQ(config.commands[0].controls[1].input, "t");
+
+    // Remove first control
+    ASSERT_TRUE(state.beginCommandEdit(0, config));
+    EXPECT_TRUE(state.removeControl(0));
+    EXPECT_EQ(state.editDraft.controls.size(), 1U);
+    EXPECT_TRUE(state.applyCommandEdit(config));
+    ASSERT_EQ(config.commands[0].controls.size(), 1U);
+    EXPECT_EQ(config.commands[0].controls[0].action, "toggle");
+    EXPECT_EQ(config.commands[0].controls[0].input, "t");
+}
+
+TEST_F(ConfigGraphViewerTest, UpdateControlActionAndInput)
+{
+    auto config = createCleanConfig();
+    ConfigGraphViewerState state;
+    state.syncWithConfig(config);
+
+    ASSERT_TRUE(state.beginCommandEdit(0, config));
+    EXPECT_TRUE(state.updateControl(0, "resume", "r"));
+    EXPECT_TRUE(state.applyCommandEdit(config));
+    ASSERT_EQ(config.commands[0].controls.size(), 1U);
+    EXPECT_EQ(config.commands[0].controls[0].action, "resume");
+    EXPECT_EQ(config.commands[0].controls[0].input, "r");
+
+    // Invalid control index returns false
+    EXPECT_FALSE(state.updateControl(999, "stop", "s"));
+}
+
+TEST_F(ConfigGraphViewerTest, RejectEmptyCommandNameDoesNotMutateOriginalConfig)
+{
+    auto config = createCleanConfig();
+    const auto originalConfig = config;
+
+    ConfigGraphViewerState state;
+    state.syncWithConfig(config);
+
+    ASSERT_TRUE(state.beginCommandEdit(0, config));
+    state.setCommandName("   ");
+    EXPECT_FALSE(state.validateDraft(config));
+    EXPECT_TRUE(state.editDraft.hasErrors());
+
+    // Attempting to apply invalid draft must fail and preserve target config
+    EXPECT_FALSE(state.applyCommandEdit(config));
+    EXPECT_EQ(config.commands[0].name, originalConfig.commands[0].name);
+}
+
+TEST_F(ConfigGraphViewerTest, RejectInvalidControlActionDoesNotMutateOriginalConfig)
+{
+    auto config = createCleanConfig();
+    const auto originalConfig = config;
+
+    ConfigGraphViewerState state;
+    state.syncWithConfig(config);
+
+    ASSERT_TRUE(state.beginCommandEdit(0, config));
+    state.addControl("non_existent_control_action", "ctrl+x");
+    EXPECT_FALSE(state.validateDraft(config));
+    EXPECT_TRUE(state.editDraft.hasErrors());
+
+    // Attempting to apply invalid action must fail and leave target config untouched
+    EXPECT_FALSE(state.applyCommandEdit(config));
+    EXPECT_EQ(config.commands[0].controls.size(), originalConfig.commands[0].controls.size());
+    EXPECT_EQ(config.commands[0].controls[0].action, originalConfig.commands[0].controls[0].action);
+}
+
+TEST_F(ConfigGraphViewerTest, CancelDraftRevertsChangesWithoutMutating)
+{
+    auto config = createCleanConfig();
+    const auto originalConfig = config;
+
+    ConfigGraphViewerState state;
+    state.syncWithConfig(config);
+
+    ASSERT_TRUE(state.beginCommandEdit(0, config));
+    state.setCommandName("UnsavedRename");
+    state.setExclusiveGroup("TemporaryGroup");
+    state.addStartKey("f12");
+    state.addControl("stop", "q");
+    EXPECT_TRUE(state.editDraft.isDirty);
+
+    // Cancel draft
+    state.cancelCommandEdit();
+    EXPECT_FALSE(state.editDraft.isActive);
+    EXPECT_FALSE(state.editDraft.isDirty);
+
+    // Config must remain identical to original
+    EXPECT_EQ(config.commands[0].name, originalConfig.commands[0].name);
+    EXPECT_EQ(config.commands[0].exclusiveGroup, originalConfig.commands[0].exclusiveGroup);
+    EXPECT_EQ(config.commands[0].startKeys, originalConfig.commands[0].startKeys);
+    EXPECT_EQ(config.commands[0].controls.size(), originalConfig.commands[0].controls.size());
+}

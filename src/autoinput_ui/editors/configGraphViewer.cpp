@@ -1,14 +1,18 @@
 /**
  * @file configGraphViewer.cpp
- * @brief Implementation of read-only visual graph viewer and diagnostics inspector for ConfigData.
+ * @brief Implementation of visual graph viewer, relationship editor, and diagnostics inspector for ConfigData.
  * @author djsquiddy
  * @date August 2026
  */
 #include "configGraphViewer.h"
 
+#include "../core/localization.h"
+#include "../widgets/formWidgets.h"
+#include "autoinput/config/configMetadata.h"
 #include "autoinput/config/configValidator.h"
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <format>
 #include <string>
@@ -25,6 +29,13 @@
 
 namespace autoinput::ui::editors
 {
+    namespace
+    {
+        constexpr std::array<std::string_view, 9> controlActionNames = { "start",        "toggle",   "stop",
+                                                                         "cancel",       "pause",    "resume",
+                                                                         "toggle-pause", "stop-all", "exit" };
+    } // namespace
+
     std::optional<ConfigNodeInspectionDetails> inspectConfigGraphNode(const autoinput::ConfigData& config,
                                                                       const graph::GraphDocument& doc,
                                                                       graph::NodeId nodeId,
@@ -257,6 +268,258 @@ namespace autoinput::ui::editors
         return viewerState.hasSelection();
     }
 
+    bool ConfigGraphViewerState::beginCommandEdit(std::size_t commandIndex, const autoinput::ConfigData& config,
+                                                  bool force)
+    {
+        if (commandIndex >= config.commands.size())
+        {
+            return false;
+        }
+
+        if (editDraft.isActive && editDraft.isDirty && editDraft.commandIndex == commandIndex && !force)
+        {
+            return true;
+        }
+
+        const auto& cmd = config.commands[commandIndex];
+        editDraft.commandIndex = commandIndex;
+        editDraft.name = cmd.name;
+        editDraft.exclusiveGroup = cmd.exclusiveGroup;
+        editDraft.startKeys = cmd.startKeys;
+        editDraft.controls = cmd.controls;
+        editDraft.isActive = true;
+        editDraft.isDirty = false;
+        editDraft.draftIssues.clear();
+        validateDraft(config);
+        return true;
+    }
+
+    void ConfigGraphViewerState::cancelCommandEdit()
+    {
+        editDraft = CommandEditDraft{};
+    }
+
+    void ConfigGraphViewerState::setCommandName(std::string_view name)
+    {
+        if (!editDraft.isActive)
+        {
+            return;
+        }
+        editDraft.name = name;
+        editDraft.isDirty = true;
+    }
+
+    void ConfigGraphViewerState::setExclusiveGroup(std::string_view group)
+    {
+        if (!editDraft.isActive)
+        {
+            return;
+        }
+        editDraft.exclusiveGroup = group;
+        editDraft.isDirty = true;
+    }
+
+    void ConfigGraphViewerState::addStartKey(std::string_view key)
+    {
+        if (!editDraft.isActive)
+        {
+            return;
+        }
+        editDraft.startKeys.push_back(std::string(key));
+        editDraft.isDirty = true;
+    }
+
+    bool ConfigGraphViewerState::removeStartKey(std::size_t index)
+    {
+        if (!editDraft.isActive || index >= editDraft.startKeys.size())
+        {
+            return false;
+        }
+        editDraft.startKeys.erase(editDraft.startKeys.begin() + static_cast<std::ptrdiff_t>(index));
+        editDraft.isDirty = true;
+        return true;
+    }
+
+    bool ConfigGraphViewerState::setStartKey(std::size_t index, std::string_view key)
+    {
+        if (!editDraft.isActive || index >= editDraft.startKeys.size())
+        {
+            return false;
+        }
+        editDraft.startKeys[index] = key;
+        editDraft.isDirty = true;
+        return true;
+    }
+
+    void ConfigGraphViewerState::addControl(std::string_view action, std::string_view input)
+    {
+        if (!editDraft.isActive)
+        {
+            return;
+        }
+        editDraft.controls.push_back(
+            autoinput::CommandControlData{ .action = std::string(action), .input = std::string(input) });
+        editDraft.isDirty = true;
+    }
+
+    bool ConfigGraphViewerState::removeControl(std::size_t index)
+    {
+        if (!editDraft.isActive || index >= editDraft.controls.size())
+        {
+            return false;
+        }
+        editDraft.controls.erase(editDraft.controls.begin() + static_cast<std::ptrdiff_t>(index));
+        editDraft.isDirty = true;
+        return true;
+    }
+
+    bool ConfigGraphViewerState::updateControl(std::size_t index, std::string_view action, std::string_view input)
+    {
+        if (!editDraft.isActive || index >= editDraft.controls.size())
+        {
+            return false;
+        }
+        editDraft.controls[index].action = action;
+        editDraft.controls[index].input = input;
+        editDraft.isDirty = true;
+        return true;
+    }
+
+    bool ConfigGraphViewerState::validateDraft(const autoinput::ConfigData& baseConfig)
+    {
+        editDraft.draftIssues.clear();
+        if (!editDraft.isActive || editDraft.commandIndex >= baseConfig.commands.size())
+        {
+            return false;
+        }
+
+        // 1. Validate command name
+        std::string trimmedName = editDraft.name;
+        trimmedName.erase(0, trimmedName.find_first_not_of(" \t\n\r"));
+        if (!trimmedName.empty())
+        {
+            trimmedName.erase(trimmedName.find_last_not_of(" \t\n\r") + 1);
+        }
+        if (trimmedName.empty())
+        {
+            editDraft.draftIssues.push_back(
+                ConfigDiagnosticIssue{ .severity = ConfigDiagnosticSeverity::Error,
+                                       .message = "Command name cannot be empty.",
+                                       .category = "Command",
+                                       .commandIndex = editDraft.commandIndex,
+                                       .suggestedFix = "Provide a unique descriptive name for this command." });
+        }
+
+        // 2. Validate controls
+        const auto validActions = autoinput::ConfigMetadata::validControlActionAliases();
+        for (std::size_t i = 0; i < editDraft.controls.size(); ++i)
+        {
+            const auto& ctrl = editDraft.controls[i];
+            std::string actionLower = ctrl.action;
+            std::ranges::transform(
+                actionLower, actionLower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            actionLower.erase(0, actionLower.find_first_not_of(" \t\n\r"));
+            if (!actionLower.empty())
+            {
+                actionLower.erase(actionLower.find_last_not_of(" \t\n\r") + 1);
+            }
+
+            if (actionLower.empty())
+            {
+                editDraft.draftIssues.push_back(ConfigDiagnosticIssue{
+                    .severity = ConfigDiagnosticSeverity::Error,
+                    .message = std::format("Control #{} has empty action.", i + 1),
+                    .category = "Control",
+                    .commandIndex = editDraft.commandIndex,
+                    .controlIndex = i,
+                    .suggestedFix =
+                        "Specify a valid control action (e.g. 'start', 'toggle', 'stop', 'pause', 'resume')." });
+            }
+            else
+            {
+                const bool isValidAction =
+                    std::ranges::any_of(validActions, [&](std::string_view valid) { return valid == actionLower; });
+                if (!isValidAction)
+                {
+                    editDraft.draftIssues.push_back(ConfigDiagnosticIssue{
+                        .severity = ConfigDiagnosticSeverity::Error,
+                        .message = std::format("Control #{} has unknown action '{}'.", i + 1, ctrl.action),
+                        .category = "Control",
+                        .commandIndex = editDraft.commandIndex,
+                        .controlIndex = i,
+                        .suggestedFix =
+                            std::format("Use one of: {}", autoinput::ConfigMetadata::validControlActionChoices()) });
+                }
+            }
+
+            if (ctrl.input.empty())
+            {
+                editDraft.draftIssues.push_back(ConfigDiagnosticIssue{
+                    .severity = ConfigDiagnosticSeverity::Warning,
+                    .message = std::format("Control #{} has empty trigger input.", i + 1),
+                    .category = "Control",
+                    .commandIndex = editDraft.commandIndex,
+                    .controlIndex = i,
+                    .suggestedFix = "Specify a key, mouse button, or wildcard trigger (e.g. 'mouse.all')." });
+            }
+            else if (autoinput::ConfigMetadata::isWildcardTrigger(ctrl.input))
+            {
+                editDraft.draftIssues.push_back(ConfigDiagnosticIssue{
+                    .severity = ConfigDiagnosticSeverity::Info,
+                    .message = std::format("Control #{} uses wildcard trigger '{}'.", i + 1, ctrl.input),
+                    .category = "Wildcard Control",
+                    .commandIndex = editDraft.commandIndex,
+                    .controlIndex = i,
+                    .relatedInput = ctrl.input });
+            }
+        }
+
+        // 3. Provisional whole-config diagnostics
+        autoinput::ConfigData provisional = baseConfig;
+        provisional.commands[editDraft.commandIndex].name = editDraft.name;
+        provisional.commands[editDraft.commandIndex].exclusiveGroup = editDraft.exclusiveGroup;
+        provisional.commands[editDraft.commandIndex].startKeys = editDraft.startKeys;
+        provisional.commands[editDraft.commandIndex].controls = editDraft.controls;
+
+        const auto fullDiag = analyzeConfigDiagnostics(provisional);
+        for (const auto& issue : fullDiag.issues)
+        {
+            if (issue.commandIndex == editDraft.commandIndex)
+            {
+                const bool alreadyExists = std::ranges::any_of(
+                    editDraft.draftIssues,
+                    [&](const auto& existing)
+                    { return existing.message == issue.message && existing.category == issue.category; });
+                if (!alreadyExists)
+                {
+                    editDraft.draftIssues.push_back(issue);
+                }
+            }
+        }
+
+        return !editDraft.hasErrors();
+    }
+
+    bool ConfigGraphViewerState::applyCommandEdit(autoinput::ConfigData& targetConfig)
+    {
+        if (!validateDraft(targetConfig))
+        {
+            statusMessage = "Cannot apply changes: Staged draft contains validation errors.";
+            return false;
+        }
+
+        targetConfig.commands[editDraft.commandIndex].name = editDraft.name;
+        targetConfig.commands[editDraft.commandIndex].exclusiveGroup = editDraft.exclusiveGroup;
+        targetConfig.commands[editDraft.commandIndex].startKeys = editDraft.startKeys;
+        targetConfig.commands[editDraft.commandIndex].controls = editDraft.controls;
+        editDraft.isDirty = false;
+
+        rebuildFromConfig(targetConfig);
+        statusMessage =
+            std::format("Applied changes to command '{}'.", targetConfig.commands[editDraft.commandIndex].name);
+        return true;
+    }
+
 #if defined(AUTOINPUT_UI_INTERNAL_HAS_IMGUI)
     namespace
     {
@@ -353,9 +616,11 @@ namespace autoinput::ui::editors
             return stateChanged;
         }
 
-        void renderConfigNodeInspectorPanel(const autoinput::ConfigData& config, const ConfigGraphViewerState& state)
+        bool renderConfigNodeInspectorPanel(autoinput::ConfigData* mutableConfig, const autoinput::ConfigData& config,
+                                            ConfigGraphViewerState& state)
         {
-            ImGui::TextUnformatted("Node Inspector");
+            bool stateChanged = false;
+            ImGui::TextUnformatted("Node Inspector & Relationship Editor");
             ImGui::Separator();
 
             if (state.viewerState.selectedNodeId != graph::InvalidNodeId)
@@ -376,44 +641,281 @@ namespace autoinput::ui::editors
                         ImGui::Text("Source Index: #%zu", *details->sourceIndex);
                     }
 
-                    if (!details->connectedInputs.empty())
+                    // Interactive editing section for Command / Control relationships
+                    const bool isCommandOrControl =
+                        (details->kind == graph::NodeKind::Command ||
+                         (details->kind == graph::NodeKind::Control && details->commandIndex.has_value()));
+                    if (mutableConfig != nullptr && state.isEditingAllowed && isCommandOrControl &&
+                        details->commandIndex.has_value())
                     {
-                        ImGui::Spacing();
-                        ImGui::TextDisabled("Inputs:");
-                        for (const auto& inText : details->connectedInputs)
+                        const std::size_t cmdIdx = *details->commandIndex;
+                        if (cmdIdx < config.commands.size())
                         {
-                            ImGui::BulletText("%s", inText.c_str());
+                            if (!state.editDraft.isActive ||
+                                (state.editDraft.commandIndex != cmdIdx && !state.editDraft.isDirty))
+                            {
+                                state.beginCommandEdit(cmdIdx, config);
+                            }
+
+                            if (state.editDraft.isActive && state.editDraft.commandIndex == cmdIdx)
+                            {
+                                ImGui::Spacing();
+                                ImGui::Separator();
+                                ImGui::TextColored(ImVec4(0.4F, 0.8F, 1.0F, 1.0F), "Edit Command Relationships");
+
+                                // 1. Command Name
+                                if (widgets::StringInput("Name", state.editDraft.name))
+                                {
+                                    state.editDraft.isDirty = true;
+                                    state.validateDraft(config);
+                                }
+
+                                // 2. Exclusive Group
+                                if (widgets::StringInput("Exclusive Group", state.editDraft.exclusiveGroup))
+                                {
+                                    state.editDraft.isDirty = true;
+                                    state.validateDraft(config);
+                                }
+
+                                // 3. Start Keys
+                                ImGui::Spacing();
+                                ImGui::TextDisabled("Start Keys (%zu):", state.editDraft.startKeys.size());
+                                for (std::size_t k = 0; k < state.editDraft.startKeys.size(); ++k)
+                                {
+                                    ImGui::PushID(static_cast<int>(k));
+                                    ImGui::SetNextItemWidth(140.0F);
+                                    if (widgets::StringInput("##sk", state.editDraft.startKeys[k]))
+                                    {
+                                        state.editDraft.isDirty = true;
+                                        state.validateDraft(config);
+                                    }
+                                    ImGui::SameLine();
+                                    if (ImGui::SmallButton("Remove"))
+                                    {
+                                        state.removeStartKey(k);
+                                        state.validateDraft(config);
+                                        ImGui::PopID();
+                                        break;
+                                    }
+                                    ImGui::PopID();
+                                }
+
+                                if (ImGui::SmallButton("+ Add Start Key"))
+                                {
+                                    state.addStartKey("f1");
+                                    state.validateDraft(config);
+                                }
+
+                                // 4. Controls
+                                ImGui::Spacing();
+                                ImGui::TextDisabled("Controls (%zu):", state.editDraft.controls.size());
+                                for (std::size_t c = 0; c < state.editDraft.controls.size(); ++c)
+                                {
+                                    ImGui::PushID(static_cast<int>(100 + c));
+                                    auto& ctrl = state.editDraft.controls[c];
+
+                                    ImGui::SetNextItemWidth(100.0F);
+                                    if (widgets::StringCombo("##ctrlAct", ctrl.action, controlActionNames))
+                                    {
+                                        state.editDraft.isDirty = true;
+                                        state.validateDraft(config);
+                                    }
+                                    ImGui::SameLine();
+                                    ImGui::SetNextItemWidth(110.0F);
+                                    if (widgets::StringInput("##ctrlIn", ctrl.input))
+                                    {
+                                        state.editDraft.isDirty = true;
+                                        state.validateDraft(config);
+                                    }
+                                    ImGui::SameLine();
+
+                                    if (ImGui::SmallButton("Preset"))
+                                    {
+                                        ImGui::OpenPopup("CtrlPresetPopup");
+                                    }
+
+                                    if (ImGui::BeginPopup("CtrlPresetPopup"))
+                                    {
+                                        ImGui::TextDisabled("Wildcards");
+                                        if (ImGui::MenuItem("mouse.all (Any Mouse)"))
+                                        {
+                                            ctrl.input = "mouse.all";
+                                            state.editDraft.isDirty = true;
+                                            state.validateDraft(config);
+                                        }
+                                        if (ImGui::MenuItem("keys.all (Any Key)"))
+                                        {
+                                            ctrl.input = "keys.all";
+                                            state.editDraft.isDirty = true;
+                                            state.validateDraft(config);
+                                        }
+                                        if (ImGui::MenuItem("input.all (Any Input)"))
+                                        {
+                                            ctrl.input = "input.all";
+                                            state.editDraft.isDirty = true;
+                                            state.validateDraft(config);
+                                        }
+                                        ImGui::Separator();
+                                        ImGui::TextDisabled("Mouse Buttons");
+                                        if (ImGui::MenuItem("mouse.left"))
+                                        {
+                                            ctrl.input = "mouse.left";
+                                            state.editDraft.isDirty = true;
+                                            state.validateDraft(config);
+                                        }
+                                        if (ImGui::MenuItem("mouse.right"))
+                                        {
+                                            ctrl.input = "mouse.right";
+                                            state.editDraft.isDirty = true;
+                                            state.validateDraft(config);
+                                        }
+                                        if (ImGui::MenuItem("mouse.middle"))
+                                        {
+                                            ctrl.input = "mouse.middle";
+                                            state.editDraft.isDirty = true;
+                                            state.validateDraft(config);
+                                        }
+                                        ImGui::EndPopup();
+                                    }
+
+                                    ImGui::SameLine();
+                                    if (ImGui::SmallButton("X"))
+                                    {
+                                        state.removeControl(c);
+                                        state.validateDraft(config);
+                                        ImGui::PopID();
+                                        break;
+                                    }
+                                    ImGui::PopID();
+                                }
+
+                                if (ImGui::SmallButton("+ Add Control"))
+                                {
+                                    state.addControl("start", "mouse.left");
+                                    state.validateDraft(config);
+                                }
+
+                                // 5. Draft Diagnostics
+                                if (state.editDraft.isDirty)
+                                {
+                                    ImGui::Spacing();
+                                    if (state.editDraft.hasErrors())
+                                    {
+                                        ImGui::TextColored(ImVec4(0.95F, 0.3F, 0.3F, 1.0F),
+                                                           "Draft Errors (%zu):",
+                                                           state.editDraft.draftIssues.size());
+                                        for (const auto& issue : state.editDraft.draftIssues)
+                                        {
+                                            if (issue.severity == ConfigDiagnosticSeverity::Error)
+                                            {
+                                                ImGui::BulletText("%s", issue.message.c_str());
+                                            }
+                                        }
+                                    }
+                                    else if (state.editDraft.hasWarnings())
+                                    {
+                                        ImGui::TextColored(ImVec4(0.95F, 0.75F, 0.2F, 1.0F),
+                                                           "Draft Warnings (%zu):",
+                                                           state.editDraft.draftIssues.size());
+                                        for (const auto& issue : state.editDraft.draftIssues)
+                                        {
+                                            if (issue.severity == ConfigDiagnosticSeverity::Warning)
+                                            {
+                                                ImGui::BulletText("%s", issue.message.c_str());
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        ImGui::TextColored(ImVec4(0.3F, 0.85F, 0.4F, 1.0F), "[Draft Valid]");
+                                    }
+
+                                    ImGui::Spacing();
+                                    const bool canApply = !state.editDraft.hasErrors();
+                                    if (!canApply)
+                                    {
+                                        ImGui::BeginDisabled();
+                                    }
+                                    if (ImGui::Button("Apply to Config"))
+                                    {
+                                        if (state.applyCommandEdit(*mutableConfig))
+                                        {
+                                            stateChanged = true;
+                                        }
+                                    }
+                                    if (!canApply)
+                                    {
+                                        ImGui::EndDisabled();
+                                    }
+
+                                    ImGui::SameLine();
+                                    if (ImGui::Button("Revert Changes"))
+                                    {
+                                        state.beginCommandEdit(state.editDraft.commandIndex, config, true);
+                                    }
+                                }
+                            }
                         }
                     }
-
-                    if (!details->connectedControls.empty())
+                    else if (isCommandOrControl && mutableConfig == nullptr)
                     {
-                        ImGui::Spacing();
-                        ImGui::TextDisabled("Controls:");
-                        for (const auto& ctrlText : details->connectedControls)
+                        // Read-only inspection details for command/controls
+                        if (!details->connectedInputs.empty())
                         {
-                            ImGui::BulletText("%s", ctrlText.c_str());
+                            ImGui::Spacing();
+                            ImGui::TextDisabled("Inputs:");
+                            for (const auto& inText : details->connectedInputs)
+                            {
+                                ImGui::BulletText("%s", inText.c_str());
+                            }
+                        }
+
+                        if (!details->connectedControls.empty())
+                        {
+                            ImGui::Spacing();
+                            ImGui::TextDisabled("Controls:");
+                            for (const auto& ctrlText : details->connectedControls)
+                            {
+                                ImGui::BulletText("%s", ctrlText.c_str());
+                            }
+                        }
+
+                        if (!details->connectedGroups.empty())
+                        {
+                            ImGui::Spacing();
+                            ImGui::TextDisabled("Exclusive Groups:");
+                            for (const auto& grpText : details->connectedGroups)
+                            {
+                                ImGui::BulletText("%s", grpText.c_str());
+                            }
                         }
                     }
-
-                    if (!details->connectedGroups.empty())
+                    else
                     {
-                        ImGui::Spacing();
-                        ImGui::TextDisabled("Exclusive Groups:");
-                        for (const auto& grpText : details->connectedGroups)
+                        // Read-only elements (Sequences, Filters, Groups, Inputs)
+                        if (!details->connectedInputs.empty())
                         {
-                            ImGui::BulletText("%s", grpText.c_str());
+                            ImGui::Spacing();
+                            ImGui::TextDisabled("Inputs:");
+                            for (const auto& inText : details->connectedInputs)
+                            {
+                                ImGui::BulletText("%s", inText.c_str());
+                            }
                         }
-                    }
 
-                    if (!details->connectedTargets.empty())
-                    {
-                        ImGui::Spacing();
-                        ImGui::TextDisabled("Connected Targets:");
-                        for (const auto& tgtText : details->connectedTargets)
+                        if (!details->connectedTargets.empty())
                         {
-                            ImGui::BulletText("%s", tgtText.c_str());
+                            ImGui::Spacing();
+                            ImGui::TextDisabled("Connected Targets:");
+                            for (const auto& tgtText : details->connectedTargets)
+                            {
+                                ImGui::BulletText("%s", tgtText.c_str());
+                            }
                         }
+
+                        ImGui::Spacing();
+                        ImGui::TextDisabled("Note: This element is read-only in the graph editor. Use the dedicated "
+                                            "editor tabs to modify sequence events or global settings.");
                     }
 
                     if (!details->diagnosticIssues.empty())
@@ -431,10 +933,11 @@ namespace autoinput::ui::editors
             }
             else
             {
-                ImGui::TextDisabled("Select a node on the graph to inspect properties and connections.");
+                ImGui::TextDisabled("Select a node on the graph to inspect properties or edit relationships.");
             }
             ImGui::Spacing();
             ImGui::Separator();
+            return stateChanged;
         }
 
         bool renderConfigDiagnosticsPanel(ConfigGraphViewerState& state)
@@ -498,6 +1001,65 @@ namespace autoinput::ui::editors
     } // namespace
 #endif
 
+    bool renderConfigGraphViewer(autoinput::ConfigData& config, ConfigGraphViewerState& state, const char* viewerId)
+    {
+        state.syncWithConfig(config);
+
+#if defined(AUTOINPUT_UI_INTERNAL_HAS_IMGUI)
+        bool stateChanged = false;
+
+        ImGui::PushID(viewerId);
+
+        if (state.showFilterToolbar)
+        {
+            if (renderConfigFilterToolbar(config, state))
+            {
+                stateChanged = true;
+            }
+        }
+
+        const float inspectorWidth = (state.showInspectorPanel || state.showDiagnosticsPanel) ? 360.0F : 0.0F;
+        const float canvasWidth =
+            ImGui::GetContentRegionAvail().x - (inspectorWidth > 0.0F ? inspectorWidth + 10.0F : 0.0F);
+
+        ImGui::BeginChild("ConfigGraphCanvasChild", ImVec2(canvasWidth, 0.0F), true);
+        {
+            graph::renderFallbackGraphViewer(
+                state.graphDocument, state.viewerState, graph::ValidationOptions::configGraph(), "ConfigGraphCanvas");
+        }
+        ImGui::EndChild();
+
+        if (inspectorWidth > 0.0F)
+        {
+            ImGui::SameLine();
+            ImGui::BeginChild("ConfigGraphInspectorSidePanel", ImVec2(inspectorWidth, 0.0F), true);
+            {
+                if (state.showInspectorPanel)
+                {
+                    if (renderConfigNodeInspectorPanel(&config, config, state))
+                    {
+                        stateChanged = true;
+                    }
+                }
+
+                if (state.showDiagnosticsPanel)
+                {
+                    if (renderConfigDiagnosticsPanel(state))
+                    {
+                        stateChanged = true;
+                    }
+                }
+            }
+            ImGui::EndChild();
+        }
+
+        ImGui::PopID();
+        return stateChanged;
+#else
+        return false;
+#endif
+    }
+
     bool renderConfigGraphViewer(const autoinput::ConfigData& config, ConfigGraphViewerState& state,
                                  const char* viewerId)
     {
@@ -516,7 +1078,7 @@ namespace autoinput::ui::editors
             }
         }
 
-        const float inspectorWidth = (state.showInspectorPanel || state.showDiagnosticsPanel) ? 340.0F : 0.0F;
+        const float inspectorWidth = (state.showInspectorPanel || state.showDiagnosticsPanel) ? 360.0F : 0.0F;
         const float canvasWidth =
             ImGui::GetContentRegionAvail().x - (inspectorWidth > 0.0F ? inspectorWidth + 10.0F : 0.0F);
 
@@ -534,7 +1096,7 @@ namespace autoinput::ui::editors
             {
                 if (state.showInspectorPanel)
                 {
-                    renderConfigNodeInspectorPanel(config, state);
+                    renderConfigNodeInspectorPanel(nullptr, config, state);
                 }
 
                 if (state.showDiagnosticsPanel)

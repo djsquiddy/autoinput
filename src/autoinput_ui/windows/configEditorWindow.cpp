@@ -534,6 +534,9 @@ namespace autoinput::ui
 
     void ConfigEditorWindow::renderConfigGraphTab()
     {
-        editors::renderConfigGraphViewer(m_draft, m_graphViewerState, "ConfigEditorGraphViewer");
+        if (editors::renderConfigGraphViewer(m_draft, m_graphViewerState, "ConfigEditorGraphViewer"))
+        {
+            markDirty();
+        }
     }
 } // namespace autoinput::ui
