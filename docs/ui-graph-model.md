@@ -2,9 +2,9 @@
 
 ## Overview
 
-The AutoInput UI Graph module (`autoinput::ui::graph`) provides an internal, dependency-free graph document representation and validation engine for future visual editors within the AutoInput UI.
+The AutoInput UI Graph module (`autoinput::ui::graph`) provides a modular, dependency-free graph document representation, topological validation engine, sequence converter/compiler, configuration relationship mapper, diagnostics engine, and pluggable node editor backend abstraction for visual editors within the AutoInput UI frontend (`autoinput-ui`).
 
-> **Note**: This is an internal developer-facing graph data model and validation engine. It is not yet a user-visible feature in the application frontend.
+> **Architecture Note**: The core graph document model, validation rules, adapters, compiler, diagnostics, and layout metadata are completely headless and dependency-free. They can be compiled, tested, and executed in pure unit-test environments without initializing Dear ImGui, OpenGL, or windowing subsystems. The visual graph editors are integrated into the AutoInput UI frontend (`SequenceEditorWindow`, `SequenceRecorderWindow`, and `ConfigEditorWindow`) using a pluggable backend abstraction that defaults to a zero-dependency fallback and custom draw-list canvas viewer, with optional support for third-party node editor libraries.
 
 ## Goals and Design Principles
 
@@ -926,3 +926,17 @@ else
     }
 }
 ```
+
+---
+
+## Limitations & Future Follow-Ups
+
+1. **Localization Scope for Graph Strings**:
+   - Core application windows and dialogs are fully localized through `en-US.toml` and compile-time `LocalizationIds`.
+   - Node-specific inspection labels, contextual error diagnostics messages, and toolbar button titles in the visual graph editors currently default to standard English strings; comprehensive localization ID generation for all graph-specific strings is scheduled for a dedicated UI localization pass.
+2. **Linear Sequence Execution Model**:
+   - The sequence graph compiler and converter strictly enforce linear execution chains (`Start -> Events -> End`) to guarantee deterministic execution and full compatibility with `autoinput::RecordedSequence`. Non-linear control flow (loops, conditional branching) remains a future compiler extension.
+3. **Interactive Connection Drag-and-Drop in Custom Canvas**:
+   - The dependency-free `CustomCanvasNodeEditorBackend` supports 2D coordinate transforms, infinite grid rendering, panning, mouse-wheel zooming, node dragging, and multi-selection queries. Interactive drag-and-drop link creation directly in the canvas is available via the optional `imgui-node-editor` backend or through the toolbar/context menu reconnection tools.
+4. **Configuration Relationship Boundaries**:
+   - Configuration graph editing is safely constrained to command properties, exclusive groups, start triggers, and control bindings through the staged draft buffer (`CommandEditDraft`). Arbitrary link rewiring between disparate commands and sequences is intentionally prevented to protect configuration integrity.

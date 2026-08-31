@@ -84,6 +84,7 @@ You can customize the build by passing the following options to `cmake`:
 - `AUTOINPUT_BUILD_TRAY`: Build the optional system tray frontend for Windows (defaults to `OFF`).
 - `AUTOINPUT_BUILD_UI`: Build the optional graphical UI frontend (defaults to `OFF`).
 - `AUTOINPUT_UI_WITH_IMNODES`: Enable optional imnodes backend for UI node editors (defaults to `OFF`).
+- `AUTOINPUT_UI_WITH_IMGUI_NODE_EDITOR`: Enable optional imgui-node-editor backend for UI node editors (defaults to `OFF`).
 - `ENABLE_KEYBOARD_HOOK`: Enable low-level keyboard hook support for global hotkeys (defaults to `ON`).
 - `ENABLE_MOUSE_HOOK`: Enable low-level mouse hook support for global hotkeys (defaults to `ON`).
 - `ENABLE_FAKE_HOOK`: Use a dummy hook implementation for development or restricted environments (defaults to `OFF`).
@@ -457,6 +458,73 @@ cmake --build .
 ```
 
 This will produce an additional executable named `autoinput-ui` (or `autoinput-ui.exe` on Windows) when the required dependencies are available.
+
+#### Visual Graph Editors & Viewers
+
+The graphical UI frontend integrates visual graph tools for inspecting, editing, recording, and diagnosing automation flows:
+
+##### 1. Sequence Graph Viewer & Editor (`SequenceEditorWindow`)
+- **Visual Linear Topology**: Displays recorded macro sequences as directed execution graphs (`Start -> Event/Wait Nodes -> End`).
+- **Tabbed Views**: Switch seamlessly between the tabular `[Steps Table]` and the interactive `[Visual Graph]`.
+- **Supported Visual Editing Operations**:
+  - **Add Event Nodes**: Insert new key down/up, mouse down/up/move, and wait/delay nodes (`+ Key Event`, `+ Mouse Event`, `+ Delay/Wait`).
+  - **Edit Event Parameters**: Select any event node to edit event type, key name, mouse button, coordinates, or delay interval directly in the Selected Node Inspector.
+  - **Delete Event Nodes**: Delete event nodes with automatic linear chain repair connecting predecessor directly to successor.
+  - **Reorder Steps**: Move nodes up or down to change execution order, automatically updating topological links.
+  - **Clipboard & Duplication**: Copy (`Ctrl+C`), paste (`Ctrl+V`), and duplicate (`Ctrl+D`) event nodes.
+  - **Reconnect Linear Chain**: Automatically repairs broken or missing connections across the sequence with one click.
+  - **Auto Layout**: Automatically spaces nodes cleanly along the horizontal execution axis.
+- **Non-Destructive Snapshot Undo/Redo**: Full undo (`Ctrl+Z`) and redo (`Ctrl+Y` / `Ctrl+Shift+Z`) history for all graph edits.
+- **Unapplied Changes & Safe Apply**: Unsaved changes are marked with a yellow `* Unapplied Changes` badge. Changes are only applied back to the underlying sequence after strict validation passes (preventing cycles, branching, or broken links). If non-fatal warnings exist, an explicit confirmation prompt is displayed before applying.
+
+##### 2. Sequence Recorder Graph Workflow (`SequenceRecorderWindow`)
+- **Dual Live Inspection**: Real-time synchronization between the captured `[Events List]` and the visual `[Visual Graph]`.
+- **Post-Recording Graph Generation**: Captured events are instantly converted into a linear `GraphDocument`.
+- **Graceful Handling of Partial Events**: Interrupted or incomplete recorded events (e.g. missing coordinates or unknown key names) are preserved safely with actionable warning badges rather than causing errors.
+- **Pre-Save Visual Polish**: Insert delays, tweak coordinates, or reorder recorded steps visually in the graph tab before saving to configuration.
+
+##### 3. Configuration Relationship Graph Viewer & Safe Editor (`ConfigEditorWindow`)
+- **Relationship Visualization**: Renders full configuration architecture in a 3-column topology:
+  - **Column 1**: Trigger Inputs, Start Keys, and Global Settings.
+  - **Column 2**: Core Commands and Recorded Sequences.
+  - **Column 3**: Attached Controls and Exclusive Groups.
+- **Category Filter Toggles**: Filter visible elements by `Commands`, `Controls`, `Sequences`, `Inputs`, `Exclusive Groups`, and `Global Settings`.
+- **Real-Time Configuration Diagnostics**: Analyzes configuration relationships and displays actionable issues with direct node selection:
+  - Duplicate or conflicting start keys across commands and sequences.
+  - Missing command actions or empty command names.
+  - Empty or invalid control actions and inputs.
+  - Broad wildcard control warnings (`mouse.all`, `keys.all`, `input.all`).
+- **Supported Safe Relationship Edits**:
+  - Rename command.
+  - Modify exclusive group name.
+  - Add, edit, or remove command start keys.
+  - Add, remove, or edit command control actions and input triggers with dropdown validation.
+- **Safe Staged Draft Buffer**: Staged edits are kept in an isolated draft buffer (`CommandEditDraft`) with live validation, cancellable via `Escape` or the Revert button, and applied via `Ctrl+Enter` or the Apply button.
+- **Explicit Read-Only Boundaries**: Arbitrary link rewiring, sequence event steps inside the config view, and global filters remain read-only in the config graph to ensure configuration consistency and avoid corrupting multi-command workflows.
+
+##### 4. Keyboard Shortcuts & Context Menus
+
+| Shortcut | Action | Scope | Description |
+|---|---|---|---|
+| `Delete` / `Backspace` | Delete Selected | Sequence Graph | Deletes the selected event node (reconnecting the linear chain) or link. |
+| `Ctrl+Z` | Undo | Sequence Graph | Reverts the last graph edit using snapshot history. |
+| `Ctrl+Y` / `Ctrl+Shift+Z` | Redo | Sequence Graph | Re-applies the previously reverted graph mutation. |
+| `Ctrl+C` | Copy Node | Sequence Graph | Copies the selected event node's parameters to internal clipboard. |
+| `Ctrl+V` | Paste Node | Sequence Graph | Pastes clipboard event data after the current selection. |
+| `Ctrl+D` | Duplicate Node | Sequence Graph | Duplicates the selected event node in place. |
+| `Escape` | Cancel Draft | Config Graph | Cancels and reverts any active, unapplied command draft edit buffer. |
+| `Ctrl+Enter` | Apply Draft | Config Graph | Validates and applies staged command relationship edits into `ConfigData`. |
+
+- **Right-Click Context Menus**:
+  - **Sequence Graph**: Quick-insert (`+ Key Event`, `+ Mouse Event`, `+ Delay/Wait`), Duplicate, Copy, Paste, Delete, Reconnect Linear Chain, Auto Layout, Undo, and Redo.
+  - **Config Graph**: Real-time layer filter toggles, Rebuild Graph, and Cancel Draft Edit.
+
+##### 5. Optional Node Backends & Zero-Dependency Default
+- **Default Build**: Default builds and CI use zero external dependencies, rendering graph tools via Dear ImGui draw lists (`CustomCanvas` backend prototype and `FallbackGraphViewer`).
+- **Optional Third-Party Backends**:
+  - `imgui-node-editor`: Advanced canvas with zooming, visual groups, and comments (`-DAUTOINPUT_UI_WITH_IMGUI_NODE_EDITOR=ON`).
+  - `imnodes`: Immediate-mode node graph backend (`-DAUTOINPUT_UI_WITH_IMNODES=ON`).
+- For full architectural details, see the [UI Graph Document Model Documentation](docs/ui-graph-model.md).
 
 ### Configuration
 
