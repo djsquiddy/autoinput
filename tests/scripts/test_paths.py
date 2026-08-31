@@ -28,6 +28,8 @@ from autoinput_tools.paths import (
     DEFAULT_CLI_HELP_METADATA_FILE,
     DEFAULT_HELP_TOML,
     DEFAULT_LOCALIZATION_FILE,
+    DOCS_API_DIR,
+    DOCS_DIR,
     GENERATED_APP_ICON_ICO,
     GENERATED_APP_ICON_RC,
     GENERATED_CLI_HELP_HEADER,
@@ -80,6 +82,9 @@ def test_directory_constants() -> None:
     assert LOCALIZATION_DIR == RESOURCES_DIR / "localization"
     # Verify CLI resources directory path
     assert CLI_RESOURCES_DIR == RESOURCES_DIR / "cli"
+    # Verify documentation directory paths
+    assert DOCS_DIR == PROJECT_ROOT / "docs"
+    assert DOCS_API_DIR == DOCS_DIR / "api"
     # Verify autocomplete directory path
     assert AUTOCOMPLETE_DIR == SCRIPTS_DIR / "autocomplete"
 

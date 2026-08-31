@@ -1,0 +1,78 @@
+#---------------------------------------------------------------------------
+# Project Information
+#---------------------------------------------------------------------------
+PROJECT_NAME           = "@PROJECT_NAME@"
+PROJECT_NUMBER         = "@PROJECT_VERSION@"
+PROJECT_BRIEF          = "Cross-platform automation and input simulation library"
+OUTPUT_DIRECTORY       = "@DOXYGEN_OUTPUT_DIR@"
+OUTPUT_LANGUAGE        = English
+
+#---------------------------------------------------------------------------
+# Input Files & Sources
+#---------------------------------------------------------------------------
+INPUT                  = "@CMAKE_SOURCE_DIR@/src" \
+                         "@CMAKE_SOURCE_DIR@/docs" \
+                         "@CMAKE_SOURCE_DIR@/readme.md"
+FILE_PATTERNS          = *.h \
+                         *.hpp \
+                         *.cpp \
+                         *.c \
+                         *.md
+RECURSIVE              = YES
+EXCLUDE                = "@CMAKE_BINARY_DIR@"
+EXCLUDE_PATTERNS       = */tests/* \
+                         */generated/*
+
+USE_MDFILE_AS_MAINPAGE = "@CMAKE_SOURCE_DIR@/readme.md"
+MARKDOWN_SUPPORT       = YES
+
+#---------------------------------------------------------------------------
+# Extraction & Parsing Settings
+#---------------------------------------------------------------------------
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+BUILTIN_STL_SUPPORT    = YES
+OPTIMIZE_OUTPUT_FOR_C  = NO
+
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = YES
+
+#---------------------------------------------------------------------------
+# Output Formats
+#---------------------------------------------------------------------------
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = YES
+
+GENERATE_LATEX         = NO
+GENERATE_RTF           = NO
+GENERATE_MAN           = NO
+GENERATE_XML           = NO
+
+#---------------------------------------------------------------------------
+# Preprocessor Configuration
+#---------------------------------------------------------------------------
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = NO
+PREDEFINED             = AUTOINPUT_API= \
+                         __cplusplus=202302L
+
+#---------------------------------------------------------------------------
+# Diagrams & Graphs
+#---------------------------------------------------------------------------
+HAVE_DOT               = NO
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+GROUP_GRAPHS           = YES
+UML_LOOK               = YES
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO

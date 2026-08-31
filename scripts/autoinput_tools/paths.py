@@ -47,6 +47,9 @@ CLANG_TIDY_CONFIG_FILE: pathlib.Path = PROJECT_ROOT / ".clang-tidy"
 CMAKE_PRESETS_FILE: pathlib.Path = PROJECT_ROOT / "CMakePresets.json"
 CMAKE_USER_PRESETS_FILE: pathlib.Path = PROJECT_ROOT / "CMakeUserPresets.json"
 
+DOCS_DIR: pathlib.Path = PROJECT_ROOT / "docs"
+DOCS_API_DIR: pathlib.Path = DOCS_DIR / "api"
+
 
 def project_path(*parts: str) -> pathlib.Path:
     return PROJECT_ROOT.joinpath(*parts)

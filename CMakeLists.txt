@@ -42,6 +42,7 @@ include(configure_localization)
 include(configure_cli_help)
 include(configure_app_icon)
 include(configure_clang_tidy)
+include(configure_docs)
 
 if(AUTOINPUT_UI_WITH_IMNODES)
     include(configure_imnodes)
