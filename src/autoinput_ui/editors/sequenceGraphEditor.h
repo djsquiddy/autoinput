@@ -44,7 +44,9 @@ namespace autoinput::ui::editors
     {
         graph::GraphDocument graphDocument;
         graph::NodeId selectedNodeId{ graph::InvalidNodeId };
+        graph::LinkId selectedLinkId{ graph::InvalidLinkId };
         std::string statusMessage;
+        bool isDirty{ false };
     };
 
     /**
@@ -60,6 +62,9 @@ namespace autoinput::ui::editors
         std::string statusMessage{ "Ready" };
         bool isGraphSynchronized{ false };
         bool isEditingAllowed{ true };
+        bool isDirty{ false };
+        bool showApplyWarningConfirmation{ false };
+        std::optional<autoinput::RecordedEvent> clipboardEvent{ std::nullopt };
         std::optional<std::string> lastCompilationError{ std::nullopt };
         std::size_t cachedSequenceEventCount{ 0 };
 
@@ -67,6 +72,36 @@ namespace autoinput::ui::editors
         std::vector<GraphEditorSnapshot> undoStack;
         std::vector<GraphEditorSnapshot> redoStack;
         std::size_t maxUndoSteps{ 50 };
+
+        /**
+         * @brief Returns true if graph modifications have not yet been applied to the sequence.
+         */
+        [[nodiscard]] bool hasUnappliedChanges() const noexcept { return isDirty; }
+
+        /**
+         * @brief Marks the graph editor state as dirty (having unapplied edits).
+         */
+        void markDirty() noexcept { isDirty = true; }
+
+        /**
+         * @brief Clears the dirty unapplied changes indicator.
+         */
+        void clearDirty() noexcept { isDirty = false; }
+
+        /**
+         * @brief Returns whether a valid node is selected that can be copied or duplicated.
+         */
+        [[nodiscard]] bool canCopy() const noexcept;
+
+        /**
+         * @brief Returns whether the clipboard has a copied event ready for pasting.
+         */
+        [[nodiscard]] bool canPaste() const noexcept;
+
+        /**
+         * @brief Returns whether the currently selected node can be duplicated.
+         */
+        [[nodiscard]] bool canDuplicate() const noexcept;
 
         /**
          * @brief Synchronizes the graph with the given sequence if out of sync or forced.
@@ -91,8 +126,16 @@ namespace autoinput::ui::editors
 
         /**
          * @brief Compiles and applies graph changes back to the target sequence.
+         * @param targetSequence Target sequence to update.
+         * @param forceWithWarnings When true, applies even if validation warnings are present.
+         * @return true if successfully compiled and applied.
          */
-        bool applyToSequence(autoinput::RecordedSequence& targetSequence);
+        bool applyToSequence(autoinput::RecordedSequence& targetSequence, bool forceWithWarnings = false);
+
+        /**
+         * @brief Dismisses the apply warning confirmation prompt without applying.
+         */
+        void dismissApplyWarningConfirmation() noexcept { showApplyWarningConfirmation = false; }
 
         /**
          * @brief Extracts inspection details for the currently selected node.
@@ -148,6 +191,53 @@ namespace autoinput::ui::editors
          * @brief Deletes the currently selected node if valid.
          */
         bool deleteSelectedNode(bool reconnectChain = true);
+
+        /**
+         * @brief Copies the specified node's event data to the internal clipboard.
+         */
+        bool copyNode(graph::NodeId nodeId);
+
+        /**
+         * @brief Copies the currently selected node's event data to the internal clipboard.
+         */
+        bool copySelectedNode();
+
+        /**
+         * @brief Pastes the clipboard event as a new node after the specified or selected node.
+         * @return ID of the created node, or InvalidNodeId if clipboard is empty.
+         */
+        graph::NodeId pasteNode(std::optional<graph::NodeId> insertAfterNodeId = std::nullopt);
+
+        /**
+         * @brief Duplicates an existing event or wait node and inserts it immediately after.
+         * @return ID of the duplicated node, or InvalidNodeId if node is invalid or Start/End.
+         */
+        graph::NodeId duplicateNode(graph::NodeId nodeId);
+
+        /**
+         * @brief Duplicates the currently selected node.
+         */
+        graph::NodeId duplicateSelectedNode();
+
+        /**
+         * @brief Deletes a specific link by ID.
+         */
+        bool deleteLink(graph::LinkId linkId);
+
+        /**
+         * @brief Deletes the currently selected link.
+         */
+        bool deleteSelectedLink();
+
+        /**
+         * @brief Deletes whatever element (node or link) is currently selected.
+         */
+        bool deleteSelectedElement(bool reconnectChain = true);
+
+        /**
+         * @brief Disconnects all incoming and outgoing links attached to a node.
+         */
+        bool disconnectNode(graph::NodeId nodeId);
 
         /**
          * @brief Updates event data and title/subtitle for an existing graph node.

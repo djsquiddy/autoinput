@@ -106,6 +106,7 @@ namespace autoinput::ui::editors
         std::string statusMessage{ "Ready" };
         bool isGraphSynchronized{ false };
         bool isEditingAllowed{ true };
+        bool showApplyWarningConfirmation{ false };
 
         // Visibility / Filter Toggles
         bool showCommands{ true };
@@ -162,6 +163,16 @@ namespace autoinput::ui::editors
          * @brief Returns whether a node or link is currently selected.
          */
         [[nodiscard]] bool hasSelection() const noexcept;
+
+        /**
+         * @brief Returns whether there are unapplied draft edits staged.
+         */
+        [[nodiscard]] bool hasUnappliedChanges() const noexcept { return editDraft.isActive && editDraft.isDirty; }
+
+        /**
+         * @brief Dismisses the apply warning confirmation prompt without applying.
+         */
+        void dismissApplyWarningConfirmation() noexcept { showApplyWarningConfirmation = false; }
 
         // --- Editing Operations ---
 
@@ -224,9 +235,11 @@ namespace autoinput::ui::editors
 
         /**
          * @brief Applies staged command changes to the target configuration if validation passes.
+         * @param targetConfig Target configuration to modify.
+         * @param forceWithWarnings When true, applies even if validation warnings are present.
          * @return true if changes were applied, false if rejected due to validation errors.
          */
-        bool applyCommandEdit(autoinput::ConfigData& targetConfig);
+        bool applyCommandEdit(autoinput::ConfigData& targetConfig, bool forceWithWarnings = false);
     };
 
     /**

@@ -500,11 +500,18 @@ namespace autoinput::ui::editors
         return !editDraft.hasErrors();
     }
 
-    bool ConfigGraphViewerState::applyCommandEdit(autoinput::ConfigData& targetConfig)
+    bool ConfigGraphViewerState::applyCommandEdit(autoinput::ConfigData& targetConfig, bool forceWithWarnings)
     {
         if (!validateDraft(targetConfig))
         {
             statusMessage = "Cannot apply changes: Staged draft contains validation errors.";
+            return false;
+        }
+
+        if (editDraft.hasWarnings() && !forceWithWarnings)
+        {
+            showApplyWarningConfirmation = true;
+            statusMessage = "Draft contains validation warnings. Confirmation required to apply.";
             return false;
         }
 
@@ -513,6 +520,7 @@ namespace autoinput::ui::editors
         targetConfig.commands[editDraft.commandIndex].startKeys = editDraft.startKeys;
         targetConfig.commands[editDraft.commandIndex].controls = editDraft.controls;
         editDraft.isDirty = false;
+        showApplyWarningConfirmation = false;
 
         rebuildFromConfig(targetConfig);
         statusMessage =
@@ -604,6 +612,12 @@ namespace autoinput::ui::editors
             else
             {
                 ImGui::TextColored(ImVec4(0.3F, 0.85F, 0.4F, 1.0F), "[Clean]");
+            }
+
+            if (state.hasUnappliedChanges())
+            {
+                ImGui::SameLine();
+                ImGui::TextColored(ImVec4(1.0F, 0.75F, 0.2F, 1.0F), "* Unapplied Draft");
             }
 
             if (filterChanged)
@@ -853,6 +867,27 @@ namespace autoinput::ui::editors
                                     {
                                         state.beginCommandEdit(state.editDraft.commandIndex, config, true);
                                     }
+
+                                    if (state.showApplyWarningConfirmation)
+                                    {
+                                        ImGui::Spacing();
+                                        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0F, 0.85F, 0.2F, 1.0F));
+                                        ImGui::Text("Notice: Draft contains validation warning(s). Apply anyway?");
+                                        ImGui::PopStyleColor();
+                                        ImGui::SameLine();
+                                        if (ImGui::Button("Confirm Apply"))
+                                        {
+                                            if (state.applyCommandEdit(*mutableConfig, true))
+                                            {
+                                                stateChanged = true;
+                                            }
+                                        }
+                                        ImGui::SameLine();
+                                        if (ImGui::Button("Cancel"))
+                                        {
+                                            state.dismissApplyWarningConfirmation();
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1010,6 +1045,25 @@ namespace autoinput::ui::editors
 
         ImGui::PushID(viewerId);
 
+        // Handle keyboard shortcuts when not typing text
+        const ImGuiIO& io = ImGui::GetIO();
+        if (!io.WantTextInput && !ImGui::IsAnyItemActive())
+        {
+            if (ImGui::IsKeyPressed(ImGuiKey_Escape) && state.editDraft.isActive)
+            {
+                state.cancelCommandEdit();
+                stateChanged = true;
+            }
+            else if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Enter) && state.editDraft.isActive &&
+                     !state.editDraft.hasErrors())
+            {
+                if (state.applyCommandEdit(config))
+                {
+                    stateChanged = true;
+                }
+            }
+        }
+
         if (state.showFilterToolbar)
         {
             if (renderConfigFilterToolbar(config, state))
@@ -1051,6 +1105,49 @@ namespace autoinput::ui::editors
                 }
             }
             ImGui::EndChild();
+        }
+
+        // Context menu for config graph
+        if (ImGui::BeginPopupContextWindow("ConfigGraphContextMenu",
+                                           ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+        {
+            ImGui::TextDisabled("Filter Toggles");
+            if (ImGui::MenuItem("Show Commands", nullptr, state.showCommands))
+            {
+                state.showCommands = !state.showCommands;
+                state.rebuildFromConfig(config);
+                stateChanged = true;
+            }
+            if (ImGui::MenuItem("Show Controls", nullptr, state.showControls))
+            {
+                state.showControls = !state.showControls;
+                state.rebuildFromConfig(config);
+                stateChanged = true;
+            }
+            if (ImGui::MenuItem("Show Sequences", nullptr, state.showSequences))
+            {
+                state.showSequences = !state.showSequences;
+                state.rebuildFromConfig(config);
+                stateChanged = true;
+            }
+            if (ImGui::MenuItem("Show Inputs", nullptr, state.showInputs))
+            {
+                state.showInputs = !state.showInputs;
+                state.rebuildFromConfig(config);
+                stateChanged = true;
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Rebuild Graph"))
+            {
+                state.rebuildFromConfig(config);
+                stateChanged = true;
+            }
+            if (state.editDraft.isActive && ImGui::MenuItem("Cancel Draft Edit (Esc)"))
+            {
+                state.cancelCommandEdit();
+                stateChanged = true;
+            }
+            ImGui::EndPopup();
         }
 
         ImGui::PopID();

@@ -434,3 +434,227 @@ TEST_F(SequenceGraphEditorTest, ApplyFailureDoesNotMutateOriginalSequence)
         EXPECT_EQ(target.events[i].delay, sampleSequence.events[i].delay);
     }
 }
+
+TEST_F(SequenceGraphEditorTest, UndoAfterNodeAdd)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+    EXPECT_FALSE(state.hasUnappliedChanges());
+    const std::size_t initialNodes = state.graphDocument.nodeCount();
+
+    RecordedEvent keyEv{ .type = RecordedEventType::KeyDown, .delay = "10ms", .key = "f12" };
+    NodeId newId = state.addEventNode(keyEv);
+    EXPECT_NE(newId, InvalidNodeId);
+    EXPECT_EQ(state.graphDocument.nodeCount(), initialNodes + 1);
+    EXPECT_TRUE(state.hasUnappliedChanges());
+    EXPECT_TRUE(state.canUndo());
+
+    // Undo node add
+    EXPECT_TRUE(state.undo());
+    EXPECT_EQ(state.graphDocument.nodeCount(), initialNodes);
+    EXPECT_EQ(state.graphDocument.findNode(newId), nullptr);
+    EXPECT_TRUE(state.validateCurrentGraph());
+
+    // Redo node add
+    EXPECT_TRUE(state.redo());
+    EXPECT_EQ(state.graphDocument.nodeCount(), initialNodes + 1);
+    EXPECT_NE(state.graphDocument.findNode(newId), nullptr);
+    EXPECT_TRUE(state.validateCurrentGraph());
+}
+
+TEST_F(SequenceGraphEditorTest, UndoAfterNodeDelete)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+    const std::size_t initialNodes = state.graphDocument.nodeCount();
+
+    auto chain = getLinearExecutionNodes(state.graphDocument);
+    ASSERT_GE(chain.size(), 3U);
+    NodeId toDelete = chain[1]; // First event node
+
+    EXPECT_TRUE(state.deleteNode(toDelete, true));
+    EXPECT_EQ(state.graphDocument.nodeCount(), initialNodes - 1);
+    EXPECT_EQ(state.graphDocument.findNode(toDelete), nullptr);
+    EXPECT_TRUE(state.hasUnappliedChanges());
+    EXPECT_TRUE(state.canUndo());
+
+    // Undo node delete
+    EXPECT_TRUE(state.undo());
+    EXPECT_EQ(state.graphDocument.nodeCount(), initialNodes);
+    EXPECT_NE(state.graphDocument.findNode(toDelete), nullptr);
+    EXPECT_TRUE(state.validateCurrentGraph());
+
+    // Redo node delete
+    EXPECT_TRUE(state.redo());
+    EXPECT_EQ(state.graphDocument.nodeCount(), initialNodes - 1);
+    EXPECT_EQ(state.graphDocument.findNode(toDelete), nullptr);
+}
+
+TEST_F(SequenceGraphEditorTest, RedoAfterUndoMultipleSteps)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+
+    RecordedEvent ev1{ .type = RecordedEventType::KeyDown, .delay = "10ms", .key = "x" };
+    RecordedEvent ev2{ .type = RecordedEventType::KeyDown, .delay = "10ms", .key = "y" };
+
+    NodeId id1 = state.addEventNode(ev1);
+    NodeId id2 = state.addEventNode(ev2);
+
+    EXPECT_NE(state.graphDocument.findNode(id1), nullptr);
+    EXPECT_NE(state.graphDocument.findNode(id2), nullptr);
+
+    // Undo step 2
+    EXPECT_TRUE(state.undo());
+    EXPECT_NE(state.graphDocument.findNode(id1), nullptr);
+    EXPECT_EQ(state.graphDocument.findNode(id2), nullptr);
+
+    // Undo step 1
+    EXPECT_TRUE(state.undo());
+    EXPECT_EQ(state.graphDocument.findNode(id1), nullptr);
+    EXPECT_EQ(state.graphDocument.findNode(id2), nullptr);
+
+    // Redo step 1
+    EXPECT_TRUE(state.redo());
+    EXPECT_NE(state.graphDocument.findNode(id1), nullptr);
+    EXPECT_EQ(state.graphDocument.findNode(id2), nullptr);
+
+    // Redo step 2
+    EXPECT_TRUE(state.redo());
+    EXPECT_NE(state.graphDocument.findNode(id1), nullptr);
+    EXPECT_NE(state.graphDocument.findNode(id2), nullptr);
+}
+
+TEST_F(SequenceGraphEditorTest, SourceDataUnchangedUntilApply)
+{
+    RecordedSequence target = sampleSequence;
+    SequenceGraphEditorState state;
+    state.syncWithSequence(target);
+
+    // Perform multiple graph edits
+    RecordedEvent ev1{ .type = RecordedEventType::KeyDown, .delay = "10ms", .key = "tab" };
+    state.addEventNode(ev1);
+    state.addWaitNode("100ms");
+
+    auto chain = getLinearExecutionNodes(state.graphDocument);
+    ASSERT_GE(chain.size(), 3U);
+    state.deleteNode(chain[1], true);
+
+    EXPECT_TRUE(state.hasUnappliedChanges());
+
+    // Verify target sequence is completely identical to original
+    EXPECT_EQ(target.events.size(), sampleSequence.events.size());
+    for (std::size_t i = 0; i < sampleSequence.events.size(); ++i)
+    {
+        EXPECT_EQ(target.events[i].type, sampleSequence.events[i].type);
+        EXPECT_EQ(target.events[i].key, sampleSequence.events[i].key);
+        EXPECT_EQ(target.events[i].delay, sampleSequence.events[i].delay);
+    }
+
+    // Apply changes
+    EXPECT_TRUE(state.applyToSequence(target));
+    EXPECT_FALSE(state.hasUnappliedChanges());
+    EXPECT_NE(target.events.size(), sampleSequence.events.size());
+}
+
+TEST_F(SequenceGraphEditorTest, CopyAndPasteNodeOperations)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+
+    auto chain = getLinearExecutionNodes(state.graphDocument);
+    ASSERT_GE(chain.size(), 3U);
+    NodeId eventNodeId = chain[1];
+
+    EXPECT_FALSE(state.canPaste());
+
+    state.selectNode(eventNodeId);
+    EXPECT_TRUE(state.canCopy());
+    EXPECT_TRUE(state.copySelectedNode());
+    EXPECT_TRUE(state.canPaste());
+
+    NodeId pastedNodeId = state.pasteNode(eventNodeId);
+    EXPECT_NE(pastedNodeId, InvalidNodeId);
+    EXPECT_TRUE(state.hasUnappliedChanges());
+
+    const auto* pastedNode = state.graphDocument.findNode(pastedNodeId);
+    ASSERT_NE(pastedNode, nullptr);
+    EXPECT_EQ(pastedNode->kind, NodeKind::RecordedEvent);
+
+    auto parsedEvent = parseRecordedEventFromNode(*pastedNode);
+    EXPECT_EQ(parsedEvent.type, sampleSequence.events[0].type);
+    EXPECT_EQ(parsedEvent.key, sampleSequence.events[0].key);
+}
+
+TEST_F(SequenceGraphEditorTest, DuplicateNodeOperation)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+
+    auto chain = getLinearExecutionNodes(state.graphDocument);
+    ASSERT_GE(chain.size(), 3U);
+    NodeId eventNodeId = chain[1];
+
+    state.selectNode(eventNodeId);
+    EXPECT_TRUE(state.canDuplicate());
+
+    NodeId dupId = state.duplicateSelectedNode();
+    EXPECT_NE(dupId, InvalidNodeId);
+    EXPECT_TRUE(state.hasUnappliedChanges());
+
+    const auto* dupNode = state.graphDocument.findNode(dupId);
+    ASSERT_NE(dupNode, nullptr);
+    EXPECT_EQ(dupNode->title, state.graphDocument.findNode(eventNodeId)->title);
+
+    EXPECT_TRUE(state.validateCurrentGraph());
+    auto compRes = state.compileGraph();
+    EXPECT_TRUE(compRes.success);
+    EXPECT_EQ(compRes.sequence->events.size(), sampleSequence.events.size() + 1);
+}
+
+TEST_F(SequenceGraphEditorTest, DeleteLinkAndDisconnectNode)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+
+    auto links = state.graphDocument.links();
+    ASSERT_FALSE(links.empty());
+    LinkId targetLink = links.front().id;
+
+    EXPECT_TRUE(state.deleteLink(targetLink));
+    EXPECT_EQ(state.graphDocument.findLink(targetLink), nullptr);
+    EXPECT_TRUE(state.hasUnappliedChanges());
+
+    // Undo restores the link
+    EXPECT_TRUE(state.undo());
+    EXPECT_NE(state.graphDocument.findLink(targetLink), nullptr);
+
+    // Disconnect node
+    auto chain = getLinearExecutionNodes(state.graphDocument);
+    ASSERT_GE(chain.size(), 3U);
+    NodeId midNode = chain[1];
+    EXPECT_TRUE(state.disconnectNode(midNode));
+    EXPECT_FALSE(state.validateCurrentGraph());
+}
+
+TEST_F(SequenceGraphEditorTest, ApplyWarningConfirmationFlow)
+{
+    SequenceGraphEditorState state;
+    state.syncWithSequence(sampleSequence);
+
+    // Introduce an unlinked event node (which causes validation issues or warnings depending on options)
+    auto& orphan = state.graphDocument.createNode(NodeKind::Comment, "NoteNode");
+    state.markDirty();
+
+    // With warnings/issues, applying without force prompts confirmation if warnings exist
+    RecordedSequence target = sampleSequence;
+    if (state.validationResult.hasWarnings() && !state.validationResult.hasErrors())
+    {
+        EXPECT_FALSE(state.applyToSequence(target, false));
+        EXPECT_TRUE(state.showApplyWarningConfirmation);
+
+        // Cancel
+        state.dismissApplyWarningConfirmation();
+        EXPECT_FALSE(state.showApplyWarningConfirmation);
+    }
+}

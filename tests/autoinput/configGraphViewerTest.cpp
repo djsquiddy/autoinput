@@ -571,3 +571,48 @@ TEST_F(ConfigGraphViewerTest, CancelDraftRevertsChangesWithoutMutating)
     EXPECT_EQ(config.commands[0].startKeys, originalConfig.commands[0].startKeys);
     EXPECT_EQ(config.commands[0].controls.size(), originalConfig.commands[0].controls.size());
 }
+
+TEST_F(ConfigGraphViewerTest, UnappliedDraftChangesTracking)
+{
+    auto config = createCleanConfig();
+    ConfigGraphViewerState state;
+    state.syncWithConfig(config);
+
+    EXPECT_FALSE(state.hasUnappliedChanges());
+
+    ASSERT_TRUE(state.beginCommandEdit(0, config));
+    EXPECT_FALSE(state.hasUnappliedChanges());
+
+    state.setCommandName("ModifiedCommand");
+    EXPECT_TRUE(state.hasUnappliedChanges());
+
+    EXPECT_TRUE(state.applyCommandEdit(config));
+    EXPECT_FALSE(state.hasUnappliedChanges());
+}
+
+TEST_F(ConfigGraphViewerTest, ApplyWarningConfirmation)
+{
+    auto config = createCleanConfig();
+    ConfigGraphViewerState state;
+    state.syncWithConfig(config);
+
+    ASSERT_TRUE(state.beginCommandEdit(0, config));
+    ASSERT_FALSE(config.commands[0].startKeys.empty());
+    // Add duplicate start key which produces a warning but no blocking error
+    state.addStartKey(config.commands[0].startKeys.front());
+    EXPECT_TRUE(state.validateDraft(config));
+    EXPECT_FALSE(state.editDraft.hasErrors());
+    EXPECT_TRUE(state.editDraft.hasWarnings());
+
+    // Applying without force sets confirmation flag
+    EXPECT_FALSE(state.applyCommandEdit(config, false));
+    EXPECT_TRUE(state.showApplyWarningConfirmation);
+
+    // Cancel / dismiss
+    state.dismissApplyWarningConfirmation();
+    EXPECT_FALSE(state.showApplyWarningConfirmation);
+
+    // Applying with force succeeds
+    EXPECT_TRUE(state.applyCommandEdit(config, true));
+    EXPECT_FALSE(state.showApplyWarningConfirmation);
+}

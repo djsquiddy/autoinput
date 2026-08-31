@@ -41,6 +41,8 @@ namespace autoinput::ui::editors
         clearUndoRedo();
         validateCurrentGraph();
         isGraphSynchronized = true;
+        isDirty = false;
+        showApplyWarningConfirmation = false;
         statusMessage = std::format("Graph synchronized with sequence ({} nodes).", graphDocument.nodeCount());
     }
 
@@ -93,7 +95,7 @@ namespace autoinput::ui::editors
         return result;
     }
 
-    bool SequenceGraphEditorState::applyToSequence(autoinput::RecordedSequence& targetSequence)
+    bool SequenceGraphEditorState::applyToSequence(autoinput::RecordedSequence& targetSequence, bool forceWithWarnings)
     {
         if (!validateCurrentGraph())
         {
@@ -103,12 +105,21 @@ namespace autoinput::ui::editors
             return false;
         }
 
+        if (validationResult.hasWarnings() && !forceWithWarnings)
+        {
+            showApplyWarningConfirmation = true;
+            statusMessage = "Graph contains validation warnings. Confirmation required to apply.";
+            return false;
+        }
+
         auto result = compileGraph(compileOptions.sourceSequence);
         if (result.success && result.sequence.has_value())
         {
             targetSequence = std::move(*result.sequence);
             cachedSequenceEventCount = targetSequence.events.size();
             isGraphSynchronized = true;
+            isDirty = false;
+            showApplyWarningConfirmation = false;
             statusMessage = "Graph successfully compiled and applied to sequence.";
             return true;
         }
@@ -116,6 +127,26 @@ namespace autoinput::ui::editors
         lastCompilationError = result.issues.empty() ? "Compilation failed." : result.issues.front().message;
         statusMessage = std::format("Cannot apply changes: {}", *lastCompilationError);
         return false;
+    }
+
+    bool SequenceGraphEditorState::canCopy() const noexcept
+    {
+        if (viewerState.selectedNodeId == graph::InvalidNodeId)
+        {
+            return false;
+        }
+        const auto* node = graphDocument.findNode(viewerState.selectedNodeId);
+        return node != nullptr && node->kind != graph::NodeKind::Start && node->kind != graph::NodeKind::End;
+    }
+
+    bool SequenceGraphEditorState::canPaste() const noexcept
+    {
+        return clipboardEvent.has_value();
+    }
+
+    bool SequenceGraphEditorState::canDuplicate() const noexcept
+    {
+        return canCopy();
     }
 
     std::optional<SelectedNodeInspectionDetails> SequenceGraphEditorState::getSelectedNodeDetails(
@@ -148,7 +179,9 @@ namespace autoinput::ui::editors
     {
         undoStack.push_back(GraphEditorSnapshot{ .graphDocument = graphDocument,
                                                  .selectedNodeId = viewerState.selectedNodeId,
-                                                 .statusMessage = statusMessage });
+                                                 .selectedLinkId = viewerState.selectedLinkId,
+                                                 .statusMessage = statusMessage,
+                                                 .isDirty = isDirty });
         if (undoStack.size() > maxUndoSteps)
         {
             undoStack.erase(undoStack.begin());
@@ -174,13 +207,17 @@ namespace autoinput::ui::editors
         }
         redoStack.push_back(GraphEditorSnapshot{ .graphDocument = graphDocument,
                                                  .selectedNodeId = viewerState.selectedNodeId,
-                                                 .statusMessage = statusMessage });
+                                                 .selectedLinkId = viewerState.selectedLinkId,
+                                                 .statusMessage = statusMessage,
+                                                 .isDirty = isDirty });
 
         auto snapshot = std::move(undoStack.back());
         undoStack.pop_back();
 
         graphDocument = std::move(snapshot.graphDocument);
         viewerState.selectedNodeId = snapshot.selectedNodeId;
+        viewerState.selectedLinkId = snapshot.selectedLinkId;
+        isDirty = snapshot.isDirty;
         statusMessage = "Undo performed.";
         validateCurrentGraph();
         return true;
@@ -194,13 +231,17 @@ namespace autoinput::ui::editors
         }
         undoStack.push_back(GraphEditorSnapshot{ .graphDocument = graphDocument,
                                                  .selectedNodeId = viewerState.selectedNodeId,
-                                                 .statusMessage = statusMessage });
+                                                 .selectedLinkId = viewerState.selectedLinkId,
+                                                 .statusMessage = statusMessage,
+                                                 .isDirty = isDirty });
 
         auto snapshot = std::move(redoStack.back());
         redoStack.pop_back();
 
         graphDocument = std::move(snapshot.graphDocument);
         viewerState.selectedNodeId = snapshot.selectedNodeId;
+        viewerState.selectedLinkId = snapshot.selectedLinkId;
+        isDirty = snapshot.isDirty;
         statusMessage = "Redo performed.";
         validateCurrentGraph();
         return true;
@@ -325,6 +366,7 @@ namespace autoinput::ui::editors
 
         autoLayout();
         viewerState.selectNode(newNode.id);
+        isDirty = true;
         validateCurrentGraph();
         statusMessage = std::format("Added node '{}' (ID #{}).", newNode.title, newNode.id);
         return newNode.id;
@@ -406,6 +448,7 @@ namespace autoinput::ui::editors
         }
 
         autoLayout();
+        isDirty = true;
         validateCurrentGraph();
         statusMessage = std::format("Deleted node #{} from graph.", nodeId);
         return true;
@@ -418,6 +461,126 @@ namespace autoinput::ui::editors
             return false;
         }
         return deleteNode(viewerState.selectedNodeId, reconnectChain);
+    }
+
+    bool SequenceGraphEditorState::copyNode(graph::NodeId nodeId)
+    {
+        const auto* node = graphDocument.findNode(nodeId);
+        if (node == nullptr || node->kind == graph::NodeKind::Start || node->kind == graph::NodeKind::End)
+        {
+            return false;
+        }
+        clipboardEvent = graph::parseRecordedEventFromNode(*node);
+        statusMessage = std::format("Copied node #{} to clipboard.", nodeId);
+        return true;
+    }
+
+    bool SequenceGraphEditorState::copySelectedNode()
+    {
+        if (!viewerState.hasSelection() || viewerState.selectedNodeId == graph::InvalidNodeId)
+        {
+            return false;
+        }
+        return copyNode(viewerState.selectedNodeId);
+    }
+
+    graph::NodeId SequenceGraphEditorState::pasteNode(std::optional<graph::NodeId> insertAfterNodeId)
+    {
+        if (!clipboardEvent.has_value())
+        {
+            return graph::InvalidNodeId;
+        }
+        return addEventNode(*clipboardEvent, insertAfterNodeId);
+    }
+
+    graph::NodeId SequenceGraphEditorState::duplicateNode(graph::NodeId nodeId)
+    {
+        const auto* node = graphDocument.findNode(nodeId);
+        if (node == nullptr || node->kind == graph::NodeKind::Start || node->kind == graph::NodeKind::End)
+        {
+            return graph::InvalidNodeId;
+        }
+        auto ev = graph::parseRecordedEventFromNode(*node);
+        return addEventNode(ev, nodeId);
+    }
+
+    graph::NodeId SequenceGraphEditorState::duplicateSelectedNode()
+    {
+        if (!viewerState.hasSelection() || viewerState.selectedNodeId == graph::InvalidNodeId)
+        {
+            return graph::InvalidNodeId;
+        }
+        return duplicateNode(viewerState.selectedNodeId);
+    }
+
+    bool SequenceGraphEditorState::deleteLink(graph::LinkId linkId)
+    {
+        const auto* link = graphDocument.findLink(linkId);
+        if (link == nullptr)
+        {
+            return false;
+        }
+        pushUndoSnapshot();
+        graphDocument.removeLink(linkId);
+        if (viewerState.selectedLinkId == linkId)
+        {
+            viewerState.selectedLinkId = graph::InvalidLinkId;
+        }
+        isDirty = true;
+        validateCurrentGraph();
+        statusMessage = std::format("Deleted link #{}.", linkId);
+        return true;
+    }
+
+    bool SequenceGraphEditorState::deleteSelectedLink()
+    {
+        if (viewerState.selectedLinkId == graph::InvalidLinkId)
+        {
+            return false;
+        }
+        return deleteLink(viewerState.selectedLinkId);
+    }
+
+    bool SequenceGraphEditorState::deleteSelectedElement(bool reconnectChain)
+    {
+        if (viewerState.selectedNodeId != graph::InvalidNodeId)
+        {
+            return deleteSelectedNode(reconnectChain);
+        }
+        if (viewerState.selectedLinkId != graph::InvalidLinkId)
+        {
+            return deleteSelectedLink();
+        }
+        return false;
+    }
+
+    bool SequenceGraphEditorState::disconnectNode(graph::NodeId nodeId)
+    {
+        const auto* node = graphDocument.findNode(nodeId);
+        if (node == nullptr)
+        {
+            return false;
+        }
+        pushUndoSnapshot();
+        auto links = graphDocument.links();
+        bool anyRemoved = false;
+        for (const auto& link : links)
+        {
+            const auto* startPin = graphDocument.findPin(link.fromPinId);
+            const auto* endPin = graphDocument.findPin(link.toPinId);
+            if ((startPin && startPin->nodeId == nodeId) || (endPin && endPin->nodeId == nodeId))
+            {
+                graphDocument.removeLink(link.id);
+                anyRemoved = true;
+            }
+        }
+        if (anyRemoved)
+        {
+            isDirty = true;
+            validateCurrentGraph();
+            statusMessage = std::format("Disconnected all links for node #{}.", nodeId);
+        }
+        return anyRemoved;
     }
 
     bool SequenceGraphEditorState::updateNodeEvent(graph::NodeId nodeId, const autoinput::RecordedEvent& event)
@@ -436,6 +599,7 @@ namespace autoinput::ui::editors
         node->subtitle = graph::formatRecordedEventSubtitle(event, !adapterOptions.separateWaitNodes);
         node->sourceIndex = std::nullopt;
 
+        isDirty = true;
         validateCurrentGraph();
         statusMessage = std::format("Updated node #{} event parameters.", nodeId);
         return true;
@@ -491,6 +655,7 @@ namespace autoinput::ui::editors
         }
 
         autoLayout();
+        isDirty = true;
         validateCurrentGraph();
         statusMessage = std::format("Moved node #{} up.", nodeId);
         return true;
@@ -533,6 +698,7 @@ namespace autoinput::ui::editors
         }
 
         autoLayout();
+        isDirty = true;
         validateCurrentGraph();
         statusMessage = std::format("Moved node #{} down.", nodeId);
         return true;
@@ -604,6 +770,7 @@ namespace autoinput::ui::editors
         }
 
         autoLayout();
+        isDirty = true;
         validateCurrentGraph();
         statusMessage = "Reconnected linear sequence chain.";
         return true;
@@ -620,6 +787,7 @@ namespace autoinput::ui::editors
 
         pushUndoSnapshot();
         graphDocument.createLink(outPin->id, inPin->id);
+        isDirty = true;
         validateCurrentGraph();
         statusMessage = std::format("Connected node #{} to node #{}.", sourceNodeId, targetNodeId);
         return true;
@@ -791,15 +959,78 @@ namespace autoinput::ui::editors
         {
             ImGui::BeginGroup();
 
+            if (!state.canUndo())
+            {
+                ImGui::BeginDisabled();
+            }
             if (ImGui::Button("Undo"))
             {
                 state.undo();
             }
+            if (!state.canUndo())
+            {
+                ImGui::EndDisabled();
+            }
+
             ImGui::SameLine();
+            if (!state.canRedo())
+            {
+                ImGui::BeginDisabled();
+            }
             if (ImGui::Button("Redo"))
             {
                 state.redo();
             }
+            if (!state.canRedo())
+            {
+                ImGui::EndDisabled();
+            }
+
+            ImGui::SameLine();
+            ImGui::TextDisabled("|");
+            ImGui::SameLine();
+
+            if (!state.canCopy())
+            {
+                ImGui::BeginDisabled();
+            }
+            if (ImGui::Button("Copy"))
+            {
+                state.copySelectedNode();
+            }
+            if (!state.canCopy())
+            {
+                ImGui::EndDisabled();
+            }
+
+            ImGui::SameLine();
+            if (!state.canPaste())
+            {
+                ImGui::BeginDisabled();
+            }
+            if (ImGui::Button("Paste"))
+            {
+                state.pasteNode();
+            }
+            if (!state.canPaste())
+            {
+                ImGui::EndDisabled();
+            }
+
+            ImGui::SameLine();
+            if (!state.canDuplicate())
+            {
+                ImGui::BeginDisabled();
+            }
+            if (ImGui::Button("Duplicate"))
+            {
+                state.duplicateSelectedNode();
+            }
+            if (!state.canDuplicate())
+            {
+                ImGui::EndDisabled();
+            }
+
             ImGui::SameLine();
             ImGui::TextDisabled("|");
             ImGui::SameLine();
@@ -833,9 +1064,9 @@ namespace autoinput::ui::editors
             {
                 ImGui::BeginDisabled();
             }
-            if (ImGui::Button("Delete Node"))
+            if (ImGui::Button("Delete"))
             {
-                state.deleteSelectedNode(true);
+                state.deleteSelectedElement(true);
             }
             if (!canDelete)
             {
@@ -885,12 +1116,27 @@ namespace autoinput::ui::editors
             }
             ImGui::SameLine();
 
+            const bool canApply = !state.validationResult.hasErrors();
+            if (!canApply)
+            {
+                ImGui::BeginDisabled();
+            }
             if (ImGui::Button("Apply to Sequence"))
             {
                 if (state.applyToSequence(sequence))
                 {
                     modified = true;
                 }
+            }
+            if (!canApply)
+            {
+                ImGui::EndDisabled();
+            }
+
+            if (state.hasUnappliedChanges())
+            {
+                ImGui::SameLine();
+                ImGui::TextColored(ImVec4(1.0F, 0.75F, 0.2F, 1.0F), "* Unapplied Changes");
             }
 
             ImGui::SameLine();
@@ -918,6 +1164,29 @@ namespace autoinput::ui::editors
                 ImGui::TextDisabled("%s", statusStr.c_str());
             }
             ImGui::EndGroup();
+
+            if (state.showApplyWarningConfirmation)
+            {
+                ImGui::Spacing();
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0F, 0.85F, 0.2F, 1.0F));
+                ImGui::Text(
+                    "Notice: Graph contains %zu warning(s). Are you sure you want to apply changes to the sequence?",
+                    state.validationResult.warningCount());
+                ImGui::PopStyleColor();
+                ImGui::SameLine();
+                if (ImGui::Button("Confirm Apply"))
+                {
+                    if (state.applyToSequence(sequence, true))
+                    {
+                        modified = true;
+                    }
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel"))
+                {
+                    state.dismissApplyWarningConfirmation();
+                }
+            }
         }
 
         void renderInspectorPanel(const autoinput::RecordedSequence& sequence, SequenceGraphEditorState& state)
@@ -1068,6 +1337,16 @@ namespace autoinput::ui::editors
                     state.deleteNode(details->nodeId, true);
                 }
                 ImGui::SameLine();
+                if (ImGui::Button("Duplicate"))
+                {
+                    state.duplicateNode(details->nodeId);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Copy"))
+                {
+                    state.copyNode(details->nodeId);
+                }
+                ImGui::SameLine();
                 if (ImGui::Button("Move Up"))
                 {
                     state.moveNodeUp(details->nodeId);
@@ -1076,6 +1355,11 @@ namespace autoinput::ui::editors
                 if (ImGui::Button("Move Down"))
                 {
                     state.moveNodeDown(details->nodeId);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Disconnect"))
+                {
+                    state.disconnectNode(details->nodeId);
                 }
             }
 
@@ -1165,6 +1449,38 @@ namespace autoinput::ui::editors
 #ifdef AUTOINPUT_UI_INTERNAL_HAS_IMGUI
         ImGui::PushID(editorId);
 
+        // Keyboard Shortcuts Handling
+        const ImGuiIO& io = ImGui::GetIO();
+        if (!io.WantTextInput && !ImGui::IsAnyItemActive())
+        {
+            const bool ctrl = io.KeyCtrl;
+            if (ImGui::IsKeyPressed(ImGuiKey_Delete) || ImGui::IsKeyPressed(ImGuiKey_Backspace))
+            {
+                state.deleteSelectedElement(true);
+            }
+            else if (ctrl && !io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_Z))
+            {
+                state.undo();
+            }
+            else if ((ctrl && ImGui::IsKeyPressed(ImGuiKey_Y)) ||
+                     (ctrl && io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_Z)))
+            {
+                state.redo();
+            }
+            else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_C))
+            {
+                state.copySelectedNode();
+            }
+            else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_V))
+            {
+                state.pasteNode();
+            }
+            else if (ctrl && ImGui::IsKeyPressed(ImGuiKey_D))
+            {
+                state.duplicateSelectedNode();
+            }
+        }
+
         renderToolbar(sequence, state, sequenceModified);
         ImGui::Separator();
 
@@ -1197,6 +1513,67 @@ namespace autoinput::ui::editors
             renderInspectorPanel(sequence, state);
             ImGui::Separator();
             renderValidationPanel(sequence, state);
+        }
+
+        // Context menu for the graph canvas
+        if (ImGui::BeginPopupContextWindow("SequenceGraphContextMenu",
+                                           ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+        {
+            ImGui::TextDisabled("Add Node");
+            if (ImGui::MenuItem("Add Key Event"))
+            {
+                autoinput::RecordedEvent keyEv{ .type = autoinput::RecordedEventType::KeyDown,
+                                                .delay = "10ms",
+                                                .key = "space" };
+                state.addEventNode(keyEv);
+            }
+            if (ImGui::MenuItem("Add Mouse Event"))
+            {
+                autoinput::RecordedEvent mouseEv{ .type = autoinput::RecordedEventType::MouseDown,
+                                                  .delay = "10ms",
+                                                  .button = "left" };
+                state.addEventNode(mouseEv);
+            }
+            if (ImGui::MenuItem("Add Delay/Wait"))
+            {
+                state.addWaitNode("50ms");
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Duplicate (Ctrl+D)", nullptr, false, state.canDuplicate()))
+            {
+                state.duplicateSelectedNode();
+            }
+            if (ImGui::MenuItem("Copy (Ctrl+C)", nullptr, false, state.canCopy()))
+            {
+                state.copySelectedNode();
+            }
+            if (ImGui::MenuItem("Paste (Ctrl+V)", nullptr, false, state.canPaste()))
+            {
+                state.pasteNode();
+            }
+            if (ImGui::MenuItem("Delete (Del)", nullptr, false, state.hasSelection()))
+            {
+                state.deleteSelectedElement(true);
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Undo (Ctrl+Z)", nullptr, false, state.canUndo()))
+            {
+                state.undo();
+            }
+            if (ImGui::MenuItem("Redo (Ctrl+Y)", nullptr, false, state.canRedo()))
+            {
+                state.redo();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Reconnect Linear Chain"))
+            {
+                state.reconnectLinearChain();
+            }
+            if (ImGui::MenuItem("Auto Layout"))
+            {
+                state.autoLayout();
+            }
+            ImGui::EndPopup();
         }
 
         ImGui::PopID();

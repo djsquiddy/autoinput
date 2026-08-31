@@ -852,6 +852,40 @@ workflow.applyGraphEdits();
 workflow.saveToConfig(configData);
 ```
 
+---
+
+## Graph Editor UX Polish, Shortcuts, & Safe Apply
+
+The Sequence and Configuration graph editors provide streamlined productivity features and safeguards to make visual editing comfortable and error-free:
+
+### Keyboard Shortcuts
+
+| Shortcut | Action | Scope | Description |
+|---|---|---|---|
+| `Delete` / `Backspace` | Delete Element | Sequence Graph | Deletes the currently selected event node (reconnecting the linear chain) or link. |
+| `Ctrl+Z` | Undo | Sequence Graph | Reverts the last graph edit using the snapshot history stack. |
+| `Ctrl+Y` / `Ctrl+Shift+Z` | Redo | Sequence Graph | Reapplies the previously reverted graph mutation. |
+| `Ctrl+C` | Copy Node | Sequence Graph | Copies the selected event node's parameters into the internal clipboard. |
+| `Ctrl+V` | Paste Node | Sequence Graph | Pastes clipboard event data as a new node inserted after the current selection. |
+| `Ctrl+D` | Duplicate Node | Sequence Graph | Duplicates the selected event node directly in place. |
+| `Escape` | Cancel Draft | Config Graph | Cancels and reverts any active, unapplied command draft edit buffer. |
+| `Ctrl+Enter` | Apply Draft | Config Graph | Validates and applies staged command relationship edits into `ConfigData`. |
+
+### Right-Click Context Menus
+
+When right-clicking inside the graph canvas or node regions:
+- **Sequence Graph**: Quick-insert actions (`+ Key Event`, `+ Mouse Event`, `+ Delay/Wait`), `Duplicate`, `Copy`, `Paste`, `Delete`, `Undo`, `Redo`, `Reconnect Linear Chain`, and `Auto Layout`.
+- **Config Graph**: Real-time category filter toggles (`Commands`, `Controls`, `Sequences`, `Inputs`), `Rebuild Graph`, and `Cancel Draft Edit`.
+
+### Snapshot-Based Undo/Redo & State Safety
+
+- **Non-Destructive History**: Every topological or parameter mutation pushes a lightweight `GraphEditorSnapshot` (storing the document topology, selection IDs, status message, and dirty state).
+- **Source Data Isolation**: Undo/redo operations modify only the visual editor's internal graph representations; underlying `ConfigData` and `RecordedSequence` structures remain completely untouched until explicitly applied.
+- **Unapplied Changes Indication**: A yellow `* Unapplied Changes` / `* Unapplied Draft` badge is displayed in the toolbar whenever the editor buffer contains unsaved modifications.
+- **Warning Confirmation Guard**: If applying graph changes would commit items with non-fatal validation warnings, an explicit confirmation prompt is displayed, preventing accidental application of suboptimal configurations.
+
+---
+
 ## Usage Example
 
 ```cpp
