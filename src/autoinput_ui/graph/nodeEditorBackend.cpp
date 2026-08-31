@@ -85,6 +85,11 @@ namespace autoinput::ui::graph
         return std::nullopt;
     }
 
+    namespace
+    {
+        std::optional<NodeEditorBackendType> s_userPreferredBackend{ std::nullopt };
+    }
+
     bool isBackendAvailable(NodeEditorBackendType type) noexcept
     {
         switch (type)
@@ -102,13 +107,33 @@ namespace autoinput::ui::graph
 
     NodeEditorBackendType getPreferredBackendType() noexcept
     {
-#ifdef AUTOINPUT_HAS_IMNODES
-        return NodeEditorBackendType::ImNodes;
-#elif defined(AUTOINPUT_HAS_IMGUI_NODE_EDITOR)
+        if (s_userPreferredBackend.has_value() && isBackendAvailable(*s_userPreferredBackend))
+        {
+            return *s_userPreferredBackend;
+        }
+
+#if defined(AUTOINPUT_HAS_IMGUI_NODE_EDITOR)
         return NodeEditorBackendType::ImguiNodeEditor;
+#elif defined(AUTOINPUT_HAS_IMNODES)
+        return NodeEditorBackendType::ImNodes;
 #else
         return NodeEditorBackendType::Fallback;
 #endif
+    }
+
+    void setPreferredBackendType(std::optional<NodeEditorBackendType> type) noexcept
+    {
+        if (type.has_value() && !isBackendAvailable(*type))
+        {
+            s_userPreferredBackend = std::nullopt;
+            return;
+        }
+        s_userPreferredBackend = type;
+    }
+
+    void resetPreferredBackendType() noexcept
+    {
+        s_userPreferredBackend = std::nullopt;
     }
 
     std::unique_ptr<INodeEditorBackend> createNodeEditorBackend(NodeEditorBackendType type)

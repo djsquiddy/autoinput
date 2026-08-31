@@ -134,6 +134,17 @@ namespace autoinput::ui::graph
     [[nodiscard]] NodeEditorBackendType getPreferredBackendType() noexcept;
 
     /**
+     * @brief Sets or clears the user-selected preferred node editor backend type.
+     * @param type The preferred backend type, or std::nullopt to reset to automatic build priority.
+     */
+    void setPreferredBackendType(std::optional<NodeEditorBackendType> type) noexcept;
+
+    /**
+     * @brief Resets the preferred backend type to automatic build priority.
+     */
+    void resetPreferredBackendType() noexcept;
+
+    /**
      * @brief Creates a node editor backend instance of the requested type.
      * @return Unique pointer to the backend, or nullptr if the requested backend is unavailable.
      */

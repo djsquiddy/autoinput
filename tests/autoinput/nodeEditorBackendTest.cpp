@@ -45,17 +45,36 @@ TEST_F(NodeEditorBackendTest, BackendAvailabilityCheck)
 
 TEST_F(NodeEditorBackendTest, PreferredBackendSelection)
 {
+    resetPreferredBackendType();
     const auto preferred = getPreferredBackendType();
 
-#ifdef AUTOINPUT_HAS_IMNODES
-    EXPECT_EQ(preferred, NodeEditorBackendType::ImNodes);
-#elif defined(AUTOINPUT_HAS_IMGUI_NODE_EDITOR)
+#if defined(AUTOINPUT_HAS_IMGUI_NODE_EDITOR)
     EXPECT_EQ(preferred, NodeEditorBackendType::ImguiNodeEditor);
+#elif defined(AUTOINPUT_HAS_IMNODES)
+    EXPECT_EQ(preferred, NodeEditorBackendType::ImNodes);
 #else
     EXPECT_EQ(preferred, NodeEditorBackendType::Fallback);
 #endif
 
     EXPECT_TRUE(isBackendAvailable(preferred));
+}
+
+TEST_F(NodeEditorBackendTest, SetAndResetPreferredBackendType)
+{
+    resetPreferredBackendType();
+    const auto defaultPreferred = getPreferredBackendType();
+
+    // Fallback is always available
+    setPreferredBackendType(NodeEditorBackendType::Fallback);
+    EXPECT_EQ(getPreferredBackendType(), NodeEditorBackendType::Fallback);
+
+    // Resetting restores default automatic priority
+    resetPreferredBackendType();
+    EXPECT_EQ(getPreferredBackendType(), defaultPreferred);
+
+    // Setting an unavailable backend type is ignored and does not change preference
+    setPreferredBackendType(static_cast<NodeEditorBackendType>(99));
+    EXPECT_EQ(getPreferredBackendType(), defaultPreferred);
 }
 
 TEST_F(NodeEditorBackendTest, CreateDefaultBackend)
