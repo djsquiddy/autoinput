@@ -5,6 +5,7 @@
  * @date August 2026
  */
 #include "nodeEditorBackend.h"
+#include "customCanvasBackend.h"
 
 #ifdef AUTOINPUT_HAS_IMNODES
 #include "imnodesBackend.h"
@@ -87,6 +88,7 @@ namespace autoinput::ui::graph
 
     namespace
     {
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
         std::optional<NodeEditorBackendType> s_userPreferredBackend{ std::nullopt };
     }
 
@@ -94,7 +96,9 @@ namespace autoinput::ui::graph
     {
         switch (type)
         {
-        case NodeEditorBackendType::Fallback: return true;
+        case NodeEditorBackendType::Fallback:
+            [[fallthrough]];
+        case NodeEditorBackendType::CustomCanvas: return true;
 #ifdef AUTOINPUT_HAS_IMNODES
         case NodeEditorBackendType::ImNodes: return true;
 #endif
@@ -112,9 +116,9 @@ namespace autoinput::ui::graph
             return *s_userPreferredBackend;
         }
 
-#if defined(AUTOINPUT_HAS_IMGUI_NODE_EDITOR)
+#ifdef AUTOINPUT_HAS_IMGUI_NODE_EDITOR
         return NodeEditorBackendType::ImguiNodeEditor;
-#elif defined(AUTOINPUT_HAS_IMNODES)
+#elifdef AUTOINPUT_HAS_IMNODES
         return NodeEditorBackendType::ImNodes;
 #else
         return NodeEditorBackendType::Fallback;
@@ -141,6 +145,7 @@ namespace autoinput::ui::graph
         switch (type)
         {
         case NodeEditorBackendType::Fallback: return std::make_unique<FallbackNodeEditorBackend>();
+        case NodeEditorBackendType::CustomCanvas: return createCustomCanvasBackend();
 #ifdef AUTOINPUT_HAS_IMNODES
         case NodeEditorBackendType::ImNodes: return createImnodesBackend();
 #endif

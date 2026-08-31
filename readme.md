@@ -825,7 +825,7 @@ python scripts/build.py --preset debug-tests
 
 Additional documentation is available in the [`docs/`](docs/) directory:
 - [Localization Guide](docs/localization.md) — Localization architecture, TOML conventions, and ID generation tooling.
-- [UI Graph Document Model](docs/ui-graph-model.md) — Internal graph model, sequence adapter/compiler, config graph adapter/viewer, configuration diagnostics, topological validation engine, fallback Dear ImGui viewer, sequence graph editor, imnodes backend evaluation report, and optional imnodes / imgui-node-editor rendering backends for future visual editors.
+- [UI Graph Document Model](docs/ui-graph-model.md) — Internal graph model, sequence adapter/compiler, config graph adapter/viewer, configuration diagnostics, topological validation engine, fallback Dear ImGui viewer, sequence graph editor, custom draw-list canvas prototype, and optional imnodes / imgui-node-editor rendering backends for future visual editors.
 - [Responsible Use Policy](docs/responsible-use.md) — Ethical guidelines and policies for automated inputs.
 
 ### License

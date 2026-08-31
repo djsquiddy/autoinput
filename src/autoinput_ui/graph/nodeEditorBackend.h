@@ -24,7 +24,8 @@ namespace autoinput::ui::graph
     {
         Fallback,
         ImNodes,
-        ImguiNodeEditor
+        ImguiNodeEditor,
+        CustomCanvas
     };
 
     /**
@@ -37,6 +38,7 @@ namespace autoinput::ui::graph
         case NodeEditorBackendType::Fallback: return "Fallback";
         case NodeEditorBackendType::ImNodes: return "ImNodes";
         case NodeEditorBackendType::ImguiNodeEditor: return "ImguiNodeEditor";
+        case NodeEditorBackendType::CustomCanvas: return "CustomCanvas";
         default: return "Unknown";
         }
     }

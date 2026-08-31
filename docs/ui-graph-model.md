@@ -545,6 +545,7 @@ The Node Editor Backend Abstraction (`autoinput_ui/graph/nodeEditorBackend.h`) d
 ### Backend Types & Selection Hierarchy
 
 - `NodeEditorBackendType::Fallback`: Lightweight no-op backend and default Dear ImGui fallback viewer. Guaranteed to be available in all builds without external dependencies.
+- `NodeEditorBackendType::CustomCanvas`: In-project custom Dear ImGui draw-list node canvas backend prototype. Provides interactive 2D canvas, panning, zooming, node dragging, selection, and Bézier links without third-party dependencies.
 - `NodeEditorBackendType::ImNodes`: Optional integration using the immediate-mode [imnodes](https://github.com/Nelarius/imnodes) library.
 - `NodeEditorBackendType::ImguiNodeEditor`: Optional integration using the advanced canvas [imgui-node-editor](https://github.com/thedmd/imgui-node-editor) library.
 
@@ -557,10 +558,10 @@ The backend factory selects the most capable enabled backend automatically:
 Developers and UI window controllers can explicitly inspect, select, or reset the active backend:
 ```cpp
 // Check if a backend is available in the current build
-if (autoinput::ui::graph::isBackendAvailable(NodeEditorBackendType::ImguiNodeEditor))
+if (autoinput::ui::graph::isBackendAvailable(NodeEditorBackendType::CustomCanvas))
 {
-    // Override default selection
-    autoinput::ui::graph::setPreferredBackendType(NodeEditorBackendType::ImguiNodeEditor);
+    // Select in-project custom draw-list canvas backend
+    autoinput::ui::graph::setPreferredBackendType(NodeEditorBackendType::CustomCanvas);
 }
 
 // Reset back to automatic build priority
@@ -569,6 +570,31 @@ autoinput::ui::graph::resetPreferredBackendType();
 // Create preferred backend instance
 std::unique_ptr<INodeEditorBackend> backend = autoinput::ui::graph::createDefaultNodeEditorBackend();
 ```
+
+### `CustomCanvas` Backend Capabilities & Limitations
+
+The in-project custom Dear ImGui draw-list backend (`autoinput_ui/graph/customCanvasBackend.h` and `customCanvasBackend.cpp`) provides a native, zero-dependency visual node canvas prototype built directly on Dear ImGui's `ImDrawList`:
+
+#### Feature Capabilities Summary
+
+- **Supported Features**:
+  - `supportsCanvas`: Dedicated 2D canvas area with infinite grid background (`ImDrawList::AddLine`).
+  - `supportsPositions`: Synchronizes 2D node coordinates (`m_nodePositions`), supporting programmatic layout and interactive dragging.
+  - `supportsSelectionQuery`: Interactive left-click node and link selection with visual gold border highlights (`m_selectedNodeId`, `m_selectedLinkId`).
+  - `supportsZoom`: Smooth canvas zooming (0.2x–3.0x scale) controlled via mouse wheel.
+  - Panning: Viewport navigation via Middle-mouse drag, Right-mouse drag, or Left-mouse drag on empty canvas space.
+  - Interactive Node Dragging: Left-mouse drag on nodes updates canvas coordinates in real-time with zoom compensation (`applyNodeDragDelta`).
+  - Node & Pin Rendering: Rounded node rectangles with header bars, title labels, and circular input/output sockets with automated vertical spacing.
+  - Link Drawing: Smooth cubic Bézier curves (`ImDrawList::AddBezierCubic`) with selection highlights.
+- **Prototype Limitations & Unsupported Features**:
+  - `supportsLinkCreationQuery`: Interactive drag-and-drop link creation is not yet implemented in this initial prototype (reported as `false`).
+  - `supportsLinkDeletionQuery`: Interactive link deletion events are not yet implemented in this prototype (reported as `false`).
+  - `supportsGroups`: Visual container frames (`NodeKind::ExclusiveGroup`) are unsupported.
+  - `supportsComments`: Floating comment boxes are unsupported.
+  - `supportsMinimap`: Minimap overview is unsupported.
+  - `supportsMultiSelect`: Multi-node box selection marquee is unsupported (single-select only).
+
+---
 
 ### `imgui-node-editor` Backend Capabilities
 
@@ -612,27 +638,27 @@ When `AUTOINPUT_UI_WITH_IMNODES` is enabled, the `imnodes` backend wraps the imm
 
 ---
 
-### Backend Evaluation Matrix: `imgui-node-editor` vs. `imnodes` vs. `Fallback`
+### Backend Evaluation Matrix: `imgui-node-editor` vs. `imnodes` vs. `CustomCanvas` vs. `Fallback`
 
-The following evaluation matrix compares the required visual editor features across all three available backends (`imgui-node-editor`, `imnodes`, and `Fallback`):
+The following evaluation matrix compares the visual editor features across all four available backends:
 
-| Feature / Capability | `imgui-node-editor` | `imnodes` | `Fallback` (Dear ImGui) | Technical Assessment & Comparison |
-| :--- | :--- | :--- | :--- | :--- |
-| **Node Rendering** | **Full** (Custom layout) | **Full** (Standard boxes) | **List / Canvas fallback** | `imgui-node-editor` and `imnodes` both offer full node rendering; `imgui-node-editor` supports richer styling and custom node headers. |
-| **Pin Rendering** | **Advanced** (Any widget) | **Basic** (Circle pin) | **Text badges** | `imgui-node-editor` allows custom shapes, icons, and inline widgets per pin; `imnodes` uses fixed left/right circular pin points. |
-| **Link Creation** | **Interactive** (`BeginCreate`) | **Interactive** (`IsLinkCreated`) | **Read-only / Manual** | Both third-party backends provide drag-and-drop link creation and wire drawing. |
-| **Link Deletion** | **Interactive** (`BeginDelete`) | **Interactive** (`IsLinkDestroyed`) | **Manual button** | Both third-party backends support interactive disconnection (Del key / context clicks). |
-| **Node Selection** | **Multi-select** (Marquee) | **Multi-select** (Marquee) | **Single-item click** | Both third-party backends provide rich multi-node selection and bounding box marquee selection. |
-| **Node Positioning** | **2D Canvas Sync** | **2D Canvas Sync** | **Auto-layout grid** | Both third-party backends support drag movement and coordinate synchronization with `GraphDocument`. |
-| **Panning** | **Smooth Canvas** | **Canvas Drag** | **Scrollbars** | Both third-party backends support canvas panning via middle-mouse or right-mouse dragging. |
-| **Zoom** | **Supported** (10%–200%) | **Unsupported** | **Unsupported** | `imgui-node-editor` supports full canvas zooming, enabling clear navigation of large multi-command configuration graphs. |
-| **Minimap** | **Available** (Optional) | **Experimental** | **Unsupported** | `imgui-node-editor` provides built-in minimap drawing and navigation helpers. |
-| **Groups & Comments**| **Supported** (Containers) | **Unsupported** | **Unsupported** | `imgui-node-editor` can visually frame `ExclusiveGroup`s and render floating comment boxes. |
-| **Keyboard Navigation**| **Built-in** (Arrow/Nav) | **Minimal** (Del only) | **Standard ImGui tab/keys** | `imgui-node-editor` provides built-in navigation and focus handling. |
-| **Context Menus** | **Native hooks** | **Manual Workaround** | **ImGui popups** | `imgui-node-editor` provides `ShowNodeContextMenu` and canvas context hooks. |
-| **Styling & Flow** | **Rich** (Curvatures/Flow) | **Basic** (Style stack) | **ImGui theme** | `imgui-node-editor` supports link flow animation, custom curvatures, and shadow styling. |
-| **Ease of Abstraction**| **Good** | **Excellent** | **Direct ImGui** | Both libraries map cleanly to `INodeEditorBackend` without leaking third-party types. |
-| **Dependency Footprint**| **Moderate** (~5 files) | **Minimal** (~2 files) | **Zero** (Built-in) | `Fallback` has zero external dependencies; `imnodes` is minimal; `imgui-node-editor` is modular. |
+| Feature / Capability | `imgui-node-editor` | `imnodes` | `CustomCanvas` (In-Project) | `Fallback` (Dear ImGui) | Technical Assessment & Comparison |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Node Rendering** | **Full** (Custom layout) | **Full** (Standard boxes) | **Full** (ImDrawList boxes) | **List / Canvas fallback** | All three active backends render custom node boxes; `CustomCanvas` provides in-project control without external dependencies. |
+| **Pin Rendering** | **Advanced** (Any widget) | **Basic** (Circle pin) | **Basic** (Circle pin) | **Text badges** | `imgui-node-editor` allows arbitrary widgets in pins; `CustomCanvas` and `imnodes` render left/right edge circular pin sockets. |
+| **Link Creation** | **Interactive** (`BeginCreate`) | **Interactive** (`IsLinkCreated`) | **Future Work** (Query `false`) | **Read-only / Manual** | Third-party backends detect interactive wire dragging; `CustomCanvas` currently supports link drawing only. |
+| **Link Deletion** | **Interactive** (`BeginDelete`) | **Interactive** (`IsLinkDestroyed`) | **Future Work** (Query `false`) | **Manual button** | Third-party backends support interactive disconnection; `CustomCanvas` delegates deletion to higher-level controllers. |
+| **Node Selection** | **Multi-select** (Marquee) | **Multi-select** (Marquee) | **Single-select** (Click) | **Single-item click** | Third-party backends support multi-node marquee selection; `CustomCanvas` supports interactive single-node selection. |
+| **Node Positioning** | **2D Canvas Sync** | **2D Canvas Sync** | **2D Drag Sync** | **Auto-layout grid** | `CustomCanvas`, `imnodes`, and `imgui-node-editor` all support interactive drag movement and 2D coordinate synchronization. |
+| **Panning** | **Smooth Canvas** | **Canvas Drag** | **Smooth Canvas Drag** | **Scrollbars** | `CustomCanvas` supports middle/right mouse drag and empty-space left drag panning. |
+| **Zoom** | **Supported** (10%–200%) | **Unsupported** | **Supported** (0.2x–3.0x) | **Unsupported** | `CustomCanvas` and `imgui-node-editor` support smooth canvas zooming via mouse wheel. |
+| **Minimap** | **Available** (Optional) | **Experimental** | **Unsupported** | **Unsupported** | Minimap navigation is currently disabled in all base integrations. |
+| **Groups & Comments**| **Supported** (Containers) | **Unsupported** | **Unsupported** | **Unsupported** | `imgui-node-editor` uniquely supports visual container frames (`NodeKind::ExclusiveGroup`) and comment boxes. |
+| **Keyboard Navigation**| **Built-in** (Arrow/Nav) | **Minimal** (Del only) | **Minimal** | **Standard ImGui tab/keys** | `imgui-node-editor` provides full built-in navigation and focus handling. |
+| **Context Menus** | **Native hooks** | **Manual Workaround** | **Manual Workaround** | **ImGui popups** | `imgui-node-editor` provides `ShowNodeContextMenu` hooks; `CustomCanvas` uses standard ImGui popups. |
+| **Styling & Flow** | **Rich** (Curvatures/Flow) | **Basic** (Style stack) | **Custom Bézier** | **ImGui theme** | `CustomCanvas` draws cubic Bézier curves with custom curvature expansion for reverse links. |
+| **Ease of Abstraction**| **Good** | **Excellent** | **Complete Native Control** | **Direct ImGui** | `CustomCanvas` is completely in-project, eliminating third-party ABI and version synchronization concerns. |
+| **Dependency Footprint**| **Moderate** (~5 files) | **Minimal** (~2 files) | **Zero** (In-Project) | **Zero** (Built-in) | `CustomCanvas` and `Fallback` require zero external dependencies; `imnodes` is minimal; `imgui-node-editor` is modular. |
 
 ---
 

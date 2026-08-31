@@ -15,6 +15,7 @@
 #include "editors/sequenceGraphEditor.h"
 #include "graph/configDiagnostics.h"
 #include "graph/configGraphAdapter.h"
+#include "graph/customCanvasBackend.h"
 #include "graph/fallbackGraphViewer.h"
 #include "graph/graphModel.h"
 #include "graph/graphValidator.h"

@@ -21,12 +21,14 @@ TEST_F(NodeEditorBackendTest, BackendTypeToStringConversions)
     EXPECT_EQ(backendTypeToString(NodeEditorBackendType::Fallback), "Fallback");
     EXPECT_EQ(backendTypeToString(NodeEditorBackendType::ImNodes), "ImNodes");
     EXPECT_EQ(backendTypeToString(NodeEditorBackendType::ImguiNodeEditor), "ImguiNodeEditor");
+    EXPECT_EQ(backendTypeToString(NodeEditorBackendType::CustomCanvas), "CustomCanvas");
     EXPECT_EQ(backendTypeToString(static_cast<NodeEditorBackendType>(99)), "Unknown");
 }
 
 TEST_F(NodeEditorBackendTest, BackendAvailabilityCheck)
 {
     EXPECT_TRUE(isBackendAvailable(NodeEditorBackendType::Fallback));
+    EXPECT_TRUE(isBackendAvailable(NodeEditorBackendType::CustomCanvas));
 
 #ifdef AUTOINPUT_HAS_IMNODES
     EXPECT_TRUE(isBackendAvailable(NodeEditorBackendType::ImNodes));
@@ -67,6 +69,10 @@ TEST_F(NodeEditorBackendTest, SetAndResetPreferredBackendType)
     // Fallback is always available
     setPreferredBackendType(NodeEditorBackendType::Fallback);
     EXPECT_EQ(getPreferredBackendType(), NodeEditorBackendType::Fallback);
+
+    // CustomCanvas is always available
+    setPreferredBackendType(NodeEditorBackendType::CustomCanvas);
+    EXPECT_EQ(getPreferredBackendType(), NodeEditorBackendType::CustomCanvas);
 
     // Resetting restores default automatic priority
     resetPreferredBackendType();
