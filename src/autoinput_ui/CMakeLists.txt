@@ -56,6 +56,8 @@ if(AUTOINPUT_BUILD_UI)
             ${CMAKE_CURRENT_LIST_DIR}/graph/nodeEditorBackend.h
             ${CMAKE_CURRENT_LIST_DIR}/graph/fallbackGraphViewer.cpp
             ${CMAKE_CURRENT_LIST_DIR}/graph/fallbackGraphViewer.h
+            ${CMAKE_CURRENT_LIST_DIR}/graph/graphLayoutMetadata.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/graph/graphLayoutMetadata.h
             # Widgets
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.cpp
             ${CMAKE_CURRENT_LIST_DIR}/widgets/basicWidgets.h

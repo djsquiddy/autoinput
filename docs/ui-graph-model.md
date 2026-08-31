@@ -710,6 +710,92 @@ Both third-party backends are completely optional and disabled (`OFF`) by defaul
 > - Search paths: `third_party/imgui-node-editor`, `extern/imgui-node-editor`, or `-DIMGUI_NODE_EDITOR_DIR=/path/to/imgui-node-editor`
 > If an option is enabled but the dependency files are not found, CMake emits an explicit, actionable configuration error.
 
+## Graph Layout Metadata Persistence
+
+Visual editors in AutoInput can optionally persist and restore canvas layout properties, node positions, collapsed states, and viewport settings across editing sessions using the `autoinput::ui::graph::graphLayoutMetadata` module.
+
+### Core Architecture & Separation of Concerns
+
+1. **Strict Runtime Isolation**: Graph layout metadata is stored separately from core automation config files. Core runtime config loaders, schema validators, CLI commands, and execution loops remain completely unaware of layout metadata and operate with zero dependency on UI files.
+2. **Sidecar File Convention**: When persisting to disk, layout metadata uses the `.graph.toml` sidecar extension (e.g. `configs/game_macro.toml` maps to `configs/game_macro.graph.toml`).
+3. **Optional and Non-Blocking**: Graph metadata is never required to load or execute a configuration. If a metadata file is absent, unreadable, or corrupted, the system returns `std::nullopt` and visual editors safely generate automatic deterministic layout positions.
+4. **Versioning & Forward Compatibility**: All layout documents include explicit integer versioning (`version = 1`) and format identification (`format = "autoinput-graph-layout"`). Documents with future schema versions are parsed gracefully without throwing errors or discarding valid fields.
+5. **Stale Metadata Pruning**: When commands, controls, sequences, or recorded events are removed or renamed, `pruneStaleMetadata()` cleans up orphaned visual layout entries so metadata files remain compact and synchronized.
+
+### Data Structures
+
+- `NodeLayoutData`:
+  - `nodeKey`: Deterministic string identifier (`"start"`, `"end"`, `"cmd:<name>"`, `"seq:<name>"`, `"event:<idx>"`, `"ctrl:<name>:<idx>"`, etc.).
+  - `position`: 2D canvas coordinates (`NodePosition`).
+  - `collapsed`: Boolean flag for collapsible node inspection.
+  - `comment`: Optional user annotation string.
+- `GraphLayoutViewSettings`:
+  - `offset`: Canvas pan offset (`x`, `y`).
+  - `zoom`: Zoom scale factor (default `1.0F`).
+  - Filter flags: `showCommands`, `showControls`, `showSequences`, `showInputs`, `showExclusiveGroups`, `showGlobalSettings`, `showBlacklist`.
+- `GraphLayoutDocument`: Layout container for an individual graph canvas.
+- `ConfigGraphMetadataDocument`: Top-level configuration document holding both the global configuration relationship graph layout and individual sequence graph layouts.
+
+### Metadata File Format Example (`<config>.graph.toml`)
+
+```toml
+[metadata]
+version = 1
+format = "autoinput-graph-layout"
+
+[config_graph]
+[config_graph.view]
+offset_x = 0.0
+offset_y = 0.0
+zoom = 1.0
+
+[config_graph.filters]
+show_commands = true
+show_controls = true
+show_sequences = true
+show_inputs = true
+show_exclusive_groups = true
+show_global_settings = true
+show_blacklist = true
+
+[config_graph.nodes]
+"cmd:AutoAttack" = { x = 120.0, y = 80.0, collapsed = false }
+"input:F1" = { x = 20.0, y = 80.0 }
+"global:end" = { x = 20.0, y = 300.0 }
+
+[sequences.ComboSequence.view]
+offset_x = 0.0
+offset_y = 0.0
+zoom = 1.2
+
+[sequences.ComboSequence.nodes]
+"start" = { x = 50.0, y = 100.0 }
+"event:0" = { x = 220.0, y = 100.0 }
+"event:1" = { x = 390.0, y = 100.0 }
+"end" = { x = 560.0, y = 100.0 }
+```
+
+### Key API Functions
+
+```cpp
+#include "autoinput_ui/graph/graphLayoutMetadata.h"
+
+using namespace autoinput::ui::graph;
+
+// Extract layout from an active graph document
+GraphLayoutDocument layout = extractLayoutFromGraph(graphDoc, viewSettings, "SequenceName");
+
+// Apply stored layout positions onto a graph document
+applyLayoutToGraph(graphDoc, layout);
+
+// Prune stale metadata entries when underlying config data changes
+pruneStaleMetadata(configMetadataDoc, configData);
+
+// Save and load sidecar metadata files
+saveGraphMetadataFile(metadataPath, configMetadataDoc);
+auto loadedDoc = loadGraphMetadataForConfig(configFilePath);
+```
+
 ## Usage Example
 
 ```cpp
